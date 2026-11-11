@@ -8,6 +8,40 @@ export interface HostConfig {
   logKeys: boolean
   windowTitle: string
   language: string
+  // Deathloom fork: Path of Building build impact
+  pob?: PobConfig
+}
+
+// Deathloom fork: Path of Building build impact
+export interface PobConfig {
+  enabled: boolean
+  // Path of Building folder that contains `src` and `runtime` (e.g. the git clone)
+  pobDir: string
+  // Builds folder for this game, e.g. ...\poe-builds\poe1
+  buildsDir: string
+  // Player folder inside buildsDir; its active.txt names the active build
+  player: string
+}
+
+export interface PobBuildInfo {
+  name: string
+  className?: string
+  ascendancy?: string
+  level?: number
+  mainSkill?: string
+  stats: Record<string, number | undefined>
+}
+
+export interface PobImpactCompare {
+  header: string
+  summary: Array<{ stat: string, label: string, old: number, new: number, diff: number, pct?: number }>
+  lines: Array<{ text: string, positive?: boolean, negative?: boolean }>
+}
+
+export interface PobImpactResult {
+  item: { name: string, rarity: string, baseName: string, type: string }
+  compares: PobImpactCompare[]
+  lines: Array<{ text: string }>
 }
 
 export interface ShortcutAction {
@@ -77,7 +111,9 @@ export type IpcEvent =
   IpcItemText |
   IpcOcrText |
   IpcConfigChanged |
-  IpcUserAction
+  IpcUserAction |
+  IpcPobImpactRequest |
+  IpcPobImpactResult
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -174,6 +210,22 @@ type IpcUserAction =
   } | {
     action: 'stash-search'
     text: string
+  }>
+
+// Deathloom fork: Path of Building build impact
+type IpcPobImpactRequest =
+  Event<'CLIENT->MAIN::pob-impact', {
+    requestId: number
+    itemText: string
+  }>
+
+type IpcPobImpactResult =
+  Event<'MAIN->CLIENT::pob-impact', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    result?: PobImpactResult
   }>
 
 interface Event<TName extends string, TPayload = undefined> {
