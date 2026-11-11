@@ -58,6 +58,7 @@ export class PobImpact {
   }
 
   configure (cfg: PobConfig | undefined) {
+    this.logger.write(`info [PoB] settings: ${JSON.stringify(cfg ?? null)}`)
     const same = JSON.stringify(cfg) === JSON.stringify(this.cfg)
     this.cfg = cfg
     if (!same || !cfg?.enabled) {
@@ -204,8 +205,13 @@ export class PobImpact {
 
   async impact (itemText: string): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
     if (!this.cfg?.enabled) throw new Error('Build impact is turned off')
-    if (!this.cfg.pobDir || !this.cfg.buildsDir || !this.cfg.player) {
-      throw new Error('Set the PoB folder, builds folder and player in settings')
+    const missing = [
+      !this.cfg.pobDir && 'Path of Building folder',
+      !this.cfg.buildsDir && 'Builds folder',
+      !this.cfg.player && 'Player'
+    ].filter(Boolean)
+    if (missing.length) {
+      throw new Error(`Missing in settings: ${missing.join(', ')}`)
     }
     if (!this.proc) {
       const exe = path.join(this.cfg.pobDir, 'runtime', 'PoBHeadless.exe')
