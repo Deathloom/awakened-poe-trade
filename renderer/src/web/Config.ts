@@ -1,7 +1,7 @@
 import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
-import { HostConfig, ShortcutAction } from '@ipc/types'
+import { HostConfig, ShortcutAction, PobConfig } from '@ipc/types'
 import type * as widget from './overlay/widgets'
 import type { StashSearchWidget } from './stash-search/widget'
 import type { ItemCheckWidget } from './item-check/widget'
@@ -120,6 +120,8 @@ export interface Config {
   widgets: widget.Widget[]
   fontSize: number
   showAttachNotification: boolean
+  // Deathloom fork: Path of Building build impact
+  pob: PobConfig
 }
 
 export const defaultConfig = (): Config => ({
@@ -129,6 +131,7 @@ export const defaultConfig = (): Config => ({
   overlayBackgroundClose: true,
   restoreClipboard: false,
   showAttachNotification: true,
+  pob: defaultPobConfig(),
   commands: [{
     text: '/hideout',
     hotkey: 'F5',
@@ -430,6 +433,9 @@ function upgradeConfig (_config: Config): Config {
     config.configVersion = 17
   }
 
+  // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
+  config.pob ??= defaultPobConfig()
+
   if (config.configVersion < 18) {
     config.useIntlSite = (config.language === 'cmn-Hant' && config.realm === 'pc-ggg')
 
@@ -566,6 +572,17 @@ function getConfigForHost (): HostConfig {
     overlayKey: config.overlayKey,
     logKeys: config.logKeys,
     windowTitle: config.windowTitle,
-    language: config.language
+    language: config.language,
+    pob: config.pob
+  }
+}
+
+// Deathloom fork: Path of Building build impact
+export function defaultPobConfig (): PobConfig {
+  return {
+    enabled: false,
+    pobDir: '',
+    buildsDir: '',
+    player: ''
   }
 }

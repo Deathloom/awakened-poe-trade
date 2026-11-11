@@ -3,6 +3,7 @@
     <filter-name
       :filters="itemFilters"
       :item="item" />
+    <build-impact :item="item" />
     <price-prediction v-if="showPredictedPrice" class="mb-4"
       :item="item" />
     <price-trend v-else
@@ -67,6 +68,7 @@ import PricePrediction from './price-prediction/PricePrediction.vue'
 import StackValue from './expected-value/StackValue.vue'
 import DustValue from './expected-value/DustValue.vue'
 import FilterName from './filters/FilterName.vue'
+import BuildImpact from './build-impact/BuildImpact.vue'
 import { CATEGORY_TO_TRADE_ID, createTradeRequest } from './trade/pathofexile-trade'
 import { AppConfig } from '@/web/Config'
 import { FilterPreset } from './filters/interfaces'
@@ -86,7 +88,8 @@ export default defineComponent({
     FiltersBlock,
     FilterName,
     StackValue,
-    DustValue
+    DustValue,
+    BuildImpact
   },
   props: {
     item: {

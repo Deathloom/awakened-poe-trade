@@ -14,6 +14,7 @@ import { AppTray } from './AppTray'
 import { OverlayVisibility } from './windowing/OverlayVisibility'
 import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
+import { PobImpact } from './pob/PobImpact'
 
 if (!app.requestSingleInstanceLock()) {
   app.exit()
@@ -34,6 +35,8 @@ app.on('ready', async () => {
   const poeWindow = new GameWindow()
   const appUpdater = new AppUpdater(eventPipe)
   const _httpProxy = new HttpProxy(server, logger)
+  const pobImpact = new PobImpact(eventPipe, logger)
+  app.on('will-quit', () => { pobImpact.stop() })
 
   setTimeout(
     async () => {
@@ -47,6 +50,7 @@ app.on('ready', async () => {
         gameConfig.readConfig(cfg.gameConfig ?? '')
         appUpdater.checkAtStartup()
         tray.overlayKey = cfg.overlayKey
+        pobImpact.configure(cfg.pob)
       })
       uIOhook.start()
       const port = await startServer(appUpdater, logger)
