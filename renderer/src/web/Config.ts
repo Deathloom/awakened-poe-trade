@@ -435,6 +435,7 @@ function upgradeConfig (_config: Config): Config {
 
   // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
   config.pob ??= defaultPobConfig()
+  config.pob = { ...defaultPobConfig(), ...config.pob }
 
   if (config.configVersion < 18) {
     config.useIntlSite = (config.language === 'cmn-Hant' && config.realm === 'pc-ggg')
@@ -583,6 +584,9 @@ export function defaultPobConfig (): PobConfig {
     enabled: false,
     pobDir: '',
     buildsDir: '',
-    player: ''
+    player: '',
+    liveGear: false,
+    accountName: '',
+    character: ''
   }
 }

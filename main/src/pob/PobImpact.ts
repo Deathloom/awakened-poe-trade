@@ -8,9 +8,11 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import type { PobConfig, PobBuildInfo, PobImpactResult } from '../../../ipc/types'
+import { app, net } from 'electron'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
+import { LiveGear, type FetchFn } from './LiveGear'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
@@ -34,14 +36,24 @@ export class PobImpact {
   private loadedBuild: PobBuildInfo | null = null
   // requests run one at a time
   private queue: Promise<unknown> = Promise.resolve()
+  private liveGear: LiveGear
+  // fetchedAt of the gear PoB currently holds (0 = not confirmed since the
+  // last load or settings change)
+  private sentGearAt = 0
+  private pobHasGear = false
 
   constructor (
     private server: ServerEvents,
     private logger: Logger
   ) {
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText }) => {
+    this.liveGear = new LiveGear(
+      net.fetch as unknown as FetchFn,
+      app.userAgentFallback,
+      (msg) => { this.logger.write(msg) }
+    )
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear }) => {
       this.queue = this.queue
-        .then(async () => await this.impact(itemText))
+        .then(async () => await this.impact(itemText, refreshGear === true))
         .then(({ build, result }) => {
           this.server.sendEventTo('last-active', {
             name: 'MAIN->CLIENT::pob-impact',
@@ -59,11 +71,24 @@ export class PobImpact {
 
   configure (cfg: PobConfig | undefined) {
     this.logger.write(`info [PoB] settings: ${JSON.stringify(cfg ?? null)}`)
-    const same = JSON.stringify(cfg) === JSON.stringify(this.cfg)
+    // Live-gear settings don't need a PoB restart
+    const procKey = (c: PobConfig | undefined) => JSON.stringify(c && [c.enabled, c.pobDir, c.buildsDir, c.player])
+    const same = procKey(cfg) === procKey(this.cfg)
+    const prevTarget = JSON.stringify(this.liveTarget())
     this.cfg = cfg
+    this.liveGear.setTarget(this.liveTarget())
+    if (JSON.stringify(this.liveTarget()) !== prevTarget) {
+      this.sentGearAt = 0
+    }
     if (!same || !cfg?.enabled) {
       this.stop()
     }
+  }
+
+  private liveTarget () {
+    const cfg = this.cfg
+    if (!cfg?.enabled || !cfg.liveGear || !cfg.accountName || !cfg.character) return null
+    return { accountName: cfg.accountName, character: cfg.character }
   }
 
   stop () {
@@ -78,6 +103,8 @@ export class PobImpact {
     this.ready = null
     this.loadedKey = null
     this.loadedBuild = null
+    this.sentGearAt = 0
+    this.pobHasGear = false
     this.stdoutBuf = ''
     for (const p of this.pending.values()) {
       clearTimeout(p.timer)
@@ -203,7 +230,42 @@ export class PobImpact {
     return path.isAbsolute(name) ? name : path.join(playerDir, name)
   }
 
-  async impact (itemText: string): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
+  // Make sure PoB holds the character's current gear. Returns an error message
+  // for the panel instead of throwing: the build comparison still works without it.
+  private async syncLiveGear (refresh: boolean): Promise<{ info?: PobEquippedInfo, error?: string }> {
+    // sentGearAt is reset when settings change or a build loads; if PoB still
+    // holds gear we didn't just confirm, drop it rather than compare to stale gear
+    const dropStale = async () => {
+      if (this.pobHasGear && this.sentGearAt === 0) {
+        await this.call('clearEquipped')
+        this.pobHasGear = false
+      }
+    }
+    if (!this.liveTarget()) {
+      await dropStale()
+      return {}
+    }
+    let gear
+    try {
+      gear = await this.liveGear.get(refresh)
+    } catch (err) {
+      await dropStale()
+      return { error: (err as Error).message }
+    }
+    if (gear.fetchedAt !== this.sentGearAt) {
+      const reply = await this.call('equipped', { items: gear.items, character: gear.character })
+      this.sentGearAt = gear.fetchedAt
+      this.pobHasGear = true
+      const info = reply.equipped as PobEquippedInfo
+      if (!Array.isArray(info.skipped)) info.skipped = []
+      if (info.skipped.length) {
+        this.logger.write(`warn [PoB] live gear: PoB skipped ${info.skipped.join(', ')}`)
+      }
+    }
+    return {}
+  }
+
+  async impact (itemText: string, refreshGear = false): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
     if (!this.cfg?.enabled) throw new Error('Build impact is turned off')
     const missing = [
       !this.cfg.pobDir && 'Path of Building folder',
@@ -236,12 +298,26 @@ export class PobImpact {
       const reply = await this.call('load', { path: buildPath })
       this.loadedKey = key
       this.loadedBuild = reply.build as PobBuildInfo
+      // Loading drops PoB's live gear set
+      this.sentGearAt = 0
+      this.pobHasGear = false
       this.logger.write(`info [PoB] loaded build "${this.loadedBuild.name}"`)
     }
+    const live = await this.syncLiveGear(refreshGear)
     const reply = await this.call('impact', { item: itemText })
-    return {
-      build: this.loadedBuild,
-      result: { item: reply.item, compares: reply.compares, lines: reply.lines }
+    const result: PobImpactResult = { item: reply.item, compares: reply.compares, lines: reply.lines }
+    if (reply.equipped) {
+      const info = reply.equipped.info as PobEquippedInfo | undefined
+      if (info) {
+        info.fetchedAt = this.sentGearAt
+        if (!Array.isArray(info.skipped)) info.skipped = []
+        if (!Array.isArray(info.summary)) info.summary = []
+      }
+      result.equipped = { compares: reply.equipped.compares, lines: reply.equipped.lines, info }
     }
+    if (live.error ?? reply.equippedError) {
+      result.equippedError = String(live.error ?? reply.equippedError)
+    }
+    return { build: this.loadedBuild, result }
   }
 }
