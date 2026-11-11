@@ -587,6 +587,7 @@ export function defaultPobConfig (): PobConfig {
     player: '',
     liveGear: false,
     accountName: '',
-    character: ''
+    character: '',
+    liveTreeAndGems: true
   }
 }

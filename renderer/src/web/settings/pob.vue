@@ -33,8 +33,8 @@
       <div class="text-gray-500 text-sm mt-1">
         Reads your character's gear from your public Characters tab on pathofexile.com
         (no login; at most once every 2 minutes, or when you press refresh in the panel).
-        Your profile's Characters tab must be public. Only items are swapped:
-        the build's tree, skills and config stay as they are in PoB.
+        Your profile's Characters tab must be public. PoB's config (enemy, buffs, bandit, pantheon)
+        always comes from the build.
       </div>
     </div>
     <template v-if="pob.liveGear">
@@ -48,6 +48,14 @@
         <div class="flex-1 mb-1">Character</div>
         <input v-model.trim="pob.character"
           class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. DeathloomAW">
+      </div>
+      <div class="mb-2">
+        <ui-toggle v-model="pob.liveTreeAndGems">Use the character's passive tree, level and gems too</ui-toggle>
+        <div class="text-gray-500 text-sm mt-1">
+          On: "vs character" is your actual character (one extra request per refresh for the tree).
+          Off: only the items are swapped into the build. The main skill is the build's main skill
+          if the character has it, otherwise PoB's guess.
+        </div>
       </div>
     </template>
   </div>

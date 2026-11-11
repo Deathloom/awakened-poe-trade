@@ -15,10 +15,16 @@ const FETCH_TIMEOUT = 10_000
 export interface LiveGearTarget {
   accountName: string
   character: string
+  // Also read the passive tree (one more request per refresh)
+  tree: boolean
 }
 
 export interface LiveGearData {
   items: unknown[]
+  // get-passive-skills answer (tree + tree jewels), when the tree was read
+  passives?: unknown
+  // Why the tree is missing when it was asked for
+  passivesError?: string
   character: { name?: string, class?: string, level?: number, league?: string }
   fetchedAt: number
 }
@@ -29,13 +35,21 @@ export type FetchFn = (url: string, init: { headers: Record<string, string>, sig
   json: () => Promise<any>
 }>
 
-export function getItemsUrl (target: LiveGearTarget) {
+function characterUrl (endpoint: 'get-items' | 'get-passive-skills', target: { accountName: string, character: string }) {
   const params = new URLSearchParams({
     accountName: target.accountName,
     character: target.character,
     realm: 'pc'
   })
-  return `https://www.pathofexile.com/character-window/get-items?${params.toString()}`
+  return `https://www.pathofexile.com/character-window/${endpoint}?${params.toString()}`
+}
+
+export function getItemsUrl (target: { accountName: string, character: string }) {
+  return characterUrl('get-items', target)
+}
+
+export function getPassivesUrl (target: { accountName: string, character: string }) {
+  return characterUrl('get-passive-skills', target)
 }
 
 // Returns how long (ms) to wait before the next request, based on GGG's
@@ -118,13 +132,14 @@ export class LiveGear {
     }
   }
 
-  private async fetch (target: LiveGearTarget): Promise<LiveGearData> {
+  // One GET with rate-limit bookkeeping. Throws readable errors.
+  private async request (url: string, target: LiveGearTarget): Promise<any> {
     this.lastFetchAt = this.now()
     const controller = new AbortController()
     const timer = setTimeout(() => { controller.abort() }, FETCH_TIMEOUT)
     let res
     try {
-      res = await this.fetchFn(getItemsUrl(target), {
+      res = await this.fetchFn(url, {
         headers: { 'user-agent': this.userAgent, accept: 'application/json' },
         signal: controller.signal,
         credentials: 'omit'
@@ -143,7 +158,7 @@ export class LiveGear {
 
     if (res.status === 429) {
       if (wait === 0) this.blockedUntil = this.now() + 60_000
-      throw new Error('Live gear: rate limited by pathofexile.com, try again later')
+      throw new HttpError(429, 'Live gear: rate limited by pathofexile.com, try again later')
     }
     if (res.status >= 400) {
       const message = res.status === 403
@@ -151,30 +166,62 @@ export class LiveGear {
         : res.status === 404
           ? `Live gear: account or character not found (${target.accountName} / ${target.character})`
           : `Live gear: pathofexile.com answered ${res.status}`
-      if (res.status < 500) {
-        // Cleared when the account/character setting changes
-        this.lastError = { message, until: this.now() + ERROR_BACKOFF }
-      }
-      throw new Error(message)
+      throw new HttpError(res.status, message)
     }
-
-    let body: any
     try {
-      body = await res.json()
+      return await res.json()
     } catch {
       throw new Error('Live gear: unexpected answer from pathofexile.com')
+    }
+  }
+
+  private async fetch (target: LiveGearTarget): Promise<LiveGearData> {
+    let body: any
+    try {
+      body = await this.request(getItemsUrl(target), target)
+    } catch (err) {
+      if (err instanceof HttpError && err.status >= 400 && err.status < 500 && err.status !== 429) {
+        // Cleared when the account/character setting changes
+        this.lastError = { message: err.message, until: this.now() + ERROR_BACKOFF }
+      }
+      throw err
     }
     if (!body || !Array.isArray(body.items)) {
       throw new Error(`Live gear: ${String(body?.error?.message ?? 'no items in the answer')}`)
     }
     const c = body.character ?? {}
-    this.lastError = null
-    this.cache = {
+    const data: LiveGearData = {
       items: body.items,
       character: { name: c.name, class: c.class, level: c.level, league: c.league },
-      fetchedAt: this.now()
+      fetchedAt: 0
     }
-    this.log(`info [PoB] live gear: ${body.items.length} items for ${String(c.name ?? target.character)}`)
-    return this.cache
+    if (target.tree) {
+      // Second request only if the first didn't use up the rate limit
+      if (this.now() < this.blockedUntil) {
+        data.passivesError = 'Passive tree skipped this time (rate limit)'
+      } else {
+        try {
+          const passives = await this.request(getPassivesUrl(target), target)
+          if (passives && Array.isArray(passives.hashes)) {
+            data.passives = passives
+          } else {
+            data.passivesError = 'Passive tree: unexpected answer from pathofexile.com'
+          }
+        } catch (err) {
+          data.passivesError = (err as Error).message.replace(/^Live gear: /, 'Passive tree: ')
+        }
+      }
+    }
+    this.lastError = null
+    data.fetchedAt = this.now()
+    this.cache = data
+    this.log(`info [PoB] live gear: ${body.items.length} items${data.passives ? ' + tree' : ''} for ${String(c.name ?? target.character)}`)
+    return data
+  }
+}
+
+class HttpError extends Error {
+  constructor (public status: number, message: string) {
+    super(message)
   }
 }

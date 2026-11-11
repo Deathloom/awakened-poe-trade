@@ -20,9 +20,15 @@
           :disabled="loading" @click="refreshGear"><i class="fas fa-sync-alt"></i></button>
       </div>
       <div v-if="result.equippedError" class="text-gray-500 text-sm mb-1">{{ result.equippedError }}</div>
+      <template v-if="mode === 'equipped' && equippedInfo">
+        <div v-if="equippedInfo.skills && equippedInfo.mainSkillMatched === false" class="text-yellow-500 text-sm mb-1">
+          The build's main skill{{ build?.mainSkill ? ` (${build.mainSkill})` : '' }} isn't on your character; using {{ equippedInfo.mainSkill ?? "PoB's guess" }}.
+        </div>
+        <div v-if="equippedInfo.passivesError" class="text-gray-500 text-sm mb-1">{{ equippedInfo.passivesError }} (using the build's tree)</div>
+      </template>
 
       <div v-if="!shownList.length && !shownLines.length" class="text-gray-500 text-sm">
-        {{ mode === 'equipped' ? 'No change from your equipped gear.' : 'No change to your build.' }}
+        {{ mode === 'equipped' ? 'No change for your character.' : 'No change to your build.' }}
       </div>
 
       <div v-for="(cmp, idx) of shownCompares" :key="idx" :class="{ 'mt-2 pt-2 border-t border-gray-700': idx > 0 }">
@@ -54,7 +60,7 @@
 
       <div v-if="mode === 'equipped' && equippedInfo && equippedInfo.summary.length" class="mt-2 pt-2 border-t border-gray-700">
         <button class="text-gray-500 text-sm" @click="showGearVsBuild = !showGearVsBuild">
-          {{ showGearVsBuild ? 'Hide' : 'Show' }} equipped gear vs PoB build gear
+          {{ showGearVsBuild ? 'Hide' : 'Show' }} your character vs the PoB build
         </button>
         <div v-if="showGearVsBuild" class="flex flex-wrap gap-1 mt-1">
           <span v-for="s of equippedInfo.summary" :key="'g' + s.stat"
@@ -106,7 +112,7 @@ const buildTitle = computed(() => {
 type Mode = 'build' | 'equipped'
 const modes: Array<{ key: Mode, label: string }> = [
   { key: 'build', label: 'vs build gear' },
-  { key: 'equipped', label: 'vs equipped' }
+  { key: 'equipped', label: 'vs character' }
 ]
 const preferredMode = ref<Mode>('equipped')
 const showGearVsBuild = ref(false)
@@ -138,8 +144,11 @@ const equippedTitle = computed(() => {
   if (!info) return ''
   const who = [info.character, info.level ? `lvl ${info.level}` : null].filter(Boolean).join(' ')
   const age = info.fetchedAt ? formatAge(Date.now() - info.fetchedAt) : ''
+  const what = info.tree || info.skills
+    ? [info.tree && 'tree', info.skills && 'gems'].filter(Boolean).join(' + ') + ' + items'
+    : 'items only'
   const skipped = info.skipped.length ? ` · skipped: ${info.skipped.join(', ')}` : ''
-  return [who, age].filter(Boolean).join(' · ') + skipped
+  return [who, what, age].filter(Boolean).join(' · ') + skipped
 })
 
 function setMode (m: Mode) {

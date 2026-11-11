@@ -27,6 +27,8 @@ export interface PobConfig {
   accountName: string
   // Character to read equipped gear from
   character: string
+  // Use the character's passive tree, level and gems too (not just items)
+  liveTreeAndGems: boolean
 }
 
 // How the equipped gear compares to the build's gear, plus what was loaded
@@ -38,6 +40,16 @@ export interface PobEquippedInfo {
   items: number
   skipped: string[]
   summary: PobImpactCompare['summary']
+  // What came from the character (false: the build's tree/skills were used)
+  tree: boolean
+  skills: boolean
+  nodes?: number
+  jewels?: number
+  // Main skill used for the character, and whether it's the build's main skill
+  mainSkill?: string
+  mainSkillMatched?: boolean
+  // Why the tree wasn't used although it was asked for
+  passivesError?: string
   // Set by the overlay (ms since epoch)
   fetchedAt?: number
 }

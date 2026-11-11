@@ -41,6 +41,7 @@ export class PobImpact {
   // last load or settings change)
   private sentGearAt = 0
   private pobHasGear = false
+  private passivesError: string | undefined
 
   constructor (
     private server: ServerEvents,
@@ -88,7 +89,7 @@ export class PobImpact {
   private liveTarget () {
     const cfg = this.cfg
     if (!cfg?.enabled || !cfg.liveGear || !cfg.accountName || !cfg.character) return null
-    return { accountName: cfg.accountName, character: cfg.character }
+    return { accountName: cfg.accountName, character: cfg.character, tree: cfg.liveTreeAndGems }
   }
 
   stop () {
@@ -253,11 +254,18 @@ export class PobImpact {
       return { error: (err as Error).message }
     }
     if (gear.fetchedAt !== this.sentGearAt) {
-      const reply = await this.call('equipped', { items: gear.items, character: gear.character })
+      const full = this.cfg?.liveTreeAndGems === true
+      const reply = await this.call('equipped', {
+        items: gear.items,
+        passives: full ? gear.passives : undefined,
+        skills: full,
+        character: gear.character
+      })
       this.sentGearAt = gear.fetchedAt
       this.pobHasGear = true
       const info = reply.equipped as PobEquippedInfo
       if (!Array.isArray(info.skipped)) info.skipped = []
+      this.passivesError = full ? gear.passivesError : undefined
       if (info.skipped.length) {
         this.logger.write(`warn [PoB] live gear: PoB skipped ${info.skipped.join(', ')}`)
       }
@@ -310,6 +318,7 @@ export class PobImpact {
       const info = reply.equipped.info as PobEquippedInfo | undefined
       if (info) {
         info.fetchedAt = this.sentGearAt
+        info.passivesError = this.passivesError
         if (!Array.isArray(info.skipped)) info.skipped = []
         if (!Array.isArray(info.summary)) info.summary = []
       }
