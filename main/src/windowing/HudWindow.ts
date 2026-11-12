@@ -24,8 +24,11 @@ const DEFAULT_POS: Record<HudPanel, { x: number, y: number }> = {
   gear: { x: 440, y: 90 }
 }
 
-// "Async connecting to lon.login.pathofexile.com:20487"
-const LOGIN_SERVER = /Async connecting to \S+\.login\./
+// Not in a zone: the game just started ("***** LOG FILE OPENING *****" is the
+// first line of every session) or is connecting to the login server
+// ("Async connecting to lon.login.pathofexile.com:20487": login, or back to
+// character select)
+const LOGIN_SERVER = /\*{5} LOG FILE OPENING \*{5}|Async connecting to \S+\.login\./
 // 'Generating level 1 area "1_1_1"' (any client language) or ": You have entered The Coast."
 const ZONE = /Generating level \d+ area "|\] : You have entered /
 
