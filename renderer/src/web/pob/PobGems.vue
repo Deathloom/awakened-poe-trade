@@ -134,7 +134,8 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
   character.value = e.character ?? 'Character'
   liveError.value = e.liveError ?? null
 })
-onUnmounted(() => { listener.abort() })
+const characterListener = Host.onEvent('MAIN->CLIENT::pob-character', () => { request() })
+onUnmounted(() => { listener.abort(); characterListener.abort() })
 
 function request (refreshGear = false) {
   loading.value = true

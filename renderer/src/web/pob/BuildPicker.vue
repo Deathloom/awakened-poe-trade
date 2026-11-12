@@ -32,6 +32,10 @@
         </select>
       </div>
     </template>
+    <div v-if="character" class="flex items-center gap-x-2 text-xs text-gray-500" title="Character used for 'vs character' and the Gems tab. Follows the character you play when 'Follow the character I'm playing' is on (Settings → Path of Building).">
+      <span class="w-14 shrink-0">Character</span>
+      <span class="truncate">{{ character }}</span>
+    </div>
     <div v-if="list && !list.builds.length" class="text-gray-500">
       No builds in your player folder yet. Save one in PoB (Push to share it).
     </div>
@@ -55,6 +59,7 @@ const error = ref<string | null>(null)
 const list = shallowRef<PobBuildList | null>(null)
 const loadouts = shallowRef<PobLoadouts | null>(null)
 const customOpen = ref(false)
+const character = ref('')
 let lastRequestId = 0
 
 const listener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => {
@@ -67,9 +72,12 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => {
   error.value = null
   list.value = e.list ?? null
   loadouts.value = e.loadouts ?? null
+  character.value = e.character ?? ''
   emit('changed', e.build ?? null)
 })
-onUnmounted(() => { listener.abort() })
+// Played character changed: its remembered build may already be active now
+const characterListener = Host.onEvent('MAIN->CLIENT::pob-character', () => { request() })
+onUnmounted(() => { listener.abort(); characterListener.abort() })
 
 function request (opts: { setActive?: string, setLoadout?: PobLoadoutChoice } = {}) {
   busy.value = true

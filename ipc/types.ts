@@ -51,8 +51,12 @@ export interface PobConfig {
   liveGear: boolean
   // PoE account name incl. discriminator, e.g. Deathloom#1234
   accountName: string
-  // Character to read equipped gear from
+  // Character to read equipped gear from (used when characterAuto is off,
+  // or until the played character is known)
   character: string
+  // Follow the character being played (Client.txt + public character list).
+  // undefined = on
+  characterAuto?: boolean
   // Use the character's passive tree, level and gems too (not just items)
   liveTreeAndGems: boolean
   // Hotkey that toggles the build gear panel (null = only from the widget menu)
@@ -318,6 +322,7 @@ export type IpcEvent =
   IpcPobPickFolderResult |
   IpcPobBuildsRequest |
   IpcPobBuildsResult |
+  IpcPobCharacter |
   IpcPobGemsRequest |
   IpcPobGemsResult |
   IpcStashRequest |
@@ -581,6 +586,16 @@ type IpcPobBuildsResult =
     list?: PobBuildList
     build?: PobBuildInfo
     loadouts?: PobLoadouts
+    // Character the comparison uses right now
+    character?: string
+  }>
+
+// Deathloom fork: the played character changed (auto mode). build = the build
+// remembered for that character, already written to active.txt
+type IpcPobCharacter =
+  Event<'MAIN->CLIENT::pob-character', {
+    character: string
+    build?: string
   }>
 
 // Deathloom fork: gems menu
