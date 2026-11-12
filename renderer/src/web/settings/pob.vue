@@ -80,7 +80,15 @@
     </template>
     <template v-if="pob.liveGear">
       <div class="mb-2">
-        <div class="flex-1 mb-1">Character</div>
+        <ui-toggle :modelValue="pob.characterAuto !== false" @update:modelValue="pob.characterAuto = $event">Follow the character I'm playing</ui-toggle>
+        <div class="text-gray-500 text-sm mt-1">
+          When you log into a character, the overlay asks pathofexile.com which character you played last
+          (one request) and compares with that one. The build you pick in the build panel is remembered
+          per character and switched back when you play that character again.
+        </div>
+      </div>
+      <div class="mb-2">
+        <div class="flex-1 mb-1">{{ pob.characterAuto !== false ? 'Character until one is detected' : 'Character' }}</div>
         <input v-model.trim="pob.character"
           class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. DeathloomAW">
       </div>

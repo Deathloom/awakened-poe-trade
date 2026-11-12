@@ -12,6 +12,7 @@ import { app, net, dialog, BrowserWindow } from 'electron'
 import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
+import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
 import { LiveGear, type FetchFn } from './LiveGear'
 
 const STARTUP_TIMEOUT = 90_000
@@ -45,6 +46,11 @@ export class PobImpact {
   // Loadout choice applied to the loaded build (JSON, '' = PoB's own active sets)
   private appliedLoadout = ''
   private loadedRel = ''
+  // Deathloom fork: character being played (auto mode), from Client.txt + get-characters
+  private activeCharacter: string | null = null
+  private logState: LogScanState = { atLogin: true }
+  private resolveTimer: NodeJS.Timeout | null = null
+  private characterBuilds = new CharacterBuilds(path.join(app.getPath('userData'), 'apt-data', 'pob-characters.json'))
 
   constructor (
     private server: ServerEvents,
@@ -151,12 +157,93 @@ export class PobImpact {
     if (!same || !cfg?.enabled) {
       this.stop()
     }
+    if (this.autoCharacter() && !this.activeCharacter && !this.resolveTimer) {
+      // overlay started while already playing
+      this.scheduleResolve(1500, false)
+    }
   }
 
   private liveTarget () {
     const cfg = this.cfg
-    if (!cfg?.enabled || !cfg.liveGear || !cfg.accountName || !cfg.character) return null
-    return { accountName: cfg.accountName, character: cfg.character, tree: cfg.liveTreeAndGems }
+    const character = this.currentCharacter()
+    if (!cfg?.enabled || !cfg.liveGear || !cfg.accountName || !character) return null
+    return { accountName: cfg.accountName, character, tree: cfg.liveTreeAndGems }
+  }
+
+  // ---- Follow the character being played --------------------------------
+  private autoCharacter () {
+    const cfg = this.cfg
+    return Boolean(cfg?.enabled && cfg.liveGear && cfg.accountName && cfg.characterAuto !== false)
+  }
+
+  currentCharacter () {
+    if (this.autoCharacter() && this.activeCharacter) return this.activeCharacter
+    return this.cfg?.character ?? ''
+  }
+
+  // Client.txt lines (history = lines that were already in the file at start)
+  handleLogLines (lines: string[], isHistory: boolean) {
+    const { entered, levelUps } = scanLog(lines, this.logState)
+    if (isHistory || !this.autoCharacter()) return
+    if (entered) {
+      // give the server a moment to mark the character as last active
+      this.scheduleResolve(4000, true)
+    } else if (levelUps.some(name => name !== this.activeCharacter)) {
+      this.scheduleResolve(1000, false)
+    }
+  }
+
+  private scheduleResolve (delay: number, retryIfSame: boolean) {
+    if (this.resolveTimer) clearTimeout(this.resolveTimer)
+    this.resolveTimer = setTimeout(() => {
+      this.resolveTimer = null
+      void this.resolveCharacter(retryIfSame)
+    }, delay)
+  }
+
+  private async resolveCharacter (retryIfSame: boolean) {
+    if (!this.autoCharacter()) return
+    let name: string | null = null
+    try {
+      name = await this.liveGear.lastActiveCharacter(this.cfg!.accountName)
+    } catch (err) {
+      this.logger.write(`warn [PoB] can't tell which character is played: ${(err as Error).message}`)
+      return
+    }
+    if (!name) return
+    if (name === this.activeCharacter) {
+      // lastActive can lag right after a switch: look once more
+      if (retryIfSame) this.scheduleResolve(25_000, false)
+      return
+    }
+    await this.setCharacter(name)
+  }
+
+  private async setCharacter (name: string) {
+    const previous = this.activeCharacter
+    this.activeCharacter = name
+    this.logger.write(`info [PoB] playing ${name}${previous ? ` (was ${previous})` : ''}`)
+    this.liveGear.setTarget(this.liveTarget())
+    this.sentGearAt = 0
+    let build: string | undefined
+    try {
+      build = await this.characterBuilds.get(name)
+      if (build) {
+        const list = await this.listBuilds()
+        if (list.active !== build && list.builds.includes(build)) {
+          await this.setActiveBuild(build, false)
+        } else if (!list.builds.includes(build)) {
+          build = undefined
+        }
+      }
+    } catch (err) {
+      this.logger.write(`warn [PoB] build for ${name}: ${(err as Error).message}`)
+      build = undefined
+    }
+    this.server.sendEventTo('broadcast', {
+      name: 'MAIN->CLIENT::pob-character',
+      payload: { character: name, build }
+    })
   }
 
   stop () {
@@ -453,7 +540,7 @@ export class PobImpact {
   }
 
   // Write active.txt: keeps comment lines, replaces the build line
-  async setActiveBuild (rel: string) {
+  async setActiveBuild (rel: string, remember = true) {
     const root = this.playerDir()
     const list = await this.listBuilds()
     if (!list.builds.includes(rel)) throw new Error(`Build not found in your folder: ${rel}`)
@@ -471,9 +558,15 @@ export class PobImpact {
     // Same line endings as PoB's files on Windows; Push/Pull compares bytes
     await fs.writeFile(activeFile, lines.join('\r\n').replace(/(\r\n)*$/, '') + '\r\n', 'utf8')
     this.logger.write(`info [PoB] active build set to ${rel}`)
+    if (remember && this.autoCharacter() && this.activeCharacter) {
+      // picked by hand while playing this character: use it again next time
+      await this.characterBuilds.set(this.activeCharacter, rel).catch((err: Error) => {
+        this.logger.write(`warn [PoB] couldn't save build for ${this.activeCharacter}: ${err.message}`)
+      })
+    }
   }
 
-  async builds (setActive?: string, setLoadout?: PobLoadoutChoice): Promise<{ list: PobBuildList, build?: PobBuildInfo, loadouts?: PobLoadouts }> {
+  async builds (setActive?: string, setLoadout?: PobLoadoutChoice): Promise<{ list: PobBuildList, build?: PobBuildInfo, loadouts?: PobLoadouts, character?: string }> {
     if (setActive) await this.setActiveBuild(setActive)
     if (setLoadout && this.cfg) {
       // The renderer saves the same choice in its config; apply it now so this
@@ -484,7 +577,8 @@ export class PobImpact {
       }
     }
     const list = await this.listBuilds()
-    if (!list.active) return { list }
+    const character = this.currentCharacter() || undefined
+    if (!list.active) return { list, character }
     const build = await this.ensureBuild()
     const reply = await this.call('loadouts')
     const loadouts = reply.loadouts as PobLoadouts
@@ -492,7 +586,7 @@ export class PobImpact {
       // PoB's JSON encoder writes empty lists as {}
       if (!Array.isArray(loadouts[key])) (loadouts as any)[key] = []
     }
-    return { list, build: (reply.build as PobBuildInfo | undefined) ?? build, loadouts }
+    return { list, build: (reply.build as PobBuildInfo | undefined) ?? build, loadouts, character }
   }
 
   async gems (refreshGear: boolean): Promise<{ build: PobBuildInfo, groups: PobSocketGroup[], live?: PobSocketGroup[], items: PobSocketedItem[], liveItems?: PobSocketedItem[], character?: string, liveError?: string }> {

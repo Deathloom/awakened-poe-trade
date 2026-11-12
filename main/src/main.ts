@@ -53,7 +53,10 @@ app.on('ready', async () => {
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
       shortcuts.hud = hud
-      gameLogWatcher.onLines = (lines) => { hud.handleLogLines(lines) }
+      gameLogWatcher.onLines = (lines, isHistory) => {
+        hud.handleLogLines(lines)
+        pobImpact.handleLogLines(lines, isHistory)
+      }
       // Deathloom fork: find Client.txt next to the game once its window shows up
       poeWindow.onAttach(() => { void gameLogWatcher.findFromGameProcess() })
       eventPipe.onEventAnyClient('CLIENT->MAIN::update-host-config', (cfg) => {

@@ -7,6 +7,8 @@
 // - obeys X-Rate-Limit-* and Retry-After; backs off after errors so a wrong
 //   name or private profile doesn't keep sending invalid requests
 
+import { pickLastActive } from './ActiveCharacter'
+
 export const CACHE_TTL = 2 * 60_000 // reuse gear this long before refetching
 export const MIN_INTERVAL = 30_000 // never fetch more often than this
 export const ERROR_BACKOFF = 5 * 60_000 // wait after a 4xx (bad name, private profile)
@@ -132,9 +134,19 @@ export class LiveGear {
     }
   }
 
+  // Which character was played last (public Characters tab). Doesn't count
+  // towards the gear request interval, but obeys the shared rate limits.
+  async lastActiveCharacter (accountName: string): Promise<string | null> {
+    if (this.now() < this.blockedUntil) return null
+    const params = new URLSearchParams({ accountName, realm: 'pc' })
+    const url = `https://www.pathofexile.com/character-window/get-characters?${params.toString()}`
+    const list = await this.request(url, { accountName, character: '(character list)', tree: false }, false)
+    return pickLastActive(list)
+  }
+
   // One GET with rate-limit bookkeeping. Throws readable errors.
-  private async request (url: string, target: LiveGearTarget): Promise<any> {
-    this.lastFetchAt = this.now()
+  private async request (url: string, target: LiveGearTarget, countsForInterval = true): Promise<any> {
+    if (countsForInterval) this.lastFetchAt = this.now()
     const controller = new AbortController()
     const timer = setTimeout(() => { controller.abort() }, FETCH_TIMEOUT)
     let res
