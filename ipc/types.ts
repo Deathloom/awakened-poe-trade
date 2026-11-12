@@ -132,6 +132,26 @@ export interface PobSocketGroup {
   gems: PobGem[]
 }
 
+// Passive tree tab: nodes that matter in a tree (small passives only counted)
+export interface PobTreeNode {
+  id: number
+  name: string
+  type: 'Keystone' | 'Ascendancy' | 'Notable' | 'Mastery' | 'Socket'
+  // Mastery: the chosen effect
+  effect?: string
+  // Notable from a cluster jewel
+  cluster?: boolean
+}
+
+export interface PobTreeSummary {
+  points: number
+  ascendancyPoints: number
+  className?: string
+  ascendancy?: string
+  level?: number
+  nodes: PobTreeNode[]
+}
+
 // Character of the account (build panel dropdown)
 export interface PobCharacterEntry {
   name: string
@@ -333,6 +353,8 @@ export type IpcEvent =
   IpcPobCharacter |
   IpcPobGemsRequest |
   IpcPobGemsResult |
+  IpcPobTreeRequest |
+  IpcPobTreeResult |
   IpcStashRequest |
   IpcStashResult |
   IpcStashSession |
@@ -631,6 +653,26 @@ type IpcPobGemsResult =
     liveItems?: PobSocketedItem[]
     character?: string
     // Why live gems are missing
+    liveError?: string
+  }>
+
+// Deathloom fork: passive tree tab
+type IpcPobTreeRequest =
+  Event<'CLIENT->MAIN::pob-tree', {
+    requestId: number
+    refreshGear?: boolean
+  }>
+
+type IpcPobTreeResult =
+  Event<'MAIN->CLIENT::pob-tree', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    tree?: PobTreeSummary
+    // The character's tree (live gear with "tree, level and gems" on)
+    live?: PobTreeSummary
+    character?: string
     liveError?: string
   }>
 

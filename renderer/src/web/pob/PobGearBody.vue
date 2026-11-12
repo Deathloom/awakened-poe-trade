@@ -23,6 +23,7 @@
     <template v-if="visible">
     <build-picker v-show="showPicker" class="shrink-0" @changed="onBuildChanged" />
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
+    <pob-tree v-if="tab === 'tree'" ref="treeRef" />
     <template v-else>
     <div v-if="error" class="p-2 text-gray-400 text-sm">{{ error }}</div>
     <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm">Loading from Path of Building…</div>
@@ -80,6 +81,7 @@ import { openTradeSearch, openPriceCheck } from './gear-actions'
 import { useCopyFeedback } from './market'
 import BuildPicker from './BuildPicker.vue'
 import PobGems from './PobGems.vue'
+import PobTree from './PobTree.vue'
 import { pobText } from './labels'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
@@ -95,13 +97,14 @@ const itemSet = ref('')
 const allMods = ref(false)
 const opened = ref<Record<string, boolean>>({})
 const tradeError = ref<Record<string, string>>({})
-const TABS = [{ key: 'gear', label: 'Gear' }, { key: 'gems', label: 'Gems' }] as const
-const tab = ref<'gear' | 'gems'>('gear')
+const TABS = [{ key: 'gear', label: 'Gear' }, { key: 'gems', label: 'Gems' }, { key: 'tree', label: 'Tree' }] as const
+const tab = ref<'gear' | 'gems' | 'tree'>('gear')
 const showPicker = ref(true)
 const gemsRef = ref<InstanceType<typeof PobGems> | null>(null)
+const treeRef = ref<InstanceType<typeof PobTree> | null>(null)
 const visible = computed(() => props.active)
 
-function setTab (key: 'gear' | 'gems') {
+function setTab (key: 'gear' | 'gems' | 'tree') {
   if (tab.value === key) return
   tab.value = key
   if (key === 'gear') request()
@@ -111,7 +114,8 @@ function setTab (key: 'gear' | 'gems') {
 function onBuildChanged (b: PobBuildInfo | null) {
   if (b) build.value = b
   if (tab.value === 'gear') request()
-  else gemsRef.value?.request()
+  else if (tab.value === 'gems') gemsRef.value?.request()
+  else treeRef.value?.request()
 }
 
 let lastRequestId = 0
