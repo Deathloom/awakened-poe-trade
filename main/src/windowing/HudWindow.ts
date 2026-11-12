@@ -49,6 +49,7 @@ export class HudWindow {
     gear: { size: { width: 416, height: 300 } }
   }
 
+  private resize?: { panel: HudPanel, cursorX: number, cursorY: number, w: number, h: number, lastW: number, lastH: number, timer: NodeJS.Timeout, started: number }
   private drag?: { panel: HudPanel, cursorX: number, cursorY: number, x: number, y: number, timer: NodeJS.Timeout, started: number }
   // Pinned panels start closed each time the app starts; their hotkey opens and
   // closes them (a trade whisper opens the trade companion). Not saved.
@@ -85,6 +86,10 @@ export class HudWindow {
       if (e.phase === 'start') this.startDrag(e.panel)
       else if (e.phase === 'end') this.endDrag()
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::hud-resize', (e) => {
+      if (e.phase === 'start') this.startResize(e.panel, e.w, e.h)
+      else this.endResize()
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::hud-panel', (e) => {
       this.setPanel(e.panel, e.visible)
     })
@@ -95,7 +100,7 @@ export class HudWindow {
     })
     // a drag ends when the mouse button is released anywhere
     uIOhook.on('mousedown', () => { this.mouseDown = true })
-    uIOhook.on('mouseup', () => { this.mouseDown = false; this.endDrag() })
+    uIOhook.on('mouseup', () => { this.mouseDown = false; this.endDrag(); this.endResize() })
   }
 
   isPinned (panel: HudPanel) {
@@ -323,6 +328,51 @@ export class HudWindow {
       name: 'MAIN->CLIENT::hud-moved',
       payload: { panel: drag.panel, x, y }
     })
+  }
+
+  // Corner resize: like dragging, main follows the real cursor (the page can't
+  // capture the mouse). The page applies the size; its window then fits the panel.
+  private startResize (panel: HudPanel, w: number, h: number) {
+    if (!this.cfg || !this.windows[panel]) return
+    if (this.resize) { clearInterval(this.resize.timer); this.resize = undefined }
+    if (!this.mouseDown) return
+    const cursor = screen.getCursorScreenPoint()
+    this.resize = {
+      panel,
+      cursorX: cursor.x,
+      cursorY: cursor.y,
+      w,
+      h,
+      lastW: w,
+      lastH: h,
+      started: Date.now(),
+      timer: setInterval(() => { this.followResize(false) }, 33)
+    }
+  }
+
+  private followResize (done: boolean) {
+    const r = this.resize
+    if (!r) return
+    if (!done && (!this.mouseDown || Date.now() - r.started > 60_000)) { this.endResize(); return }
+    const cursor = screen.getCursorScreenPoint()
+    const w = Math.round(Math.max(200, Math.min(1400, r.w + cursor.x - r.cursorX)))
+    const h = Math.round(Math.max(80, Math.min(1400, r.h + cursor.y - r.cursorY)))
+    if (!done && w === r.lastW && h === r.lastH) return
+    r.lastW = w
+    r.lastH = h
+    if (done && this.cfg) this.cfg.dims = { ...this.cfg.dims, [r.panel]: { w, h } }
+    this.server.sendEventTo('broadcast', {
+      name: 'MAIN->CLIENT::hud-dims',
+      payload: { panel: r.panel, w, h, done }
+    })
+  }
+
+  private endResize () {
+    const r = this.resize
+    if (!r) return
+    clearInterval(r.timer)
+    this.followResize(true)
+    this.resize = undefined
   }
 
   private destroy (panel: HudPanel) {

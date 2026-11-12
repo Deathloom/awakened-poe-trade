@@ -31,6 +31,8 @@ export interface PobHudConfig {
   opacity: number
   // Top-left corner of each panel's window, in pixels from the game window's top-left corner
   pos: Record<HudPanel, { x: number, y: number }>
+  // Size set by dragging a panel's corner (CSS pixels); missing = the panel's default size
+  dims?: Partial<Record<HudPanel, { w: number, h: number }>>
   // older single-window position (moved into pos.guide / pos.trades)
   x?: number
   y?: number
@@ -319,7 +321,9 @@ export type IpcEvent =
   IpcHudState |
   IpcHudPanel |
   IpcHudGearAction |
-  IpcHudGearActionRelay
+  IpcHudGearActionRelay |
+  IpcHudResize |
+  IpcHudDims
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -345,6 +349,25 @@ type IpcHudMoved =
     panel: HudPanel
     x: number
     y: number
+  }>
+
+// Resizing a HUD panel by its corner: main follows the cursor and sends the new size
+type IpcHudResize =
+  Event<'CLIENT->MAIN::hud-resize', {
+    panel: HudPanel
+    phase: 'start' | 'end'
+    // the panel's current size, as the start size
+    w: number
+    h: number
+  }>
+
+type IpcHudDims =
+  Event<'MAIN->CLIENT::hud-dims', {
+    panel: HudPanel
+    w: number
+    h: number
+    // the resize is finished: the overlay saves it
+    done: boolean
   }>
 
 type IpcHudState =

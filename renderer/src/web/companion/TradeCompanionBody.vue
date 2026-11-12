@@ -1,6 +1,7 @@
 <template>
   <!-- Deathloom fork: trade companion body (used by the overlay widget and the HUD window) -->
-  <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm" style="width: 24rem;" :style="{ maxHeight: compact ? '32rem' : '70vh' }">
+  <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm"
+    :style="compact ? { width: 'var(--hud-w, 24rem)', maxHeight: 'var(--hud-h, 32rem)' } : { width: '24rem', maxHeight: '70vh' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500 shrink-0"><i class="fas fa-handshake mr-1" />Trades</span>
       <div class="flex gap-px shrink-0">

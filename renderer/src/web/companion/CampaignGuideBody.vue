@@ -1,6 +1,7 @@
 <template>
   <!-- Deathloom fork: campaign guide body (used by the overlay widget and the HUD window) -->
-  <div class="widget-default-style text-gray-200 leading-tight text-sm" style="width: 20rem;">
+  <div class="widget-default-style text-gray-200 leading-tight text-sm flex flex-col"
+    :style="tall ? { width: 'var(--hud-w, 20rem)', height: 'var(--hud-h)' } : { width: 'var(--hud-w, 20rem)' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t">
       <span class="text-gray-500"><i class="fas fa-route mr-1" />Act {{ step.act }}</span>
       <span v-if="areaLevel" class="text-gray-500 text-xs">area level {{ areaLevel }}</span>
@@ -12,8 +13,8 @@
         <button class="hover:text-gray-200" title="Start over (new character)" @click="reset"><i class="fas fa-undo" /></button>
       </div>
     </div>
-    <div class="p-1">
-      <div v-for="s of visible" :key="s.i" class="flex gap-x-2 px-1 rounded"
+    <div ref="listEl" class="p-1 min-h-0" :class="{ 'overflow-y-auto flex-1': tall }">
+      <div v-for="s of visible" :key="s.i" class="flex gap-x-2 px-1 rounded" :data-current="s.i === index ? '1' : undefined"
         :class="s.i === index ? 'bg-gray-800' : (s.i < index ? 'opacity-50' : '')">
         <span class="w-4 shrink-0 text-center">
           <i v-if="s.trial" class="fas fa-dungeon text-yellow-500" title="Labyrinth trial" />
@@ -37,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
@@ -63,11 +64,22 @@ function setIndex (i: number) {
 
 const step = computed(() => STEPS[index.value])
 
+// tall: resized in the HUD; shows the whole act and scrolls to the current step
+const props = defineProps<{ tall?: boolean }>()
+const listEl = ref<HTMLElement>()
+
 const visible = computed(() => {
   const all = STEPS.map((s, i) => ({ ...s, i }))
-  if (showAll.value) return all.filter(s => s.act === step.value.act)
+  if (showAll.value || props.tall) return all.filter(s => s.act === step.value.act)
   return all.slice(Math.max(0, index.value - 1), index.value + 4)
 })
+
+watch([index, () => props.tall], () => {
+  if (!props.tall) return
+  nextTick(() => {
+    listEl.value?.querySelector('[data-current]')?.scrollIntoView({ block: 'center' })
+  }).catch(() => {})
+}, { immediate: true })
 
 function move (d: number) { setIndex(index.value + d) }
 function reset () { setIndex(0); lastZone.value = ''; matched.value = true }
