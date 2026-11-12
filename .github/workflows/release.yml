@@ -9,6 +9,10 @@ on:
       version:
         description: 'Version (x.y.z, higher than the last release)'
         required: true
+      pob_ref:
+        description: 'Path of Building fork branch to bundle'
+        required: true
+        default: 'dev'
 
 permissions:
   contents: write
@@ -36,6 +40,23 @@ jobs:
           exit 1
         fi
         gh release create "v$V" --draft --title "$V" --target "$GITHUB_SHA" --notes "Loot Goblin $V (built from ${GITHUB_SHA::7})"
+    - name: Bundle Path of Building (Deathloom fork)
+      shell: bash
+      run: |
+        git clone --depth 1 --branch "${{ inputs.pob_ref }}" https://github.com/Deathloom/PathOfBuilding.git pob-src
+        grep -q bundledMode pob-src/src/Launch.lua || { echo "This PoB branch has no bundled mode (PoB PR #14)"; exit 1; }
+        test -f pob-src/runtime/PoBHeadless.exe
+        test -f pob-src/src/ImpactServer.lua
+        mkdir -p main/pob-bundle
+        cp -r pob-src/src pob-src/runtime main/pob-bundle/
+        cp pob-src/manifest.xml pob-src/LICENSE.md pob-src/changelog.txt pob-src/help.txt main/pob-bundle/
+        # bundled.cfg switches PoB to bundled mode: no own updater, data in Documents\Loot Goblin
+        touch main/pob-bundle/src/bundled.cfg
+        POB_SHA=$(git -C pob-src rev-parse --short HEAD)
+        echo "$POB_SHA" > main/pob-bundle/pob-commit.txt
+        gh release edit "v${{ inputs.version }}" --notes "Loot Goblin ${{ inputs.version }} (built from ${GITHUB_SHA::7}), with Path of Building ${{ inputs.pob_ref }}@$POB_SHA"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - run: npm ci
       working-directory: ./renderer
     - run: npm run build

@@ -1,4 +1,6 @@
 import path from 'path'
+import { existsSync } from 'fs'
+import { spawn } from 'child_process'
 import { app, Tray, Menu, shell, nativeImage, dialog } from 'electron'
 import type { ServerEvents } from './server'
 
@@ -6,6 +8,8 @@ export class AppTray {
   public overlayKey = 'Shift + Space'
   private tray: Tray
   serverPort = 0
+  // Deathloom fork: PoB folder in use (bundled copy or settings), for "Open Path of Building"
+  pobDir: () => string = () => ''
 
   constructor (server: ServerEvents) {
     let trayImage = nativeImage.createFromPath(
@@ -50,6 +54,10 @@ export class AppTray {
           shell.openExternal(`http://localhost:${this.serverPort}`)
         }
       },
+      {
+        label: 'Open Path of Building',
+        click: () => { this.openPob() }
+      },
       { type: 'separator' },
       {
         label: 'Open config folder',
@@ -66,5 +74,27 @@ export class AppTray {
     ])
 
     this.tray.setContextMenu(contextMenu)
+  }
+
+  // Deathloom fork: starts the PoB window (same as runtime\Path of Building.exe from the PoB folder)
+  private openPob () {
+    const dir = this.pobDir()
+    const exe = dir && path.join(dir, 'runtime', 'Path of Building.exe')
+    if (!exe || !existsSync(exe)) {
+      dialog.showMessageBox({
+        title: 'Path of Building',
+        message: 'Path of Building was not found. Set the Path of Building folder in Settings → Path of Building.'
+      })
+      return
+    }
+    try {
+      const proc = spawn(exe, [], { cwd: path.dirname(exe), detached: true, stdio: 'ignore' })
+      proc.on('error', (err) => {
+        dialog.showMessageBox({ title: 'Path of Building', message: `Can't start Path of Building: ${err.message}` })
+      })
+      proc.unref()
+    } catch (err) {
+      dialog.showMessageBox({ title: 'Path of Building', message: `Can't start Path of Building: ${(err as Error).message}` })
+    }
   }
 }

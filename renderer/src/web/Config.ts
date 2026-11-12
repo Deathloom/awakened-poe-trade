@@ -654,7 +654,8 @@ export function defaultHudConfig (): PobHudConfig {
 // Deathloom fork: Path of Building build impact
 export function defaultPobConfig (): PobConfig {
   return {
-    enabled: false,
+    // on by default: the installer bundles PoB, so it works without setup
+    enabled: true,
     pobDir: '',
     buildsDir: '',
     player: '',

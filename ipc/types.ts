@@ -348,6 +348,8 @@ export type IpcEvent =
   IpcWriteClipboard |
   IpcPobPickFolderRequest |
   IpcPobPickFolderResult |
+  IpcPobDefaultsRequest |
+  IpcPobDefaultsResult |
   IpcPobBuildsRequest |
   IpcPobBuildsResult |
   IpcPobCharacter |
@@ -596,6 +598,22 @@ type IpcPobPickFolderResult =
     requestId: number
     // null when the dialog was cancelled
     path: string | null
+  }>
+
+// Deathloom fork: what empty Path of Building settings fall back to
+// (bundled PoB, Documents\Loot Goblin\Builds, PoB's build sync player)
+type IpcPobDefaultsRequest =
+  Event<'CLIENT->MAIN::pob-defaults', {
+    requestId: number
+  }>
+
+type IpcPobDefaultsResult =
+  Event<'MAIN->CLIENT::pob-defaults', {
+    requestId: number
+    // '' = no default (e.g. no bundled PoB in dev runs)
+    pobDir: string
+    buildsDir: string
+    player: string
   }>
 
 // Deathloom fork: build panel. Lists the player's builds and the active
