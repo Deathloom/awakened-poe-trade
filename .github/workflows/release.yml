@@ -1,0 +1,43 @@
+# Deathloom fork: build the Windows installer and publish it as a GitHub release.
+# Installed copies check this repo's latest release and update themselves.
+# Run from the Actions tab: Release -> Run workflow -> version (e.g. 1.0.0).
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (x.y.z, higher than the last release)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 22
+    - name: Check version
+      shell: bash
+      run: |
+        [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 1.2.3"; exit 1; }
+    - run: npm ci
+      working-directory: ./renderer
+    - run: npm run build
+      working-directory: ./renderer
+    - run: npm ci
+      working-directory: ./main
+    - run: npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
+      working-directory: ./main
+    - run: npm run build
+      working-directory: ./main
+    - run: npm run package -- --win -p always
+      working-directory: ./main
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Hash
+      run: type .\main\dist\latest.yml
