@@ -10,6 +10,9 @@ export class AppTray {
   serverPort = 0
   // Deathloom fork: PoB folder in use (bundled copy or settings), for "Open Path of Building"
   pobDir: () => string = () => ''
+  // Deathloom fork: "Restart to update" item once an update is downloaded
+  updateReady: string | null = null
+  installUpdate: () => void = () => {}
 
   constructor (server: ServerEvents) {
     let trayImage = nativeImage.createFromPath(
@@ -39,6 +42,10 @@ export class AppTray {
 
   rebuildMenu () {
     const contextMenu = Menu.buildFromTemplate([
+      ...(this.updateReady
+        ? [{ label: `Restart to update to ${this.updateReady}`, click: () => { this.installUpdate() } },
+            { type: 'separator' as const }]
+        : []),
       {
         label: 'Settings/League',
         click: () => {
