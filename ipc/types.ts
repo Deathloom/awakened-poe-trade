@@ -13,18 +13,23 @@ export interface HostConfig {
 }
 
 // Deathloom fork: panels pinned over the game while it has focus
+export type HudPanel = 'guide' | 'trades' | 'gear'
+
 export interface PobHudConfig {
   guide: boolean
   trades: boolean
+  gear: boolean
   // Mouse clicks go through to the game (panels are read-only while playing)
   clickThrough: boolean
   // Solid background instead of a see-through window (try this if the game crashes)
   opaque: boolean
   // 30-100
   opacity: number
-  // Top-left corner, in pixels from the game window's top-left corner
-  x: number
-  y: number
+  // Top-left corner of each panel's window, in pixels from the game window's top-left corner
+  pos: Record<HudPanel, { x: number, y: number }>
+  // older single-window position (moved into pos.guide / pos.trades)
+  x?: number
+  y?: number
 }
 
 // Deathloom fork: Path of Building build impact
@@ -308,7 +313,9 @@ export type IpcEvent =
   IpcHudDrag |
   IpcHudMoved |
   IpcHudState |
-  IpcHudPanel
+  IpcHudPanel |
+  IpcHudGearAction |
+  IpcHudGearActionRelay
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -316,12 +323,14 @@ export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = 
 // Deathloom fork: HUD window ("show while playing")
 type IpcHudSize =
   Event<'CLIENT->MAIN::hud-size', {
+    panel: HudPanel
     width: number
     height: number
   }>
 
 type IpcHudDrag =
   Event<'CLIENT->MAIN::hud-drag', {
+    panel: HudPanel
     phase: 'start' | 'move' | 'end'
     screenX: number
     screenY: number
@@ -329,6 +338,7 @@ type IpcHudDrag =
 
 type IpcHudMoved =
   Event<'MAIN->CLIENT::hud-moved', {
+    panel: HudPanel
     x: number
     y: number
   }>
@@ -338,13 +348,30 @@ type IpcHudState =
     // false while the overlay is active (Shift+Space) or the game isn't focused
     playing: boolean
     // pinned panels hidden with their hotkey
-    hidden: { guide: boolean, trades: boolean }
+    hidden: { guide: boolean, trades: boolean, gear: boolean }
   }>
 
 type IpcHudPanel =
   Event<'CLIENT->MAIN::hud-panel', {
-    panel: 'guide' | 'trades'
+    panel: HudPanel
     visible: boolean
+  }>
+
+// Build gear panel in the HUD: actions the overlay carries out
+type IpcHudGearAction =
+  Event<'CLIENT->MAIN::hud-gear-action', {
+    action: 'trade' | 'price-check' | 'loadouts'
+    // item text (Ctrl+C format) for trade / price-check
+    text?: string
+    // new pob.loadouts for 'loadouts' (the overlay saves the settings)
+    loadouts?: Record<string, PobLoadoutChoice>
+  }>
+
+type IpcHudGearActionRelay =
+  Event<'MAIN->CLIENT::hud-gear-action', {
+    action: 'trade' | 'price-check' | 'loadouts'
+    text?: string
+    loadouts?: Record<string, PobLoadoutChoice>
   }>
 
 type IpcOverlayAttached =

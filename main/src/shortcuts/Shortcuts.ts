@@ -164,10 +164,11 @@ export class Shortcuts {
             name: 'MAIN->CLIENT::widget-action',
             payload: { target: entry.action.target }
           })
-          // Deathloom fork: campaign guide / trade companion pinned to the HUD window
+          // Deathloom fork: build gear / campaign guide / trade companion pinned to the HUD window
           // toggle there, without opening the overlay
           const hudPanel = entry.action.target === 'campaign-guide' ? 'guide'
-            : entry.action.target === 'trade-companion' ? 'trades' : null
+            : entry.action.target === 'trade-companion' ? 'trades'
+              : entry.action.target === 'pob-gear' ? 'gear' : null
           if (hudPanel && this.hud?.isPinned(hudPanel)) {
             this.hud.togglePanel(hudPanel)
             return

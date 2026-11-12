@@ -42,6 +42,7 @@
 import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import type { PobBuildInfo, PobBuildList, PobLoadoutChoice, PobLoadouts } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
+import { IS_HUD } from '@/web/hud/is-hud'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
 import { pobText, pobLoadoutName } from './labels'
 
@@ -111,8 +112,13 @@ function saveChoice (choice: PobLoadoutChoice) {
   const next = Object.fromEntries(Object.entries(pob.loadouts ?? {}).filter(([k]) => k !== active))
   if (Object.keys(choice).length) next[active] = choice
   pob.loadouts = next
-  saveConfig()
-  pushHostConfig()
+  if (IS_HUD) {
+    // the overlay saves settings; it sends them to main and back to this window
+    Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'loadouts', loadouts: JSON.parse(JSON.stringify(next)) } })
+  } else {
+    saveConfig()
+    pushHostConfig()
+  }
   request({ setLoadout: choice })
 }
 
