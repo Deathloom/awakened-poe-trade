@@ -1,6 +1,12 @@
+# Deathloom fork: own identity (installs, settings and updates separate from
+# upstream Awakened PoE Trade) and updates from Deathloom's GitHub releases.
 publish:
-  - "github"
-productName: "Awakened PoE Trade"
+  - provider: "github"
+    owner: "Deathloom"
+    repo: "awakened-poe-trade"
+    releaseType: "release"
+appId: "com.deathloom.poe-builds-toolkit"
+productName: "POE Builds Toolkit"
 npmRebuild: false
 toolsets:
   appimage: 1.0.3
@@ -14,13 +20,14 @@ files:
     to: "."
 extraMetadata:
   main: "main.js"
+  name: "poe-builds-toolkit"
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 win:
+  # nsis only: the portable exe can't auto-update
   target:
   - "nsis"
-  - "portable"
 linux:
   target:
   - "AppImage"
