@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem } from '../../../ipc/types'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -48,6 +48,7 @@ export class PobImpact {
   private loadedRel = ''
   // Deathloom fork: character being played (auto mode), from Client.txt + get-characters
   private activeCharacter: string | null = null
+  private characterAccount = ''
   private logState: LogScanState = { atLogin: true }
   private resolveTimer: NodeJS.Timeout | null = null
   private characterBuilds = new CharacterBuilds(path.join(app.getPath('userData'), 'apt-data', 'pob-characters.json'))
@@ -85,8 +86,8 @@ export class PobImpact {
           })
         })
     })
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-builds', ({ requestId, setActive, setLoadout }) => {
-      this.reply('MAIN->CLIENT::pob-builds', requestId, async () => await this.builds(setActive, setLoadout))
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-builds', ({ requestId, setActive, setLoadout, setCharacter }) => {
+      this.reply('MAIN->CLIENT::pob-builds', requestId, async () => await this.builds(setActive, setLoadout, setCharacter))
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gems', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
@@ -157,8 +158,12 @@ export class PobImpact {
     if (!same || !cfg?.enabled) {
       this.stop()
     }
-    if (this.autoCharacter() && !this.activeCharacter && !this.resolveTimer) {
-      // overlay started while already playing
+    if (this.characterAccount !== (cfg?.accountName ?? '')) {
+      this.characterAccount = cfg?.accountName ?? ''
+      this.activeCharacter = null
+    }
+    if (this.listsCharacters() && !this.activeCharacter && !this.resolveTimer) {
+      // overlay started (maybe while already playing): fill the list, pick the last played
       this.scheduleResolve(1500, false)
     }
   }
@@ -176,9 +181,26 @@ export class PobImpact {
     return Boolean(cfg?.enabled && cfg.liveGear && cfg.accountName && cfg.characterAuto !== false)
   }
 
+  // Character list available (live gear on + account set)
+  private listsCharacters () {
+    const cfg = this.cfg
+    return Boolean(cfg?.enabled && cfg.liveGear && cfg.accountName)
+  }
+
+  // Detected or picked in the build panel; else the Character setting
   currentCharacter () {
-    if (this.autoCharacter() && this.activeCharacter) return this.activeCharacter
+    if (this.listsCharacters() && this.activeCharacter) return this.activeCharacter
     return this.cfg?.character ?? ''
+  }
+
+  // Picked in the build panel's Character dropdown (until the next detected login)
+  async pickCharacter (name: string) {
+    if (!this.listsCharacters() || name === this.activeCharacter) return
+    await this.setCharacter(name, false)
+  }
+
+  async characterList () {
+    return this.listsCharacters() ? await this.characterBuilds.characters(this.cfg!.accountName) : []
   }
 
   // Client.txt lines (history = lines that were already in the file at start)
@@ -202,27 +224,43 @@ export class PobImpact {
   }
 
   private async resolveCharacter (retryIfSame: boolean) {
-    if (!this.autoCharacter()) return
-    let name: string | null = null
+    if (!this.listsCharacters()) return
+    const account = this.cfg!.accountName
+    let list
     try {
-      name = await this.liveGear.lastActiveCharacter(this.cfg!.accountName)
+      list = await this.liveGear.characterList(account)
     } catch (err) {
-      this.logger.write(`warn [PoB] can't tell which character is played: ${(err as Error).message}`)
+      this.logger.write(`warn [PoB] can't read the character list: ${(err as Error).message}`)
       return
     }
-    if (!name) return
+    if (!list?.length) return
+    await this.characterBuilds.setCharacters(account, list).catch(() => {})
+    const name = list[0].lastLoginTime !== undefined ? list[0].name : null
+    if (!this.autoCharacter() || !name) {
+      this.announceCharacter()
+      return
+    }
     if (name === this.activeCharacter) {
-      // lastActive can lag right after a switch: look once more
+      // last login time can lag right after a switch: look once more
       if (retryIfSame) this.scheduleResolve(25_000, false)
+      this.announceCharacter()
       return
     }
-    await this.setCharacter(name)
+    await this.setCharacter(name, true)
   }
 
-  private async setCharacter (name: string) {
+  // Tell the panels (list or character changed)
+  private announceCharacter (build?: string) {
+    this.server.sendEventTo('broadcast', {
+      name: 'MAIN->CLIENT::pob-character',
+      payload: { character: this.currentCharacter(), build }
+    })
+  }
+
+  private async setCharacter (name: string, detected: boolean) {
     const previous = this.activeCharacter
     this.activeCharacter = name
-    this.logger.write(`info [PoB] playing ${name}${previous ? ` (was ${previous})` : ''}`)
+    this.logger.write(`info [PoB] ${detected ? 'playing' : 'picked'} ${name}${previous ? ` (was ${previous})` : ''}`)
     this.liveGear.setTarget(this.liveTarget())
     this.sentGearAt = 0
     let build: string | undefined
@@ -240,10 +278,7 @@ export class PobImpact {
       this.logger.write(`warn [PoB] build for ${name}: ${(err as Error).message}`)
       build = undefined
     }
-    this.server.sendEventTo('broadcast', {
-      name: 'MAIN->CLIENT::pob-character',
-      payload: { character: name, build }
-    })
+    this.announceCharacter(build)
   }
 
   stop () {
@@ -558,7 +593,7 @@ export class PobImpact {
     // Same line endings as PoB's files on Windows; Push/Pull compares bytes
     await fs.writeFile(activeFile, lines.join('\r\n').replace(/(\r\n)*$/, '') + '\r\n', 'utf8')
     this.logger.write(`info [PoB] active build set to ${rel}`)
-    if (remember && this.autoCharacter() && this.activeCharacter) {
+    if (remember && this.listsCharacters() && this.activeCharacter) {
       // picked by hand while playing this character: use it again next time
       await this.characterBuilds.set(this.activeCharacter, rel).catch((err: Error) => {
         this.logger.write(`warn [PoB] couldn't save build for ${this.activeCharacter}: ${err.message}`)
@@ -566,7 +601,8 @@ export class PobImpact {
     }
   }
 
-  async builds (setActive?: string, setLoadout?: PobLoadoutChoice): Promise<{ list: PobBuildList, build?: PobBuildInfo, loadouts?: PobLoadouts, character?: string }> {
+  async builds (setActive?: string, setLoadout?: PobLoadoutChoice, setCharacter?: string): Promise<{ list: PobBuildList, build?: PobBuildInfo, loadouts?: PobLoadouts, character?: string, characters?: PobCharacterEntry[] }> {
+    if (setCharacter) await this.pickCharacter(setCharacter)
     if (setActive) await this.setActiveBuild(setActive)
     if (setLoadout && this.cfg) {
       // The renderer saves the same choice in its config; apply it now so this
@@ -578,7 +614,8 @@ export class PobImpact {
     }
     const list = await this.listBuilds()
     const character = this.currentCharacter() || undefined
-    if (!list.active) return { list, character }
+    const characters = await this.characterList()
+    if (!list.active) return { list, character, characters }
     const build = await this.ensureBuild()
     const reply = await this.call('loadouts')
     const loadouts = reply.loadouts as PobLoadouts
@@ -586,7 +623,7 @@ export class PobImpact {
       // PoB's JSON encoder writes empty lists as {}
       if (!Array.isArray(loadouts[key])) (loadouts as any)[key] = []
     }
-    return { list, build: (reply.build as PobBuildInfo | undefined) ?? build, loadouts, character }
+    return { list, build: (reply.build as PobBuildInfo | undefined) ?? build, loadouts, character, characters }
   }
 
   async gems (refreshGear: boolean): Promise<{ build: PobBuildInfo, groups: PobSocketGroup[], live?: PobSocketGroup[], items: PobSocketedItem[], liveItems?: PobSocketedItem[], character?: string, liveError?: string }> {

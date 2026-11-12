@@ -43,50 +43,99 @@ export function scanLog (lines: string[], state: LogScanState): LogScanResult {
   return result
 }
 
+// One entry of the account's character list (cached for the build panel dropdown)
+export interface CharacterEntry {
+  name: string
+  league?: string
+  class?: string
+  level?: number
+  lastLoginTime?: number
+}
+
+// get-characters answer -> clean list (newest login first)
+export function parseCharacters (list: unknown): CharacterEntry[] {
+  if (!Array.isArray(list)) return []
+  const out: CharacterEntry[] = []
+  for (const c of list) {
+    if (!c || typeof c !== 'object') continue
+    const { name, league, class: cls, level, lastLoginTime, lastActive } = c as Record<string, unknown>
+    if (typeof name !== 'string' || !name) continue
+    out.push({
+      name,
+      league: typeof league === 'string' ? league : undefined,
+      class: typeof cls === 'string' ? cls : undefined,
+      level: typeof level === 'number' ? level : undefined,
+      // an old-style lastActive flag counts as the newest login
+      lastLoginTime: lastActive === true ? Number.MAX_SAFE_INTEGER : (typeof lastLoginTime === 'number' ? lastLoginTime : undefined)
+    })
+  }
+  out.sort((a, b) => (b.lastLoginTime ?? -1) - (a.lastLoginTime ?? -1))
+  return out
+}
+
 // get-characters answer -> name of the character played last.
 // pathofexile.com sends lastLoginTime (unix seconds) per character; older
 // answers had a lastActive flag, which still wins if present.
 export function pickLastActive (list: unknown): string | null {
-  if (!Array.isArray(list)) return null
-  let best: { name: string, time: number } | null = null
-  for (const c of list) {
-    if (!c || typeof c !== 'object') continue
-    const { name, lastActive, lastLoginTime } = c as { name?: unknown, lastActive?: unknown, lastLoginTime?: unknown }
-    if (typeof name !== 'string' || !name) continue
-    if (lastActive === true) return name
-    const time = typeof lastLoginTime === 'number' ? lastLoginTime : -1
-    if (!best || time > best.time) best = { name, time }
-  }
-  return best && best.time >= 0 ? best.name : null
+  const first = parseCharacters(list)[0]
+  return first && first.lastLoginTime !== undefined ? first.name : null
 }
 
-// Build per character, kept by the main process (the HUD can't save settings)
+interface StoreData {
+  builds: Record<string, string>
+  account?: string
+  characters?: CharacterEntry[]
+}
+
+// Build per character + the cached character list, kept by the main process
+// (the HUD can't save settings)
 export class CharacterBuilds {
-  private data: Record<string, string> | null = null
+  private data: StoreData | null = null
 
   constructor (private file: string) {}
 
-  private async load () {
+  private async load (): Promise<StoreData> {
     if (this.data) return this.data
     try {
       const parsed = JSON.parse(await fs.readFile(this.file, 'utf8'))
-      this.data = (parsed && typeof parsed.builds === 'object' && parsed.builds) || {}
+      this.data = {
+        builds: (parsed && typeof parsed.builds === 'object' && parsed.builds) || {},
+        account: typeof parsed?.account === 'string' ? parsed.account : undefined,
+        characters: Array.isArray(parsed?.characters) ? parsed.characters : undefined
+      }
     } catch {
-      this.data = {}
+      this.data = { builds: {} }
     }
-    return this.data!
+    return this.data
+  }
+
+  private async save () {
+    await fs.mkdir(path.dirname(this.file), { recursive: true })
+    await fs.writeFile(this.file, JSON.stringify(this.data, null, 2), 'utf8')
   }
 
   async get (character: string): Promise<string | undefined> {
     const data = await this.load()
-    return data[character]
+    return data.builds[character]
   }
 
   async set (character: string, build: string) {
     const data = await this.load()
-    if (data[character] === build) return
-    data[character] = build
-    await fs.mkdir(path.dirname(this.file), { recursive: true })
-    await fs.writeFile(this.file, JSON.stringify({ builds: data }, null, 2), 'utf8')
+    if (data.builds[character] === build) return
+    data.builds[character] = build
+    await this.save()
+  }
+
+  // Cached list for this account (empty if none or another account)
+  async characters (account: string): Promise<CharacterEntry[]> {
+    const data = await this.load()
+    return data.account === account ? (data.characters ?? []) : []
+  }
+
+  async setCharacters (account: string, list: CharacterEntry[]) {
+    const data = await this.load()
+    data.account = account
+    data.characters = list.map(({ name, league, class: cls, level }) => ({ name, league, class: cls, level }))
+    await this.save()
   }
 }

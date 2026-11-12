@@ -132,6 +132,14 @@ export interface PobSocketGroup {
   gems: PobGem[]
 }
 
+// Character of the account (build panel dropdown)
+export interface PobCharacterEntry {
+  name: string
+  league?: string
+  class?: string
+  level?: number
+}
+
 // Socketable item in a PoB item set (gems tab). sockets in game notation: "R-G-B W"
 export interface PobSocketedItem {
   slot: string
@@ -576,6 +584,8 @@ type IpcPobBuildsRequest =
     requestId: number
     setActive?: string
     setLoadout?: PobLoadoutChoice
+    // Character picked in the build panel dropdown
+    setCharacter?: string
   }>
 
 type IpcPobBuildsResult =
@@ -588,6 +598,8 @@ type IpcPobBuildsResult =
     loadouts?: PobLoadouts
     // Character the comparison uses right now
     character?: string
+    // Cached character list of the account (newest login first)
+    characters?: PobCharacterEntry[]
   }>
 
 // Deathloom fork: the played character changed (auto mode). build = the build
