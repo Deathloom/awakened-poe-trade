@@ -139,8 +139,8 @@
           <span class="w-10 text-right">{{ pob.hud.opacity }}%</span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="flex-1">Each panel has its own spot: drag its grip to move it.</span>
-          <button type="button" class="px-2 bg-gray-800 rounded" @click="resetHudPositions">Reset positions</button>
+          <span class="flex-1">Drag a panel's top bar to move it, its bottom-right corner to resize it.</span>
+          <button type="button" class="px-2 bg-gray-800 rounded" @click="resetHudPositions">Reset positions and sizes</button>
         </div>
       </template>
     </div>
@@ -241,6 +241,7 @@ export default defineComponent({
       // applied when the settings window is closed, like every other setting
       resetHudPositions () {
         pob.value.hud.pos = defaultHudConfig().pos
+        pob.value.hud.dims = {}
       },
       sessionInput,
       sessionNote,

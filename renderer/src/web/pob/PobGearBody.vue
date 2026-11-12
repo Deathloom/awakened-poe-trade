@@ -1,6 +1,7 @@
 <template>
   <!-- Deathloom fork: build gear panel body (used by the overlay widget and the HUD window) -->
-  <div class="widget-default-style flex flex-col text-gray-200 leading-tight" style="width: 26rem;" :style="{ maxHeight: hud ? '40rem' : '85vh' }">
+  <div class="widget-default-style flex flex-col text-gray-200 leading-tight"
+    :style="hud ? { width: 'var(--hud-w, 26rem)', maxHeight: 'var(--hud-h, 40rem)' } : { width: '26rem', maxHeight: '85vh' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500 shrink-0"><i class="fas fa-hammer mr-1" />Build</span>
       <div class="flex gap-px text-sm shrink-0">

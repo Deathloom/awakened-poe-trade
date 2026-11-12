@@ -21,6 +21,13 @@ if (!IS_HUD) {
     hud.pos = { ...hud.pos, [e.panel]: { x: e.x, y: e.y } }
     saveConfig()
   })
+  // a HUD panel was resized by its corner
+  Host.onEvent('MAIN->CLIENT::hud-dims', (e) => {
+    const hud = AppConfig().pob?.hud
+    if (!e.done || !hud) return
+    hud.dims = { ...hud.dims, [e.panel]: { w: e.w, h: e.h } }
+    saveConfig()
+  })
   // build gear panel pinned in the HUD window: Trade / price check / loadout choice
   Host.onEvent('MAIN->CLIENT::hud-gear-action', (e) => {
     if (e.action === 'trade' && e.text) {
