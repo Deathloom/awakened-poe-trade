@@ -117,6 +117,9 @@ export function parseClipboard (clipboard: string): Result<ParsedItem, string> {
       for (const section of sections) {
         // workaround upstream bug
         parseEldritchItem(section)
+        // Deathloom fork: PoB's gear text can put the Exarch/Eater line in a
+        // section of its own, which parseEldritchItem leaves empty
+        if (!section.length) continue
 
         const result = parser(section, parsed.value)
         if (result === 'SECTION_PARSED') {
