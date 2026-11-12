@@ -1,6 +1,6 @@
 'use strict'
 
-import { app } from 'electron'
+import { app, clipboard } from 'electron'
 import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
 import { startServer, eventPipe, server } from './server'
@@ -37,6 +37,10 @@ app.on('ready', async () => {
   const _httpProxy = new HttpProxy(server, logger)
   const pobImpact = new PobImpact(eventPipe, logger)
   app.on('will-quit', () => { pobImpact.stop() })
+  // Deathloom fork: Copy buttons (market search text). Only the clipboard; nothing is sent to the game.
+  eventPipe.onEventAnyClient('CLIENT->MAIN::write-clipboard', ({ text }) => {
+    clipboard.writeText(text)
+  })
 
   setTimeout(
     async () => {

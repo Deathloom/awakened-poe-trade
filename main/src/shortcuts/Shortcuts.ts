@@ -151,6 +151,11 @@ export class Shortcuts {
             name: 'MAIN->CLIENT::widget-action',
             payload: { target: entry.action.target }
           })
+          // Deathloom fork: the build gear panel has buttons, so it needs the overlay focused
+          if (entry.action.target === 'pob-gear') {
+            this.areaTracker.removeListeners()
+            this.overlay.assertOverlayActive()
+          }
         } else if (entry.action.type === 'stash-search') {
           stashSearch(entry.action.text, this.clipboard, this.overlay)
         } else if (entry.action.type === 'copy-item') {

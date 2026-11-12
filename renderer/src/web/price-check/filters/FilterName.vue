@@ -3,10 +3,14 @@
     <button class="px-2 rounded border overflow-hidden text-ellipsis"
       :class="{ 'border-gray-500': showAsActive, 'border-gray-900': !showAsActive }"
       @click="toggleAccuracy">{{ label }}</button>
-    <button v-if="filters.corrupted" class="px-2" @click="corrupted = !corrupted">
-      <span v-if="corrupted" class="text-red-500">{{ t('item.corrupted') }}</span>
-      <span v-else class="text-gray-600">{{ t('item.not_corrupted') }}</span>
-    </button>
+    <div class="flex">
+      <button v-if="filters.corrupted" class="px-2" @click="corrupted = !corrupted">
+        <span v-if="corrupted" class="text-red-500">{{ t('item.corrupted') }}</span>
+        <span v-else class="text-gray-600">{{ t('item.not_corrupted') }}</span>
+      </button>
+      <!-- Deathloom fork -->
+      <market-copy-button :item="item" />
+    </div>
   </div>
 </template>
 
@@ -16,9 +20,11 @@ import { useI18n } from 'vue-i18n'
 import type { ParsedItem } from '@/parser'
 import type { ItemFilters } from './interfaces'
 import { CATEGORY_TO_TRADE_ID } from '../trade/pathofexile-trade'
+import MarketCopyButton from './MarketCopyButton.vue'
 
 export default defineComponent({
   name: 'FilterName',
+  components: { MarketCopyButton },
   props: {
     filters: {
       type: Object as PropType<ItemFilters>,

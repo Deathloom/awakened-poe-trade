@@ -1,0 +1,268 @@
+<template>
+  <!-- Deathloom fork: the active PoB build's gear, with Copy / Trade / Check per item -->
+  <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
+    <div class="widget-default-style flex flex-col text-gray-200 leading-tight" style="width: 26rem; max-height: 85vh;">
+      <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
+        <span class="text-gray-500 shrink-0"><i class="fas fa-hammer mr-1" />Build gear</span>
+        <span v-if="build" class="text-gray-400 truncate text-sm" :title="buildTitle">{{ buildTitle }}</span>
+        <div class="ml-auto flex items-center gap-x-2 shrink-0">
+          <button class="text-gray-500 hover:text-gray-200 text-sm" @click="allMods = !allMods">
+            {{ allMods ? 'Hide mods' : 'Show mods' }}</button>
+          <button class="text-gray-500 hover:text-gray-200" title="Reload from Path of Building"
+            :disabled="loading" @click="request"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
+        </div>
+      </div>
+
+      <div v-if="error" class="p-2 text-gray-400 text-sm">{{ error }}</div>
+      <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm">Loading from Path of Building…</div>
+      <div v-else-if="items && !items.length" class="p-2 text-gray-500 text-sm">This build's item set is empty.</div>
+
+      <div v-else-if="items" class="overflow-y-auto min-h-0 p-1">
+        <div class="px-1 pb-1 text-xs text-gray-500">
+          Copy = name for the in-game market (press <span class="bg-gray-700 rounded px-1">/</span> then Ctrl+V).
+          Trade = exact stat search on the trade site.
+        </div>
+        <template v-for="group of groups" :key="group.key">
+          <div class="px-1 pt-2 pb-px text-xs uppercase tracking-wide text-gray-500">{{ group.label }}</div>
+          <div v-for="item of group.items" :key="item.slot"
+            class="rounded px-1 py-px hover:bg-gray-800">
+            <div class="flex items-center gap-x-2">
+              <button class="flex-1 min-w-0 flex items-baseline gap-x-2 text-left" @click="toggle(item.slot)">
+                <span class="text-gray-500 text-sm shrink-0 w-24 truncate" :title="item.label">{{ item.label }}</span>
+                <span class="truncate" :style="{ color: rarityColour(item.rarity) }" :title="itemTitle(item)">
+                  {{ item.title || item.name }}</span>
+                <span v-if="item.title && item.rarity !== 'Unique'" class="text-gray-500 text-sm truncate shrink">{{ item.baseName }}</span>
+              </button>
+              <div class="flex gap-px shrink-0 text-sm">
+                <button class="bg-gray-700 text-gray-300 rounded-l px-1.5"
+                  :title="`Copy '${item.searchText}' for the in-game market`"
+                  @click="copy(item.searchText, item.slot)">
+                  <i v-if="copiedKey === item.slot" class="fas fa-check text-green-400" />
+                  <i v-else class="far fa-copy" /></button>
+                <button class="bg-gray-700 text-gray-300 px-1.5" title="Exact stat search on the official trade site"
+                  @click="openTrade(item)">Trade</button>
+                <button class="bg-gray-700 text-gray-300 rounded-r px-1.5" title="Price check (edit stat filters, build impact)"
+                  @click="priceCheck(item, $event)"><i class="fas fa-search-dollar" /></button>
+              </div>
+            </div>
+            <div v-if="tradeError[item.slot]" class="text-xs text-red-400" style="padding-left: 6.5rem;">{{ tradeError[item.slot] }}</div>
+            <div v-if="isOpen(item.slot) && item.mods.length" class="pb-1 text-sm" style="padding-left: 6.5rem;">
+              <div v-for="(mod, idx) of item.mods" :key="idx" :class="modClass(mod, item.mods, idx)">
+                {{ mod.text }}<span v-if="mod.crafted" class="text-gray-500 text-xs"> (crafted)</span><span
+                  v-if="mod.fractured" class="text-gray-500 text-xs"> (fractured)</span>
+              </div>
+            </div>
+          </div>
+        </template>
+        <div v-if="itemSet" class="px-1 pt-2 text-xs text-gray-600">Item set: {{ itemSet }}</div>
+      </div>
+    </div>
+  </Widget>
+</template>
+
+<script lang="ts">
+import type { WidgetSpec } from '../overlay/interfaces'
+import type { PobGearWidget } from './widget'
+
+export default {
+  widget: {
+    type: 'pob-gear',
+    instances: 'single',
+    initInstance: (): PobGearWidget => {
+      return {
+        wmId: 0,
+        wmType: 'pob-gear',
+        wmTitle: '{icon=fa-hammer}',
+        wmWants: 'hide',
+        wmZorder: null,
+        wmFlags: ['invisible-on-blur'],
+        anchor: {
+          pos: 'tl',
+          x: 35,
+          y: 10
+        }
+      }
+    }
+  } satisfies WidgetSpec
+}
+</script>
+
+<script setup lang="ts">
+import { computed, inject, onUnmounted, ref, shallowRef, watch } from 'vue'
+import type { PobBuildInfo, PobGearItem } from '@ipc/types'
+import { Host } from '@/web/background/IPC'
+import { AppConfig } from '@/web/Config'
+import { useLeagues } from '@/web/background/Leagues'
+import { parseClipboard } from '@/parser'
+import { createPresets } from '@/web/price-check/filters/create-presets'
+import { createTradeRequest } from '@/web/price-check/trade/pathofexile-trade'
+import { getTradeEndpoint } from '@/web/price-check/trade/common'
+import type { PriceCheckWidget, WidgetManager } from '../overlay/interfaces'
+import { useCopyFeedback } from './market'
+import Widget from '../overlay/Widget.vue'
+
+const props = defineProps<{
+  config: PobGearWidget
+}>()
+
+const wm = inject<WidgetManager>('wm')!
+const leagues = useLeagues()
+const { copiedKey, copy } = useCopyFeedback()
+
+const loading = ref(false)
+const error = ref<string | null>(null)
+const build = shallowRef<PobBuildInfo | null>(null)
+const items = shallowRef<PobGearItem[] | null>(null)
+const itemSet = ref('')
+const allMods = ref(false)
+const opened = ref<Record<string, boolean>>({})
+const tradeError = ref<Record<string, string>>({})
+
+let lastRequestId = 0
+
+const GROUPS: Array<{ key: PobGearItem['group'], label: string }> = [
+  { key: 'gear', label: 'Gear' },
+  { key: 'swap', label: 'Weapon swap' },
+  { key: 'flask', label: 'Flasks' },
+  { key: 'jewel', label: 'Jewels' },
+  { key: 'abyss', label: 'Abyss jewels' }
+]
+
+const groups = computed(() => {
+  const list = items.value ?? []
+  return GROUPS
+    .map(g => ({ ...g, items: list.filter(i => i.group === g.key) }))
+    .filter(g => g.items.length)
+})
+
+const buildTitle = computed(() => {
+  const b = build.value
+  if (!b) return ''
+  const cls = b.ascendancy ?? b.className
+  return [b.name, cls && b.level ? `${cls} ${b.level}` : cls, b.mainSkill].filter(Boolean).join(' · ')
+})
+
+const listener = Host.onEvent('MAIN->CLIENT::pob-gear', (e) => {
+  if (e.requestId !== lastRequestId) return
+  loading.value = false
+  if (e.ok) {
+    error.value = null
+    build.value = e.build ?? null
+    itemSet.value = e.itemSet ?? ''
+    items.value = e.items ?? []
+  } else {
+    error.value = (e.error ?? 'Unknown error').replace(/^.*ImpactServer\.lua:\d+: /, '')
+  }
+})
+
+const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
+  if (e.target !== 'pob-gear') return
+  // From in game (overlay not active yet) the hotkey always opens the panel;
+  // main focuses the overlay at the same time
+  if (props.config.wmWants === 'hide' || !wm.active.value) {
+    wm.show(props.config.wmId)
+  } else {
+    wm.hide(props.config.wmId)
+  }
+})
+
+onUnmounted(() => {
+  listener.abort()
+  hotkey.abort()
+})
+
+function request () {
+  loading.value = true
+  tradeError.value = {}
+  lastRequestId += 1
+  Host.sendEvent({
+    name: 'CLIENT->MAIN::pob-gear',
+    payload: { requestId: lastRequestId }
+  })
+}
+
+// Reload each time the panel comes into view: PoB only reloads the build if it changed
+watch(() => [props.config.wmWants, wm.active.value] as const, ([wants, active]) => {
+  if (wants === 'show' && active) request()
+}, { immediate: true })
+
+function toggle (slot: string) {
+  opened.value[slot] = !isOpen(slot)
+}
+
+function isOpen (slot: string) {
+  return opened.value[slot] ?? allMods.value
+}
+
+watch(allMods, () => { opened.value = {} })
+
+function rarityColour (rarity: string) {
+  switch (rarity) {
+    case 'Unique': return '#af6025'
+    case 'Rare': return '#ffff77'
+    case 'Magic': return '#8888ff'
+    default: return '#c8c8c8'
+  }
+}
+
+function modClass (mod: PobGearItem['mods'][number], mods: PobGearItem['mods'], idx: number) {
+  const classes: string[] = []
+  // A thin line between implicits/enchants and explicits, like the game tooltip
+  const prev = mods[idx - 1]
+  if (prev && prev.kind !== 'explicit' && mod.kind === 'explicit') classes.push('mt-1 pt-1 border-t border-gray-700')
+  if (mod.unsupported) classes.push('text-gray-600')
+  else if (mod.kind === 'enchant') classes.push('text-teal-300')
+  else if (mod.kind === 'implicit' || mod.kind === 'scourge') classes.push('text-gray-300')
+  else if (mod.crafted) classes.push('text-blue-300')
+  else if (mod.fractured) classes.push('text-yellow-600')
+  else classes.push('text-indigo-300')
+  return classes
+}
+
+function itemTitle (item: PobGearItem) {
+  const parts = [item.name]
+  if (item.itemLevel) parts.push(`Item level ${item.itemLevel}`)
+  if (item.corrupted) parts.push('Corrupted')
+  return parts.join(' · ')
+}
+
+function openTrade (item: PobGearItem) {
+  tradeError.value = { ...tradeError.value, [item.slot]: '' }
+  const parsed = parseClipboard(item.text)
+  if (parsed.isErr()) {
+    tradeError.value[item.slot] = "The overlay couldn't read this item; try the price check button."
+    return
+  }
+  const league = leagues.selectedId.value
+  if (!league) {
+    tradeError.value[item.slot] = 'Pick a league first (price check window title).'
+    return
+  }
+  const widget = AppConfig<PriceCheckWidget>('price-check')!
+  const presets = createPresets(parsed.value, {
+    league,
+    merchantOnly: widget.merchantOnly,
+    collapseListings: widget.collapseListings,
+    activateStockFilter: widget.activateStockFilter,
+    searchStatRange: widget.searchStatRange,
+    useEn: AppConfig().useIntlSite,
+    currency: widget.defaultCurrency
+  })
+  const preset = presets.presets.find(p => p.id === presets.active)!
+  const query = createTradeRequest(preset.filters, preset.stats)
+  window.open(`https://${getTradeEndpoint()}/trade/search/${league}?q=${JSON.stringify(query)}`)
+}
+
+// Open the normal price check window for this item (stat filters, prices, build impact)
+function priceCheck (item: PobGearItem, e: MouseEvent) {
+  Host.selfDispatch({
+    name: 'MAIN->CLIENT::item-text',
+    payload: {
+      clipboard: item.text,
+      position: { x: e.clientX, y: e.clientY },
+      focusOverlay: true,
+      target: 'price-check'
+    }
+  })
+}
+</script>

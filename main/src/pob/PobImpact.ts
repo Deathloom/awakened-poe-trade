@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { app, net } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo } from '../../../ipc/types'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { LiveGear, type FetchFn } from './LiveGear'
@@ -64,6 +64,22 @@ export class PobImpact {
         .catch((err: Error) => {
           this.server.sendEventTo('last-active', {
             name: 'MAIN->CLIENT::pob-impact',
+            payload: { requestId, ok: false, error: err.message }
+          })
+        })
+    })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-gear', ({ requestId }) => {
+      this.queue = this.queue
+        .then(async () => await this.gear())
+        .then(({ build, itemSet, items }) => {
+          this.server.sendEventTo('last-active', {
+            name: 'MAIN->CLIENT::pob-gear',
+            payload: { requestId, ok: true, build, itemSet, items }
+          })
+        })
+        .catch((err: Error) => {
+          this.server.sendEventTo('last-active', {
+            name: 'MAIN->CLIENT::pob-gear',
             payload: { requestId, ok: false, error: err.message }
           })
         })
@@ -273,8 +289,9 @@ export class PobImpact {
     return {}
   }
 
-  async impact (itemText: string, refreshGear = false): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
-    if (!this.cfg?.enabled) throw new Error('Build impact is turned off')
+  // Start PoB if needed and make sure it holds the current active build
+  private async ensureBuild (): Promise<PobBuildInfo> {
+    if (!this.cfg?.enabled) throw new Error('Path of Building is turned off in settings (Path of Building page)')
     const missing = [
       !this.cfg.pobDir && 'Path of Building folder',
       !this.cfg.buildsDir && 'Builds folder',
@@ -311,6 +328,24 @@ export class PobImpact {
       this.pobHasGear = false
       this.logger.write(`info [PoB] loaded build "${this.loadedBuild.name}"`)
     }
+    return this.loadedBuild
+  }
+
+  // The build's own items (active item set) for the build gear panel
+  async gear (): Promise<{ build: PobBuildInfo, itemSet: string, items: PobGearItem[] }> {
+    const build = await this.ensureBuild()
+    const reply = await this.call('gear')
+    return {
+      build: (reply.build as PobBuildInfo | undefined) ?? build,
+      itemSet: String(reply.itemSet ?? ''),
+      // PoB's JSON encoder writes empty lists as {}
+      items: (Array.isArray(reply.items) ? reply.items as PobGearItem[] : [])
+        .map(item => ({ ...item, mods: Array.isArray(item.mods) ? item.mods : [] }))
+    }
+  }
+
+  async impact (itemText: string, refreshGear = false): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
+    await this.ensureBuild()
     const live = await this.syncLiveGear(refreshGear)
     const reply = await this.call('impact', { item: itemText })
     const result: PobImpactResult = { item: reply.item, compares: reply.compares, lines: reply.lines }
@@ -327,6 +362,6 @@ export class PobImpact {
     if (live.error ?? reply.equippedError) {
       result.equippedError = String(live.error ?? reply.equippedError)
     }
-    return { build: this.loadedBuild, result }
+    return { build: this.loadedBuild!, result }
   }
 }
