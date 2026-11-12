@@ -4,7 +4,9 @@ publish:
   - provider: "github"
     owner: "Deathloom"
     repo: "awakened-poe-trade"
-    releaseType: "release"
+    # The Release workflow creates the draft first and publishes it after the
+    # upload (parallel uploads otherwise race to create the release)
+    releaseType: "draft"
 appId: "com.deathloom.loot-goblin"
 productName: "Loot Goblin"
 npmRebuild: false
