@@ -10,6 +10,10 @@ import WidgetDelveGrid from './WidgetDelveGrid.vue'
 import WidgetItemSearch from '../item-search/WidgetItemSearch.vue'
 import WidgetSettings from '../settings/SettingsWindow.vue'
 import WidgetPobGear from '../pob/WidgetPobGear.vue'
+import WidgetTradeCompanion from '../companion/WidgetTradeCompanion.vue'
+import WidgetCampaignGuide from '../companion/WidgetCampaignGuide.vue'
+import WidgetMarketHistory from '../market-history/WidgetMarketHistory.vue'
+import WidgetStashTracker from '../stash/WidgetStashTracker.vue'
 
 type WidgetComponent = Component & { widget: WidgetSpec }
 
@@ -34,3 +38,7 @@ registry.widgets.push(WidgetImageStrip as unknown as WidgetComponent)
 registry.widgets.push(WidgetDelveGrid as unknown as WidgetComponent)
 // Deathloom fork
 registry.widgets.push(WidgetPobGear as unknown as WidgetComponent)
+registry.widgets.push(WidgetTradeCompanion as unknown as WidgetComponent)
+registry.widgets.push(WidgetCampaignGuide as unknown as WidgetComponent)
+registry.widgets.push(WidgetMarketHistory as unknown as WidgetComponent)
+registry.widgets.push(WidgetStashTracker as unknown as WidgetComponent)
