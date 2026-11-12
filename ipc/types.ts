@@ -19,8 +19,12 @@ export interface PobHudConfig {
   guide: boolean
   trades: boolean
   gear: boolean
-  // Mouse clicks go through to the game (panels are read-only while playing)
-  clickThrough: boolean
+  // Per panel: mouse clicks go through to the game while playing (the panel is read-only then)
+  clickThroughPanels: Record<HudPanel, boolean>
+  // older single setting (moved into clickThroughPanels)
+  clickThrough?: boolean
+  // Trade companion closes itself when no trades are left open (a whisper or Ctrl+T opens it)
+  autoHideTrades: boolean
   // Solid background instead of a see-through window (try this if the game crashes)
   opaque: boolean
   // 30-100

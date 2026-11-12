@@ -114,15 +114,24 @@
         the overlay active (Shift+Space). If the game crashes with a panel pinned, try "Solid background",
         and make sure the game's Display mode is <b>Windowed Fullscreen</b>.
       </div>
-      <ui-toggle v-model="pob.hud.guide" class="mb-1">Campaign guide</ui-toggle>
-      <ui-toggle v-model="pob.hud.trades" class="mb-1">Trade companion</ui-toggle>
-      <ui-toggle v-model="pob.hud.gear" class="mb-1">Build gear panel</ui-toggle>
+      <table class="mb-2">
+        <tr class="text-gray-500 text-sm">
+          <td class="pr-4"></td><td class="pr-4">Pinned</td><td>Clicks go through while playing</td>
+        </tr>
+        <tr v-for="p of HUD_PANELS" :key="p.key">
+          <td class="pr-4 py-0.5">{{ p.label }} <span class="text-gray-500 text-sm">({{ pob[p.hotkey] || 'no hotkey' }})</span></td>
+          <td class="pr-4"><ui-toggle v-model="pob.hud[p.key]" /></td>
+          <td><ui-toggle v-if="pob.hud[p.key]" v-model="pob.hud.clickThroughPanels[p.key]" /></td>
+        </tr>
+      </table>
+      <div class="text-gray-500 text-sm mb-2">
+        Pinned panels start closed: open and close them with their hotkey. Clicks going through means you can't
+        press that panel's buttons while you play (Shift+Space makes them clickable).
+      </div>
+      <template v-if="pob.hud.trades">
+        <ui-toggle v-model="pob.hud.autoHideTrades" class="mb-1">Trade companion opens on a trade whisper and closes when no trades are left</ui-toggle>
+      </template>
       <template v-if="pob.hud.guide || pob.hud.trades || pob.hud.gear">
-        <ui-toggle v-model="pob.hud.clickThrough" class="mb-1">Clicks go through to the game while playing</ui-toggle>
-        <div class="text-gray-500 text-sm mb-1 ml-6">
-          On: the panels can't be clicked while you play (press Shift+Space to use the buttons).
-          Off: chat buttons work straight away, without the overlay.
-        </div>
         <ui-toggle v-model="pob.hud.opaque" class="mb-1">Solid background (no see-through window)</ui-toggle>
         <div class="flex items-center gap-2 mb-1">
           <span class="shrink-0">Opacity</span>
@@ -187,6 +196,7 @@ export default defineComponent({
       props.config.pob.stash ??= defaultPobConfig().stash
       props.config.pob.chatButtons ??= 'copy'
       props.config.pob.hud ??= defaultHudConfig()
+      props.config.pob.hud.clickThroughPanels ??= defaultHudConfig().clickThroughPanels
       if (props.config.pob.guideKey === undefined) props.config.pob.guideKey = null
       if (props.config.pob.tradesKey === undefined) props.config.pob.tradesKey = null
       return props.config.pob
@@ -223,6 +233,11 @@ export default defineComponent({
 
     return {
       pob,
+      HUD_PANELS: [
+        { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },
+        { key: 'trades', label: 'Trade companion', hotkey: 'tradesKey' },
+        { key: 'gear', label: 'Build gear', hotkey: 'gearPanelKey' }
+      ] as const,
       // applied when the settings window is closed, like every other setting
       resetHudPositions () {
         pob.value.hud.pos = defaultHudConfig().pos

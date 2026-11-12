@@ -11,7 +11,7 @@
       <span>{{ playing ? '' : 'Drag to move' }}</span>
     </div>
     <CampaignGuideBody v-if="HUD_PANEL === 'guide'" />
-    <TradeCompanionBody v-else-if="HUD_PANEL === 'trades'" compact @incoming="showTrades" />
+    <TradeCompanionBody v-else-if="HUD_PANEL === 'trades'" compact @incoming="showTrades" @empty="hideTradesIfAuto" />
     <PobGearBody v-else-if="HUD_PANEL === 'gear'" :active="!hidden.gear" hud />
   </div>
 </template>
@@ -20,6 +20,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { HUD_PANEL } from './is-hud'
+import { AppConfig } from '@/web/Config'
 import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import PobGearBody from '../pob/PobGearBody.vue'
@@ -27,7 +28,7 @@ import PobGearBody from '../pob/PobGearBody.vue'
 document.documentElement.classList.add('hud')
 
 const playing = ref(true)
-const hidden = ref({ guide: false, trades: false, gear: false })
+const hidden = ref({ guide: true, trades: true, gear: true })
 const hiddenByAlt = ref(false)
 const listeners = [
   Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing; hidden.value = e.hidden }),
@@ -72,10 +73,17 @@ function dragEnd (e: PointerEvent) {
   sendDrag('end', e)
 }
 
-// a whisper arrived while the companion was hidden with its hotkey
+// a trade whisper arrived: open the companion (it starts closed)
 function showTrades () {
   if (hidden.value.trades) {
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-panel', payload: { panel: 'trades', visible: true } })
+  }
+}
+
+// no open trades left: close it again if auto-hide is on (Ctrl+T still opens it)
+function hideTradesIfAuto () {
+  if (AppConfig().pob?.hud?.autoHideTrades && !hidden.value.trades) {
+    Host.sendEvent({ name: 'CLIENT->MAIN::hud-panel', payload: { panel: 'trades', visible: false } })
   }
 }
 </script>
