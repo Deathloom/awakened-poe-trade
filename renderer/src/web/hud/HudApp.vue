@@ -2,11 +2,13 @@
   <!-- Deathloom fork: "show while playing" HUD window, one per pinned panel
        (index.html?hud=guide / trades / gear). Read-only view of the settings;
        the overlay window owns and saves them. -->
-  <div ref="root" class="hud-root flex flex-col items-start" :class="{ 'invisible': hiddenByAlt }">
-    <div class="hud-grip flex items-center gap-x-2 px-2 rounded-t bg-gray-900 text-gray-600 text-xs select-none"
-      title="Drag to move" @pointerdown="dragStart" @pointerup="dragEnd">
+  <!-- drag from the grip or any empty spot of the panel (not buttons, lists or inputs) -->
+  <div ref="root" class="hud-root flex flex-col items-start select-none" :class="{ 'invisible': hiddenByAlt }"
+    @pointerdown="dragStart" @pointerup="dragEnd">
+    <div class="hud-grip self-stretch flex items-center justify-center gap-x-2 px-2 rounded-t bg-gray-900 text-gray-600 text-xs"
+      title="Drag to move">
       <i class="fas fa-grip-lines" />
-      <span v-if="!playing">Drag to move</span>
+      <span>{{ playing ? '' : 'Drag to move' }}</span>
     </div>
     <CampaignGuideBody v-if="HUD_PANEL === 'guide'" />
     <TradeCompanionBody v-else-if="HUD_PANEL === 'trades'" compact @incoming="showTrades" />
@@ -59,8 +61,11 @@ onUnmounted(() => {
 function sendDrag (phase: 'start' | 'end', e: PointerEvent) {
   Host.sendEvent({ name: 'CLIENT->MAIN::hud-drag', payload: { panel: HUD_PANEL, phase, screenX: e.screenX, screenY: e.screenY } })
 }
+const NO_DRAG = 'button, a, input, select, textarea, option, label, [data-no-drag]'
 function dragStart (e: PointerEvent) {
   if (e.button !== 0) return
+  const target = e.target as HTMLElement | null
+  if (target?.closest(NO_DRAG)) return
   sendDrag('start', e)
 }
 function dragEnd (e: PointerEvent) {
