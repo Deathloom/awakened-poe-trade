@@ -3,16 +3,27 @@
   <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
     <div class="widget-default-style flex flex-col text-gray-200 leading-tight" style="width: 26rem; max-height: 85vh;">
       <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
-        <span class="text-gray-500 shrink-0"><i class="fas fa-hammer mr-1" />Build gear</span>
+        <span class="text-gray-500 shrink-0"><i class="fas fa-hammer mr-1" />Build</span>
+        <div class="flex gap-px text-sm shrink-0">
+          <button v-for="t of TABS" :key="t.key" class="px-2 rounded"
+            :class="tab === t.key ? 'bg-gray-700 text-gray-100' : 'text-gray-500 hover:text-gray-200'"
+            @click="setTab(t.key)">{{ t.label }}</button>
+        </div>
         <span v-if="build" class="text-gray-400 truncate text-sm" :title="buildTitle">{{ buildTitle }}</span>
         <div class="ml-auto flex items-center gap-x-2 shrink-0">
-          <button class="text-gray-500 hover:text-gray-200 text-sm" @click="allMods = !allMods">
+          <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200 text-sm" @click="allMods = !allMods">
             {{ allMods ? 'Hide mods' : 'Show mods' }}</button>
-          <button class="text-gray-500 hover:text-gray-200" title="Reload from Path of Building"
+          <button class="text-gray-500 hover:text-gray-200 text-sm" title="Pick the build and loadout"
+            :class="{ 'text-gray-200': showPicker }" @click="showPicker = !showPicker"><i class="fas fa-exchange-alt" /></button>
+          <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200" title="Reload from Path of Building"
             :disabled="loading" @click="request"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
         </div>
       </div>
 
+      <template v-if="visible">
+      <build-picker v-show="showPicker" class="shrink-0" @changed="onBuildChanged" />
+      <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
+      <template v-else>
       <div v-if="error" class="p-2 text-gray-400 text-sm">{{ error }}</div>
       <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm">Loading from Path of Building…</div>
       <div v-else-if="items && !items.length" class="p-2 text-gray-500 text-sm">This build's item set is empty.</div>
@@ -56,6 +67,8 @@
         </template>
         <div v-if="itemSet" class="px-1 pt-2 text-xs text-gray-600">Item set: {{ itemSet }}</div>
       </div>
+      </template>
+      </template>
     </div>
   </Widget>
 </template>
@@ -100,6 +113,8 @@ import { getTradeEndpoint } from '@/web/price-check/trade/common'
 import type { PriceCheckWidget, WidgetManager } from '../overlay/interfaces'
 import { useCopyFeedback } from './market'
 import Widget from '../overlay/Widget.vue'
+import BuildPicker from './BuildPicker.vue'
+import PobGems from './PobGems.vue'
 
 const props = defineProps<{
   config: PobGearWidget
@@ -117,6 +132,24 @@ const itemSet = ref('')
 const allMods = ref(false)
 const opened = ref<Record<string, boolean>>({})
 const tradeError = ref<Record<string, string>>({})
+const TABS = [{ key: 'gear', label: 'Gear' }, { key: 'gems', label: 'Gems' }] as const
+const tab = ref<'gear' | 'gems'>('gear')
+const showPicker = ref(true)
+const gemsRef = ref<InstanceType<typeof PobGems> | null>(null)
+const visible = computed(() => props.config.wmWants === 'show' && wm.active.value)
+
+function setTab (key: 'gear' | 'gems') {
+  if (tab.value === key) return
+  tab.value = key
+  if (key === 'gear') request()
+}
+
+// The picker loads the build list when the panel opens and after each change
+function onBuildChanged (b: PobBuildInfo | null) {
+  if (b) build.value = b
+  if (tab.value === 'gear') request()
+  else gemsRef.value?.request()
+}
 
 let lastRequestId = 0
 
@@ -181,10 +214,7 @@ function request () {
   })
 }
 
-// Reload each time the panel comes into view: PoB only reloads the build if it changed
-watch(() => [props.config.wmWants, wm.active.value] as const, ([wants, active]) => {
-  if (wants === 'show' && active) request()
-}, { immediate: true })
+// Gear reloads when the build picker (re)loads, i.e. each time the panel opens
 
 function toggle (slot: string) {
   opened.value[slot] = !isOpen(slot)

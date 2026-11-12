@@ -60,6 +60,16 @@ export class Shortcuts {
     this.server.onEventAnyClient('CLIENT->MAIN::user-action', (e) => {
       if (e.action === 'stash-search') {
         stashSearch(e.text, this.clipboard, this.overlay)
+      } else if (e.action === 'chat-command') {
+        // Deathloom fork: trade companion button. Each click sends exactly one
+        // chat message/command, like a chat hotkey (GGG's macro rule).
+        const text = e.text.trim()
+        if (!text || text.includes('\n') || !/^[/@%#$&]/.test(text)) {
+          this.logger.write('warn [Shortcuts] chat-command ignored: not a single chat command')
+          return
+        }
+        this.overlay.assertGameActive()
+        typeInChat(text, true, this.clipboard)
       }
     })
 

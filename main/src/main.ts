@@ -15,6 +15,7 @@ import { OverlayVisibility } from './windowing/OverlayVisibility'
 import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
 import { PobImpact } from './pob/PobImpact'
+import { StashTracker } from './pob/StashTracker'
 
 if (!app.requestSingleInstanceLock()) {
   app.exit()
@@ -37,6 +38,7 @@ app.on('ready', async () => {
   const _httpProxy = new HttpProxy(server, logger)
   const pobImpact = new PobImpact(eventPipe, logger)
   app.on('will-quit', () => { pobImpact.stop() })
+  const stashTracker = new StashTracker(eventPipe, logger)
   // Deathloom fork: Copy buttons (market search text). Only the clipboard; nothing is sent to the game.
   eventPipe.onEventAnyClient('CLIENT->MAIN::write-clipboard', ({ text }) => {
     clipboard.writeText(text)
@@ -55,6 +57,7 @@ app.on('ready', async () => {
         appUpdater.checkAtStartup()
         tray.overlayKey = cfg.overlayKey
         pobImpact.configure(cfg.pob)
+        stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
       })
       uIOhook.start()
       const port = await startServer(appUpdater, logger)

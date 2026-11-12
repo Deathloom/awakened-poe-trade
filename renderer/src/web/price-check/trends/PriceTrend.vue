@@ -48,6 +48,9 @@
           />
         </div>
       </div>
+      <!-- Deathloom fork: watch this item in the market history panel -->
+      <button class="px-1 text-gray-500 hover:text-yellow-400" :title="watched ? 'Stop watching' : 'Watch price (market history panel)'"
+        @click="toggleWatched"><i :class="watched ? 'fas fa-star text-yellow-400' : 'far fa-star'" /></button>
     </template>
   </div>
   <div v-else-if="showFallback" class="flex items-center pb-4" style="min-height: 3rem;">
@@ -68,6 +71,8 @@ import VueApexcharts from 'vue3-apexcharts'
 import { ParsedItem } from '@/parser'
 import { artificialSlowdown } from '../trade/artificial-slowdown'
 import { ItemFilters } from '../filters/interfaces'
+import { useLeagues } from '@/web/background/Leagues'
+import { isWatched, toggleWatch, watchKey } from '@/web/market-history/watchlist'
 
 const slowdown = artificialSlowdown(800)
 
@@ -110,9 +115,25 @@ export default defineComponent({
       }
     })
 
+    const leagues = useLeagues()
+    const detailsKey = computed(() => {
+      const id = getDetailsId(props.item)
+      const league = leagues.selectedId.value
+      return id && league ? { id, league, key: watchKey(id, league) } : null
+    })
+    const watched = computed(() => detailsKey.value != null && isWatched(detailsKey.value.key))
+
     return {
       t,
       trend,
+      watched,
+      toggleWatched () {
+        const d = detailsKey.value
+        if (!d) return
+        const label = [props.item.info.name, d.id.variant].filter(Boolean).join(' · ')
+        const found = findPriceByQuery(d.id)
+        toggleWatch({ ns: d.id.ns, name: d.id.name, variant: d.id.variant, label, icon: props.item.info.icon, league: d.league }, found?.chaos)
+      },
       openNinja () {
         window.open(trend.value!.url)
       },

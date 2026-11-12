@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem } from '../../../ipc/types'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { LiveGear, type FetchFn } from './LiveGear'
@@ -42,6 +42,9 @@ export class PobImpact {
   private sentGearAt = 0
   private pobHasGear = false
   private passivesError: string | undefined
+  // Loadout choice applied to the loaded build (JSON, '' = PoB's own active sets)
+  private appliedLoadout = ''
+  private loadedRel = ''
 
   constructor (
     private server: ServerEvents,
@@ -76,6 +79,12 @@ export class PobImpact {
           })
         })
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-builds', ({ requestId, setActive, setLoadout }) => {
+      this.reply('MAIN->CLIENT::pob-builds', requestId, async () => await this.builds(setActive, setLoadout))
+    })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-gems', ({ requestId, refreshGear }) => {
+      this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gear', ({ requestId }) => {
       this.queue = this.queue
         .then(async () => await this.gear())
@@ -92,6 +101,19 @@ export class PobImpact {
           })
         })
     })
+  }
+
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems'> (
+    name: N, requestId: number, work: () => Promise<Record<string, unknown>>
+  ) {
+    this.queue = this.queue
+      .then(work)
+      .then((payload) => {
+        this.server.sendEventTo('last-active', { name, payload: { requestId, ok: true, ...payload } } as any)
+      })
+      .catch((err: Error) => {
+        this.server.sendEventTo('last-active', { name, payload: { requestId, ok: false, error: err.message } } as any)
+      })
   }
 
   private async pickFolder (title: string, defaultPath: string): Promise<string | null> {
@@ -146,6 +168,7 @@ export class PobImpact {
     this.ready = null
     this.loadedKey = null
     this.loadedBuild = null
+    this.appliedLoadout = ''
     this.sentGearAt = 0
     this.pobHasGear = false
     this.stdoutBuf = ''
@@ -345,6 +368,10 @@ export class PobImpact {
       throw new Error(`Active build not found: ${buildPath}`)
     }
     const key = `${buildPath}|${stat.mtimeMs}`
+    const rel = path.relative(path.join(this.cfg.buildsDir, this.cfg.player), buildPath)
+    const choice = this.loadoutChoice(rel)
+    // Going back to PoB's own sets needs a fresh load
+    if (this.appliedLoadout && !choice) this.loadedKey = null
     if (key !== this.loadedKey || !this.loadedBuild) {
       const reply = await this.call('load', { path: buildPath })
       this.loadedKey = key
@@ -352,9 +379,139 @@ export class PobImpact {
       // Loading drops PoB's live gear set
       this.sentGearAt = 0
       this.pobHasGear = false
+      this.appliedLoadout = ''
+      this.loadedRel = rel
       this.logger.write(`info [PoB] loaded build "${this.loadedBuild.name}"`)
     }
+    if (choice && choice !== this.appliedLoadout) {
+      try {
+        const reply = await this.call('setLoadout', JSON.parse(choice))
+        this.loadedBuild = reply.build as PobBuildInfo
+      } catch (err) {
+        // A loadout that no longer exists: fall back to the build's own sets
+        this.logger.write(`warn [PoB] loadout ${choice}: ${(err as Error).message}`)
+      }
+      this.appliedLoadout = choice
+      // setLoadout drops PoB's live gear set
+      this.sentGearAt = 0
+      this.pobHasGear = false
+    }
     return this.loadedBuild
+  }
+
+  // JSON of the saved loadout choice for a build ('' = none)
+  private loadoutChoice (rel: string): string {
+    const choice = this.cfg?.loadouts?.[rel]
+    if (!choice) return ''
+    const clean: PobLoadoutChoice = {}
+    if (choice.named) clean.named = choice.named
+    else {
+      if (choice.spec) clean.spec = choice.spec
+      if (choice.itemSet) clean.itemSet = choice.itemSet
+      if (choice.skillSet) clean.skillSet = choice.skillSet
+    }
+    return Object.keys(clean).length ? JSON.stringify(clean) : ''
+  }
+
+  private playerDir (): string {
+    const cfg = this.cfg
+    if (!cfg?.buildsDir || !cfg.player) throw new Error('Missing in settings: Builds folder, Player')
+    return path.join(cfg.buildsDir, cfg.player)
+  }
+
+  // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them
+  async listBuilds (): Promise<PobBuildList> {
+    const root = this.playerDir()
+    const builds: string[] = []
+    const walk = async (dir: string, depth: number) => {
+      let entries
+      try {
+        entries = await fs.readdir(dir, { withFileTypes: true })
+      } catch {
+        return
+      }
+      for (const entry of entries) {
+        if (entry.name.startsWith('.')) continue
+        const full = path.join(dir, entry.name)
+        if (entry.isDirectory() && depth < 6) {
+          await walk(full, depth + 1)
+        } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.xml')) {
+          builds.push(path.relative(root, full))
+        }
+      }
+    }
+    await walk(root, 0)
+    builds.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+    let active: string | null = null
+    try {
+      active = path.relative(root, await this.resolveActiveBuild())
+    } catch {}
+    return { builds, active }
+  }
+
+  // Write active.txt: keeps comment lines, replaces the build line
+  async setActiveBuild (rel: string) {
+    const root = this.playerDir()
+    const list = await this.listBuilds()
+    if (!list.builds.includes(rel)) throw new Error(`Build not found in your folder: ${rel}`)
+    const activeFile = path.join(root, 'active.txt')
+    let lines: string[] = []
+    try {
+      lines = (await fs.readFile(activeFile, 'utf8')).split(/\r?\n/)
+    } catch {}
+    const idx = lines.findIndex(l => l.trim() && !l.trim().startsWith('#'))
+    if (idx >= 0) lines[idx] = rel
+    else {
+      while (lines.length && !lines[lines.length - 1].trim()) lines.pop()
+      lines.push(rel)
+    }
+    // Same line endings as PoB's files on Windows; Push/Pull compares bytes
+    await fs.writeFile(activeFile, lines.join('\r\n').replace(/(\r\n)*$/, '') + '\r\n', 'utf8')
+    this.logger.write(`info [PoB] active build set to ${rel}`)
+  }
+
+  async builds (setActive?: string, setLoadout?: PobLoadoutChoice): Promise<{ list: PobBuildList, build?: PobBuildInfo, loadouts?: PobLoadouts }> {
+    if (setActive) await this.setActiveBuild(setActive)
+    if (setLoadout && this.cfg) {
+      // The renderer saves the same choice in its config; apply it now so this
+      // reply already shows it
+      const list = await this.listBuilds()
+      if (list.active) {
+        this.cfg.loadouts = { ...this.cfg.loadouts, [list.active]: setLoadout }
+      }
+    }
+    const list = await this.listBuilds()
+    if (!list.active) return { list }
+    const build = await this.ensureBuild()
+    const reply = await this.call('loadouts')
+    const loadouts = reply.loadouts as PobLoadouts
+    for (const key of ['trees', 'itemSets', 'skillSets', 'named'] as const) {
+      // PoB's JSON encoder writes empty lists as {}
+      if (!Array.isArray(loadouts[key])) (loadouts as any)[key] = []
+    }
+    return { list, build: (reply.build as PobBuildInfo | undefined) ?? build, loadouts }
+  }
+
+  async gems (refreshGear: boolean): Promise<{ build: PobBuildInfo, groups: PobSocketGroup[], live?: PobSocketGroup[], character?: string, liveError?: string }> {
+    await this.ensureBuild()
+    let liveError: string | undefined
+    if (!this.liveTarget()) {
+      liveError = 'Turn on "Also compare with my equipped gear" in Settings → Path of Building to compare with your character.'
+    } else if (!this.cfg?.liveTreeAndGems) {
+      liveError = 'Turn on "Use the character\'s passive tree, level and gems too" to compare gems.'
+    }
+    const live = await this.syncLiveGear(refreshGear)
+    if (live.error) liveError = live.error
+    const reply = await this.call('gems')
+    const fix = (groups: unknown) => (Array.isArray(groups) ? groups as PobSocketGroup[] : [])
+      .map(g => ({ ...g, gems: Array.isArray(g.gems) ? g.gems : [] }))
+    return {
+      build: reply.build as PobBuildInfo,
+      groups: fix(reply.groups),
+      live: reply.live ? fix(reply.live) : undefined,
+      character: reply.character,
+      liveError: reply.live ? undefined : liveError
+    }
   }
 
   // The build's own items (active item set) for the build gear panel

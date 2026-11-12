@@ -58,13 +58,15 @@
         always comes from the build.
       </div>
     </div>
-    <template v-if="pob.liveGear">
+    <template v-if="pob.liveGear || pob.stash.enabled">
       <div class="mb-2">
         <div class="flex-1 mb-1">Account name</div>
         <input v-model.trim="pob.accountName"
           class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. Deathloom#1234">
         <div class="text-gray-500 text-sm mt-1">Including the <code>#1234</code> part, as shown on your profile.</div>
       </div>
+    </template>
+    <template v-if="pob.liveGear">
       <div class="mb-2">
         <div class="flex-1 mb-1">Character</div>
         <input v-model.trim="pob.character"
@@ -79,11 +81,54 @@
         </div>
       </div>
     </template>
+
+    <div class="mt-6 mb-2">
+      <div class="mb-1">Chat buttons (trade companion)</div>
+      <select v-model="pob.chatButtons" class="rounded bg-gray-900 px-1">
+        <option value="copy">Copy the command (paste it in chat yourself)</option>
+        <option value="send">Send it to game chat</option>
+      </select>
+      <div class="text-gray-500 text-sm mt-1">
+        Send: each click focuses the game and sends exactly one chat command (e.g. <code>/invite name</code>),
+        the same as a chat hotkey. Nothing is ever sent without a click.
+      </div>
+    </div>
+
+    <div class="mt-6 mb-2">
+      <ui-toggle v-model="pob.stash.enabled">Stash tracker (personal, uses your login cookie)</ui-toggle>
+      <div class="text-yellow-500 text-sm mt-1">
+        Grey area: GGG's official stash API needs an approved app and registration is closed, so this reads
+        your tabs the way the website's stash viewer does, with your POESESSID. Read-only, refresh by hand only,
+        a few tabs at a time. Never share your POESESSID: anyone with it is logged in as you.
+      </div>
+    </div>
+    <template v-if="pob.stash.enabled">
+      <div class="mb-2">
+        <div class="flex-1 mb-1">League</div>
+        <input v-model.trim="pob.stash.league"
+          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. Keepers (exactly as on the trade site)">
+      </div>
+      <div class="mb-2">
+        <div class="flex-1 mb-1">POESESSID</div>
+        <div class="flex gap-1">
+          <input v-model.trim="sessionInput" type="password" autocomplete="off"
+            class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="paste to replace the saved one">
+          <button type="button" class="px-2 bg-gray-800 rounded shrink-0" :disabled="!sessionInput" @click="saveSession">Save</button>
+          <button type="button" class="px-2 bg-gray-800 rounded shrink-0" @click="forgetSession">Forget</button>
+        </div>
+        <div class="text-gray-500 text-sm mt-1">
+          From pathofexile.com while logged in: browser dev tools → Application → Cookies → POESESSID.
+          Saved encrypted on this PC (Windows DPAPI), not in the settings file, and only sent to pathofexile.com.
+          It changes when you log out; paste the new one then.
+          <span v-if="sessionNote" class="text-green-500">{{ sessionNote }}</span>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue'
+import { defineComponent, computed, ref } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import HotkeyInput from './HotkeyInput.vue'
 import { configProp } from './utils'
@@ -97,8 +142,16 @@ export default defineComponent({
   setup (props) {
     const pob = computed(() => {
       props.config.pob ??= defaultPobConfig()
+      props.config.pob.stash ??= defaultPobConfig().stash
+      props.config.pob.chatButtons ??= 'copy'
       return props.config.pob
     })
+
+    const sessionInput = ref('')
+    const sessionNote = ref('')
+    function sendSession (sessionId: string | null) {
+      Host.sendEvent({ name: 'CLIENT->MAIN::stash-session', payload: { sessionId } })
+    }
 
     let nextId = 1
     function pickFolder (title: string, defaultPath: string): Promise<string | null> {
@@ -125,6 +178,18 @@ export default defineComponent({
 
     return {
       pob,
+      sessionInput,
+      sessionNote,
+      saveSession () {
+        if (!sessionInput.value) return
+        sendSession(sessionInput.value)
+        sessionInput.value = ''
+        sessionNote.value = 'Saved.'
+      },
+      forgetSession () {
+        sendSession(null)
+        sessionNote.value = 'Removed.'
+      },
       async browsePobDir () {
         const picked = await pickFolder('Path of Building folder', pob.value.pobDir)
         if (picked) pob.value.pobDir = picked

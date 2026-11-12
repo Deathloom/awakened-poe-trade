@@ -31,6 +31,93 @@ export interface PobConfig {
   liveTreeAndGems: boolean
   // Hotkey that toggles the build gear panel (null = only from the widget menu)
   gearPanelKey: string | null
+  // Loadout picked in the build panel, per build file (path relative to the player folder).
+  // Only changes what the overlay compares against; the build file is never written.
+  loadouts: Record<string, PobLoadoutChoice>
+  // Trade companion: 'copy' puts the chat command on the clipboard,
+  // 'send' types it into game chat (one command per click)
+  chatButtons: 'copy' | 'send'
+  // Stash tracker (personal, opt-in): reads stash tabs with your POESESSID
+  stash: PobStashConfig
+}
+
+export interface PobLoadoutChoice {
+  // PoB's named loadout (the dropdown at the top of PoB), or ...
+  named?: string
+  // ... separate sets (ids as PoB numbers them)
+  spec?: number
+  itemSet?: number
+  skillSet?: number
+}
+
+export interface PobStashConfig {
+  enabled: boolean
+  league: string
+  // Stash tab indexes to read (0-based, as the website numbers them)
+  tabs: number[]
+}
+
+// Build panel: the player's builds and the active build's loadouts
+export interface PobBuildList {
+  // Paths relative to the player folder, e.g. "3.29\\Helmbreaker\\Build.xml"
+  builds: string[]
+  active: string | null
+}
+
+export interface PobLoadouts {
+  trees: Array<{ id: number, title: string }>
+  itemSets: Array<{ id: number, title: string }>
+  skillSets: Array<{ id: number, title: string }>
+  named: string[]
+  active: { spec: number, itemSet: number, skillSet: number, named?: string }
+}
+
+export interface PobGem {
+  name: string
+  level?: number
+  quality?: number
+  enabled: boolean
+  support: boolean
+  // PoB gem colour: 1 str, 2 dex, 3 int, 4 white
+  colour?: number
+}
+
+export interface PobSocketGroup {
+  index: number
+  label?: string
+  slot?: string
+  // Set when the skill comes from an item, not a socketed gem
+  source?: string
+  enabled: boolean
+  main?: boolean
+  fullDPS?: boolean
+  gems: PobGem[]
+}
+
+// Stash tracker
+export interface StashTabInfo {
+  index: number
+  name: string
+  type: string
+  colour?: string
+}
+
+export interface StashItem {
+  id: string
+  tab: number
+  name: string
+  typeLine: string
+  baseType: string
+  frameType: number
+  stackSize?: number
+  ilvl?: number
+  icon?: string
+  x: number
+  y: number
+  // Game Ctrl+C style text isn't available from the website; these help price it
+  gemLevel?: number
+  links?: number
+  corrupted?: boolean
 }
 
 // Build gear panel: one item of the build's active item set
@@ -186,7 +273,14 @@ export type IpcEvent =
   IpcPobGearResult |
   IpcWriteClipboard |
   IpcPobPickFolderRequest |
-  IpcPobPickFolderResult
+  IpcPobPickFolderResult |
+  IpcPobBuildsRequest |
+  IpcPobBuildsResult |
+  IpcPobGemsRequest |
+  IpcPobGemsResult |
+  IpcStashRequest |
+  IpcStashResult |
+  IpcStashSession
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -283,6 +377,11 @@ type IpcUserAction =
   } | {
     action: 'stash-search'
     text: string
+  } | {
+    // Deathloom fork: trade companion button. Focuses the game and sends one
+    // chat command (one message per click, GGG's macro rule).
+    action: 'chat-command'
+    text: string
   }>
 
 // Deathloom fork: Path of Building build impact
@@ -338,6 +437,73 @@ type IpcPobPickFolderResult =
     requestId: number
     // null when the dialog was cancelled
     path: string | null
+  }>
+
+// Deathloom fork: build panel. Lists the player's builds and the active
+// build's loadouts; optionally sets the active build (writes active.txt) or
+// the loadout first.
+type IpcPobBuildsRequest =
+  Event<'CLIENT->MAIN::pob-builds', {
+    requestId: number
+    setActive?: string
+    setLoadout?: PobLoadoutChoice
+  }>
+
+type IpcPobBuildsResult =
+  Event<'MAIN->CLIENT::pob-builds', {
+    requestId: number
+    ok: boolean
+    error?: string
+    list?: PobBuildList
+    build?: PobBuildInfo
+    loadouts?: PobLoadouts
+  }>
+
+// Deathloom fork: gems menu
+type IpcPobGemsRequest =
+  Event<'CLIENT->MAIN::pob-gems', {
+    requestId: number
+    refreshGear?: boolean
+  }>
+
+type IpcPobGemsResult =
+  Event<'MAIN->CLIENT::pob-gems', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    groups?: PobSocketGroup[]
+    // The character's socket groups (live gear with gems on)
+    live?: PobSocketGroup[]
+    character?: string
+    // Why live gems are missing
+    liveError?: string
+  }>
+
+// Deathloom fork: stash tracker (personal opt-in, POESESSID)
+type IpcStashRequest =
+  Event<'CLIENT->MAIN::stash', {
+    requestId: number
+    action: 'tabs' | 'refresh'
+  }>
+
+type IpcStashResult =
+  Event<'MAIN->CLIENT::stash', {
+    requestId: number
+    ok: boolean
+    error?: string
+    tabs?: StashTabInfo[]
+    items?: StashItem[]
+    // ids of items that weren't there at the previous refresh
+    newIds?: string[]
+    fetchedAt?: number
+    hasSession: boolean
+  }>
+
+// Save or forget the POESESSID (stored encrypted with Windows DPAPI via Electron safeStorage)
+type IpcStashSession =
+  Event<'CLIENT->MAIN::stash-session', {
+    sessionId: string | null
   }>
 
 interface Event<TName extends string, TPayload = undefined> {
