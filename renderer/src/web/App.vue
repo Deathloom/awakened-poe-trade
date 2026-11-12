@@ -10,16 +10,29 @@ import OverlayWindow from './overlay/OverlayWindow.vue'
 import HudApp from './hud/HudApp.vue'
 import { IS_HUD } from './hud/is-hud'
 import { Host } from './background/IPC'
-import { AppConfig, saveConfig } from './Config'
+import { AppConfig, saveConfig, pushHostConfig } from './Config'
+import { openTradeSearch, openPriceCheck } from './pob/gear-actions'
 
 // Deathloom fork: the HUD window was dragged; the overlay owns the settings file
 if (!IS_HUD) {
   Host.onEvent('MAIN->CLIENT::hud-moved', (e) => {
     const hud = AppConfig().pob?.hud
     if (!hud) return
-    hud.x = e.x
-    hud.y = e.y
+    hud.pos = { ...hud.pos, [e.panel]: { x: e.x, y: e.y } }
     saveConfig()
+  })
+  // build gear panel pinned in the HUD window: Trade / price check / loadout choice
+  Host.onEvent('MAIN->CLIENT::hud-gear-action', (e) => {
+    if (e.action === 'trade' && e.text) {
+      const err = openTradeSearch(e.text)
+      if (err) console.warn('[HUD gear] ' + err)
+    } else if (e.action === 'price-check' && e.text) {
+      openPriceCheck(e.text, { x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight / 3) })
+    } else if (e.action === 'loadouts' && e.loadouts) {
+      AppConfig().pob.loadouts = e.loadouts
+      saveConfig()
+      pushHostConfig()
+    }
   })
 }
 </script>

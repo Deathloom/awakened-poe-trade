@@ -17,6 +17,8 @@ let lastActiveClient: WebSocket
 // Deathloom fork: the HUD window ("show while playing") connects as a second
 // client. It only listens; replies meant for the overlay never go to it.
 const hudClients = new WeakSet<WebSocket>()
+// the client whose message is being handled right now (see replyTo)
+let dispatchingSocket: WebSocket | undefined
 
 addFileUploadRoutes(server)
 
@@ -62,13 +64,25 @@ export function sendEventTo (
   }
 }
 
+// Deathloom fork: call this synchronously inside an onEventAnyClient handler to
+// get a function that answers the client that sent the event (the overlay or
+// the HUD window), even after async work. Falls back to the last-active client.
+export function replyTo (): (event: IpcEvent) => void {
+  const socket = dispatchingSocket ?? lastActiveClient
+  return (event) => {
+    if (socket && socket.readyState === socket.OPEN) socket.send(JSON.stringify(event))
+  }
+}
+
 export interface ServerEvents {
   onEventAnyClient: typeof onEventAnyClient
   sendEventTo: typeof sendEventTo
+  replyTo: typeof replyTo
 }
 export const eventPipe = {
   onEventAnyClient,
-  sendEventTo
+  sendEventTo,
+  replyTo
 }
 
 server.on('upgrade', (req, socket, head) => {
@@ -96,7 +110,12 @@ export async function startServer (
         if (isHud) return
         lastActiveClient = socket
       }
-      evBus.emit(event.name, event.payload)
+      dispatchingSocket = socket
+      try {
+        evBus.emit(event.name, event.payload)
+      } finally {
+        dispatchingSocket = undefined
+      }
     })
     socket.on('close', () => {
       const clients = [...websocketServer.clients].filter(c => !hudClients.has(c))

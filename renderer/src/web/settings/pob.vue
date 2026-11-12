@@ -116,7 +116,8 @@
       </div>
       <ui-toggle v-model="pob.hud.guide" class="mb-1">Campaign guide</ui-toggle>
       <ui-toggle v-model="pob.hud.trades" class="mb-1">Trade companion</ui-toggle>
-      <template v-if="pob.hud.guide || pob.hud.trades">
+      <ui-toggle v-model="pob.hud.gear" class="mb-1">Build gear panel</ui-toggle>
+      <template v-if="pob.hud.guide || pob.hud.trades || pob.hud.gear">
         <ui-toggle v-model="pob.hud.clickThrough" class="mb-1">Clicks go through to the game while playing</ui-toggle>
         <div class="text-gray-500 text-sm mb-1 ml-6">
           On: the panels can't be clicked while you play (press Shift+Space to use the buttons).
@@ -129,10 +130,8 @@
           <span class="w-10 text-right">{{ pob.hud.opacity }}%</span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="shrink-0">Position (from the game's top-left)</span>
-          <input v-model.number="pob.hud.x" type="number" class="rounded bg-gray-900 px-1 w-16">
-          <input v-model.number="pob.hud.y" type="number" class="rounded bg-gray-900 px-1 w-16">
-          <button type="button" class="px-2 bg-gray-800 rounded" @click="pob.hud.x = 10; pob.hud.y = 60">Reset</button>
+          <span class="flex-1">Each panel has its own spot: drag its grip to move it.</span>
+          <button type="button" class="px-2 bg-gray-800 rounded" @click="resetHudPositions">Reset positions</button>
         </div>
       </template>
     </div>
@@ -224,6 +223,10 @@ export default defineComponent({
 
     return {
       pob,
+      // applied when the settings window is closed, like every other setting
+      resetHudPositions () {
+        pob.value.hud.pos = defaultHudConfig().pos
+      },
       sessionInput,
       sessionNote,
       saveSession () {

@@ -48,6 +48,8 @@ export function saveConfig (opts?: { isTemporary: boolean }) {
 }
 
 export function pushHostConfig () {
+  // Deathloom fork: only the overlay window tells main about settings
+  if (IS_HUD) return
   Host.sendEvent({
     name: 'CLIENT->MAIN::update-host-config',
     payload: getConfigForHost()
@@ -441,6 +443,14 @@ function upgradeConfig (_config: Config): Config {
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
   config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }
+  if (typeof config.pob.hud.x === 'number' && typeof config.pob.hud.y === 'number') {
+    // one HUD window per panel now: the old shared spot goes to the guide, trades below it
+    const { x, y } = config.pob.hud
+    config.pob.hud.pos = { ...config.pob.hud.pos, guide: { x, y }, trades: { x, y: y + 330 } }
+    delete config.pob.hud.x
+    delete config.pob.hud.y
+  }
+  config.pob.hud.pos = { ...defaultHudConfig().pos, ...config.pob.hud.pos }
   if (!config.pob.hotkeysV1) {
     // one-time defaults for configs saved before these hotkeys existed
     config.pob.gearPanelKey ||= 'Ctrl + G'
@@ -622,7 +632,15 @@ function getConfigForHost (): HostConfig {
 }
 
 export function defaultHudConfig (): PobHudConfig {
-  return { guide: false, trades: false, clickThrough: false, opaque: false, opacity: 90, x: 10, y: 60 }
+  return {
+    guide: false,
+    trades: false,
+    gear: false,
+    clickThrough: false,
+    opaque: false,
+    opacity: 90,
+    pos: { guide: { x: 10, y: 90 }, trades: { x: 10, y: 420 }, gear: { x: 440, y: 90 } }
+  }
 }
 
 // Deathloom fork: Path of Building build impact

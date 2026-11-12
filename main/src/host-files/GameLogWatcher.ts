@@ -19,6 +19,9 @@ const POSSIBLE_PATH =
 
 export class GameLogWatcher {
   private _wantedPath: string | null = null
+  // Deathloom fork: main-process listeners (HUD: are we in a zone yet?).
+  // Called with the end of the existing log when a file is opened, then with new lines.
+  onLines?: (lines: string[], isHistory: boolean) => void
   get actualPath () { return this._state?.path ?? null }
   private _state: {
     offset: number
@@ -89,6 +92,14 @@ export class GameLogWatcher {
         readBuff: Buffer.allocUnsafe(64 * 1024),
       }
       this.logger.write(`info [GameLogWatcher] Reading ${logFile}`)
+      // Deathloom fork: the last bit of the existing log tells whether we're already in a zone
+      if (this.onLines) {
+        const tail = Math.min(stats.size, 256 * 1024)
+        const buf = Buffer.allocUnsafe(tail)
+        const { bytesRead } = await file.read(buf, 0, tail, stats.size - tail)
+        const lines = buf.toString('utf8', 0, bytesRead).split('\n').map(l => l.trim()).filter(l => l.length)
+        this.onLines(lines, true)
+      }
     } catch {
       this.logger.write('error [GameLogWatcher] Failed to watch file.')
     }
@@ -110,6 +121,7 @@ export class GameLogWatcher {
     if (bytesRead) {
       const str = readBuff.toString('utf8', 0, bytesRead)
       const lines = str.split('\n').map(line => line.trim()).filter(line => line.length)
+      this.onLines?.(lines, false)
       this.server.sendEventTo('broadcast', {
         name: 'MAIN->CLIENT::game-log',
         payload: { lines }

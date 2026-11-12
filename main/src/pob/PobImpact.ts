@@ -86,16 +86,18 @@ export class PobImpact {
       this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gear', ({ requestId }) => {
+      // the build gear panel can be in the overlay or the HUD window
+      const send = this.server.replyTo()
       this.queue = this.queue
         .then(async () => await this.gear())
         .then(({ build, itemSet, items }) => {
-          this.server.sendEventTo('last-active', {
+          send({
             name: 'MAIN->CLIENT::pob-gear',
             payload: { requestId, ok: true, build, itemSet, items }
           })
         })
         .catch((err: Error) => {
-          this.server.sendEventTo('last-active', {
+          send({
             name: 'MAIN->CLIENT::pob-gear',
             payload: { requestId, ok: false, error: err.message }
           })
@@ -106,13 +108,14 @@ export class PobImpact {
   private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
+    const send = this.server.replyTo()
     this.queue = this.queue
       .then(work)
       .then((payload) => {
-        this.server.sendEventTo('last-active', { name, payload: { requestId, ok: true, ...payload } } as any)
+        send({ name, payload: { requestId, ok: true, ...payload } } as any)
       })
       .catch((err: Error) => {
-        this.server.sendEventTo('last-active', { name, payload: { requestId, ok: false, error: err.message } } as any)
+        send({ name, payload: { requestId, ok: false, error: err.message } } as any)
       })
   }
 
