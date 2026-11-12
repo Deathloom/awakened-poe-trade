@@ -10,21 +10,30 @@
     </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Path of Building folder</div>
-      <input v-model.trim="pob.pobDir"
-        class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. D:\Claude Projects\PathOfBuilding">
+      <div class="flex gap-1">
+        <input v-model.trim="pob.pobDir"
+        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. D:\Claude Projects\PathOfBuilding">
+        <button type="button" @click="browsePobDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
+      </div>
       <div class="text-gray-500 text-sm mt-1">The folder that contains <code>src</code> and <code>runtime\PoBHeadless.exe</code>.</div>
     </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Builds folder</div>
-      <input v-model.trim="pob.buildsDir"
-        class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. D:\Claude Projects\poe-builds\poe1">
+      <div class="flex gap-1">
+        <input v-model.trim="pob.buildsDir"
+        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. D:\Claude Projects\poe-builds\poe1">
+        <button type="button" @click="browseBuildsDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
+      </div>
     </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Player</div>
-      <input v-model.trim="pob.player"
-        class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. Deathloom">
+      <div class="flex gap-1">
+        <input v-model.trim="pob.player"
+        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. Deathloom">
+        <button type="button" @click="browsePlayer" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
+      </div>
       <div class="text-gray-500 text-sm mt-1">
-        Your folder in the builds folder. Its <code>active.txt</code> names the build to compare against.
+        Your folder in the builds folder (Browse… picks it and fills in the name). Its <code>active.txt</code> names the build to compare against.
         Changes are picked up automatically after a Pull in PoB.
       </div>
     </div>
@@ -79,17 +88,64 @@ import UiToggle from '@/web/ui/UiToggle.vue'
 import HotkeyInput from './HotkeyInput.vue'
 import { configProp } from './utils'
 import { defaultPobConfig } from '@/web/Config'
+import { Host } from '@/web/background/IPC'
 
 export default defineComponent({
   name: 'Path of Building',
   components: { UiToggle, HotkeyInput },
   props: configProp(),
   setup (props) {
-    return {
-      pob: computed(() => {
-        props.config.pob ??= defaultPobConfig()
-        return props.config.pob
+    const pob = computed(() => {
+      props.config.pob ??= defaultPobConfig()
+      return props.config.pob
+    })
+
+    let nextId = 1
+    function pickFolder (title: string, defaultPath: string): Promise<string | null> {
+      const requestId = nextId++
+      return new Promise((resolve) => {
+        const listener = Host.onEvent('MAIN->CLIENT::pob-pick-folder', (e) => {
+          if (e.requestId !== requestId) return
+          listener.abort()
+          resolve(e.path)
+        })
+        Host.sendEvent({
+          name: 'CLIENT->MAIN::pob-pick-folder',
+          payload: { requestId, title, defaultPath }
+        })
       })
+    }
+
+    function joinPath (dir: string, name: string) {
+      return dir ? dir.replace(/[\\/]+$/, '') + '\\' + name : name
+    }
+    function baseName (p: string) {
+      return p.replace(/[\\/]+$/, '').split(/[\\/]/).pop() ?? ''
+    }
+
+    return {
+      pob,
+      async browsePobDir () {
+        const picked = await pickFolder('Path of Building folder', pob.value.pobDir)
+        if (picked) pob.value.pobDir = picked
+      },
+      async browseBuildsDir () {
+        const picked = await pickFolder('Builds folder (poe-builds\\poe1)', pob.value.buildsDir)
+        if (picked) pob.value.buildsDir = picked
+      },
+      async browsePlayer () {
+        const start = pob.value.player
+          ? joinPath(pob.value.buildsDir, pob.value.player)
+          : pob.value.buildsDir
+        const picked = await pickFolder('Your player folder', start)
+        if (!picked) return
+        const parent = picked.replace(/[\\/]+$/, '').replace(/[\\/][^\\/]*$/, '')
+        // a player folder outside the current builds folder moves the builds folder too
+        if (parent.toLowerCase() !== pob.value.buildsDir.replace(/[\\/]+$/, '').toLowerCase()) {
+          pob.value.buildsDir = parent
+        }
+        pob.value.player = baseName(picked)
+      }
     }
   }
 })
