@@ -36,7 +36,7 @@ export class ConfigStore {
       } catch {}
     }
     if (contents == null && !this.isDev) {
-      // Deathloom fork, first run of the installed toolkit: start from the
+      // Deathloom fork, first run of the installed Loot Goblin: start from the
       // settings used when running from source (or upstream APT's), if any
       const old = path.join(app.getPath('appData'), 'awakened-poe-trade', 'apt-data')
       for (const file of ['config.dev.json', 'config.json']) {

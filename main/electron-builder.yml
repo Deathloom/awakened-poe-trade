@@ -5,8 +5,8 @@ publish:
     owner: "Deathloom"
     repo: "awakened-poe-trade"
     releaseType: "release"
-appId: "com.deathloom.poe-builds-toolkit"
-productName: "POE Builds Toolkit"
+appId: "com.deathloom.loot-goblin"
+productName: "Loot Goblin"
 npmRebuild: false
 toolsets:
   appimage: 1.0.3
@@ -20,7 +20,7 @@ files:
     to: "."
 extraMetadata:
   main: "main.js"
-  name: "poe-builds-toolkit"
+  name: "loot-goblin"
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
