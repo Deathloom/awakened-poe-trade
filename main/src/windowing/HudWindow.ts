@@ -34,6 +34,8 @@ const ZONE = /Generating level \d+ area "|\] : You have entered /
 
 interface PanelWindow {
   win?: BrowserWindow
+  // last state set by update(): on screen, or invisible + click-through
+  shown?: boolean
   builtOpaque?: boolean
   size: { width: number, height: number }
 }
@@ -158,16 +160,26 @@ export class HudWindow {
       // the page exists even while hidden, so the companion keeps reading whispers
       const win = this.ensureWindow(panel)
       if (!win) continue
+      const pw = this.windows[panel]
       if (!show) {
-        if (win.isVisible()) win.hide()
+        // Not hide(): after hide() + showInactive() (alt-tab away and back) Windows
+        // stopped sending clicks to some panels. Invisible and click-through instead.
+        if (pw.shown !== false) {
+          win.setOpacity(0)
+          win.setIgnoreMouseEvents(true)
+          pw.shown = false
+        }
         continue
       }
-      win.setOpacity(Math.max(30, Math.min(100, this.cfg.opacity || 100)) / 100)
-      // Click-through only while playing; with the overlay active (Shift+Space) you can always click and drag
+      // Click-through only while playing; with the overlay active (Shift+Space) you can always click and drag.
+      // Always set twice: Electron skips the call when it thinks nothing changed.
       const ignore = Boolean(this.cfg.clickThrough && playing)
+      win.setIgnoreMouseEvents(!ignore)
       win.setIgnoreMouseEvents(ignore)
+      win.setOpacity(Math.max(30, Math.min(100, this.cfg.opacity || 100)) / 100)
       this.place(panel)
       if (!win.isVisible()) win.showInactive()
+      pw.shown = true
       // keep it above the full-screen overlay window too (also after the overlay was activated)
       win.setAlwaysOnTop(true, 'screen-saver')
       win.moveTop()
@@ -213,6 +225,7 @@ export class HudWindow {
       return undefined
     }
     pw.win = win
+    pw.shown = undefined
     win.setMenu(null)
     win.webContents.setWindowOpenHandler((details) => {
       shell.openExternal(details.url)
