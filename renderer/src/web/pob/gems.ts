@@ -39,8 +39,8 @@ function overlap (a: PobSocketGroup, b: PobSocketGroup) {
   return b.gems.filter(g => names.has(key(g.name))).length
 }
 
-// Pick the character's group for each build group: same slot and most shared
-// gems first, then most shared gems anywhere. Each character group is used once.
+// Pick the character's group for each build group: same slot first (most shared
+// gems), then most shared gems anywhere. Each character group is used once.
 function matchGroups (build: PobSocketGroup[], live: PobSocketGroup[]) {
   const used = new Set<number>()
   const result = new Map<PobSocketGroup, PobSocketGroup>()
@@ -49,7 +49,8 @@ function matchGroups (build: PobSocketGroup[], live: PobSocketGroup[]) {
     for (const l of live) {
       const shared = overlap(b, l)
       if (!shared) continue
-      candidates.push({ b, l, score: shared * 10 + (b.slot && b.slot === l.slot ? 5 : 0) })
+      // Same gear piece wins over sharing more gems elsewhere (e.g. a swap-weapon copy)
+      candidates.push({ b, l, score: shared + (b.slot && b.slot === l.slot ? 100 : 0) })
     }
   }
   candidates.sort((x, y) => y.score - x.score)
@@ -258,14 +259,19 @@ export function bySlot (
     list.push(row)
     bySlotName.set(row.group.slot!, list)
   }
-  const slotNames = [...bySlotName.keys()]
+  // Every gear piece gets a card, with or without gems
+  const slotNames = [...new Set([
+    ...bySlotName.keys(),
+    ...items.map(i => i.slot),
+    ...(liveItems ?? []).map(i => i.slot)
+  ])]
   slotNames.sort((a, b) => {
     const ia = SLOT_ORDER.indexOf(a)
     const ib = SLOT_ORDER.indexOf(b)
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b)
   })
   const slots = slotNames.map(slot => {
-    const rows = bySlotName.get(slot)!
+    const rows = bySlotName.get(slot) ?? []
     const needs = socketNeeds(rows.map(r => r.group))
     const item = items.find(i => i.slot === slot)
     const liveItem = liveItems?.find(i => i.slot === slot)

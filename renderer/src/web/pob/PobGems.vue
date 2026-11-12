@@ -20,9 +20,10 @@
         <div class="flex items-center gap-x-2 text-xs">
           <span class="text-gray-300 shrink-0">{{ sv.slot }}</span>
           <span class="text-gray-500 truncate flex-1" :title="sv.item?.baseName">{{ sv.item?.name ?? '' }}</span>
-          <span class="text-gray-500 shrink-0" title="Sockets the gems in this slot need (colours, biggest link)">{{ needsText(sv.needs) }}</span>
+          <span v-if="sv.rows.length" class="text-gray-500 shrink-0" title="Sockets the gems in this slot need (colours, biggest link)">{{ needsText(sv.needs) }}</span>
+          <span v-else class="text-gray-600 shrink-0">no gems</span>
         </div>
-        <div class="flex items-center gap-x-2 text-xs py-px">
+        <div v-if="sv.rows.length || sv.item?.sockets" class="flex items-center gap-x-2 text-xs py-px">
           <span class="w-14 shrink-0 text-gray-500">build</span>
           <span class="flex items-center">
             <template v-for="(grp, gi) of parseSockets(sv.item?.sockets)" :key="gi">
@@ -33,10 +34,11 @@
               </template>
             </template>
             <span v-if="!sv.item" class="text-gray-600">no item in PoB</span>
+            <span v-else-if="!sv.item.sockets" class="text-gray-600">no sockets</span>
           </span>
-          <span v-if="sv.item && !sv.buildCheck.ok" class="text-yellow-600">{{ checkText(sv.buildCheck, sv.needs) }}</span>
+          <span v-if="sv.item && sv.rows.length && !sv.buildCheck.ok" class="text-yellow-600">{{ checkText(sv.buildCheck, sv.needs) }}</span>
         </div>
-        <div v-if="sv.liveCheck" class="flex items-center gap-x-2 text-xs py-px">
+        <div v-if="sv.liveCheck && (sv.rows.length || sv.liveItem?.sockets)" class="flex items-center gap-x-2 text-xs py-px">
           <span class="w-14 shrink-0 text-gray-500 truncate" :title="sv.liveItem?.name">yours</span>
           <span class="flex items-center">
             <template v-for="(grp, gi) of parseSockets(sv.liveItem?.sockets)" :key="gi">
@@ -46,25 +48,26 @@
                 <span class="inline-block w-3 h-3 rounded-full border border-black" :style="{ background: socketColour(c) }" :title="socketName(c)" />
               </template>
             </template>
-            <span v-if="!sv.liveItem" class="text-gray-600">nothing socketed there</span>
+            <span v-if="!sv.liveItem" class="text-gray-600">nothing equipped there</span>
+            <span v-else-if="!sv.liveItem.sockets" class="text-gray-600">no sockets</span>
           </span>
-          <span v-if="sv.liveItem" :class="sv.liveCheck.ok ? 'text-green-500' : 'text-red-400'">
+          <span v-if="sv.liveItem && sv.rows.length" :class="sv.liveCheck.ok ? 'text-green-500' : 'text-red-400'">
             {{ sv.liveCheck.ok ? 'fits' : checkText(sv.liveCheck, sv.needs) }}</span>
         </div>
         <!-- Gems, one block per link group -->
         <div v-for="row of sv.rows" :key="row.group.index" class="mt-1 pl-1 border-l-2"
           :class="row.group.main ? 'border-yellow-600' : 'border-gray-700'">
           <div v-if="sv.rows.length > 1 || row.group.main || row.liveSlot || (live && !row.matched)" class="flex items-baseline gap-x-2 text-xs text-gray-500">
-            <span class="text-gray-400">{{ linkTitle(row) }}</span>
-            <span v-if="row.group.main" class="text-yellow-500">main skill</span>
-            <span v-if="row.liveSlot" class="ml-auto">yours: in {{ row.liveSlot }}</span>
-            <span v-else-if="live && !row.matched" class="ml-auto text-red-400">not on character</span>
+            <span class="text-gray-400 truncate min-w-0 flex-1" :title="linkTitle(row)">{{ linkTitle(row) }}</span>
+            <span v-if="row.group.main" class="text-yellow-500 shrink-0 whitespace-nowrap">main skill</span>
+            <span v-if="row.liveSlot" class="shrink-0 whitespace-nowrap">yours: {{ row.liveSlot }}</span>
+            <span v-else-if="live && !row.matched" class="shrink-0 whitespace-nowrap text-red-400">not on character</span>
           </div>
           <div v-for="(g, idx) of row.gems" :key="idx" class="flex items-baseline gap-x-2" :class="{ hidden: !g.gem.enabled }">
             <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0 self-center" :style="{ background: gemColour(g.gem.colour) }" />
             <span class="flex-1 truncate" :class="{ 'text-gray-400': g.gem.support }" :title="gemTitle(g.gem)">{{ g.gem.name }}</span>
             <span class="text-gray-400 shrink-0" title="Level / quality the build uses">{{ g.gem.level ?? '?' }}/{{ g.gem.quality ?? 0 }}</span>
-            <span class="w-28 text-right shrink-0 text-xs" :class="statusClass(g.status)" :title="statusTitle(g)">{{ statusText(g) }}</span>
+            <span class="w-32 text-right shrink-0 text-xs truncate whitespace-nowrap" :class="statusClass(g.status)" :title="statusTitle(g)">{{ statusText(g) }}</span>
           </div>
           <div v-if="row.extra.length" class="text-xs text-gray-500 pt-px">
             You also have: {{ row.extra.map(g => `${g.name} ${g.level ?? '?'}/${g.quality ?? 0}`).join(', ') }}
@@ -199,8 +202,8 @@ function statusClass (s: GemStatus) {
 
 function statusText (g: GemRow) {
   switch (g.status) {
-    case 'ok': return g.have?.slot ? `ok (in ${g.have.slot})` : 'ok'
-    case 'low': return `have ${g.have?.level ?? '?'}/${g.have?.quality ?? 0}${g.have?.slot ? ' (' + g.have.slot + ')' : ''}`
+    case 'ok': return g.have?.slot ? `ok · ${g.have.slot}` : 'ok'
+    case 'low': return `have ${g.have?.level ?? '?'}/${g.have?.quality ?? 0}${g.have?.slot ? ' · ' + g.have.slot : ''}`
     case 'missing': return 'missing'
     default: return ''
   }
