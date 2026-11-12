@@ -12,7 +12,7 @@ import path from 'path'
 export const LOGIN = /\*{5} LOG FILE OPENING \*{5}|Async connecting to \S+\.login\./
 // Entered an area (any client language for the first form)
 export const ZONE = /Generating level \d+ area "|\] : You have entered /
-// ": Deathloom (Necromancer) is now level 93"
+// ": MyWitch (Necromancer) is now level 93"
 export const LEVEL_UP = /\] : ([^\s(]+) \([^)]+\) is now level \d+/
 
 export interface LogScanState {
