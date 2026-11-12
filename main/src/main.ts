@@ -12,6 +12,7 @@ import { Shortcuts } from './shortcuts/Shortcuts'
 import { AppUpdater } from './AppUpdater'
 import { AppTray } from './AppTray'
 import { OverlayVisibility } from './windowing/OverlayVisibility'
+import { HudWindow } from './windowing/HudWindow'
 import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
 import { PobImpact } from './pob/PobImpact'
@@ -48,6 +49,8 @@ app.on('ready', async () => {
     async () => {
       const overlay = new OverlayWindow(eventPipe, logger, poeWindow)
       new OverlayVisibility(eventPipe, overlay, gameConfig)
+      // Deathloom fork: panels that stay visible while playing
+      const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
       eventPipe.onEventAnyClient('CLIENT->MAIN::update-host-config', (cfg) => {
         overlay.updateOpts(cfg.overlayKey, cfg.windowTitle)
@@ -58,12 +61,14 @@ app.on('ready', async () => {
         tray.overlayKey = cfg.overlayKey
         pobImpact.configure(cfg.pob)
         stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
+        hud.configure(cfg.pob?.hud)
       })
       uIOhook.start()
       const port = await startServer(appUpdater, logger)
       // TODO: move up (currently crashes)
       logger.write(`info ${os.type()} ${os.release} / v${app.getVersion()}`)
       overlay.loadAppPage(port)
+      hud.setPort(port)
       tray.serverPort = port
     },
     // fixes(linux): window is black instead of transparent

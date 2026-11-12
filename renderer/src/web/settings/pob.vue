@@ -95,6 +95,37 @@
     </div>
 
     <div class="mt-6 mb-2">
+      <div class="mb-1">Show while playing</div>
+      <div class="text-gray-500 text-sm mb-2">
+        Pinned panels stay on screen while the game has focus, in a small window of their own that never
+        takes focus from the game. Drag the grip at the top to move it. Unpinned panels only show with
+        the overlay active (Shift+Space). If the game crashes with a panel pinned, try "Solid background",
+        and make sure the game's Display mode is <b>Windowed Fullscreen</b>.
+      </div>
+      <ui-toggle v-model="pob.hud.guide" class="mb-1">Campaign guide</ui-toggle>
+      <ui-toggle v-model="pob.hud.trades" class="mb-1">Trade companion</ui-toggle>
+      <template v-if="pob.hud.guide || pob.hud.trades">
+        <ui-toggle v-model="pob.hud.clickThrough" class="mb-1">Clicks go through to the game while playing</ui-toggle>
+        <div class="text-gray-500 text-sm mb-1 ml-6">
+          On: the panels can't be clicked while you play (press Shift+Space to use the buttons).
+          Off: chat buttons work straight away, without the overlay.
+        </div>
+        <ui-toggle v-model="pob.hud.opaque" class="mb-1">Solid background (no see-through window)</ui-toggle>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="shrink-0">Opacity</span>
+          <input v-model.number="pob.hud.opacity" type="range" min="30" max="100" step="5" class="flex-1">
+          <span class="w-10 text-right">{{ pob.hud.opacity }}%</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="shrink-0">Position (from the game's top-left)</span>
+          <input v-model.number="pob.hud.x" type="number" class="rounded bg-gray-900 px-1 w-16">
+          <input v-model.number="pob.hud.y" type="number" class="rounded bg-gray-900 px-1 w-16">
+          <button type="button" class="px-2 bg-gray-800 rounded" @click="pob.hud.x = 10; pob.hud.y = 60">Reset</button>
+        </div>
+      </template>
+    </div>
+
+    <div class="mt-6 mb-2">
       <ui-toggle v-model="pob.stash.enabled">Stash tracker (personal, uses your login cookie)</ui-toggle>
       <div class="text-yellow-500 text-sm mt-1">
         Grey area: GGG's official stash API needs an approved app and registration is closed, so this reads
@@ -132,7 +163,7 @@ import { defineComponent, computed, ref } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import HotkeyInput from './HotkeyInput.vue'
 import { configProp } from './utils'
-import { defaultPobConfig } from '@/web/Config'
+import { defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import { Host } from '@/web/background/IPC'
 
 export default defineComponent({
@@ -144,6 +175,7 @@ export default defineComponent({
       props.config.pob ??= defaultPobConfig()
       props.config.pob.stash ??= defaultPobConfig().stash
       props.config.pob.chatButtons ??= 'copy'
+      props.config.pob.hud ??= defaultHudConfig()
       return props.config.pob
     })
 

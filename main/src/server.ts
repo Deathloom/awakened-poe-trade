@@ -14,6 +14,9 @@ import type { Logger } from './RemoteLogger'
 export const server = createServer()
 const websocketServer = new WebSocketServer({ noServer: true })
 let lastActiveClient: WebSocket
+// Deathloom fork: the HUD window ("show while playing") connects as a second
+// client. It only listens; replies meant for the overlay never go to it.
+const hudClients = new WeakSet<WebSocket>()
 
 addFileUploadRoutes(server)
 
@@ -21,7 +24,9 @@ if (!process.env.VITE_DEV_SERVER_URL) {
   server.addListener('request', (req, res) => {
     if (req.url?.startsWith('/config') || req.url?.startsWith('/uploads') || req.url?.startsWith('/proxy')) return
 
-    const filePath = (req.url === '/') ? '/index.html' : req.url!
+    // Deathloom fork: ignore the query string (the HUD window loads index.html?hud)
+    const urlPath = req.url!.split('?')[0]
+    const filePath = (urlPath === '/') ? '/index.html' : urlPath
     switch (path.extname(filePath)) {
       case '.html': res.setHeader('content-type', 'text/html'); break;
       case '.js': res.setHeader('content-type', 'text/javascript'); break;
@@ -67,10 +72,11 @@ export const eventPipe = {
 }
 
 server.on('upgrade', (req, socket, head) => {
-  if (req.url !== '/events') {
+  if (req.url !== '/events' && req.url !== '/events?client=hud') {
     return req.destroy()
   }
   websocketServer.handleUpgrade(req, socket, head, (ws) => {
+    if (req.url === '/events?client=hud') hudClients.add(ws)
     websocketServer.emit('connection', ws, req)
   })
 })
@@ -82,25 +88,29 @@ export async function startServer (
   const configStore = new ConfigStore(eventPipe)
 
   websocketServer.on('connection', (socket) => {
-    lastActiveClient = socket
+    const isHud = hudClients.has(socket)
+    if (!isHud) lastActiveClient = socket
     socket.on('message', (bytes) => {
       const event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
       if (event.name === 'CLIENT->MAIN::used-recently') {
+        if (isHud) return
         lastActiveClient = socket
       }
       evBus.emit(event.name, event.payload)
     })
     socket.on('close', () => {
-      const clients = websocketServer.clients
-      if (clients.size === 1) {
-        lastActiveClient = clients.values().next().value!
+      const clients = [...websocketServer.clients].filter(c => !hudClients.has(c))
+      if (clients.length === 1) {
+        lastActiveClient = clients[0]
         evBus.emit('CLIENT->MAIN::used-recently', { isOverlay: true })
       }
     })
-    sendEventTo('last-active', {
-      name: 'MAIN->CLIENT::log-entry',
-      payload: { message: logger.history }
-    })
+    if (!isHud) {
+      sendEventTo('last-active', {
+        name: 'MAIN->CLIENT::log-entry',
+        payload: { message: logger.history }
+      })
+    }
   })
 
   server.addListener('request', async (req, res) => {

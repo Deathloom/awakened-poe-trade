@@ -1,11 +1,27 @@
 <template>
   <div id="app" class="text-sm font-poe-sc">
-    <OverlayWindow />
+    <HudApp v-if="IS_HUD" />
+    <OverlayWindow v-else />
   </div>
 </template>
 
 <script setup lang="ts">
 import OverlayWindow from './overlay/OverlayWindow.vue'
+import HudApp from './hud/HudApp.vue'
+import { IS_HUD } from './hud/is-hud'
+import { Host } from './background/IPC'
+import { AppConfig, saveConfig } from './Config'
+
+// Deathloom fork: the HUD window was dragged; the overlay owns the settings file
+if (!IS_HUD) {
+  Host.onEvent('MAIN->CLIENT::hud-moved', (e) => {
+    const hud = AppConfig().pob?.hud
+    if (!hud) return
+    hud.x = e.x
+    hud.y = e.y
+    saveConfig()
+  })
+}
 </script>
 
 <style lang="postcss">
