@@ -94,7 +94,7 @@ export default {
       wmTitle: '{icon=fa-handshake}',
       wmWants: 'hide',
       wmZorder: null,
-      wmFlags: [],
+      wmFlags: ['invisible-on-blur'],
       anchor: { pos: 'tr', x: 98, y: 20 }
     })
   } satisfies WidgetSpec
@@ -112,6 +112,12 @@ import { runChat, chatMode } from './chat'
 import { addPrice, type TradeEntry, loadLedger, saveLedger } from './ledger'
 
 const props = defineProps<{ config: TradeCompanionWidget }>()
+// Only draw while the overlay is active (Shift+Space), never over the game while
+// it has focus: an always-visible overlay crashed the game to desktop on
+// Gerhard's PC (2026-11-12). Also fixes configs saved before this change.
+if (!props.config.wmFlags.includes('invisible-on-blur')) {
+  props.config.wmFlags = [...props.config.wmFlags, 'invisible-on-blur']
+}
 const wm = inject<WidgetManager>('wm')!
 
 const TABS = [{ key: 'trades', label: 'Whispers' }, { key: 'ledger', label: 'Ledger' }] as const

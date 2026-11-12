@@ -52,7 +52,7 @@ export default {
       wmTitle: '{icon=fa-route}',
       wmWants: 'hide',
       wmZorder: null,
-      wmFlags: [],
+      wmFlags: ['invisible-on-blur'],
       anchor: { pos: 'tl', x: 1, y: 30 }
     })
   } satisfies WidgetSpec
@@ -67,7 +67,13 @@ import Widget from '../overlay/Widget.vue'
 import { parseLogLine } from './game-log'
 import { STEPS, findStep } from './campaign-route'
 
-defineProps<{ config: CampaignGuideWidget }>()
+const props = defineProps<{ config: CampaignGuideWidget }>()
+// Only draw while the overlay is active (Shift+Space), never over the game while
+// it has focus: an always-visible overlay crashed the game to desktop on
+// Gerhard's PC (2026-11-12). Also fixes configs saved before this change.
+if (!props.config.wmFlags.includes('invisible-on-blur')) {
+  props.config.wmFlags = [...props.config.wmFlags, 'invisible-on-blur']
+}
 
 const KEY = 'deathloom.campaign-step.v1'
 function loadIndex () {
