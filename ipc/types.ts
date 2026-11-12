@@ -21,6 +21,37 @@ export interface PobConfig {
   buildsDir: string
   // Player folder inside buildsDir; its active.txt names the active build
   player: string
+  // Also compare against the character's equipped gear (public Characters tab)
+  liveGear: boolean
+  // PoE account name incl. discriminator, e.g. Deathloom#1234
+  accountName: string
+  // Character to read equipped gear from
+  character: string
+  // Use the character's passive tree, level and gems too (not just items)
+  liveTreeAndGems: boolean
+}
+
+// How the equipped gear compares to the build's gear, plus what was loaded
+export interface PobEquippedInfo {
+  character?: string
+  class?: string
+  level?: number
+  league?: string
+  items: number
+  skipped: string[]
+  summary: PobImpactCompare['summary']
+  // What came from the character (false: the build's tree/skills were used)
+  tree: boolean
+  skills: boolean
+  nodes?: number
+  jewels?: number
+  // Main skill used for the character, and whether it's the build's main skill
+  mainSkill?: string
+  mainSkillMatched?: boolean
+  // Why the tree wasn't used although it was asked for
+  passivesError?: string
+  // Set by the overlay (ms since epoch)
+  fetchedAt?: number
 }
 
 export interface PobBuildInfo {
@@ -42,6 +73,14 @@ export interface PobImpactResult {
   item: { name: string, rarity: string, baseName: string, type: string }
   compares: PobImpactCompare[]
   lines: Array<{ text: string }>
+  // Same comparison against the character's equipped gear (when live gear is on)
+  equipped?: {
+    compares: PobImpactCompare[]
+    lines: Array<{ text: string }>
+    info?: PobEquippedInfo
+  }
+  // Why the equipped comparison is missing (fetch failed, private profile, ...)
+  equippedError?: string
 }
 
 export interface ShortcutAction {
@@ -217,6 +256,8 @@ type IpcPobImpactRequest =
   Event<'CLIENT->MAIN::pob-impact', {
     requestId: number
     itemText: string
+    // Fetch equipped gear now instead of using the cached copy (still rate-limited)
+    refreshGear?: boolean
   }>
 
 type IpcPobImpactResult =
