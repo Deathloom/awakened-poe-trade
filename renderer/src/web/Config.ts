@@ -451,6 +451,13 @@ function upgradeConfig (_config: Config): Config {
     delete config.pob.hud.y
   }
   config.pob.hud.pos = { ...defaultHudConfig().pos, ...config.pob.hud.pos }
+  if (typeof config.pob.hud.clickThrough === 'boolean') {
+    // was one setting for all panels
+    const on = config.pob.hud.clickThrough
+    config.pob.hud.clickThroughPanels = { guide: on, trades: on, gear: on }
+    delete config.pob.hud.clickThrough
+  }
+  config.pob.hud.clickThroughPanels = { ...defaultHudConfig().clickThroughPanels, ...config.pob.hud.clickThroughPanels }
   if (!config.pob.hotkeysV1) {
     // one-time defaults for configs saved before these hotkeys existed
     config.pob.gearPanelKey ||= 'Ctrl + G'
@@ -636,7 +643,8 @@ export function defaultHudConfig (): PobHudConfig {
     guide: false,
     trades: false,
     gear: false,
-    clickThrough: false,
+    clickThroughPanels: { guide: false, trades: false, gear: false },
+    autoHideTrades: true,
     opaque: false,
     opacity: 90,
     pos: { guide: { x: 10, y: 90 }, trades: { x: 10, y: 420 }, gear: { x: 440, y: 90 } }

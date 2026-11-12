@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine, type LogEvent } from './game-log'
@@ -84,7 +84,7 @@ import { runChat, chatMode } from './chat'
 import { addPrice, type TradeEntry, loadLedger, saveLedger } from './ledger'
 
 defineProps<{ compact?: boolean }>()
-const emit = defineEmits<{ (e: 'incoming'): void }>()
+const emit = defineEmits<{ (e: 'incoming' | 'empty'): void }>()
 
 const TABS = [{ key: 'trades', label: 'Whispers' }, { key: 'ledger', label: 'Ledger' }] as const
 const tab = ref<'trades' | 'ledger'>('trades')
@@ -116,6 +116,8 @@ const modeHelp = computed(() => mode.value === 'send'
   : 'Each click copies the command: press Enter in game, Ctrl+V, Enter. To send directly, change Chat buttons in Settings → Path of Building.')
 
 const openTrades = computed(() => trades.value.filter(t => !t.done))
+// the last open trade was dealt with (Sold, dismissed, or the trade went through)
+watch(() => openTrades.value.length, (n, prev) => { if (n === 0 && prev > 0) emit('empty') })
 
 function handle (e: LogEvent) {
   if (e.type === 'trade') {

@@ -50,8 +50,9 @@ export class HudWindow {
   }
 
   private drag?: { panel: HudPanel, cursorX: number, cursorY: number, x: number, y: number, timer: NodeJS.Timeout, started: number }
-  // pinned panels hidden with their hotkey (not saved; they show again after a restart)
-  private hidden: Record<HudPanel, boolean> = { guide: false, trades: false, gear: false }
+  // Pinned panels start closed each time the app starts; their hotkey opens and
+  // closes them (a trade whisper opens the trade companion). Not saved.
+  private hidden: Record<HudPanel, boolean> = { guide: true, trades: true, gear: true }
   // Only show once a character is in a zone, not on the login / character select screens
   private inWorld = false
   // no Client.txt being read: can't tell, so behave as before (show with the game)
@@ -173,7 +174,7 @@ export class HudWindow {
       }
       // Click-through only while playing; with the overlay active (Shift+Space) you can always click and drag.
       // Always set twice: Electron skips the call when it thinks nothing changed.
-      const ignore = Boolean(this.cfg.clickThrough && playing)
+      const ignore = Boolean(this.cfg.clickThroughPanels?.[panel] && playing)
       win.setIgnoreMouseEvents(!ignore)
       win.setIgnoreMouseEvents(ignore)
       win.setOpacity(Math.max(30, Math.min(100, this.cfg.opacity || 100)) / 100)
