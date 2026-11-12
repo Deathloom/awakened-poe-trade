@@ -15,6 +15,11 @@ import type { Logger } from '../RemoteLogger'
 import type { GameWindow } from './GameWindow'
 import type { OverlayWindow } from './OverlayWindow'
 
+// "Async connecting to lon.login.pathofexile.com:20487"
+const LOGIN_SERVER = /Async connecting to \S+\.login\./
+// 'Generating level 1 area "1_1_1"' (any client language) or ": You have entered The Coast."
+const ZONE = /Generating level \d+ area "|\] : You have entered /
+
 export class HudWindow {
   private window?: BrowserWindow
   private cfg?: PobHudConfig
@@ -23,6 +28,10 @@ export class HudWindow {
   private drag?: { cursorX: number, cursorY: number, x: number, y: number, timer: NodeJS.Timeout, started: number }
   // pinned panels hidden with their hotkey (not saved; everything shows again after a restart)
   private hidden = { guide: false, trades: false }
+  // Only show once a character is in a zone, not on the login / character select screens
+  private inWorld = false
+  // no Client.txt being read: can't tell, so behave as before (show with the game)
+  private readingLog = false
   private builtOpaque?: boolean
 
   constructor (
@@ -34,7 +43,7 @@ export class HudWindow {
     this.poeWindow.on('active-change', () => { this.update() })
     OverlayController.events.on('moveresize', (_e: MoveresizeEvent) => { this.place() })
     OverlayController.events.on('attach', () => { this.place(); this.update() })
-    OverlayController.events.on('detach', () => { this.update() })
+    OverlayController.events.on('detach', () => { this.inWorld = false; this.update() })
 
     this.server.onEventAnyClient('CLIENT->MAIN::hud-size', (e) => {
       this.size = {
@@ -52,6 +61,22 @@ export class HudWindow {
     })
     // a drag ends when the mouse button is released anywhere
     uIOhook.on('mouseup', () => { this.endDrag() })
+  }
+
+  // From Client.txt: a zone being generated / entered means a character is in the
+  // world; connecting to the login server means login or back to character select.
+  handleLogLines (lines: string[]) {
+    const wasReading = this.readingLog
+    this.readingLog = true
+    let inWorld = this.inWorld
+    for (const line of lines) {
+      if (LOGIN_SERVER.test(line)) inWorld = false
+      else if (ZONE.test(line)) inWorld = true
+    }
+    if (inWorld !== this.inWorld || !wasReading) {
+      this.inWorld = inWorld
+      this.update()
+    }
   }
 
   isPinned (panel: 'guide' | 'trades') {
@@ -96,7 +121,7 @@ export class HudWindow {
   update = () => {
     if (!this.enabled || !this.port) return
     const playing = this.poeWindow.isActive
-    const visible = (playing || this.overlay.isInteractable) && this.anyPanelShown
+    const visible = (playing || this.overlay.isInteractable) && this.anyPanelShown && (this.inWorld || !this.readingLog)
 
     if (!visible) {
       this.window?.hide()
