@@ -44,6 +44,9 @@ export class PobImpact {
   // fetchedAt of the gear PoB currently holds (0 = not confirmed since the
   // last load or settings change)
   private sentGearAt = 0
+  // panels are told to ask again once the rate limit allows (after a character switch)
+  private liveRetryTimer: NodeJS.Timeout | null = null
+  private liveRetries = 0
   private pobHasGear = false
   private passivesError: string | undefined
   // Loadout choice applied to the loaded build (JSON, '' = PoB's own active sets)
@@ -280,6 +283,19 @@ export class PobImpact {
     await this.setCharacter(name, true)
   }
 
+  // Re-announce the character when a gear fetch is allowed again, so the
+  // panels (gear, gems, tree) ask once more and show the new character
+  private scheduleLiveRetry () {
+    // a few tries per character, so a lasting rate limit can't keep it going
+    if (this.liveRetryTimer || this.liveRetries >= 3) return
+    this.liveRetries += 1
+    const wait = Math.min(Math.max(this.liveGear.retryIn(), 1000), 120_000) + 500
+    this.liveRetryTimer = setTimeout(() => {
+      this.liveRetryTimer = null
+      this.announceCharacter()
+    }, wait)
+  }
+
   // Tell the panels (list or character changed)
   private announceCharacter (build?: string) {
     this.server.sendEventTo('broadcast', {
@@ -291,6 +307,7 @@ export class PobImpact {
   private async setCharacter (name: string, detected: boolean) {
     const previous = this.activeCharacter
     this.activeCharacter = name
+    this.liveRetries = 0
     this.logger.write(`info [PoB] ${detected ? 'playing' : 'picked'} ${name}${previous ? ` (was ${previous})` : ''}`)
     this.liveGear.setTarget(this.liveTarget())
     this.sentGearAt = 0
@@ -472,8 +489,11 @@ export class PobImpact {
       gear = await this.liveGear.get(refresh)
     } catch (err) {
       await dropStale()
-      return { error: (err as Error).message }
+      const message = (err as Error).message
+      if (/waiting|character changed|rate limit/.test(message)) this.scheduleLiveRetry()
+      return { error: message }
     }
+    if (gear.passivesError?.includes('rate limit') && this.cfg?.liveTreeAndGems) this.scheduleLiveRetry()
     if (gear.fetchedAt !== this.sentGearAt) {
       const full = this.cfg?.liveTreeAndGems === true
       const reply = await this.call('equipped', {

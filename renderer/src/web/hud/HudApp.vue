@@ -37,8 +37,13 @@ const hiddenByAlt = ref(false)
 const liveDims = ref<{ w: number, h: number } | null>(null)
 let resizing = false
 const dims = computed(() => liveDims.value ?? AppConfig().pob?.hud?.dims?.[HUD_PANEL] ?? null)
+// never bigger than the screen, so the resize corner can't end up off-screen
+// (older saved sizes could be; main also clamps new resizes to the game window)
 const dimsStyle = computed(() => dims.value
-  ? { '--hud-w': `${dims.value.w}px`, '--hud-h': `${dims.value.h}px` }
+  ? {
+      '--hud-w': `${Math.min(dims.value.w, Math.max(200, window.screen.availWidth - 40))}px`,
+      '--hud-h': `${Math.min(dims.value.h, Math.max(80, window.screen.availHeight - 40))}px`
+    }
   : {})
 
 const listeners = [
