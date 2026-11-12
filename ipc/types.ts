@@ -12,6 +12,21 @@ export interface HostConfig {
   pob?: PobConfig
 }
 
+// Deathloom fork: panels pinned over the game while it has focus
+export interface PobHudConfig {
+  guide: boolean
+  trades: boolean
+  // Mouse clicks go through to the game (panels are read-only while playing)
+  clickThrough: boolean
+  // Solid background instead of a see-through window (try this if the game crashes)
+  opaque: boolean
+  // 30-100
+  opacity: number
+  // Top-left corner, in pixels from the game window's top-left corner
+  x: number
+  y: number
+}
+
 // Deathloom fork: Path of Building build impact
 export interface PobConfig {
   enabled: boolean
@@ -37,6 +52,9 @@ export interface PobConfig {
   // Trade companion: 'copy' puts the chat command on the clipboard,
   // 'send' types it into game chat (one command per click)
   chatButtons: 'copy' | 'send'
+  // "Show while playing" HUD: a small separate window that stays on top of the
+  // game without taking focus (the full-screen overlay hides while you play)
+  hud: PobHudConfig
   // Stash tracker (personal, opt-in): reads stash tabs with your POESESSID
   stash: PobStashConfig
 }
@@ -280,10 +298,40 @@ export type IpcEvent =
   IpcPobGemsResult |
   IpcStashRequest |
   IpcStashResult |
-  IpcStashSession
+  IpcStashSession |
+  IpcHudSize |
+  IpcHudDrag |
+  IpcHudMoved |
+  IpcHudState
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
+
+// Deathloom fork: HUD window ("show while playing")
+type IpcHudSize =
+  Event<'CLIENT->MAIN::hud-size', {
+    width: number
+    height: number
+  }>
+
+type IpcHudDrag =
+  Event<'CLIENT->MAIN::hud-drag', {
+    phase: 'start' | 'move' | 'end'
+    screenX: number
+    screenY: number
+  }>
+
+type IpcHudMoved =
+  Event<'MAIN->CLIENT::hud-moved', {
+    x: number
+    y: number
+  }>
+
+type IpcHudState =
+  Event<'MAIN->CLIENT::hud-state', {
+    // false while the overlay is active (Shift+Space) or the game isn't focused
+    playing: boolean
+  }>
 
 type IpcOverlayAttached =
   Event<'MAIN->OVERLAY::overlay-attached'>

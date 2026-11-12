@@ -1,6 +1,7 @@
 import type { IpcEvent, IpcEventPayload, UpdateInfo, HostState } from '@ipc/types'
 import { shallowRef } from 'vue'
 import Sockette from 'sockette'
+import { IS_HUD } from '../hud/is-hud'
 
 class HostTransport {
   private evBus = new EventTarget()
@@ -18,7 +19,7 @@ class HostTransport {
     })
     await new Promise((resolve) => {
       const protocol = (window.location.protocol === 'https:') ? 'wss:' : 'ws:'
-      this.socket = new Sockette(`${protocol}//${window.location.host}/events`, {
+      this.socket = new Sockette(`${protocol}//${window.location.host}/events${IS_HUD ? '?client=hud' : ''}`, {
         onmessage: (e) => {
           this.selfDispatch(JSON.parse(e.data))
         },

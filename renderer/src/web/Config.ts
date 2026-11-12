@@ -1,7 +1,8 @@
 import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
-import { HostConfig, ShortcutAction, PobConfig } from '@ipc/types'
+import { HostConfig, ShortcutAction, PobConfig, PobHudConfig } from '@ipc/types'
+import { IS_HUD } from './hud/is-hud'
 import type * as widget from './overlay/widgets'
 import type { StashSearchWidget } from './stash-search/widget'
 import type { ItemCheckWidget } from './item-check/widget'
@@ -27,6 +28,8 @@ export function updateConfig (updates: Config) {
 }
 
 export function saveConfig (opts?: { isTemporary: boolean }) {
+  // Deathloom fork: the HUD window only reads settings; the overlay owns them
+  if (IS_HUD) return
   const rawConfig = toRaw(_config.value!)
   if (rawConfig.widgets.some(w => w.wmZorder === 'exclusive' && w.wmWants === 'show')) {
     return
@@ -437,6 +440,7 @@ function upgradeConfig (_config: Config): Config {
   config.pob ??= defaultPobConfig()
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
+  config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }
   for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'stash-tracker']) {
     if (!config.widgets.some(w => w.wmType === type)) {
       config.widgets.push({
@@ -595,6 +599,10 @@ function getConfigForHost (): HostConfig {
   }
 }
 
+export function defaultHudConfig (): PobHudConfig {
+  return { guide: false, trades: false, clickThrough: false, opaque: false, opacity: 90, x: 10, y: 60 }
+}
+
 // Deathloom fork: Path of Building build impact
 export function defaultPobConfig (): PobConfig {
   return {
@@ -609,6 +617,7 @@ export function defaultPobConfig (): PobConfig {
     gearPanelKey: null,
     loadouts: {},
     chatButtons: 'copy',
+    hud: defaultHudConfig(),
     stash: { enabled: false, league: '', tabs: [] }
   }
 }
