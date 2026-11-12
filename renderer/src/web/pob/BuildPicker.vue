@@ -19,7 +19,7 @@
       <select class="flex-1 min-w-0 bg-gray-900 rounded px-1" :disabled="busy" :value="loadoutValue"
         @change="setLoadoutValue(($event.target as HTMLSelectElement).value)">
         <option value="">As saved in PoB</option>
-        <option v-for="name of loadouts.named" :key="name" :value="'named:' + name">{{ name }}</option>
+        <option v-for="name of loadouts.named" :key="name" :value="'named:' + name">{{ pobLoadoutName(name) }}</option>
         <option value="custom">Custom (pick tree, items, skills)…</option>
       </select>
     </div>
@@ -28,7 +28,7 @@
         <span class="text-gray-500 w-14 shrink-0 text-right">{{ row.label }}</span>
         <select class="flex-1 min-w-0 bg-gray-900 rounded px-1" :disabled="busy || row.options.length < 2"
           :value="row.value" @change="setCustom(row.key, Number(($event.target as HTMLSelectElement).value))">
-          <option v-for="o of row.options" :key="o.id" :value="o.id">{{ o.title }}</option>
+          <option v-for="o of row.options" :key="o.id" :value="o.id">{{ pobText(o.title) || 'Default' }}</option>
         </select>
       </div>
     </template>
@@ -43,6 +43,7 @@ import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import type { PobBuildInfo, PobBuildList, PobLoadoutChoice, PobLoadouts } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
+import { pobText, pobLoadoutName } from './labels'
 
 const emit = defineEmits<{
   (e: 'changed', build: PobBuildInfo | null): void

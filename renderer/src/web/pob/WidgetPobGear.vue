@@ -65,7 +65,7 @@
             </div>
           </div>
         </template>
-        <div v-if="itemSet" class="px-1 pt-2 text-xs text-gray-600">Item set: {{ itemSet }}</div>
+        <div v-if="itemSet" class="px-1 pt-2 text-xs text-gray-600">Item set: {{ pobText(itemSet) }}</div>
       </div>
       </template>
       </template>
@@ -115,6 +115,7 @@ import { useCopyFeedback } from './market'
 import Widget from '../overlay/Widget.vue'
 import BuildPicker from './BuildPicker.vue'
 import PobGems from './PobGems.vue'
+import { pobText } from './labels'
 
 const props = defineProps<{
   config: PobGearWidget
