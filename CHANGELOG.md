@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Bundled Path of Building (awaiting merge)
+- The installer includes the Path of Building fork (`resources\PathOfBuilding`); tray menu **Open Path of Building**. PoB updates come with each Loot Goblin release (PoB's own updater is off in this copy).
+- Empty Path of Building settings now mean defaults: bundled PoB, builds in `Documents\Loot Goblin\Builds`, player from PoB's build sharing (or no player folder). Build impact is on by default for new installs.
+
 ### In review (not merged yet)
 - Character dropdown in the build panel (#23).
 - Tree tab: keystones, ascendancy, notables, masteries and jewel sockets compared with your character (#24).

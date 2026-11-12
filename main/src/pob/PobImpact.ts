@@ -14,6 +14,7 @@ import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
 import { LiveGear, type FetchFn } from './LiveGear'
+import { pobDefaults, withDefaults, type PobDefaults } from './defaults'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
@@ -27,6 +28,8 @@ interface Pending {
 
 export class PobImpact {
   private cfg: PobConfig | undefined
+  // settings as saved (empty fields = defaults)
+  private rawCfg: PobConfig | undefined
   private proc: ChildProcessWithoutNullStreams | null = null
   private ready: Promise<void> | null = null
   private nextId = 1
@@ -68,6 +71,12 @@ export class PobImpact {
           name: 'MAIN->CLIENT::pob-pick-folder',
           payload: { requestId, path: picked }
         })
+      })
+    })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-defaults', ({ requestId }) => {
+      this.server.sendEventTo('last-active', {
+        name: 'MAIN->CLIENT::pob-defaults',
+        payload: { requestId, ...this.defaults() }
       })
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear }) => {
@@ -147,8 +156,27 @@ export class PobImpact {
     }
   }
 
-  configure (cfg: PobConfig | undefined) {
-    this.logger.write(`info [PoB] settings: ${JSON.stringify(cfg ?? null)}`)
+  // Bundled PoB, Documents\Loot Goblin\Builds and the PoB sync player (see defaults.ts)
+  defaults (): PobDefaults {
+    return pobDefaults({
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      documents: app.getPath('documents')
+    })
+  }
+
+  // PoB folder in use (setting, else the bundled copy); '' if none
+  pobDir (): string {
+    return this.rawCfg?.pobDir || this.defaults().pobDir
+  }
+
+  configure (raw: PobConfig | undefined) {
+    this.rawCfg = raw
+    const cfg = raw && withDefaults(raw, this.defaults())
+    this.logger.write(`info [PoB] settings: ${JSON.stringify(raw ?? null)}`)
+    if (cfg && raw && (cfg.pobDir !== raw.pobDir || cfg.buildsDir !== raw.buildsDir || cfg.player !== raw.player)) {
+      this.logger.write(`info [PoB] with defaults: pobDir=${cfg.pobDir} buildsDir=${cfg.buildsDir} player=${cfg.player}`)
+    }
     // Live-gear settings don't need a PoB restart
     const procKey = (c: PobConfig | undefined) => JSON.stringify(c && [c.enabled, c.pobDir, c.buildsDir, c.player])
     const same = procKey(cfg) === procKey(this.cfg)
@@ -469,10 +497,14 @@ export class PobImpact {
   // Start PoB if needed and make sure it holds the current active build
   private async ensureBuild (): Promise<PobBuildInfo> {
     if (!this.cfg?.enabled) throw new Error('Path of Building is turned off in settings (Path of Building page)')
+    if (!this.cfg.player && this.rawCfg) {
+      // PoB's build sharing may have been set up since (player folder in BuildSync.json)
+      const next = withDefaults(this.rawCfg, this.defaults())
+      if (next.player) this.configure(this.rawCfg)
+    }
     const missing = [
       !this.cfg.pobDir && 'Path of Building folder',
-      !this.cfg.buildsDir && 'Builds folder',
-      !this.cfg.player && 'Player'
+      !this.cfg.buildsDir && 'Builds folder'
     ].filter(Boolean)
     if (missing.length) {
       throw new Error(`Missing in settings: ${missing.join(', ')}`)
@@ -543,8 +575,9 @@ export class PobImpact {
 
   private playerDir (): string {
     const cfg = this.cfg
-    if (!cfg?.buildsDir || !cfg.player) throw new Error('Missing in settings: Builds folder, Player')
-    return path.join(cfg.buildsDir, cfg.player)
+    if (!cfg?.buildsDir) throw new Error('Missing in settings: Builds folder')
+    // no player folder (PoB without build sharing): the builds folder itself
+    return path.join(cfg.buildsDir, cfg.player || '')
   }
 
   // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them

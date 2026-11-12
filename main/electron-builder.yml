@@ -20,6 +20,11 @@ files:
     filter: ["main.js", "vision.js"]
   - from: "../renderer/dist"
     to: "."
+# Deathloom fork: the PoB fork, put in pob-bundle by the Release workflow
+# (skipped when the folder doesn't exist, e.g. local packaging)
+extraResources:
+  - from: "pob-bundle"
+    to: "PathOfBuilding"
 extraMetadata:
   main: "main.js"
   name: "loot-goblin"

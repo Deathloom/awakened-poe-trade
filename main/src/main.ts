@@ -38,6 +38,7 @@ app.on('ready', async () => {
   const appUpdater = new AppUpdater(eventPipe)
   const _httpProxy = new HttpProxy(server, logger)
   const pobImpact = new PobImpact(eventPipe, logger)
+  tray.pobDir = () => pobImpact.pobDir()
   app.on('will-quit', () => { pobImpact.stop() })
   const stashTracker = new StashTracker(eventPipe, logger)
   // Deathloom fork: Copy buttons (market search text). Only the clipboard; nothing is sent to the game.
