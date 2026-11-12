@@ -24,8 +24,11 @@ const DEFAULT_POS: Record<HudPanel, { x: number, y: number }> = {
   gear: { x: 440, y: 90 }
 }
 
-// "Async connecting to lon.login.pathofexile.com:20487"
-const LOGIN_SERVER = /Async connecting to \S+\.login\./
+// Not in a zone: the game just started ("***** LOG FILE OPENING *****" is the
+// first line of every session) or is connecting to the login server
+// ("Async connecting to lon.login.pathofexile.com:20487": login, or back to
+// character select)
+const LOGIN_SERVER = /\*{5} LOG FILE OPENING \*{5}|Async connecting to \S+\.login\./
 // 'Generating level 1 area "1_1_1"' (any client language) or ": You have entered The Coast."
 const ZONE = /Generating level \d+ area "|\] : You have entered /
 
@@ -51,6 +54,8 @@ export class HudWindow {
   private inWorld = false
   // no Client.txt being read: can't tell, so behave as before (show with the game)
   private readingLog = false
+  // left/any mouse button held (from the global mouse hook)
+  private mouseDown = false
 
   constructor (
     private server: ServerEvents,
@@ -73,6 +78,7 @@ export class HudWindow {
       this.place(e.panel)
     })
     this.server.onEventAnyClient('CLIENT->MAIN::hud-drag', (e) => {
+      this.logger.write(`debug [HUD] drag ${e.phase} ${e.panel}${this.drag ? ' (drag active: ' + this.drag.panel + ')' : ''}`)
       if (e.phase === 'start') this.startDrag(e.panel)
       else if (e.phase === 'end') this.endDrag()
     })
@@ -85,7 +91,8 @@ export class HudWindow {
       if (e.action === 'price-check') this.overlay.assertOverlayActive()
     })
     // a drag ends when the mouse button is released anywhere
-    uIOhook.on('mouseup', () => { this.endDrag() })
+    uIOhook.on('mousedown', () => { this.mouseDown = true })
+    uIOhook.on('mouseup', () => { this.mouseDown = false; this.endDrag() })
   }
 
   isPinned (panel: HudPanel) {
@@ -157,11 +164,13 @@ export class HudWindow {
       }
       win.setOpacity(Math.max(30, Math.min(100, this.cfg.opacity || 100)) / 100)
       // Click-through only while playing; with the overlay active (Shift+Space) you can always click and drag
-      win.setIgnoreMouseEvents(Boolean(this.cfg.clickThrough && playing))
+      const ignore = Boolean(this.cfg.clickThrough && playing)
+      win.setIgnoreMouseEvents(ignore)
       this.place(panel)
       if (!win.isVisible()) win.showInactive()
-      // keep it above the full-screen overlay window too
+      // keep it above the full-screen overlay window too (also after the overlay was activated)
       win.setAlwaysOnTop(true, 'screen-saver')
+      win.moveTop()
     }
     this.server.sendEventTo('broadcast', {
       name: 'MAIN->CLIENT::hud-state',
@@ -244,7 +253,11 @@ export class HudWindow {
   // window capture the mouse, and the HUD never becomes the foreground window,
   // so the page loses the pointer as soon as it leaves the window.
   private startDrag (panel: HudPanel) {
-    if (!this.cfg || this.drag || !this.windows[panel]) return
+    if (!this.cfg || !this.windows[panel]) return
+    // a drag that somehow never ended must not block new ones
+    if (this.drag) { clearInterval(this.drag.timer); this.drag = undefined }
+    // the button may already be up again (a quick click): nothing to drag
+    if (!this.mouseDown) return
     const cursor = screen.getCursorScreenPoint()
     const pos = this.position(panel)
     this.drag = {
@@ -266,8 +279,8 @@ export class HudWindow {
   private followCursor () {
     const drag = this.drag
     if (!drag || !this.cfg) return
-    // safety net in case the mouse-up was missed
-    if (Date.now() - drag.started > 60_000) { this.endDrag(); return }
+    // safety nets in case the mouse-up was missed
+    if (!this.mouseDown || Date.now() - drag.started > 60_000) { this.endDrag(); return }
     const cursor = screen.getCursorScreenPoint()
     this.setPosition(drag.panel,
       Math.round(drag.x + cursor.x - drag.cursorX),
