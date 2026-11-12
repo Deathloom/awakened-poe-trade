@@ -52,6 +52,9 @@ app.on('ready', async () => {
       // Deathloom fork: panels that stay visible while playing
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
+      shortcuts.hud = hud
+      // Deathloom fork: find Client.txt next to the game once its window shows up
+      poeWindow.onAttach(() => { void gameLogWatcher.findFromGameProcess() })
       eventPipe.onEventAnyClient('CLIENT->MAIN::update-host-config', (cfg) => {
         overlay.updateOpts(cfg.overlayKey, cfg.windowTitle)
         shortcuts.updateActions(cfg.shortcuts, cfg.stashScroll, cfg.logKeys, cfg.restoreClipboard, cfg.language)

@@ -3,12 +3,13 @@
        view of the settings; the overlay window owns and saves them. -->
   <div ref="root" class="hud-root flex flex-col gap-y-1 items-start" :class="{ 'invisible': hiddenByAlt }">
     <div class="hud-grip flex items-center gap-x-2 px-2 rounded-t bg-gray-900 text-gray-600 text-xs select-none"
-      title="Drag to move" @pointerdown="dragStart" @pointermove="dragMove" @pointerup="dragEnd" @pointercancel="dragEnd">
+      title="Drag to move" @pointerdown="dragStart" @pointerup="dragEnd">
       <i class="fas fa-grip-lines" />
       <span v-if="!playing">Drag to move · pinned over the game</span>
     </div>
-    <CampaignGuideBody v-if="hud.guide" />
-    <TradeCompanionBody v-if="hud.trades" compact />
+    <!-- v-show, not v-if: hidden panels keep reading the log (whispers, zones) -->
+    <CampaignGuideBody v-if="hud.guide" v-show="!hidden.guide" />
+    <TradeCompanionBody v-if="hud.trades" v-show="!hidden.trades" compact @incoming="showTrades" />
   </div>
 </template>
 
@@ -23,9 +24,10 @@ document.documentElement.classList.add('hud')
 const hud = computed(() => AppConfig().pob?.hud ?? defaultHudConfig())
 
 const playing = ref(true)
+const hidden = ref({ guide: false, trades: false })
 const hiddenByAlt = ref(false)
 const listeners = [
-  Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing }),
+  Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing; hidden.value = e.hidden }),
   // same as the overlay: holding Alt hides it (to read ground labels)
   Host.onEvent('MAIN->OVERLAY::visibility', (e) => { hiddenByAlt.value = !e.isVisible })
 ]
@@ -51,28 +53,24 @@ onUnmounted(() => {
   for (const l of listeners) l.abort()
 })
 
-let dragging = false
-function sendDrag (phase: 'start' | 'move' | 'end', e: PointerEvent) {
+// Main moves the window with the real cursor until the button is released
+// (the page can't capture the mouse: the HUD is never the foreground window)
+function sendDrag (phase: 'start' | 'end', e: PointerEvent) {
   Host.sendEvent({ name: 'CLIENT->MAIN::hud-drag', payload: { phase, screenX: e.screenX, screenY: e.screenY } })
 }
 function dragStart (e: PointerEvent) {
   if (e.button !== 0) return
-  dragging = true
-  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   sendDrag('start', e)
 }
-let lastMove = 0
-function dragMove (e: PointerEvent) {
-  if (!dragging) return
-  const now = performance.now()
-  if (now - lastMove < 16) return
-  lastMove = now
-  sendDrag('move', e)
-}
 function dragEnd (e: PointerEvent) {
-  if (!dragging) return
-  dragging = false
   sendDrag('end', e)
+}
+
+// a whisper arrived while the companion was hidden with its hotkey
+function showTrades () {
+  if (hidden.value.trades) {
+    Host.sendEvent({ name: 'CLIENT->MAIN::hud-panel', payload: { panel: 'trades', visible: true } })
+  }
 }
 </script>
 

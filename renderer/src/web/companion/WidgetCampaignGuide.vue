@@ -1,11 +1,7 @@
 <template>
   <!-- Deathloom fork: campaign guide; follows the current zone from Client.txt -->
   <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
-    <div v-if="inHud" class="widget-default-style text-gray-400 text-sm p-2" style="width: 20rem;">
-      <i class="fas fa-route mr-1" />The campaign guide is pinned over the game
-      (Settings → Path of Building → Show while playing).
-    </div>
-    <CampaignGuideBody v-else />
+    <CampaignGuideBody v-if="!inHud" />
   </Widget>
 </template>
 
@@ -31,12 +27,13 @@ export default {
       anchor: { pos: 'tl', x: 1, y: 30 }
     })
   } satisfies WidgetSpec
-}
-</script>
+}</script>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, onUnmounted, watch } from 'vue'
+import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
+import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
 import CampaignGuideBody from './CampaignGuideBody.vue'
 
@@ -48,5 +45,22 @@ const props = defineProps<{ config: CampaignGuideWidget }>()
 if (!props.config.wmFlags.includes('invisible-on-blur')) {
   props.config.wmFlags = [...props.config.wmFlags, 'invisible-on-blur']
 }
+const wm = inject<WidgetManager>('wm')!
 const inHud = computed(() => Boolean(AppConfig().pob?.hud?.guide))
+// Pinned to the HUD window: hide this widget and drop it from the widget menu
+watch(inHud, (pinned) => {
+  wm.setFlag(props.config.wmId, 'menu::skip', pinned)
+  if (pinned && props.config.wmWants === 'show') wm.hide(props.config.wmId)
+}, { immediate: true })
+// Hotkey (Ctrl+H / Ctrl+T by default). Pinned panels are toggled in the HUD window by main.
+const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
+  if (e.target !== 'campaign-guide' || inHud.value) return
+  // from in game (overlay not active yet) it always opens; main focuses the overlay
+  if (props.config.wmWants === 'hide' || !wm.active.value) {
+    wm.show(props.config.wmId)
+  } else {
+    wm.hide(props.config.wmId)
+  }
+})
+onUnmounted(() => { hotkey.abort() })
 </script>

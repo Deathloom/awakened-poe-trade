@@ -1,3 +1,4 @@
+import { execFile } from 'child_process'
 import { promises as fs, watchFile, unwatchFile } from 'fs'
 import path from 'path'
 import { app } from 'electron'
@@ -49,10 +50,33 @@ export class GameLogWatcher {
       if (guessedPath != null) {
         logFile = guessedPath
       } else {
+        // Deathloom fork: found later from the running game (see findFromGameProcess)
+        this.logger.write('warn [GameLogWatcher] Client.txt not found in the default folders; will look next to the running game')
         return
       }
     }
+    await this.open(logFile)
+  }
 
+  // Deathloom fork: no Client.txt path set and none guessed (game installed
+  // elsewhere, or both Steam and standalone installed): take it from the
+  // running PoE1 process, i.e. <game folder>\logs\Client.txt.
+  // Only lists processes; nothing reads the game's memory.
+  async findFromGameProcess () {
+    if (this._state || this._wantedPath || process.platform !== 'win32') return
+    const exe = await findPoe1Exe()
+    if (!exe || this._state || this._wantedPath) return
+    const logFile = path.join(path.dirname(exe), 'logs', 'Client.txt')
+    try {
+      await fs.access(logFile)
+    } catch {
+      this.logger.write(`warn [GameLogWatcher] No log at ${logFile}`)
+      return
+    }
+    await this.open(logFile)
+  }
+
+  private async open (logFile: string) {
     try {
       const file = await fs.open(logFile, 'r')
       const stats = await file.stat()
@@ -64,6 +88,7 @@ export class GameLogWatcher {
         isReading: false,
         readBuff: Buffer.allocUnsafe(64 * 1024),
       }
+      this.logger.write(`info [GameLogWatcher] Reading ${logFile}`)
     } catch {
       this.logger.write('error [GameLogWatcher] Failed to watch file.')
     }
@@ -98,4 +123,15 @@ export class GameLogWatcher {
       this._state.isReading = false
     }
   }
+}
+
+// Deathloom fork: path of the running PoE1 executable (PoE2 lives in a "Path of Exile 2" folder)
+function findPoe1Exe (): Promise<string | null> {
+  const script = "Get-Process | Where-Object { $_.ProcessName -like 'PathOfExile*' } | " +
+    'ForEach-Object { $_.Path } | Where-Object { $_ -and $_ -notmatch "Path of Exile 2" } | Select-Object -First 1'
+  return new Promise((resolve) => {
+    execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script],
+      { timeout: 8000, windowsHide: true },
+      (err, stdout) => { resolve(err ? null : (stdout.trim() || null)) })
+  })
 }

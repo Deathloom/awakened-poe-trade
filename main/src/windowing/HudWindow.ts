@@ -6,7 +6,8 @@
 // game memory or sends input to the game.
 
 import path from 'path'
-import { BrowserWindow, shell } from 'electron'
+import { BrowserWindow, screen, shell } from 'electron'
+import { uIOhook } from 'uiohook-napi'
 import { OverlayController, type MoveresizeEvent } from 'electron-overlay-window'
 import type { PobHudConfig } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
@@ -19,7 +20,9 @@ export class HudWindow {
   private cfg?: PobHudConfig
   private port = 0
   private size = { width: 320, height: 200 }
-  private drag?: { screenX: number, screenY: number, x: number, y: number }
+  private drag?: { cursorX: number, cursorY: number, x: number, y: number, timer: NodeJS.Timeout, started: number }
+  // pinned panels hidden with their hotkey (not saved; everything shows again after a restart)
+  private hidden = { guide: false, trades: false }
   private builtOpaque?: boolean
 
   constructor (
@@ -40,7 +43,33 @@ export class HudWindow {
       }
       this.place()
     })
-    this.server.onEventAnyClient('CLIENT->MAIN::hud-drag', (e) => { this.handleDrag(e) })
+    this.server.onEventAnyClient('CLIENT->MAIN::hud-drag', (e) => {
+      if (e.phase === 'start') this.startDrag()
+      else if (e.phase === 'end') this.endDrag()
+    })
+    this.server.onEventAnyClient('CLIENT->MAIN::hud-panel', (e) => {
+      this.setPanel(e.panel, e.visible)
+    })
+    // a drag ends when the mouse button is released anywhere
+    uIOhook.on('mouseup', () => { this.endDrag() })
+  }
+
+  isPinned (panel: 'guide' | 'trades') {
+    return Boolean(this.cfg?.[panel])
+  }
+
+  togglePanel (panel: 'guide' | 'trades') {
+    this.setPanel(panel, this.hidden[panel])
+  }
+
+  private setPanel (panel: 'guide' | 'trades', visible: boolean) {
+    if (this.hidden[panel] === !visible) return
+    this.hidden[panel] = !visible
+    this.update()
+  }
+
+  private get anyPanelShown () {
+    return Boolean(this.cfg && ((this.cfg.guide && !this.hidden.guide) || (this.cfg.trades && !this.hidden.trades)))
   }
 
   get enabled () {
@@ -67,7 +96,7 @@ export class HudWindow {
   update = () => {
     if (!this.enabled || !this.port) return
     const playing = this.poeWindow.isActive
-    const visible = playing || this.overlay.isInteractable
+    const visible = (playing || this.overlay.isInteractable) && this.anyPanelShown
 
     if (!visible) {
       this.window?.hide()
@@ -89,7 +118,7 @@ export class HudWindow {
   private sendState (playing: boolean) {
     this.server.sendEventTo('broadcast', {
       name: 'MAIN->CLIENT::hud-state',
-      payload: { playing }
+      payload: { playing, hidden: { ...this.hidden } }
     })
   }
 
@@ -155,24 +184,47 @@ export class HudWindow {
     win.setBounds({ x, y, width, height })
   }
 
-  private handleDrag (e: { phase: 'start' | 'move' | 'end', screenX: number, screenY: number }) {
-    if (!this.cfg) return
-    if (e.phase === 'start') {
-      this.drag = { screenX: e.screenX, screenY: e.screenY, x: this.cfg.x, y: this.cfg.y }
-      return
+  // Dragging is done here, not in the page: Windows only lets the foreground
+  // window capture the mouse, and the HUD never becomes the foreground window,
+  // so the page loses the pointer as soon as it leaves the window.
+  private startDrag () {
+    if (!this.cfg || this.drag) return
+    const cursor = screen.getCursorScreenPoint()
+    this.drag = {
+      cursorX: cursor.x,
+      cursorY: cursor.y,
+      x: this.cfg.x,
+      y: this.cfg.y,
+      started: Date.now(),
+      timer: setInterval(() => { this.followCursor() }, 16)
     }
-    if (!this.drag) return
-    this.cfg.x = Math.round(this.drag.x + e.screenX - this.drag.screenX)
-    this.cfg.y = Math.round(this.drag.y + e.screenY - this.drag.screenY)
+  }
+
+  private followCursor () {
+    if (!this.drag || !this.cfg) return
+    // safety net in case the mouse-up was missed
+    if (Date.now() - this.drag.started > 60_000) { this.endDrag(); return }
+    const cursor = screen.getCursorScreenPoint()
+    this.cfg.x = Math.round(this.drag.x + cursor.x - this.drag.cursorX)
+    this.cfg.y = Math.round(this.drag.y + cursor.y - this.drag.cursorY)
     this.place()
-    if (e.phase === 'end') {
-      this.drag = undefined
-      // the overlay saves it to the settings file
-      this.server.sendEventTo('broadcast', {
-        name: 'MAIN->CLIENT::hud-moved',
-        payload: { x: this.cfg.x, y: this.cfg.y }
-      })
+  }
+
+  private endDrag () {
+    if (!this.drag || !this.cfg) return
+    this.followCursor()
+    clearInterval(this.drag.timer)
+    this.drag = undefined
+    // store the clamped position (what you see), then let the overlay save it
+    const game = OverlayController.targetBounds
+    if (game.width > 0 && game.height > 0) {
+      this.cfg.x = Math.max(0, Math.min(game.width - this.size.width, this.cfg.x))
+      this.cfg.y = Math.max(0, Math.min(game.height - this.size.height, this.cfg.y))
     }
+    this.server.sendEventTo('broadcast', {
+      name: 'MAIN->CLIENT::hud-moved',
+      payload: { x: this.cfg.x, y: this.cfg.y }
+    })
   }
 
   private destroy () {

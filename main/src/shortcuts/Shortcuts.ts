@@ -7,6 +7,7 @@ import { HostClipboard } from './HostClipboard'
 import { OcrWorker } from '../vision/link-main'
 import type { ShortcutAction } from '../../../ipc/types'
 import type { Logger } from '../RemoteLogger'
+import type { HudWindow } from '../windowing/HudWindow'
 import type { OverlayWindow } from '../windowing/OverlayWindow'
 import type { GameWindow } from '../windowing/GameWindow'
 import type { GameConfig } from '../host-files/GameConfig'
@@ -21,6 +22,8 @@ export class Shortcuts {
   private logKeys = false
   private areaTracker: WidgetAreaTracker
   private clipboard: HostClipboard
+  // Deathloom fork: set by main once the HUD window exists
+  hud?: HudWindow
 
   static async create (
     logger: Logger,
@@ -161,8 +164,17 @@ export class Shortcuts {
             name: 'MAIN->CLIENT::widget-action',
             payload: { target: entry.action.target }
           })
-          // Deathloom fork: the build gear panel has buttons, so it needs the overlay focused
-          if (entry.action.target === 'pob-gear') {
+          // Deathloom fork: campaign guide / trade companion pinned to the HUD window
+          // toggle there, without opening the overlay
+          const hudPanel = entry.action.target === 'campaign-guide' ? 'guide'
+            : entry.action.target === 'trade-companion' ? 'trades' : null
+          if (hudPanel && this.hud?.isPinned(hudPanel)) {
+            this.hud.togglePanel(hudPanel)
+            return
+          }
+          // Deathloom fork: the build gear panel has buttons, so it needs the overlay focused;
+          // unpinned guide / companion only show with the overlay active
+          if (entry.action.target === 'pob-gear' || hudPanel) {
             this.areaTracker.removeListeners()
             this.overlay.assertOverlayActive()
           }

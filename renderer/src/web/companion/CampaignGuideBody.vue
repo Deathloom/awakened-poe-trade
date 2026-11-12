@@ -25,6 +25,10 @@
           <div v-if="s.note && (s.i === index || showAll || s.i === index + 1)" class="text-xs text-gray-500">{{ s.note }}</div>
         </div>
       </div>
+      <div v-if="!lastZone" class="px-1 pt-1 text-xs text-gray-600">
+        Follows you on each zone change (from Client.txt). If it doesn't move after you change zones,
+        set the Client.txt path in Settings → General.
+      </div>
       <div v-if="lastZone && !matched" class="px-1 pt-1 text-xs text-gray-600">
         In "{{ lastZone }}" (not on the route)
       </div>
