@@ -128,6 +128,14 @@ export interface PobSocketGroup {
   gems: PobGem[]
 }
 
+// Socketable item in a PoB item set (gems tab). sockets in game notation: "R-G-B W"
+export interface PobSocketedItem {
+  slot: string
+  name: string
+  baseName?: string
+  sockets: string
+}
+
 // Stash tracker
 export interface StashTabInfo {
   index: number
@@ -591,6 +599,9 @@ type IpcPobGemsResult =
     groups?: PobSocketGroup[]
     // The character's socket groups (live gear with gems on)
     live?: PobSocketGroup[]
+    // Build / character gear with sockets, per slot
+    items?: PobSocketedItem[]
+    liveItems?: PobSocketedItem[]
     character?: string
     // Why live gems are missing
     liveError?: string

@@ -15,25 +15,76 @@
         <button v-if="live || liveError" class="text-gray-500 hover:text-gray-200" title="Fetch the character again (rate-limited)"
           :disabled="loading" @click="request(true)"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /> character</button>
       </div>
-      <div v-for="row of comparison.groups" :key="row.group.index"
-        class="rounded px-1 py-1 mb-1 bg-gray-900" :class="{ 'opacity-50': !row.group.enabled }">
-        <div class="flex items-baseline gap-x-2 text-xs text-gray-500">
-          <span class="text-gray-300">{{ groupTitle(row.group) }}</span>
-          <span v-if="row.group.main" class="text-yellow-500">main skill</span>
-          <span v-if="row.group.source" title="Granted by an item, not a socketed gem">from item</span>
-          <span v-if="!row.group.enabled" title="This socket group is switched off in PoB, so the build doesn't count it">disabled in PoB</span>
-          <span v-if="row.liveSlot" class="ml-auto">character: {{ row.liveSlot }}</span>
-          <span v-else-if="live && !row.matched && !row.group.source" class="ml-auto text-red-400">not on character</span>
+      <div v-for="sv of view.slots" :key="sv.slot" class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <!-- Slot header: item + its sockets (build), character's sockets below -->
+        <div class="flex items-center gap-x-2 text-xs">
+          <span class="text-gray-300 shrink-0">{{ sv.slot }}</span>
+          <span class="text-gray-500 truncate flex-1" :title="sv.item?.baseName">{{ sv.item?.name ?? '' }}</span>
+          <span class="text-gray-500 shrink-0" title="Sockets the gems in this slot need (colours, biggest link)">{{ needsText(sv.needs) }}</span>
         </div>
-        <div v-for="(g, idx) of row.gems" :key="idx" class="flex items-baseline gap-x-2">
-          <i class="fas fa-circle text-xs shrink-0" :style="{ color: gemColour(g.gem.colour) }" />
-          <span class="flex-1 truncate" :class="{ 'text-gray-400': g.gem.support, 'line-through text-gray-600': !g.gem.enabled }"
-            :title="gemTitle(g.gem)">{{ g.gem.name }}</span>
-          <span class="text-gray-400 shrink-0" title="Level / quality the build uses">{{ g.gem.level ?? '?' }}/{{ g.gem.quality ?? 0 }}</span>
-          <span class="w-28 text-right shrink-0 text-xs" :class="statusClass(g.status)" :title="statusTitle(g)">{{ statusText(g) }}</span>
+        <div class="flex items-center gap-x-2 text-xs py-px">
+          <span class="w-14 shrink-0 text-gray-500">build</span>
+          <span class="flex items-center">
+            <template v-for="(grp, gi) of parseSockets(sv.item?.sockets)" :key="gi">
+              <span v-if="gi" class="w-2" />
+              <template v-for="(c, ci) of grp" :key="ci">
+                <span v-if="ci" class="inline-block w-1.5 h-0.5 bg-gray-400" />
+                <span class="inline-block w-3 h-3 rounded-full border border-black" :style="{ background: socketColour(c) }" :title="socketName(c)" />
+              </template>
+            </template>
+            <span v-if="!sv.item" class="text-gray-600">no item in PoB</span>
+          </span>
+          <span v-if="sv.item && !sv.buildCheck.ok" class="text-yellow-600">{{ checkText(sv.buildCheck, sv.needs) }}</span>
         </div>
-        <div v-if="row.extra.length" class="text-xs text-gray-500 pt-px">
-          Character also has: {{ row.extra.map(g => `${g.name} ${g.level ?? '?'}/${g.quality ?? 0}`).join(', ') }}
+        <div v-if="sv.liveCheck" class="flex items-center gap-x-2 text-xs py-px">
+          <span class="w-14 shrink-0 text-gray-500 truncate" :title="sv.liveItem?.name">yours</span>
+          <span class="flex items-center">
+            <template v-for="(grp, gi) of parseSockets(sv.liveItem?.sockets)" :key="gi">
+              <span v-if="gi" class="w-2" />
+              <template v-for="(c, ci) of grp" :key="ci">
+                <span v-if="ci" class="inline-block w-1.5 h-0.5 bg-gray-400" />
+                <span class="inline-block w-3 h-3 rounded-full border border-black" :style="{ background: socketColour(c) }" :title="socketName(c)" />
+              </template>
+            </template>
+            <span v-if="!sv.liveItem" class="text-gray-600">nothing socketed there</span>
+          </span>
+          <span v-if="sv.liveItem" :class="sv.liveCheck.ok ? 'text-green-500' : 'text-red-400'">
+            {{ sv.liveCheck.ok ? 'fits' : checkText(sv.liveCheck, sv.needs) }}</span>
+        </div>
+        <!-- Gems, one block per link group -->
+        <div v-for="row of sv.rows" :key="row.group.index" class="mt-1 pl-1 border-l-2"
+          :class="row.group.main ? 'border-yellow-600' : 'border-gray-700'">
+          <div v-if="sv.rows.length > 1 || row.group.main || row.liveSlot || (live && !row.matched)" class="flex items-baseline gap-x-2 text-xs text-gray-500">
+            <span class="text-gray-400">{{ linkTitle(row) }}</span>
+            <span v-if="row.group.main" class="text-yellow-500">main skill</span>
+            <span v-if="row.liveSlot" class="ml-auto">yours: in {{ row.liveSlot }}</span>
+            <span v-else-if="live && !row.matched" class="ml-auto text-red-400">not on character</span>
+          </div>
+          <div v-for="(g, idx) of row.gems" :key="idx" class="flex items-baseline gap-x-2" :class="{ hidden: !g.gem.enabled }">
+            <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0 self-center" :style="{ background: gemColour(g.gem.colour) }" />
+            <span class="flex-1 truncate" :class="{ 'text-gray-400': g.gem.support }" :title="gemTitle(g.gem)">{{ g.gem.name }}</span>
+            <span class="text-gray-400 shrink-0" title="Level / quality the build uses">{{ g.gem.level ?? '?' }}/{{ g.gem.quality ?? 0 }}</span>
+            <span class="w-28 text-right shrink-0 text-xs" :class="statusClass(g.status)" :title="statusTitle(g)">{{ statusText(g) }}</span>
+          </div>
+          <div v-if="row.extra.length" class="text-xs text-gray-500 pt-px">
+            You also have: {{ row.extra.map(g => `${g.name} ${g.level ?? '?'}/${g.quality ?? 0}`).join(', ') }}
+          </div>
+        </div>
+      </div>
+      <!-- Item-granted skills (e.g. a unique's skill): nothing to socket -->
+      <div v-if="view.granted.length" class="px-1 pb-1 text-xs text-gray-500">
+        From items: {{ view.granted.map(r => r.group.gems.map(g => g.name).join(', ')).join(' · ') }}
+      </div>
+      <div v-if="view.hidden.length" class="px-1 pb-1 text-xs text-gray-500">
+        <button class="hover:text-gray-200" @click="showHidden = !showHidden">
+          <i class="fas" :class="showHidden ? 'fa-caret-down' : 'fa-caret-right'" />
+          {{ view.hidden.length }} group{{ view.hidden.length > 1 ? 's' : '' }} only for PoB's calculations or switched off
+        </button>
+        <div v-if="showHidden">
+          <div v-for="row of view.hidden" :key="row.group.index" class="text-gray-600">
+            {{ pobText(row.group.label) || row.group.gems[0]?.name }}{{ row.group.slot ? ` (${row.group.slot}, off)` : '' }}:
+            {{ row.group.gems.map(g => g.name).join(', ') }}
+          </div>
         </div>
       </div>
       <div v-if="comparison.unmatched.length" class="px-1 pt-1 text-xs text-gray-500">
@@ -43,9 +94,8 @@
         </div>
       </div>
       <div class="px-1 pt-1 text-xs text-gray-600">
-        Level/quality as set in PoB. Gems are compared by name, in any socket group.
-        <span class="line-through">Struck through</span> = gem switched off in PoB (not counted by the build).
-        Faded group = whole group switched off. Hover for details.
+        Grouped by gear piece. Each bar on the left is one link group: link those gems together.
+        Sockets: build = the item in PoB, yours = your character's. Level/quality as set in PoB.
       </div>
     </template>
   </div>
@@ -53,12 +103,15 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, shallowRef } from 'vue'
-import type { PobGem, PobSocketGroup } from '@ipc/types'
+import type { PobGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
 import { pobText } from './labels'
 import { Host } from '@/web/background/IPC'
-import { compareGems, type GemRow, type GemStatus } from './gems'
+import { compareGems, bySlot, parseSockets, needsText, checkText, type GemRow, type GemStatus, type GroupRow } from './gems'
 
 const loading = ref(false)
+const showHidden = ref(false)
+const items = shallowRef<PobSocketedItem[]>([])
+const liveItems = shallowRef<PobSocketedItem[] | undefined>(undefined)
 const error = ref<string | null>(null)
 const groups = shallowRef<PobSocketGroup[] | null>(null)
 const live = shallowRef<PobSocketGroup[] | undefined>(undefined)
@@ -76,6 +129,8 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
   error.value = null
   groups.value = e.groups ?? []
   live.value = e.live
+  items.value = e.items ?? []
+  liveItems.value = e.liveItems
   character.value = e.character ?? 'Character'
   liveError.value = e.liveError ?? null
 })
@@ -93,10 +148,26 @@ defineExpose({ request })
 request()
 
 const comparison = computed(() => groups.value ? compareGems(groups.value, live.value) : null)
+const view = computed(() => {
+  const empty = { slots: [], hidden: [], granted: [] as GroupRow[] }
+  if (!comparison.value) return empty
+  const granted = comparison.value.groups.filter(r => r.group.source && r.group.enabled)
+  const rest = { ...comparison.value, groups: comparison.value.groups.filter(r => !(r.group.source && r.group.enabled)) }
+  return { ...bySlot(rest, items.value, liveItems.value), granted }
+})
 
-function groupTitle (g: PobSocketGroup) {
-  const active = g.gems.find(x => !x.support)?.name
-  return [pobText(g.label) || active || 'Group', g.slot].filter(Boolean).join(' · ')
+function linkTitle (row: GroupRow) {
+  const active = row.group.gems.filter(g => g.enabled && !g.support).map(g => g.name)
+  const n = row.group.gems.filter(g => g.enabled).length
+  return `${pobText(row.group.label) || active.join(' + ') || 'Supports'} · ${n}L`
+}
+
+function socketColour (c: string) {
+  return ({ R: '#c0392b', G: '#27ae60', B: '#2e86de', W: '#eeeeee', A: '#444', D: '#888' } as Record<string, string>)[c] ?? '#888'
+}
+
+function socketName (c: string) {
+  return ({ R: 'Red', G: 'Green', B: 'Blue', W: 'White', A: 'Abyssal', D: 'Delve' } as Record<string, string>)[c] ?? c
 }
 
 function gemTitle (gem: PobGem) {

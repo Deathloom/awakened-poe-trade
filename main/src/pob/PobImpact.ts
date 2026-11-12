@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup } from '../../../ipc/types'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { LiveGear, type FetchFn } from './LiveGear'
@@ -495,7 +495,7 @@ export class PobImpact {
     return { list, build: (reply.build as PobBuildInfo | undefined) ?? build, loadouts }
   }
 
-  async gems (refreshGear: boolean): Promise<{ build: PobBuildInfo, groups: PobSocketGroup[], live?: PobSocketGroup[], character?: string, liveError?: string }> {
+  async gems (refreshGear: boolean): Promise<{ build: PobBuildInfo, groups: PobSocketGroup[], live?: PobSocketGroup[], items: PobSocketedItem[], liveItems?: PobSocketedItem[], character?: string, liveError?: string }> {
     await this.ensureBuild()
     let liveError: string | undefined
     if (!this.liveTarget()) {
@@ -508,10 +508,15 @@ export class PobImpact {
     const reply = await this.call('gems')
     const fix = (groups: unknown) => (Array.isArray(groups) ? groups as PobSocketGroup[] : [])
       .map(g => ({ ...g, gems: Array.isArray(g.gems) ? g.gems : [] }))
+    // PoB's JSON encoder writes empty lists as {}
+    const items = (list: unknown) => (Array.isArray(list) ? list as PobSocketedItem[] : [])
+      .filter(i => typeof i?.slot === 'string' && typeof i?.sockets === 'string')
     return {
       build: reply.build as PobBuildInfo,
       groups: fix(reply.groups),
       live: reply.live ? fix(reply.live) : undefined,
+      items: items(reply.items),
+      liveItems: reply.live ? items(reply.liveItems) : undefined,
       character: reply.character,
       liveError: reply.live ? undefined : liveError
     }
