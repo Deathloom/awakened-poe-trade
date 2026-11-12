@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry } from '../../../ipc/types'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -89,6 +89,9 @@ export class PobImpact {
     this.server.onEventAnyClient('CLIENT->MAIN::pob-builds', ({ requestId, setActive, setLoadout, setCharacter }) => {
       this.reply('MAIN->CLIENT::pob-builds', requestId, async () => await this.builds(setActive, setLoadout, setCharacter))
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-tree', ({ requestId, refreshGear }) => {
+      this.reply('MAIN->CLIENT::pob-tree', requestId, async () => await this.tree(refreshGear === true))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gems', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
     })
@@ -112,7 +115,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -624,6 +627,29 @@ export class PobImpact {
       if (!Array.isArray(loadouts[key])) (loadouts as any)[key] = []
     }
     return { list, build: (reply.build as PobBuildInfo | undefined) ?? build, loadouts, character, characters }
+  }
+
+  // Passive tree tab: the build's tree (selected loadout) and the character's
+  async tree (refreshGear: boolean): Promise<{ build: PobBuildInfo, tree: PobTreeSummary, live?: PobTreeSummary, character?: string, liveError?: string }> {
+    await this.ensureBuild()
+    let liveError: string | undefined
+    if (!this.liveTarget()) {
+      liveError = 'Turn on "Also compare with my equipped gear" in Settings → Path of Building to compare with your character.'
+    } else if (!this.cfg?.liveTreeAndGems) {
+      liveError = 'Turn on "Use the character\'s passive tree, level and gems too" to compare trees.'
+    }
+    const live = await this.syncLiveGear(refreshGear)
+    if (live.error) liveError = live.error
+    const reply = await this.call('tree')
+    // PoB's JSON encoder writes empty lists as {}
+    const fix = (t: any): PobTreeSummary => ({ ...t, nodes: Array.isArray(t?.nodes) ? t.nodes : [] })
+    return {
+      build: reply.build as PobBuildInfo,
+      tree: fix(reply.tree),
+      live: reply.live ? fix(reply.live) : undefined,
+      character: reply.character,
+      liveError: reply.live ? undefined : (liveError ?? this.passivesError)
+    }
   }
 
   async gems (refreshGear: boolean): Promise<{ build: PobBuildInfo, groups: PobSocketGroup[], live?: PobSocketGroup[], items: PobSocketedItem[], liveItems?: PobSocketedItem[], character?: string, liveError?: string }> {
