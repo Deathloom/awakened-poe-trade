@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Updates (awaiting merge, #31)
+- Windows notification when an update starts downloading and when it's ready (click it to restart and update).
+- Tray menu shows **Restart to update to x.y.z** once an update is downloaded.
+- Updating on quit now shows the installer's progress and starts Loot Goblin again afterwards (upstream installed silently and left it closed).
+
 ### Fixes (awaiting merge, #30)
 - Tree tab: ascendancy names in blue instead of yellow (yellow means "other mastery effect").
 - Switching character (dropdown or in game) now refreshes gear, gems and tree: a fetch still running for the old character is dropped, the first fetch after a switch may come after 5 s instead of 30 s, and the panels ask again by themselves when the rate limit allowed nothing yet.

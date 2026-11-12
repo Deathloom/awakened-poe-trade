@@ -1,3 +1,4 @@
+import { app, Notification } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import type { ServerEvents } from './server'
 import type { UpdateInfo } from '../../ipc/types'
@@ -5,6 +6,10 @@ import type { UpdateInfo } from '../../ipc/types'
 export class AppUpdater {
   private _checkedAtStartup = false
   private _info: UpdateInfo = { state: 'initial' }
+  // Deathloom fork: install with a visible progress window and start the app again
+  private _installing = false
+  private _notifiedVersion = ''
+  onChange: (info: UpdateInfo) => void = () => {}
 
   public readonly noAutoUpdatesReason:
     Extract<UpdateInfo, { state: 'update-available' }>['noDownloadReason'] = null
@@ -16,6 +21,21 @@ export class AppUpdater {
       name: 'MAIN->CLIENT::updater-state',
       payload: info
     })
+    this.onChange(info)
+  }
+
+  // Deathloom fork: show the installer's progress and start Loot Goblin again afterwards
+  installNow = () => {
+    if (this._info.state !== 'update-downloaded' || this._installing) return
+    this._installing = true
+    autoUpdater.quitAndInstall(false, true)
+  }
+
+  private notify (title: string, body: string, onClick?: () => void) {
+    if (!Notification.isSupported()) return
+    const n = new Notification({ title, body })
+    if (onClick) n.on('click', onClick)
+    n.show()
   }
 
   constructor (
@@ -27,7 +47,7 @@ export class AppUpdater {
       if (action === 'check-for-update') {
         this.check()
       } else if (action === 'update-and-restart') {
-        autoUpdater.quitAndInstall(false)
+        this.installNow()
       }
     })
 
@@ -41,11 +61,28 @@ export class AppUpdater {
       this.noAutoUpdatesReason = 'disabled-by-flag'
     }
 
+    // Deathloom fork: upstream installs silently on quit and doesn't start the app
+    // again. We install on quit ourselves, with progress, then relaunch.
+    autoUpdater.autoInstallOnAppQuit = false
+    if (process.platform === 'win32' && app.isPackaged) {
+      // needed for Windows notifications to show under the app's name
+      app.setAppUserModelId('com.deathloom.loot-goblin')
+    }
+    app.on('before-quit', (e) => {
+      if (this._info.state === 'update-downloaded' && !this._installing) {
+        e.preventDefault()
+        this.installNow()
+      }
+    })
+
     autoUpdater.on('checking-for-update', () => {
       this.info = { state: 'checking-for-update' }
     })
     autoUpdater.on('update-available', (info: { version: string }) => {
       this.info = { state: 'update-available', version: info.version, noDownloadReason: this.noAutoUpdatesReason }
+      if (this.noAutoUpdatesReason == null && this._notifiedVersion !== info.version) {
+        this.notify('Loot Goblin update', `Downloading version ${info.version} in the background…`)
+      }
     })
     autoUpdater.on('update-not-available', () => {
       this.info = { state: 'update-not-available', checkedAt: Date.now() }
@@ -55,6 +92,12 @@ export class AppUpdater {
     })
     autoUpdater.on('update-downloaded', (info: { version: string }) => {
       this.info = { state: 'update-downloaded', version: info.version }
+      if (this._notifiedVersion !== info.version) {
+        this._notifiedVersion = info.version
+        this.notify(`Loot Goblin ${info.version} is ready`,
+          'Click here to restart and update now, or it updates when you quit (it starts again by itself).',
+          this.installNow)
+      }
     })
     // on('download-progress') https://github.com/electron-userland/electron-builder/issues/2521
   }
