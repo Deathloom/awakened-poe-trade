@@ -1,11 +1,7 @@
 <template>
   <!-- Deathloom fork: trade companion (incoming/outgoing trade whispers from Client.txt) + sales ledger -->
   <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
-    <div v-if="inHud" class="widget-default-style text-gray-400 text-sm p-2" style="width: 24rem;">
-      <i class="fas fa-handshake mr-1" />The trade companion is pinned over the game
-      (Settings → Path of Building → Show while playing).
-    </div>
-    <TradeCompanionBody v-else @incoming="onIncoming" />
+    <TradeCompanionBody v-if="!inHud" @incoming="onIncoming" />
   </Widget>
 </template>
 
@@ -31,11 +27,10 @@ export default {
       anchor: { pos: 'tr', x: 98, y: 20 }
     })
   } satisfies WidgetSpec
-}
-</script>
+}</script>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, watch } from 'vue'
 import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
@@ -55,4 +50,9 @@ const inHud = computed(() => Boolean(AppConfig().pob?.hud?.trades))
 function onIncoming () {
   if (props.config.wmWants === 'hide') wm.show(props.config.wmId)
 }
+// Pinned to the HUD window: hide this widget and drop it from the widget menu
+watch(inHud, (pinned) => {
+  wm.setFlag(props.config.wmId, 'menu::skip', pinned)
+  if (pinned && props.config.wmWants === 'show') wm.hide(props.config.wmId)
+}, { immediate: true })
 </script>
