@@ -11,6 +11,7 @@ import { parseCharacters, type CharacterEntry } from './ActiveCharacter'
 
 export const CACHE_TTL = 2 * 60_000 // reuse gear this long before refetching
 export const MIN_INTERVAL = 30_000 // never fetch more often than this
+export const SWITCH_INTERVAL = 5_000 // after a character switch: first fetch this soon (rate-limit headers still apply)
 export const ERROR_BACKOFF = 5 * 60_000 // wait after a 4xx (bad name, private profile)
 const FETCH_TIMEOUT = 10_000
 
@@ -86,6 +87,8 @@ export class LiveGear {
   private lastFetchAt = 0
   private blockedUntil = 0
   private inflight: Promise<LiveGearData> | null = null
+  // the target changed since the last gear fetch (allows a quick first fetch)
+  private switched = false
 
   constructor (
     private fetchFn: FetchFn,
@@ -100,6 +103,15 @@ export class LiveGear {
     this.target = target
     this.cache = null
     this.lastError = null
+    // a fetch still running belongs to the old character: its result is dropped
+    this.inflight = null
+    this.switched = true
+  }
+
+  // ms until a gear fetch is allowed again (0 = now)
+  retryIn (): number {
+    const interval = this.switched ? SWITCH_INTERVAL : MIN_INTERVAL
+    return Math.max(0, Math.max(this.blockedUntil, this.lastFetchAt + interval) - this.now())
   }
 
   // Equipped gear, from cache when fresh enough. `force` skips the cache but
@@ -108,23 +120,29 @@ export class LiveGear {
   async get (force = false): Promise<LiveGearData> {
     if (!this.target) throw new Error('Live gear: account name or character not set')
     const now = this.now()
-    if (this.cache && !force && now - this.cache.fetchedAt < CACHE_TTL) {
+    // gear without the tree (rate limit skipped it) is refetched when allowed
+    const partial = Boolean(this.cache?.passivesError?.includes('rate limit')) && this.target.tree
+    if (this.cache && !force && !(partial && this.retryIn() === 0) && now - this.cache.fetchedAt < CACHE_TTL) {
       return this.cache
     }
     // A wrong name or private profile: don't keep sending invalid requests
     if (this.lastError && now < this.lastError.until) {
       throw new Error(this.lastError.message)
     }
-    const waitUntil = Math.max(this.blockedUntil, this.lastFetchAt + MIN_INTERVAL)
-    if (now < waitUntil) {
+    const wait = this.retryIn()
+    if (wait > 0) {
       if (this.cache) return this.cache
-      throw new Error(`Live gear: waiting ${Math.ceil((waitUntil - now) / 1000)}s (rate limit)`)
+      throw new Error(`Live gear: waiting ${Math.ceil(wait / 1000)}s (rate limit)`)
     }
     if (!this.inflight) {
-      this.inflight = this.fetch(this.target).finally(() => { this.inflight = null })
+      const target = this.target
+      const run: Promise<LiveGearData> = this.fetch(target).finally(() => { if (this.inflight === run) this.inflight = null })
+      this.inflight = run
+      this.switched = false
     }
+    const run = this.inflight
     try {
-      return await this.inflight
+      return await run
     } catch (err) {
       if (this.cache) {
         this.log(`warn [PoB] live gear refresh failed, using cached gear: ${(err as Error).message}`)
@@ -225,8 +243,12 @@ export class LiveGear {
         }
       }
     }
-    this.lastError = null
     data.fetchedAt = this.now()
+    // switched character meanwhile: don't keep this one's gear for the new target
+    if (JSON.stringify(target) !== JSON.stringify(this.target)) {
+      throw new Error('Live gear: character changed, fetching again')
+    }
+    this.lastError = null
     this.cache = data
     this.log(`info [PoB] live gear: ${body.items.length} items${data.passives ? ' + tree' : ''} for ${String(c.name ?? target.character)}`)
     return data

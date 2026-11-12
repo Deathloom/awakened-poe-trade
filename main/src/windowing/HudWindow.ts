@@ -355,8 +355,14 @@ export class HudWindow {
     if (!r) return
     if (!done && (!this.mouseDown || Date.now() - r.started > 60_000)) { this.endResize(); return }
     const cursor = screen.getCursorScreenPoint()
-    const w = Math.round(Math.max(200, Math.min(1400, r.w + cursor.x - r.cursorX)))
-    const h = Math.round(Math.max(80, Math.min(1400, r.h + cursor.y - r.cursorY)))
+    // keep the bottom-right corner inside the game window (else it can't be grabbed again)
+    const game = OverlayController.targetBounds
+    const b = this.windows[r.panel].win?.getBounds()
+    const area = (game.width > 0 && game.height > 0) ? game : screen.getDisplayNearestPoint(cursor).workArea
+    const maxW = b ? Math.max(200, Math.min(1400, area.x + area.width - b.x - 8)) : 1400
+    const maxH = b ? Math.max(80, Math.min(1400, area.y + area.height - b.y - 8)) : 1400
+    const w = Math.round(Math.max(200, Math.min(maxW, r.w + cursor.x - r.cursorX)))
+    const h = Math.round(Math.max(80, Math.min(maxH, r.h + cursor.y - r.cursorY)))
     if (!done && w === r.lastW && h === r.lastH) return
     r.lastW = w
     r.lastH = h

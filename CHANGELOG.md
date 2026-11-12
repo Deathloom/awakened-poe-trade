@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixes (awaiting merge, #30)
+- Tree tab: ascendancy names in blue instead of yellow (yellow means "other mastery effect").
+- Switching character (dropdown or in game) now refreshes gear, gems and tree: a fetch still running for the old character is dropped, the first fetch after a switch may come after 5 s instead of 30 s, and the panels ask again by themselves when the rate limit allowed nothing yet.
+- HUD panels can't be resized past the game window or screen any more (older oversized panels shrink to fit).
+
 ### Bundled Path of Building (awaiting merge)
 - The installer includes the Path of Building fork (`resources\PathOfBuilding`); tray menu **Open Path of Building**. PoB updates come with each Loot Goblin release (PoB's own updater is off in this copy).
 - Empty Path of Building settings now mean defaults: bundled PoB, builds in `Documents\Loot Goblin\Builds`, player from PoB's build sharing (or no player folder). Build impact is on by default for new installs.

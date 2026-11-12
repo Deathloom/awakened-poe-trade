@@ -95,7 +95,7 @@ function classText (t: PobTreeSummary) {
 }
 
 function nameClass (type: PobTreeNode['type']) {
-  return { Keystone: 'text-yellow-300', Ascendancy: 'text-yellow-500', Notable: 'text-gray-200', Mastery: 'text-purple-300', Socket: 'text-gray-400' }[type]
+  return { Keystone: 'text-yellow-300', Ascendancy: 'text-sky-300', Notable: 'text-gray-200', Mastery: 'text-purple-300', Socket: 'text-gray-400' }[type]
 }
 
 function rowTitle (row: TreeRow) {
