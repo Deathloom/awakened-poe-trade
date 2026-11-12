@@ -21,15 +21,16 @@
           <span class="text-gray-300">{{ groupTitle(row.group) }}</span>
           <span v-if="row.group.main" class="text-yellow-500">main skill</span>
           <span v-if="row.group.source" title="Granted by an item, not a socketed gem">from item</span>
-          <span v-if="!row.group.enabled">disabled in PoB</span>
+          <span v-if="!row.group.enabled" title="This socket group is switched off in PoB, so the build doesn't count it">disabled in PoB</span>
           <span v-if="row.liveSlot" class="ml-auto">character: {{ row.liveSlot }}</span>
           <span v-else-if="live && !row.matched && !row.group.source" class="ml-auto text-red-400">not on character</span>
         </div>
         <div v-for="(g, idx) of row.gems" :key="idx" class="flex items-baseline gap-x-2">
           <i class="fas fa-circle text-xs shrink-0" :style="{ color: gemColour(g.gem.colour) }" />
-          <span class="flex-1 truncate" :class="{ 'text-gray-400': g.gem.support, 'line-through text-gray-600': !g.gem.enabled }">{{ g.gem.name }}</span>
-          <span class="text-gray-400 shrink-0">{{ g.gem.level ?? '?' }}/{{ g.gem.quality ?? 0 }}</span>
-          <span class="w-28 text-right shrink-0 text-xs" :class="statusClass(g.status)">{{ statusText(g) }}</span>
+          <span class="flex-1 truncate" :class="{ 'text-gray-400': g.gem.support, 'line-through text-gray-600': !g.gem.enabled }"
+            :title="gemTitle(g.gem)">{{ g.gem.name }}</span>
+          <span class="text-gray-400 shrink-0" title="Level / quality the build uses">{{ g.gem.level ?? '?' }}/{{ g.gem.quality ?? 0 }}</span>
+          <span class="w-28 text-right shrink-0 text-xs" :class="statusClass(g.status)" :title="statusTitle(g)">{{ statusText(g) }}</span>
         </div>
         <div v-if="row.extra.length" class="text-xs text-gray-500 pt-px">
           Character also has: {{ row.extra.map(g => `${g.name} ${g.level ?? '?'}/${g.quality ?? 0}`).join(', ') }}
@@ -41,14 +42,19 @@
           {{ g.slot ?? 'No slot' }}: {{ g.gems.map(x => x.name).join(', ') }}
         </div>
       </div>
-      <div class="px-1 pt-1 text-xs text-gray-600">Level/quality as set in PoB. Gems are compared by name, in any socket group.</div>
+      <div class="px-1 pt-1 text-xs text-gray-600">
+        Level/quality as set in PoB. Gems are compared by name, in any socket group.
+        <span class="line-through">Struck through</span> = gem switched off in PoB (not counted by the build).
+        Faded group = whole group switched off. Hover for details.
+      </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, shallowRef } from 'vue'
-import type { PobSocketGroup } from '@ipc/types'
+import type { PobGem, PobSocketGroup } from '@ipc/types'
+import { pobText } from './labels'
 import { Host } from '@/web/background/IPC'
 import { compareGems, type GemRow, type GemStatus } from './gems'
 
@@ -90,7 +96,21 @@ const comparison = computed(() => groups.value ? compareGems(groups.value, live.
 
 function groupTitle (g: PobSocketGroup) {
   const active = g.gems.find(x => !x.support)?.name
-  return [g.label ?? active ?? 'Group', g.slot].filter(Boolean).join(' · ')
+  return [pobText(g.label) || active || 'Group', g.slot].filter(Boolean).join(' · ')
+}
+
+function gemTitle (gem: PobGem) {
+  const kind = gem.support ? 'Support gem' : 'Skill gem'
+  return gem.enabled ? kind : `${kind}, switched off in PoB: the build doesn't count it`
+}
+
+function statusTitle (g: GemRow) {
+  switch (g.status) {
+    case 'ok': return g.have?.slot ? `Your character has it, but in ${g.have.slot}` : 'Your character has it at this level/quality or better'
+    case 'low': return `Your character has it at ${g.have?.level ?? '?'}/${g.have?.quality ?? 0}, lower than the build`
+    case 'missing': return "Your character doesn't have this gem socketed"
+    default: return ''
+  }
 }
 
 function gemColour (c?: number) {
