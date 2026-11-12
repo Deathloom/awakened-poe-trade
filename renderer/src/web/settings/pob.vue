@@ -12,7 +12,7 @@
       <div class="flex-1 mb-1">Path of Building folder</div>
       <div class="flex gap-1">
         <input v-model.trim="pob.pobDir"
-        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. D:\Claude Projects\PathOfBuilding">
+        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. C:\Games\PathOfBuilding">
         <button type="button" @click="browsePobDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
       </div>
       <div class="text-gray-500 text-sm mt-1">The folder that contains <code>src</code> and <code>runtime\PoBHeadless.exe</code>.</div>
@@ -21,7 +21,7 @@
       <div class="flex-1 mb-1">Builds folder</div>
       <div class="flex gap-1">
         <input v-model.trim="pob.buildsDir"
-        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. D:\Claude Projects\poe-builds\poe1">
+        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. C:\Games\poe-builds\poe1">
         <button type="button" @click="browseBuildsDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
       </div>
     </div>
@@ -29,7 +29,7 @@
       <div class="flex-1 mb-1">Player</div>
       <div class="flex gap-1">
         <input v-model.trim="pob.player"
-        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. Deathloom">
+        class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="your GitHub name">
         <button type="button" @click="browsePlayer" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
       </div>
       <div class="text-gray-500 text-sm mt-1">
@@ -74,7 +74,7 @@
       <div class="mb-2">
         <div class="flex-1 mb-1">Account name</div>
         <input v-model.trim="pob.accountName"
-          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. Deathloom#1234">
+          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. YourName#1234">
         <div class="text-gray-500 text-sm mt-1">Including the <code>#1234</code> part, as shown on your profile.</div>
       </div>
     </template>
@@ -90,7 +90,7 @@
       <div class="mb-2">
         <div class="flex-1 mb-1">{{ pob.characterAuto !== false ? 'Character until one is detected' : 'Character' }}</div>
         <input v-model.trim="pob.character"
-          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. DeathloomAW">
+          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. MyWitch">
       </div>
       <div class="mb-2">
         <ui-toggle v-model="pob.liveTreeAndGems">Use the character's passive tree, level and gems too</ui-toggle>

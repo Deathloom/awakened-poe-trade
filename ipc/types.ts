@@ -49,7 +49,7 @@ export interface PobConfig {
   player: string
   // Also compare against the character's equipped gear (public Characters tab)
   liveGear: boolean
-  // PoE account name incl. discriminator, e.g. Deathloom#1234
+  // PoE account name incl. discriminator, e.g. YourName#1234
   accountName: string
   // Character to read equipped gear from (used when characterAuto is off,
   // or until the played character is known)
@@ -97,7 +97,7 @@ export interface PobStashConfig {
 
 // Build panel: the player's builds and the active build's loadouts
 export interface PobBuildList {
-  // Paths relative to the player folder, e.g. "3.29\\Helmbreaker\\Build.xml"
+  // Paths relative to the player folder, e.g. "3.29\\Witch\\Build.xml"
   builds: string[]
   active: string | null
 }
