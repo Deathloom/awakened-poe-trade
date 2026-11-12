@@ -1,7 +1,7 @@
 // Deathloom fork: follow the character being played.
 // Client.txt shows when you go back to character select / log in and when you
 // enter the world, but not which character. After entering the world we ask
-// pathofexile.com (public Characters tab) which character is "lastActive".
+// pathofexile.com (public Characters tab) which character logged in last (lastLoginTime).
 // The build picked for a character is remembered in apt-data\pob-characters.json
 // and restored when that character is played again.
 
@@ -43,12 +43,21 @@ export function scanLog (lines: string[], state: LogScanState): LogScanResult {
   return result
 }
 
-// get-characters answer -> name of the last active character
+// get-characters answer -> name of the character played last.
+// pathofexile.com sends lastLoginTime (unix seconds) per character; older
+// answers had a lastActive flag, which still wins if present.
 export function pickLastActive (list: unknown): string | null {
   if (!Array.isArray(list)) return null
-  const last = list.find(c => c && typeof c === 'object' && (c as { lastActive?: unknown }).lastActive === true)
-  const name = (last as { name?: unknown } | undefined)?.name
-  return typeof name === 'string' && name ? name : null
+  let best: { name: string, time: number } | null = null
+  for (const c of list) {
+    if (!c || typeof c !== 'object') continue
+    const { name, lastActive, lastLoginTime } = c as { name?: unknown, lastActive?: unknown, lastLoginTime?: unknown }
+    if (typeof name !== 'string' || !name) continue
+    if (lastActive === true) return name
+    const time = typeof lastLoginTime === 'number' ? lastLoginTime : -1
+    if (!best || time > best.time) best = { name, time }
+  }
+  return best && best.time >= 0 ? best.name : null
 }
 
 // Build per character, kept by the main process (the HUD can't save settings)
