@@ -40,7 +40,7 @@ import TradeCompanionBody from './TradeCompanionBody.vue'
 const props = defineProps<{ config: TradeCompanionWidget }>()
 // Only draw while the overlay is active (Shift+Space), never over the game while
 // it has focus: an always-visible overlay crashed the game to desktop on
-// Gerhard's PC (2026-11-12). Also fixes configs saved before this change.
+// a tester's PC (2026-11-12). Also fixes configs saved before this change.
 // To keep it visible while playing, pin it to the HUD window instead.
 if (!props.config.wmFlags.includes('invisible-on-blur')) {
   props.config.wmFlags = [...props.config.wmFlags, 'invisible-on-blur']
