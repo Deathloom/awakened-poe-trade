@@ -46,6 +46,11 @@ export interface PobConfig {
   liveTreeAndGems: boolean
   // Hotkey that toggles the build gear panel (null = only from the widget menu)
   gearPanelKey: string | null
+  // Hotkeys that toggle the campaign guide / trade companion (pinned or not)
+  guideKey: string | null
+  tradesKey: string | null
+  // set once the Ctrl+G / Ctrl+H / Ctrl+T defaults were applied to an older config
+  hotkeysV1?: boolean
   // Loadout picked in the build panel, per build file (path relative to the player folder).
   // Only changes what the overlay compares against; the build file is never written.
   loadouts: Record<string, PobLoadoutChoice>
@@ -302,7 +307,8 @@ export type IpcEvent =
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
-  IpcHudState
+  IpcHudState |
+  IpcHudPanel
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -331,6 +337,14 @@ type IpcHudState =
   Event<'MAIN->CLIENT::hud-state', {
     // false while the overlay is active (Shift+Space) or the game isn't focused
     playing: boolean
+    // pinned panels hidden with their hotkey
+    hidden: { guide: boolean, trades: boolean }
+  }>
+
+type IpcHudPanel =
+  Event<'CLIENT->MAIN::hud-panel', {
+    panel: 'guide' | 'trades'
+    visible: boolean
   }>
 
 type IpcOverlayAttached =

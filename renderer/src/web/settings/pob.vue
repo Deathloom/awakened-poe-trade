@@ -42,6 +42,18 @@
         <span class="flex-1">Build gear panel hotkey</span>
         <hotkey-input v-model="pob.gearPanelKey" class="w-48" />
       </div>
+      <div class="flex items-center gap-x-2 mb-1">
+        <span class="flex-1">Campaign guide hotkey</span>
+        <hotkey-input v-model="pob.guideKey" class="w-48" />
+      </div>
+      <div class="flex items-center gap-x-2 mb-1">
+        <span class="flex-1">Trade companion hotkey</span>
+        <hotkey-input v-model="pob.tradesKey" class="w-48" />
+      </div>
+      <div class="text-gray-500 text-sm mb-1">
+        Each hotkey shows or hides its panel. A pinned panel (Show while playing, below) toggles over
+        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+T.
+      </div>
       <div class="text-gray-500 text-sm">
         Shows the active build's items in the overlay (also in the widget menu, hammer icon).
         Copy puts the unique name or base type on the clipboard for the in-game market
@@ -176,6 +188,8 @@ export default defineComponent({
       props.config.pob.stash ??= defaultPobConfig().stash
       props.config.pob.chatButtons ??= 'copy'
       props.config.pob.hud ??= defaultHudConfig()
+      if (props.config.pob.guideKey === undefined) props.config.pob.guideKey = null
+      if (props.config.pob.tradesKey === undefined) props.config.pob.tradesKey = null
       return props.config.pob
     })
 

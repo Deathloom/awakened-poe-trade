@@ -441,6 +441,13 @@ function upgradeConfig (_config: Config): Config {
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
   config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }
+  if (!config.pob.hotkeysV1) {
+    // one-time defaults for configs saved before these hotkeys existed
+    config.pob.gearPanelKey ||= 'Ctrl + G'
+    config.pob.guideKey ||= 'Ctrl + H'
+    config.pob.tradesKey ||= 'Ctrl + T'
+    config.pob.hotkeysV1 = true
+  }
   for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'stash-tracker']) {
     if (!config.widgets.some(w => w.wmType === type)) {
       config.widgets.push({
@@ -530,6 +537,21 @@ function getConfigForHost (): HostConfig {
       keepModKeys: true
     })
   }
+  // Deathloom fork: campaign guide / trade companion (toggle; pinned ones toggle in the HUD window)
+  if (config.pob?.guideKey) {
+    actions.push({
+      shortcut: config.pob.guideKey,
+      action: { type: 'trigger-event', target: 'campaign-guide' },
+      keepModKeys: true
+    })
+  }
+  if (config.pob?.tradesKey) {
+    actions.push({
+      shortcut: config.pob.tradesKey,
+      action: { type: 'trigger-event', target: 'trade-companion' },
+      keepModKeys: true
+    })
+  }
   for (const command of config.commands) {
     if (command.hotkey) {
       actions.push({
@@ -614,7 +636,10 @@ export function defaultPobConfig (): PobConfig {
     accountName: '',
     character: '',
     liveTreeAndGems: true,
-    gearPanelKey: null,
+    gearPanelKey: 'Ctrl + G',
+    guideKey: 'Ctrl + H',
+    tradesKey: 'Ctrl + T',
+    hotkeysV1: true,
     loadouts: {},
     chatButtons: 'copy',
     hud: defaultHudConfig(),

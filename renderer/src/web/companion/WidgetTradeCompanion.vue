@@ -30,7 +30,8 @@ export default {
 }</script>
 
 <script setup lang="ts">
-import { computed, inject, watch } from 'vue'
+import { computed, inject, onUnmounted, watch } from 'vue'
+import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
@@ -55,4 +56,15 @@ watch(inHud, (pinned) => {
   wm.setFlag(props.config.wmId, 'menu::skip', pinned)
   if (pinned && props.config.wmWants === 'show') wm.hide(props.config.wmId)
 }, { immediate: true })
+// Hotkey (Ctrl+H / Ctrl+T by default). Pinned panels are toggled in the HUD window by main.
+const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
+  if (e.target !== 'trade-companion' || inHud.value) return
+  // from in game (overlay not active yet) it always opens; main focuses the overlay
+  if (props.config.wmWants === 'hide' || !wm.active.value) {
+    wm.show(props.config.wmId)
+  } else {
+    wm.hide(props.config.wmId)
+  }
+})
+onUnmounted(() => { hotkey.abort() })
 </script>
