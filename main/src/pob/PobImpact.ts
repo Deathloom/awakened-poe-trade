@@ -8,7 +8,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import { app, net } from 'electron'
+import { app, net, dialog, BrowserWindow } from 'electron'
 import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
@@ -52,6 +52,14 @@ export class PobImpact {
       app.userAgentFallback,
       (msg) => { this.logger.write(msg) }
     )
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-pick-folder', ({ requestId, title, defaultPath }) => {
+      void this.pickFolder(title, defaultPath).then((picked) => {
+        this.server.sendEventTo('last-active', {
+          name: 'MAIN->CLIENT::pob-pick-folder',
+          payload: { requestId, path: picked }
+        })
+      })
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear }) => {
       this.queue = this.queue
         .then(async () => await this.impact(itemText, refreshGear === true))
@@ -68,6 +76,24 @@ export class PobImpact {
           })
         })
     })
+  }
+
+  private async pickFolder (title: string, defaultPath: string): Promise<string | null> {
+    try {
+      const opts: Electron.OpenDialogOptions = {
+        title,
+        defaultPath: defaultPath || undefined,
+        properties: ['openDirectory']
+      }
+      const parent = BrowserWindow.getFocusedWindow()
+      const res = parent
+        ? await dialog.showOpenDialog(parent, opts)
+        : await dialog.showOpenDialog(opts)
+      return (res.canceled || res.filePaths.length === 0) ? null : res.filePaths[0]
+    } catch (e) {
+      this.logger.write(`error [PoB] folder picker: ${(e as Error).message}`)
+      return null
+    }
   }
 
   configure (cfg: PobConfig | undefined) {

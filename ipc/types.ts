@@ -152,7 +152,9 @@ export type IpcEvent =
   IpcConfigChanged |
   IpcUserAction |
   IpcPobImpactRequest |
-  IpcPobImpactResult
+  IpcPobImpactResult |
+  IpcPobPickFolderRequest |
+  IpcPobPickFolderResult
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -267,6 +269,21 @@ type IpcPobImpactResult =
     error?: string
     build?: PobBuildInfo
     result?: PobImpactResult
+  }>
+
+// Deathloom fork: native folder picker for the Path of Building settings
+type IpcPobPickFolderRequest =
+  Event<'CLIENT->MAIN::pob-pick-folder', {
+    requestId: number
+    title: string
+    defaultPath: string
+  }>
+
+type IpcPobPickFolderResult =
+  Event<'MAIN->CLIENT::pob-pick-folder', {
+    requestId: number
+    // null when the dialog was cancelled
+    path: string | null
   }>
 
 interface Event<TName extends string, TPayload = undefined> {
