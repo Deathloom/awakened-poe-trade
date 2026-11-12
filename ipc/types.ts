@@ -29,6 +29,35 @@ export interface PobConfig {
   character: string
   // Use the character's passive tree, level and gems too (not just items)
   liveTreeAndGems: boolean
+  // Hotkey that toggles the build gear panel (null = only from the widget menu)
+  gearPanelKey: string | null
+}
+
+// Build gear panel: one item of the build's active item set
+export interface PobGearItem {
+  slot: string
+  label: string
+  group: 'gear' | 'swap' | 'flask' | 'jewel' | 'abyss'
+  active?: boolean
+  name: string
+  title?: string
+  baseName: string
+  rarity: string
+  type: string
+  itemLevel?: number
+  quality?: number
+  corrupted?: boolean
+  mods: Array<{
+    text: string
+    kind: 'enchant' | 'scourge' | 'implicit' | 'explicit' | 'crucible'
+    crafted?: boolean
+    fractured?: boolean
+    unsupported?: boolean
+  }>
+  // What GGG's in-game market search accepts: unique name or base type
+  searchText: string
+  // The item in the game's Ctrl+C format
+  text: string
 }
 
 // How the equipped gear compares to the build's gear, plus what was loaded
@@ -152,7 +181,10 @@ export type IpcEvent =
   IpcConfigChanged |
   IpcUserAction |
   IpcPobImpactRequest |
-  IpcPobImpactResult
+  IpcPobImpactResult |
+  IpcPobGearRequest |
+  IpcPobGearResult |
+  IpcWriteClipboard
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -267,6 +299,28 @@ type IpcPobImpactResult =
     error?: string
     build?: PobBuildInfo
     result?: PobImpactResult
+  }>
+
+// Deathloom fork: build gear panel (the active build's items)
+type IpcPobGearRequest =
+  Event<'CLIENT->MAIN::pob-gear', {
+    requestId: number
+  }>
+
+type IpcPobGearResult =
+  Event<'MAIN->CLIENT::pob-gear', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    itemSet?: string
+    items?: PobGearItem[]
+  }>
+
+// Deathloom fork: put text on the clipboard (Copy buttons). Never sent to the game.
+type IpcWriteClipboard =
+  Event<'CLIENT->MAIN::write-clipboard', {
+    text: string
   }>
 
 interface Event<TName extends string, TPayload = undefined> {

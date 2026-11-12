@@ -29,6 +29,18 @@
       </div>
     </div>
     <div class="mt-4 mb-2">
+      <div class="flex items-center gap-x-2 mb-1">
+        <span class="flex-1">Build gear panel hotkey</span>
+        <hotkey-input v-model="pob.gearPanelKey" class="w-48" />
+      </div>
+      <div class="text-gray-500 text-sm">
+        Shows the active build's items in the overlay (also in the widget menu, hammer icon).
+        Copy puts the unique name or base type on the clipboard for the in-game market
+        (press <code>/</code>, then Ctrl+V); the app never types into the game.
+        The same Copy button is on the price check window.
+      </div>
+    </div>
+    <div class="mt-4 mb-2">
       <ui-toggle v-model="pob.liveGear">Also compare with my equipped gear</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         Reads your character's gear from your public Characters tab on pathofexile.com
@@ -64,12 +76,13 @@
 <script lang="ts">
 import { defineComponent, computed } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
+import HotkeyInput from './HotkeyInput.vue'
 import { configProp } from './utils'
 import { defaultPobConfig } from '@/web/Config'
 
 export default defineComponent({
   name: 'Path of Building',
-  components: { UiToggle },
+  components: { UiToggle, HotkeyInput },
   props: configProp(),
   setup (props) {
     return {

@@ -436,6 +436,12 @@ function upgradeConfig (_config: Config): Config {
   // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
   config.pob ??= defaultPobConfig()
   config.pob = { ...defaultPobConfig(), ...config.pob }
+  if (!config.widgets.some(w => w.wmType === 'pob-gear')) {
+    config.widgets.push({
+      ...defaultConfig().widgets.find(w => w.wmType === 'pob-gear')!,
+      wmId: Math.max(0, ...config.widgets.map(_ => _.wmId)) + 1
+    })
+  }
 
   if (config.configVersion < 18) {
     config.useIntlSite = (config.language === 'cmn-Hant' && config.realm === 'pc-ggg')
@@ -506,6 +512,14 @@ function getConfigForHost (): HostConfig {
     actions.push({
       shortcut: delveGrid.toggleKey,
       action: { type: 'trigger-event', target: 'delve-grid' },
+      keepModKeys: true
+    })
+  }
+  // Deathloom fork: build gear panel
+  if (config.pob?.gearPanelKey) {
+    actions.push({
+      shortcut: config.pob.gearPanelKey,
+      action: { type: 'trigger-event', target: 'pob-gear' },
       keepModKeys: true
     })
   }
@@ -588,6 +602,7 @@ export function defaultPobConfig (): PobConfig {
     liveGear: false,
     accountName: '',
     character: '',
-    liveTreeAndGems: true
+    liveTreeAndGems: true,
+    gearPanelKey: null
   }
 }
