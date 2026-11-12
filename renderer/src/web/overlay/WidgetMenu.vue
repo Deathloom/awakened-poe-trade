@@ -3,7 +3,7 @@
     <div class="widget-default-style">
       <div class="p-1 flex gap-1 items-center text-base">
         <template v-for="widget in widgets" :key="widget.wmId">
-          <button @click="toggle(widget)"
+          <button @click="toggle(widget)" :title="widget.hint"
             :class="widget.wmWants === 'show' ? 'border-gray-500' : 'border-gray-800'"
             class="bg-gray-800 rounded text-gray-100 p-2 leading-none whitespace-nowrap border"
           >
@@ -13,7 +13,7 @@
         </template>
         <ui-popover>
           <template #target>
-            <button class="rounded text-gray-600 px-2 py-1 leading-none"><i class="fas fa-ellipsis-h"></i></button>
+            <button class="rounded text-gray-600 px-2 py-1 leading-none" title="Add a widget"><i class="fas fa-ellipsis-h"></i></button>
           </template>
           <template #content>
             <div class="flex flex-col justify-center text-base">
@@ -24,6 +24,25 @@
             </div>
           </template>
         </ui-popover>
+        <!-- Deathloom fork: how-to -->
+        <button class="rounded px-2 py-1 leading-none" :class="showHelp ? 'text-gray-100' : 'text-gray-600'"
+          title="How to use the overlay" @click="showHelp = !showHelp"><i class="fas fa-question-circle"></i></button>
+      </div>
+      <div v-if="showHelp" class="px-2 pb-2 text-sm text-gray-300 leading-snug" style="max-width: 34rem;">
+        <div class="text-gray-100 mb-1">How to use it</div>
+        <ul class="list-disc pl-4 space-y-0.5">
+          <li><b>{{ help.overlayKey }}</b>: open / close the overlay (this bar). Esc closes it too.</li>
+          <li><b>{{ help.priceKey }}</b> over an item in game: price check, with what it does to your PoB build.</li>
+          <li><b>{{ help.gearKey }}</b> build gear, <b>{{ help.guideKey }}</b> campaign guide, <b>{{ help.tradesKey }}</b> trade companion: show / hide.</li>
+          <li>Pinned panels (Settings <i class="fas fa-cog"></i> → Path of Building → Show while playing) stay on screen while you play.
+            Drag them by the top bar or any empty spot.</li>
+          <li>Build gear: <i class="far fa-copy"></i> copies the name for the in-game market (press <b>/</b>, then Ctrl+V),
+            <b>Trade</b> opens an exact search on the trade site, <i class="fas fa-search-dollar"></i> opens the price check.
+            <i class="fas fa-exchange-alt"></i> picks the build and loadout.</li>
+          <li>Trade companion: buttons copy the chat command (or send it, see settings). Ledger tab = your sales and buys.</li>
+          <li>Campaign guide: moves on by itself when you reach the next zone on the route; arrows to fix it by hand.</li>
+          <li>The buttons on this bar open or close a panel; hover one to see its name.</li>
+        </ul>
       </div>
       <div v-if="isEditing" class="text-gray-100 px-2 pb-1 whitespace-nowrap">
         <ui-toggle v-model="config.alwaysShow">{{ t(':always_show') }}</ui-toggle>
@@ -38,7 +57,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, computed, inject } from 'vue'
+import { defineComponent, PropType, computed, inject, ref } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import UiPopover from '@/web/ui/Popover.vue'
 import { Widget as IWidget, WidgetManager, WidgetMenu, WidgetSpec } from './interfaces'
@@ -46,6 +65,28 @@ import { registry } from './widget-registry'
 import { Host } from '@/web/background/IPC'
 import Widget from './Widget.vue'
 import { useI18nNs } from '@/web/i18n'
+import { AppConfig } from '@/web/Config'
+import type { PriceCheckWidget } from './widgets'
+
+// Deathloom fork: names for the icon-only buttons (shown on hover)
+function hintFor (type: string): string | undefined {
+  const pob = AppConfig().pob
+  const key = (k: string | null | undefined) => k ? ` (${k})` : ''
+  switch (type) {
+    case 'settings': return 'Settings'
+    case 'item-search': return 'Item search'
+    case 'pob-gear': return 'Build gear' + key(pob?.gearPanelKey)
+    case 'campaign-guide': return 'Campaign guide' + key(pob?.guideKey)
+    case 'trade-companion': return 'Trade companion' + key(pob?.tradesKey)
+    case 'market-history': return 'Market history (price trends of starred items)'
+    case 'stash-tracker': return 'Stash tracker'
+    case 'stash-search': return 'Stash search'
+    case 'image-strip': return 'Image strip'
+    case 'delve-grid': return 'Delve grid'
+    case 'timer': return 'Stopwatch'
+    default: return undefined
+  }
+}
 
 export default defineComponent({
   widget: {
@@ -88,6 +129,7 @@ export default defineComponent({
         return {
           wmId: widget.wmId,
           wmWants: widget.wmWants,
+          hint: hintFor(widget.wmType) ?? (regexMatch?.groups!.title || undefined),
           title: regexMatch?.groups!.title ||
             ((!regexMatch?.groups!.icon) ? `#${widget.wmId}` : undefined),
           icon: regexMatch?.groups!.icon
@@ -97,8 +139,23 @@ export default defineComponent({
 
     const { t } = useI18nNs('widget_menu')
 
+    const showHelp = ref(false)
+    const help = computed(() => {
+      const pob = AppConfig().pob
+      const pc = AppConfig<PriceCheckWidget>('price-check')
+      return {
+        overlayKey: AppConfig().overlayKey,
+        priceKey: pc?.hotkey ? `${pc.hotkeyHold} + ${pc.hotkey}` : 'the price check hotkey',
+        gearKey: pob?.gearPanelKey || 'no hotkey',
+        guideKey: pob?.guideKey || 'no hotkey',
+        tradesKey: pob?.tradesKey || 'no hotkey'
+      }
+    })
+
     return {
       t,
+      showHelp,
+      help,
       widgets,
       instantiableWidgets: computed(() => {
         return registry.widgets

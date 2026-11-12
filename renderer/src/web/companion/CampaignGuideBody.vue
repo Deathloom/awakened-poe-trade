@@ -41,7 +41,7 @@ import { computed, onUnmounted, ref } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { STEPS, findStep } from './campaign-route'
+import { STEPS, findStep, isOnRoute, actFromAreaCode } from './campaign-route'
 
 const KEY = 'deathloom.campaign-step.v1'
 function loadIndex () {
@@ -53,6 +53,8 @@ const showAll = ref(false)
 const lastZone = ref('')
 const matched = ref(true)
 const areaLevel = ref<number | null>(null)
+// act of the zone being entered, from its area id (null = unknown)
+let areaAct: number | null = null
 
 function setIndex (i: number) {
   index.value = Math.min(STEPS.length - 1, Math.max(0, i))
@@ -75,11 +77,15 @@ const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
   for (const line of e.lines) {
     const ev = parseLogLine(line, lang)
     if (!ev) continue
-    if (ev.type === 'area') areaLevel.value = ev.level
+    if (ev.type === 'area') {
+      areaLevel.value = ev.level
+      areaAct = actFromAreaCode(ev.code)
+    }
     if (ev.type === 'zone') {
       lastZone.value = ev.name
-      const i = findStep(ev.name, index.value)
-      matched.value = i >= 0
+      // forward only: back in town or an earlier zone keeps the current step
+      const i = findStep(ev.name, index.value, areaAct)
+      matched.value = isOnRoute(ev.name)
       if (i >= 0) setIndex(i)
     }
   }

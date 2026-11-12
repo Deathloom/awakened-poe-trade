@@ -210,16 +210,34 @@ export const ROUTE: RouteAct[] = [
 // Flat list with act numbers, in route order
 export const STEPS = ROUTE.flatMap(a => a.steps.map(s => ({ ...s, act: a.act })))
 
-// Next step for an entered zone: the first match at or after the current
-// step (zones repeat between acts 1-5 and 6-10), else the nearest earlier one.
-export function findStep (zone: string, current: number): number {
-  const norm = (z: string) => z.toLowerCase().replace(/^the /, '').trim()
+const norm = (z: string) => z.toLowerCase().replace(/^the /, '').trim()
+
+// Act from the area id in Client.txt ('Generating level 13 area "1_3_7"' -> 3;
+// "2_6_1" -> 6). null for hideouts, maps and anything else.
+export function actFromAreaCode (code: string | undefined): number | null {
+  const m = code?.match(/^\d+_(\d+)_/)
+  const act = m ? Number(m[1]) : NaN
+  return act >= 1 && act <= 10 ? act : null
+}
+
+// Forward-only: the next matching step after the current one, so going back
+// to a town or an earlier zone never moves the guide backwards. With the act
+// known (from the area id) only that act's steps count, so act 1's "The Coast"
+// never jumps to act 6's. Without it, only the current and the next act.
+// Returns -1 when there's no forward match.
+export function findStep (zone: string, current: number, act: number | null = null): number {
   const target = norm(zone)
-  for (let i = Math.max(0, current); i < STEPS.length; i++) {
-    if (norm(STEPS[i].zone) === target) return i
-  }
-  for (let i = Math.min(current, STEPS.length - 1); i >= 0; i--) {
-    if (norm(STEPS[i].zone) === target) return i
+  const curAct = STEPS[Math.max(0, Math.min(current, STEPS.length - 1))].act
+  for (let i = Math.max(0, current + 1); i < STEPS.length; i++) {
+    const s = STEPS[i]
+    if (act != null ? s.act !== act : s.act > curAct + 1) continue
+    if (norm(s.zone) === target) return i
   }
   return -1
+}
+
+// Whether the zone is anywhere on the route (for the "not on the route" note)
+export function isOnRoute (zone: string): boolean {
+  const target = norm(zone)
+  return STEPS.some(s => norm(s.zone) === target)
 }
