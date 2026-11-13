@@ -470,7 +470,7 @@ function upgradeConfig (_config: Config): Config {
     if (config.pob.openPobKey === undefined) config.pob.openPobKey = 'Ctrl + P'
     config.pob.hotkeysV2 = true
   }
-  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'stash-tracker']) {
+  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'stash-tracker', 'setup-guide']) {
     if (!config.widgets.some(w => w.wmType === type)) {
       config.widgets.push({
         ...defaultConfig().widgets.find(w => w.wmType === type)!,

@@ -84,6 +84,8 @@ export interface PobConfig {
   hud: PobHudConfig
   // Stash tracker (personal, opt-in): reads stash tabs with your POESESSID
   stash: PobStashConfig
+  // First-run setup guide was shown (absent = show it the next time the overlay opens)
+  setupDone?: boolean
 }
 
 export interface PobLoadoutChoice {
@@ -357,6 +359,8 @@ export type IpcEvent =
   IpcPobPickFolderResult |
   IpcPobDefaultsRequest |
   IpcPobDefaultsResult |
+  IpcPobSetupProbeRequest |
+  IpcPobSetupProbeResult |
   IpcPobBuildsRequest |
   IpcPobBuildsResult |
   IpcPobCharacter |
@@ -643,6 +647,30 @@ type IpcPobDefaultsResult =
     pobDir: string
     buildsDir: string
     player: string
+  }>
+
+// Deathloom fork: first-run setup guide. What Loot Goblin finds by itself
+// (Client.txt, PoB folder, builds, player) and, with an account name, the
+// public character list (one get-characters request).
+type IpcPobSetupProbeRequest =
+  Event<'CLIENT->MAIN::pob-setup-probe', {
+    requestId: number
+    accountName?: string
+  }>
+
+type IpcPobSetupProbeResult =
+  Event<'MAIN->CLIENT::pob-setup-probe', {
+    requestId: number
+    // Client.txt being read right now (null = not found yet; it's found once the game runs)
+    clientLog: string | null
+    pobDir: string
+    // PoB folder in use has runtime\PoBHeadless.exe
+    pobOk: boolean
+    buildsDir: string
+    player: string
+    // only when accountName was given
+    characters?: Array<{ name: string, league?: string, level?: number, class?: string }>
+    charactersError?: string
   }>
 
 // Deathloom fork: build sync from Loot Goblin (runs PoB's src\SyncServer.lua).

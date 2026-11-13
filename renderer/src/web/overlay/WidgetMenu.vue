@@ -24,7 +24,9 @@
             </div>
           </template>
         </ui-popover>
-        <!-- Deathloom fork: how-to -->
+        <!-- Deathloom fork: setup guide + how-to -->
+        <button class="rounded px-2 py-1 leading-none text-gray-600 hover:text-gray-100"
+          title="Setup guide (run it again)" @click="openSetup"><i class="fas fa-magic"></i></button>
         <button class="rounded px-2 py-1 leading-none" :class="showHelp ? 'text-gray-100' : 'text-gray-600'"
           title="How to use the overlay" @click="showHelp = !showHelp"><i class="fas fa-question-circle"></i></button>
       </div>
@@ -42,7 +44,7 @@
             <i class="fas fa-exchange-alt"></i> picks the build and loadout.</li>
           <li>Trade companion: buttons copy the chat command (or send it, see settings). Ledger tab = your sales and buys.</li>
           <li>Campaign guide: moves on by itself when you reach the next zone on the route; arrows to fix it by hand.</li>
-          <li>The buttons on this bar open or close a panel; hover one to see its name.</li>
+          <li>The buttons on this bar open or close a panel; hover one to see its name. <i class="fas fa-magic"></i> runs the setup guide again.</li>
         </ul>
       </div>
       <div v-if="isEditing" class="text-gray-100 px-2 pb-1 whitespace-nowrap">
@@ -164,6 +166,10 @@ export default defineComponent({
           .filter(({ widget }) => widget.instances === 'multi')
           .map(({ widget }) => widget)
       }),
+      openSetup () {
+        const w = wm.widgets.value.find(w => w.wmType === 'setup-guide')
+        if (w) wm.show(w.wmId)
+      },
       createOfType (type: string) {
         wm.create(type)
       },

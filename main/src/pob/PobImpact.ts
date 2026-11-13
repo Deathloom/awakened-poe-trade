@@ -13,7 +13,7 @@ import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGear
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
-import { LiveGear, type FetchFn } from './LiveGear'
+import { LiveGear, HttpError, type FetchFn } from './LiveGear'
 import { pobDefaults, withDefaults, type PobDefaults } from './defaults'
 
 const STARTUP_TIMEOUT = 90_000
@@ -606,6 +606,50 @@ export class PobImpact {
   // Settings with defaults filled in (undefined before the first settings arrive)
   resolved (): PobConfig | undefined {
     return this.rawCfg && withDefaults(this.rawCfg, this.defaults())
+  }
+
+  // Deathloom fork: first-run setup guide. Folders in use (setting or default),
+  // whether PoB is there, and with an account name the public character list
+  // (one request, same rate limiting as live gear).
+  async setupProbe (accountName?: string) {
+    const d = this.defaults()
+    const cfg = this.resolved()
+    const pobDir = cfg?.pobDir || d.pobDir
+    let pobOk = false
+    if (pobDir) {
+      try {
+        await fs.access(path.join(pobDir, 'runtime', 'PoBHeadless.exe'))
+        pobOk = true
+      } catch {}
+    }
+    const out: {
+      pobDir: string
+      pobOk: boolean
+      buildsDir: string
+      player: string
+      characters?: Array<{ name: string, league?: string, level?: number, class?: string }>
+      charactersError?: string
+    } = { pobDir, pobOk, buildsDir: cfg?.buildsDir || d.buildsDir, player: cfg?.player ?? d.player }
+    const account = accountName?.trim()
+    if (account) {
+      try {
+        const list = await this.liveGear.characterList(account)
+        if (list === null) {
+          out.charactersError = 'pathofexile.com asked us to wait a moment. Try again in a minute.'
+        } else {
+          out.characters = list.map(({ name, league, level, class: cls }) => ({ name, league, level, class: cls }))
+          await this.characterBuilds.setCharacters(account, list).catch(() => {})
+        }
+      } catch (err) {
+        const status = err instanceof HttpError ? err.status : 0
+        out.charactersError = status === 403
+          ? 'Your Characters tab isn\'t public. On pathofexile.com: My Account → Privacy Settings → untick "Hide characters", then check again.'
+          : status === 404
+            ? 'Account not found. Use the name exactly as on your profile, including #1234.'
+            : (err as Error).message.replace(/^Live gear: /, '')
+      }
+    }
+    return out
   }
 
   // Sign-in or player folder changed in Loot Goblin's build sync: pick up the new defaults
