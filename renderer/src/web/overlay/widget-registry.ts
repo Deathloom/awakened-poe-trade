@@ -14,6 +14,7 @@ import WidgetTradeCompanion from '../companion/WidgetTradeCompanion.vue'
 import WidgetCampaignGuide from '../companion/WidgetCampaignGuide.vue'
 import WidgetMarketHistory from '../market-history/WidgetMarketHistory.vue'
 import WidgetStashTracker from '../stash/WidgetStashTracker.vue'
+import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 
 type WidgetComponent = Component & { widget: WidgetSpec }
 
@@ -42,3 +43,4 @@ registry.widgets.push(WidgetTradeCompanion as unknown as WidgetComponent)
 registry.widgets.push(WidgetCampaignGuide as unknown as WidgetComponent)
 registry.widgets.push(WidgetMarketHistory as unknown as WidgetComponent)
 registry.widgets.push(WidgetStashTracker as unknown as WidgetComponent)
+registry.widgets.push(WidgetSetupGuide as unknown as WidgetComponent)

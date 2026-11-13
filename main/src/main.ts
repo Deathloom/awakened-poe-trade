@@ -115,6 +115,18 @@ app.on('ready', async () => {
       }
       // Deathloom fork: find Client.txt next to the game once its window shows up
       poeWindow.onAttach(() => { void gameLogWatcher.findFromGameProcess() })
+      // Deathloom fork: first-run setup guide asks what was found
+      eventPipe.onEventAnyClient('CLIENT->MAIN::pob-setup-probe', ({ requestId, accountName }) => {
+        const send = eventPipe.replyTo()
+        void (async () => {
+          if (!gameLogWatcher.actualPath) await gameLogWatcher.findFromGameProcess().catch(() => {})
+          const probe = await pobImpact.setupProbe(accountName)
+          send({
+            name: 'MAIN->CLIENT::pob-setup-probe',
+            payload: { requestId, clientLog: gameLogWatcher.actualPath, ...probe }
+          })
+        })()
+      })
       eventPipe.onEventAnyClient('CLIENT->MAIN::update-host-config', (cfg) => {
         overlay.updateOpts(cfg.overlayKey, cfg.windowTitle)
         shortcuts.updateActions(cfg.shortcuts, cfg.stashScroll, cfg.logKeys, cfg.restoreClipboard, cfg.language)

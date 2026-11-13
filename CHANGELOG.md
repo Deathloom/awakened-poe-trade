@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.12] - 2026-11-13
+
+### Added (#40)
+- **First-run setup guide**: opens by itself the first time the overlay is opened (Shift+Space), then only from the wand button on the top bar. Seven skippable steps: build sharing (GitHub sign-in, player folder, **Request access** to POE-Builds), game log + PoB / builds / player folders (shows what was found, Browse…), character (account name with a Check button that reads the public character list once, follow character), panels (hotkeys, pin over the game, clicks go through, solid background, opacity), trade companion buttons (copy / send, auto-hide), extras (market history, problem reports, stash tracker) and a summary. Changes apply right away. Setting flag `pob.setupDone`.
+
 ## [1.0.11] - 2026-11-13
 
 ### Added (#39)
