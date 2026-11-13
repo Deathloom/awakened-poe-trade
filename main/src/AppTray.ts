@@ -86,8 +86,12 @@ export class AppTray {
   // Deathloom fork: starts the PoB window (same as runtime\Path of Building.exe from the PoB folder)
   private openPob () {
     const dir = this.pobDir()
-    const exe = dir && path.join(dir, 'runtime', 'Path of Building.exe')
-    if (!exe || !existsSync(exe)) {
+    // the git repo (and so the bundled copy) names it "Path{space}of{space}Building.exe";
+    // PoB's own installer renames it to "Path of Building.exe"
+    const exe = dir && ['Path of Building.exe', 'Path{space}of{space}Building.exe']
+      .map(name => path.join(dir, 'runtime', name))
+      .find(file => existsSync(file))
+    if (!exe) {
       dialog.showMessageBox({
         title: 'Path of Building',
         message: 'Path of Building was not found. Set the Path of Building folder in Settings → Path of Building.'
