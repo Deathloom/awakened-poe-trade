@@ -1,7 +1,8 @@
 // Deathloom fork: default Path of Building paths, so friends need no setup.
 //
-// - PoB folder: the PoB fork bundled inside the installed app
-//   (resources\PathOfBuilding, added by the Release workflow).
+// - PoB folder: Loot Goblin's own copy of the PoB fork in
+//   %LOCALAPPDATA%\Loot Goblin\PathOfBuilding, downloaded on first run (PobInstaller).
+//   Older versions shipped it in resources\PathOfBuilding (still used if found).
 // - Builds folder: PoB's build save path as its build sync recorded it in
 //   BuildSync.json, else Documents\Loot Goblin\Builds (the bundled PoB's default
 //   build save path; not the install folder, which updates replace).
@@ -13,6 +14,8 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
+import * as os from 'os'
+import { isInstalled } from './PobDownload'
 import type { PobConfig } from '../../../ipc/types'
 
 export interface PobDefaults {
@@ -30,10 +33,30 @@ export interface PobDefaultsEnv {
 
 export const APP_DOCS_FOLDER = 'Loot Goblin'
 
-export function bundledPobDir (env: PobDefaultsEnv): string {
-  if (!env.isPackaged) return ''
-  const dir = path.join(env.resourcesPath, 'PathOfBuilding')
+// Where Loot Goblin keeps its PoB (not the install folder: updates replace that,
+// and not Roaming AppData: it's ~750 MB)
+export function managedPobDir (): string {
+  const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
+  return path.join(local, APP_DOCS_FOLDER, 'PathOfBuilding')
+}
+
+// PoB inside the install folder (Loot Goblin 1.0.x); '' if none
+export function legacyPobDir (): string {
+  if (!process.resourcesPath) return ''
+  const dir = path.join(process.resourcesPath, 'PathOfBuilding')
   return fs.existsSync(path.join(dir, 'src', 'ImpactServer.lua')) ? dir : ''
+}
+
+// Setting that still points at the old copy inside the install folder: ignore it
+export function isLegacyPobSetting (dir: string): boolean {
+  return /[\\/]resources[\\/]PathOfBuilding[\\/]?$/i.test(dir) && !fs.existsSync(path.join(dir, 'src', 'ImpactServer.lua'))
+}
+
+// Loot Goblin's PoB once it's usable ('' while it's missing or still downloading)
+export function bundledPobDir (_env?: PobDefaultsEnv): string {
+  const dir = managedPobDir()
+  if (isInstalled(dir)) return dir
+  return legacyPobDir()
 }
 
 export function defaultBuildsDir (env: PobDefaultsEnv): string {

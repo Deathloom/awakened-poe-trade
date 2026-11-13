@@ -25,8 +25,9 @@
       </div>
       <div class="text-gray-500 text-sm mt-1">
         The folder that contains <code>src</code> and <code>runtime\PoBHeadless.exe</code>.
-        Leave empty to use the Path of Building that comes with Loot Goblin (tray menu → Open Path of Building).
+        Leave empty to use Loot Goblin's own Path of Building (downloaded once, keeps itself up to date; tray menu → Open Path of Building).
       </div>
+      <PobInstallStatus v-if="!pob.pobDir" class="mt-2" />
     </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Builds folder</div>
@@ -35,7 +36,7 @@
         class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" :placeholder="defaults.buildsDir ? `Default: ${defaults.buildsDir}` : 'e.g. C:\\Games\\poe-builds\\poe1'">
         <button type="button" @click="browseBuildsDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
       </div>
-      <div class="text-gray-500 text-sm mt-1">Leave empty for the builds folder of the Path of Building that comes with Loot Goblin.</div>
+      <div class="text-gray-500 text-sm mt-1">Leave empty for the builds folder of Loot Goblin's own Path of Building.</div>
     </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Player</div>
@@ -207,13 +208,14 @@
 import { defineComponent, computed, ref } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import HotkeyInput from './HotkeyInput.vue'
+import PobInstallStatus from '@/web/pob/PobInstallStatus.vue'
 import { configProp } from './utils'
 import { defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import { Host } from '@/web/background/IPC'
 
 export default defineComponent({
   name: 'Path of Building',
-  components: { UiToggle, HotkeyInput },
+  components: { UiToggle, HotkeyInput, PobInstallStatus },
   props: configProp(),
   setup (props) {
     const pob = computed(() => {

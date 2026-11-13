@@ -19,6 +19,7 @@ import { PobImpact } from './pob/PobImpact'
 import { StashTracker } from './pob/StashTracker'
 import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
+import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
 import { ErrorReporter } from './ErrorReporter'
 
 if (!app.requestSingleInstanceLock()) {
@@ -60,6 +61,16 @@ app.on('ready', async () => {
   errorReporter.enabled = () => pobImpact.resolved()?.errorReports !== false
   pobImpact.onCodeError = (message, detail) => { errorReporter.capture('pob', message, detail, 'ImpactServer') }
   pobSync.onCodeError = (message) => { errorReporter.capture('pob', message, undefined, 'SyncServer') }
+  // Deathloom fork: Loot Goblin's own PoB (downloaded on first run, then kept current)
+  const pobInstaller = new PobInstaller(eventPipe, logger)
+  pobImpact.installStatus = () => pobImpact.pobDir() ? null : pobInstaller.statusText()
+  tray.pobStatus = () => pobImpact.pobDir() ? null : pobInstaller.statusText()
+  pobInstaller.beforeReplace = () => { pobImpact.stop() }
+  pobInstaller.onChanged = () => {
+    pobImpact.refreshPob()
+    pobSync.configure()
+  }
+  let pobInstallStarted = false
   const pobImport = new PobImport(async (url) => {
     const res = await net.fetch(url, { headers: { 'User-Agent': `Loot Goblin/${app.getVersion()}` } })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -147,6 +158,11 @@ app.on('ready', async () => {
         tray.overlayKey = cfg.overlayKey
         pobImpact.configure(cfg.pob)
         pobSync.configure()
+        // first settings of this run: get / update Loot Goblin's PoB (not when a PoB folder of your own is set)
+        if (!pobInstallStarted && shouldAutoInstall() && !pobImpact.usesOwnPob()) {
+          pobInstallStarted = true
+          setTimeout(() => { void pobInstaller.ensure() }, 3000)
+        }
         stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
         hud.configure(cfg.pob?.hud)
       })

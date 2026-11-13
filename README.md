@@ -26,7 +26,7 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Build panel** (Ctrl+G) | Gear, Gems and Tree tabs for the active build. Every item has Copy / Trade / Price check buttons. Gems are shown per gear piece, with socket colours and links. Pick the build, loadout and character from the panel. |
 | **Build sharing** | Cloud button in the build panel: sign in with GitHub, Pull / Push / Sync now. Builds sync automatically when Loot Goblin starts and after you change them. Same sign-in as the PoB window. |
 | **Import builds** | Import button in the build panel: paste a PoB code or a pobb.in / poe.ninja / pastebin / maxroll link and save it to your folder, without opening PoB. |
-| **Open PoB** (Ctrl+P) | Opens the bundled Path of Building. |
+| **Open PoB** (Ctrl+P) | Opens Loot Goblin's own Path of Building. |
 | **Follows your character** | Switches to the character you just logged into and remembers which build goes with each character. |
 | **Campaign guide** (Ctrl+H) | Route for acts 1–10. It moves forward as you enter zones. |
 | **Trade companion** (Ctrl+T) | Opens on an incoming trade whisper, with Invite / Trade / Thanks / Kick buttons. They copy the command to the clipboard, or send it if you turn that on. |
@@ -39,9 +39,9 @@ Shift+Space opens the full overlay. Hover the menu icons to see their names and 
 
 ## Setting it up
 
-1. Install Loot Goblin (it includes our [PoB fork](https://github.com/Deathloom/PathOfBuilding)). Your GitHub account must be a member of POE-Builds.
+1. Install Loot Goblin. On first run it downloads our [PoB fork](https://github.com/Deathloom/PathOfBuilding) (once, then it keeps itself up to date). Your GitHub account must be a member of POE-Builds.
 2. Press Ctrl+G, click the cloud button and **Sign in with GitHub**. Your player folder becomes your GitHub name and everyone's builds are pulled.
-   Leave the folder fields in **Settings → Path of Building** empty to use the defaults (bundled PoB, `Documents\Loot Goblin\Builds`); **Browse…** sets your own.
+   Leave the folder fields in **Settings → Path of Building** empty to use the defaults (Loot Goblin's PoB, `Documents\Loot Goblin\Builds`); **Browse…** sets your own.
 3. Optional, in the same settings page: turn on **Also compare with my equipped gear** (your profile's Characters tab must be public), choose which panels show while playing, and set the chat buttons to copy or send.
 
 ## Changes

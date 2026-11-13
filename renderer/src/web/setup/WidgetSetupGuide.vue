@@ -11,6 +11,8 @@
       </div>
       <div class="grow layout-column bg-gray-900 min-w-0">
         <div class="grow overflow-y-auto bg-gray-800 rounded-tl p-4 text-base leading-snug">
+          <!-- Deathloom fork: PoB download progress on every step until it's ready (not on Folders: shown there in full) -->
+          <PobInstallStatus v-if="step !== 1" compact class="mb-3" />
 
           <!-- 1. Welcome + build sharing -->
           <template v-if="step === 0">
@@ -60,6 +62,7 @@
               <div class="text-gray-500 text-sm mt-1">Used by the campaign guide, trade companion and "follow my character".</div>
             </div>
             <div class="mb-3">
+              <PobInstallStatus v-if="!pob.pobDir" class="mb-2" />
               <div class="mb-1">Path of Building folder</div>
               <div v-if="found" class="text-sm mb-1 break-all" :class="found.pobOk ? 'text-green-500' : 'text-red-400'">
                 <i class="fas mr-1" :class="found.pobOk ? 'fa-check' : 'fa-times'" />
@@ -68,7 +71,7 @@
               <div class="flex gap-1">
                 <input v-model.trim="pob.pobDir"
                   class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic"
-                  placeholder="Empty = the Path of Building that comes with Loot Goblin">
+                  placeholder="Empty = Loot Goblin's own Path of Building (downloads by itself)">
                 <button class="btn" @click="browse('pobDir')">Browse…</button>
               </div>
             </div>
@@ -258,6 +261,7 @@ import AppTitleBar from '@/web/ui/AppTitlebar.vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import HotkeyInput from '@/web/settings/HotkeyInput.vue'
 import BuildSync from '@/web/pob/BuildSync.vue'
+import PobInstallStatus from '@/web/pob/PobInstallStatus.vue'
 import { IS_HUD } from '@/web/hud/is-hud'
 
 const props = defineProps<{ config: WidgetT }>()
