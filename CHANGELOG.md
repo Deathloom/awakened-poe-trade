@@ -8,8 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-11-13
+
 ### Changed (#36)
 - Gems by gear piece: sockets no longer have to match gem colours (in PoE1 any gem fits any socket now; a socket of the gem's colour only adds 10% quality). Slots show sockets + links needed ("6S · 6L") and a "colour bonus x/y" note instead of "needs 3G more".
+
+## [1.0.8] - 2026-11-13
 
 ### Added (#35)
 - **Build sharing from the overlay** (cloud button in the build panel): Sign in with GitHub (code is copied, GitHub opens; finishes by itself), Pull / Push / Sync now with progress and results, player folder, Sync automatically. Uses the bundled PoB's sync (`src\SyncServer.lua`), so PoB and Loot Goblin share one sign-in and one sync state. Warns when Loot Goblin reads builds from another folder than PoB syncs.
