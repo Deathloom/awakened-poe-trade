@@ -189,6 +189,11 @@
                 history panel then shows its 7-day trend plus prices Loot Goblin records while it runs. Nothing to set up.</div>
             </div>
             <div class="mb-3">
+              <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Loot Goblin with Windows</ui-toggle>
+              <div class="text-gray-400 text-sm mt-1">Starts in the tray when you sign in to Windows, so it's ready
+                before you launch the game.</div>
+            </div>
+            <div class="mb-3">
               <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
               <div class="text-gray-400 text-sm mt-1">When something breaks, Loot Goblin opens an issue in the group's private
                 repo with your GitHub sign-in (version, error, last log lines; no Windows user folder). Only when signed in.

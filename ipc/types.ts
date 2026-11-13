@@ -62,6 +62,8 @@ export interface PobConfig {
   // Send problem reports (crashes, code errors) as GitHub issues to the builds repo
   // with your GitHub sign-in. undefined = on
   errorReports?: boolean
+  // Start Loot Goblin (in the tray) when you sign in to Windows. undefined = on
+  startWithWindows?: boolean
   // Hotkey that toggles the build gear panel (null = only from the widget menu)
   gearPanelKey: string | null
   // Hotkeys that toggle the campaign guide / trade companion (pinned or not)

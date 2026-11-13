@@ -9,6 +9,12 @@
       </div>
     </div>
     <div class="mb-4">
+      <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Loot Goblin with Windows</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        Starts in the tray when you sign in to Windows, so hotkeys, the HUD and updates are ready before the game.
+      </div>
+    </div>
+    <div class="mb-4">
       <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         When Loot Goblin or its Path of Building hits an error, it opens an issue in the group's private
