@@ -48,6 +48,15 @@
         <input type="checkbox" :checked="status.prefs.autoSync" @change="setAuto(($event.target as HTMLInputElement).checked)">
         Sync automatically
       </label>
+      <label v-if="!hud" class="flex items-center gap-x-2 text-gray-400 cursor-pointer"
+        title="Each player keeps builds in their own private repo (builds-<name>). You only get the builds of players who approved your request. Turn on once the group has switched.">
+        <input type="checkbox" :checked="perPlayer" @change="setPerPlayer(($event.target as HTMLInputElement).checked)">
+        Private builds (per player)
+      </label>
+      <div v-if="perPlayer" class="flex items-center gap-x-2 text-gray-500">
+        <span class="truncate">You get the builds of players who shared them with you.</span>
+        <button class="btn-mini shrink-0" title="Ask a player to share their builds (GitHub form; they approve)" @click="requestAccess">Request access</button>
+      </div>
       <div class="flex items-center gap-x-2">
         <div class="flex gap-px">
           <button class="btn-mini rounded-r-none" :disabled="Boolean(state.busy)" title="Download everyone's builds" @click="send({ op: 'pull' })">Pull</button>
@@ -113,6 +122,18 @@ function savePlayer () {
   const p = player.value.trim()
   if (!status.value || p === status.value.settings.player) return
   send({ op: 'configure', player: p })
+}
+
+const perPlayer = computed(() => Boolean(status.value?.settings.repoPrefix))
+
+function setPerPlayer (on: boolean) {
+  send({ op: 'configure', repoPrefix: on ? 'builds-' : '' })
+}
+
+function requestAccess () {
+  const owner = status.value?.settings.owner || 'POE-Builds'
+  if (!/^[A-Za-z0-9_.-]+$/.test(owner)) return
+  window.open(`https://github.com/${owner}/access/issues/new?template=builds-access.yml`)
 }
 
 function setAuto (on: boolean) {

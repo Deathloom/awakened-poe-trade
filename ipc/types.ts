@@ -731,7 +731,8 @@ export interface PobSyncStatus {
   login?: string
   // signed out, but a pasted fine-grained token is saved in PoB
   usingToken: boolean
-  settings: { owner: string, repo: string, branch: string, root: string, player: string }
+  // repoPrefix: per-player builds repos ("builds-" = <owner>/builds-<player>); empty or missing = one shared repo
+  settings: { owner: string, repo: string, branch: string, root: string, player: string, repoPrefix?: string }
   prefs: { autoSync: boolean, setupAsked: boolean }
   // PoB's build save path (the folder that maps to the repo's poe1 folder)
   buildPath: string
@@ -759,6 +760,8 @@ type IpcPobSyncRequest =
     // configure
     player?: string
     autoSync?: boolean
+    // '' = shared repo, 'builds-' = per-player repos (needs PoB with per-player support)
+    repoPrefix?: string
   }>
 
 type IpcPobSyncState =

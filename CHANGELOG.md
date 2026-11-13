@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added
+- **Private builds (per player)** in the build sync box (needs the PoB fork's per-player repos): each player's builds live in their own private repo; **Request access** opens the GitHub form to ask a player to share theirs. Off by default until the group has switched.
+
 ### Added (#47)
 - **Start Loot Goblin with Windows** (Settings → Path of Building, and the setup guide's extras step). On by default: Loot Goblin starts in the tray when you sign in to Windows. Installed app only.
 
