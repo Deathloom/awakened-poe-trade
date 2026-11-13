@@ -60,6 +60,8 @@ export class HudWindow {
   private readingLog = false
   // left/any mouse button held (from the global mouse hook)
   private mouseDown = false
+  // panel that has the keyboard right now (import box in the build panel)
+  private typing: HudPanel | null = null
 
   constructor (
     private server: ServerEvents,
@@ -90,6 +92,9 @@ export class HudWindow {
       if (e.phase === 'start') this.startResize(e.panel, e.w, e.h)
       else this.endResize()
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::hud-typing', (e) => {
+      this.setTyping(e.panel, e.on)
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::hud-panel', (e) => {
       this.setPanel(e.panel, e.visible)
     })
@@ -101,6 +106,29 @@ export class HudWindow {
     // a drag ends when the mouse button is released anywhere
     uIOhook.on('mousedown', () => { this.mouseDown = true })
     uIOhook.on('mouseup', () => { this.mouseDown = false; this.endDrag(); this.endResize() })
+  }
+
+  // HUD windows never take focus (the game keeps it), except while a panel needs typing:
+  // then that window may be focused; the game gets focus back when typing ends
+  private setTyping (panel: HudPanel, on: boolean) {
+    const win = this.windows[panel]?.win
+    if (on) {
+      if (!win || win.isDestroyed()) return
+      this.typing = panel
+      win.setFocusable(true)
+      win.setIgnoreMouseEvents(false)
+      win.focus()
+      this.logger.write(`debug [HUD] ${panel} typing on`)
+    } else {
+      if (this.typing !== panel) return
+      this.typing = null
+      if (win && !win.isDestroyed()) {
+        win.setFocusable(false)
+        if (win.isFocused()) OverlayController.focusTarget()
+      }
+      this.logger.write(`debug [HUD] ${panel} typing off`)
+    }
+    this.update()
   }
 
   isPinned (panel: HudPanel) {
@@ -157,7 +185,8 @@ export class HudWindow {
   // Called when the game or the overlay gains/loses focus, and on any HUD change
   update = () => {
     if (!this.cfg || !this.port) return
-    const playing = this.poeWindow.isActive
+    // typing into a HUD panel takes focus from the game, but you're still playing
+    const playing = this.poeWindow.isActive || this.typing !== null
     const onScreen = (playing || this.overlay.isInteractable) && (this.inWorld || !this.readingLog)
 
     for (const panel of PANELS) {
@@ -179,7 +208,7 @@ export class HudWindow {
       }
       // Click-through only while playing; with the overlay active (Shift+Space) you can always click and drag.
       // Always set twice: Electron skips the call when it thinks nothing changed.
-      const ignore = Boolean(this.cfg.clickThroughPanels?.[panel] && playing)
+      const ignore = Boolean(this.cfg.clickThroughPanels?.[panel] && playing && this.typing !== panel)
       win.setIgnoreMouseEvents(!ignore)
       win.setIgnoreMouseEvents(ignore)
       win.setOpacity(Math.max(30, Math.min(100, this.cfg.opacity || 100)) / 100)
@@ -238,6 +267,8 @@ export class HudWindow {
       return { action: 'deny' }
     })
     win.on('closed', () => { if (pw.win === win) pw.win = undefined })
+    // clicked back into the game while typing: the panel asks again on its next click
+    win.on('blur', () => { if (this.typing === panel) this.setTyping(panel, false) })
 
     const base = process.env.VITE_DEV_SERVER_URL || `http://localhost:${this.port}/index.html`
     win.loadURL(`${base}${base.includes('?') ? '&' : '?'}hud=${panel}`)

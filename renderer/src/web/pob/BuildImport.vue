@@ -1,7 +1,8 @@
 <template>
   <!-- Deathloom fork: import a PoB code or build link into the player folder (no PoB window needed) -->
-  <div class="px-2 py-1 bg-gray-800 text-sm flex flex-col gap-y-1">
-    <textarea v-model="input" rows="2" spellcheck="false"
+  <!-- In the HUD window (never focused while playing) it asks main for the keyboard while you use it -->
+  <div class="px-2 py-1 bg-gray-800 text-sm flex flex-col gap-y-1" @mousedown="wantKeyboard">
+    <textarea ref="inputRef" v-model="input" rows="2" spellcheck="false"
       class="bg-gray-900 rounded px-1 text-xs font-mono resize-none"
       placeholder="Paste a PoB code or a link (pobb.in, poe.ninja, pastebin, maxroll, …)"
       @input="onInput" />
@@ -39,9 +40,24 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, shallowRef } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import type { PobImportPreview } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
+
+const props = defineProps<{ hud?: boolean }>()
+const inputRef = ref<HTMLTextAreaElement | null>(null)
+
+// HUD window: take the keyboard while the import box is open (main gives the game focus back after)
+function wantKeyboard () {
+  if (props.hud) Host.sendEvent({ name: 'CLIENT->MAIN::hud-typing', payload: { panel: 'gear', on: true } })
+}
+function releaseKeyboard () {
+  if (props.hud) Host.sendEvent({ name: 'CLIENT->MAIN::hud-typing', payload: { panel: 'gear', on: false } })
+}
+onMounted(() => {
+  wantKeyboard()
+  void nextTick(() => { inputRef.value?.focus() })
+})
 
 const emit = defineEmits<{
   (e: 'imported', rel: string, active: boolean): void
@@ -81,6 +97,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-import', (e) => {
       error.value = null
       exists.value = false
       saved.value = e.saved
+      releaseKeyboard()
       emit('imported', e.saved, setActive.value)
     } else {
       exists.value = e.exists === true
@@ -88,7 +105,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-import', (e) => {
     }
   }
 })
-onUnmounted(() => { listener.abort(); if (typing) clearTimeout(typing) })
+onUnmounted(() => { listener.abort(); if (typing) clearTimeout(typing); releaseKeyboard() })
 
 function onInput () {
   saved.value = ''

@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-11-13
+
+### Fixed (#38)
+- Import button missing when the build panel is pinned over the game (HUD). It's there now: while the import box is open, that panel takes the keyboard so you can paste and type; the game gets focus back after Import (or when you click the game).
+
 ## [1.0.9] - 2026-11-13
 
 ### Changed (#36)

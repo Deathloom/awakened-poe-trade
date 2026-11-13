@@ -376,7 +376,8 @@ export type IpcEvent =
   IpcHudGearAction |
   IpcHudGearActionRelay |
   IpcHudResize |
-  IpcHudDims
+  IpcHudDims |
+  IpcHudTyping
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -412,6 +413,13 @@ type IpcHudResize =
     // the panel's current size, as the start size
     w: number
     h: number
+  }>
+
+// Deathloom fork: a HUD panel needs the keyboard (import box): the window may take focus until done
+type IpcHudTyping =
+  Event<'CLIENT->MAIN::hud-typing', {
+    panel: HudPanel
+    on: boolean
   }>
 
 type IpcHudDims =

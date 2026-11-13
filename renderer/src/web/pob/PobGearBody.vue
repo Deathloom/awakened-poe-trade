@@ -15,7 +15,7 @@
           {{ allMods ? 'Hide mods' : 'Show mods' }}</button>
         <button class="text-gray-500 hover:text-gray-200 text-sm" title="Build sharing: sign in with GitHub, Pull / Push"
           :class="{ 'text-gray-200': showSync }" @click="showSync = !showSync"><i class="fas fa-cloud" /></button>
-        <button v-if="!hud" class="text-gray-500 hover:text-gray-200 text-sm" title="Import a PoB code or build link"
+        <button class="text-gray-500 hover:text-gray-200 text-sm" title="Import a PoB code or build link"
           :class="{ 'text-gray-200': showImport }" @click="showImport = !showImport"><i class="fas fa-file-import" /></button>
         <button class="text-gray-500 hover:text-gray-200 text-sm" title="Pick the build and loadout"
           :class="{ 'text-gray-200': showPicker }" @click="showPicker = !showPicker"><i class="fas fa-exchange-alt" /></button>
@@ -26,7 +26,8 @@
 
     <template v-if="visible">
     <build-sync v-if="showSync" class="shrink-0 border-b border-gray-700" :hud="hud" @synced="pickerRef?.request()" />
-    <build-import v-if="showImport && !hud" class="shrink-0 border-b border-gray-700" @imported="pickerRef?.request()" />
+    <build-import v-if="showImport" class="shrink-0 border-b border-gray-700" :hud="hud"
+      @imported="pickerRef?.request()" />
     <build-picker v-show="showPicker" ref="pickerRef" class="shrink-0" @changed="onBuildChanged" />
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
     <pob-tree v-else-if="tab === 'tree'" ref="treeRef" />
