@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-11-13
+
+### Added (#41)
+- Setup guide: **copy builds from an earlier Path of Building** (Documents\Path of Building\Builds, or the build save path in its Settings.xml). Copies into your player folder (or the builds folder), keeps sub folders, never overwrites; uploaded by auto sync when signed in. Main only copies from the folder it found itself.
+
 ## [1.0.12] - 2026-11-13
 
 ### Added (#40)
