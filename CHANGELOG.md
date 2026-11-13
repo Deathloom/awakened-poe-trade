@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-11-13
+
+### Added (#39)
+- **Automatic problem reports**: crashes and code errors (Loot Goblin, overlay pages, the bundled PoB) open a GitHub issue in the private POE-Builds/poe-builds repo with your GitHub sign-in (label `auto-report`; one issue per problem, repeats add a comment; at most 5 per run; Windows user folder removed). Needs PoB fork #18. Setting: Settings → Path of Building → Send problem reports automatically (on).
+- Tray **Report a problem…** opens a new issue in POE-Builds/poe-builds with the version filled in.
+
 ## [1.0.10] - 2026-11-13
 
 ### Fixed (#38)

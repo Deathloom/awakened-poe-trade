@@ -65,6 +65,11 @@ export class AppTray {
         label: 'Open Path of Building',
         click: () => { this.openPob() }
       },
+      {
+        // Deathloom fork: problem reports go to the group's private builds repo
+        label: 'Report a problem…',
+        click: () => { this.reportProblem() }
+      },
       { type: 'separator' },
       {
         label: 'Open config folder',
@@ -81,6 +86,23 @@ export class AppTray {
     ])
 
     this.tray.setContextMenu(contextMenu)
+  }
+
+  // Deathloom fork: new issue in POE-Builds/poe-builds with the version filled in
+  private reportProblem () {
+    const body = [
+      `Loot Goblin ${app.getVersion()} · ${process.platform}`,
+      '',
+      '**What happened?**',
+      '',
+      '',
+      '**What did you expect?**',
+      '',
+      '',
+      '_Log: tray → Open config folder → apt-data (or attach a screenshot)._'
+    ].join('\n')
+    const url = 'https://github.com/POE-Builds/poe-builds/issues/new?labels=report&body=' + encodeURIComponent(body)
+    void shell.openExternal(url)
   }
 
   // Deathloom fork: starts the PoB window (same as runtime\Path of Building.exe from the PoB folder)

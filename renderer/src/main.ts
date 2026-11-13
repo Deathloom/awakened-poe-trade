@@ -16,7 +16,21 @@ import { Host } from './web/background/IPC'
     await I18n.loadLang(AppConfig().language)
   })
 
-  createApp(App)
+  // Deathloom fork: errors in the overlay pages go into the automatic problem report
+  const where = new URLSearchParams(location.search).get('hud') ? `hud=${new URLSearchParams(location.search).get('hud')}` : 'overlay'
+  const report = (err: unknown, extra?: string) => {
+    const e = err instanceof Error ? err : new Error(String(err))
+    Host.sendEvent({ name: 'CLIENT->MAIN::report-error', payload: { message: e.message, stack: e.stack, where: extra ? `${where}, ${extra}` : where } })
+  }
+  window.addEventListener('error', (ev) => { report(ev.error ?? ev.message) })
+  window.addEventListener('unhandledrejection', (ev) => { report(ev.reason) })
+
+  const app = createApp(App)
+  app.config.errorHandler = (err, instance, info) => {
+    console.error(err)
+    report(err, `${instance?.$options.name ?? instance?.$options.__name ?? 'component'} ${info}`)
+  }
+  app
     .use(i18nPlugin)
     .mount('#app')
 })()
