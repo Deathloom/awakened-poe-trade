@@ -21,6 +21,7 @@ import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
 import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
 import { ErrorReporter } from './ErrorReporter'
+import { applyStartWithWindows } from './StartWithWindows'
 
 if (!app.requestSingleInstanceLock()) {
   app.exit()
@@ -168,6 +169,7 @@ app.on('ready', async () => {
         }
         stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
         hud.configure(cfg.pob?.hud)
+        applyStartWithWindows(cfg.pob?.startWithWindows !== false)
       })
       uIOhook.start()
       const port = await startServer(appUpdater, logger)
