@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-11-13
+
+### Fixed (#43)
+- Updates found sooner: Loot Goblin checks for a new release every 30 minutes and when the PC wakes from sleep or is unlocked (was every 16 hours, so an update released while you were away waited until the app restarted). Installing still waits until the game is closed.
+
 ## [1.0.13] - 2026-11-13
 
 ### Added (#41)

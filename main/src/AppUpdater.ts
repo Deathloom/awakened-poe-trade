@@ -1,4 +1,4 @@
-import { app, Notification } from 'electron'
+import { app, Notification, powerMonitor } from 'electron'
 import { execFile } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import type { ServerEvents } from './server'
@@ -64,7 +64,12 @@ export class AppUpdater {
   constructor (
     private server: ServerEvents
   ) {
-    setInterval(this.check, 16 * 60 * 60 * 1000)
+    // Deathloom fork: upstream checked every 16 h, so a release made while the PC sat
+    // idle wasn't found until the app restarted. Check every 30 min and when the
+    // PC wakes up or is unlocked (one request to GitHub Releases each time).
+    setInterval(this.check, 30 * 60 * 1000)
+    powerMonitor.on('resume', this.checkSoon)
+    powerMonitor.on('unlock-screen', this.checkSoon)
 
     this.server.onEventAnyClient('CLIENT->MAIN::user-action', ({ action }) => {
       if (action === 'check-for-update') {
@@ -133,7 +138,17 @@ export class AppUpdater {
     }
   }
 
+  private _lastCheck = 0
+  // after wake-up the network needs a moment; at most one extra check per 5 min
+  private checkSoon = () => {
+    setTimeout(() => {
+      if (Date.now() - this._lastCheck < 5 * 60 * 1000) return
+      void this.check()
+    }, 20 * 1000)
+  }
+
   private check = async () => {
+    this._lastCheck = Date.now()
     try {
       await autoUpdater.checkForUpdates()
     } catch {
