@@ -361,6 +361,8 @@ export type IpcEvent =
   IpcPobDefaultsResult |
   IpcPobSetupProbeRequest |
   IpcPobSetupProbeResult |
+  IpcPobCopyBuildsRequest |
+  IpcPobCopyBuildsResult |
   IpcPobBuildsRequest |
   IpcPobBuildsResult |
   IpcPobCharacter |
@@ -671,6 +673,25 @@ type IpcPobSetupProbeResult =
     // only when accountName was given
     characters?: Array<{ name: string, league?: string, level?: number, class?: string }>
     charactersError?: string
+    // builds of a Path of Building that was installed before (Documents\Path of Building)
+    existingPob?: { buildsDir: string, count: number }
+  }>
+
+// Deathloom fork: copy the builds of that earlier PoB install into the player
+// folder (main uses the folder it found itself, never a path from the page)
+type IpcPobCopyBuildsRequest =
+  Event<'CLIENT->MAIN::pob-copy-builds', {
+    requestId: number
+  }>
+
+type IpcPobCopyBuildsResult =
+  Event<'MAIN->CLIENT::pob-copy-builds', {
+    requestId: number
+    ok: boolean
+    error?: string
+    copied?: number
+    skipped?: number
+    target?: string
   }>
 
 // Deathloom fork: build sync from Loot Goblin (runs PoB's src\SyncServer.lua).

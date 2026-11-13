@@ -15,6 +15,7 @@ import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
 import { LiveGear, HttpError, type FetchFn } from './LiveGear'
 import { pobDefaults, withDefaults, type PobDefaults } from './defaults'
+import { findExistingBuilds, copyBuilds } from './ExistingPob'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
@@ -629,7 +630,9 @@ export class PobImpact {
       player: string
       characters?: Array<{ name: string, league?: string, level?: number, class?: string }>
       charactersError?: string
+      existingPob?: { buildsDir: string, count: number }
     } = { pobDir, pobOk, buildsDir: cfg?.buildsDir || d.buildsDir, player: cfg?.player ?? d.player }
+    out.existingPob = await this.existingBuilds() ?? undefined
     const account = accountName?.trim()
     if (account) {
       try {
@@ -650,6 +653,21 @@ export class PobImpact {
       }
     }
     return out
+  }
+
+  private async existingBuilds () {
+    const buildsDir = this.resolved()?.buildsDir || this.defaults().buildsDir
+    return await findExistingBuilds(app.getPath('documents'), buildsDir).catch(() => null)
+  }
+
+  // Copy the earlier PoB install's builds into the player folder (or the builds folder)
+  async copyExistingBuilds () {
+    const found = await this.existingBuilds()
+    if (!found) throw new Error('No other Path of Building builds found')
+    const target = this.playerDir()
+    const res = await copyBuilds(found.buildsDir, target)
+    this.logger.write(`info [PoB] copied ${res.copied} builds from ${found.buildsDir} (${res.skipped} already there)`)
+    return { ...res, target }
   }
 
   // Sign-in or player folder changed in Loot Goblin's build sync: pick up the new defaults
