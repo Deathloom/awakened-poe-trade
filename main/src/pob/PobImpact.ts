@@ -57,6 +57,8 @@ export class PobImpact {
   private characterAccount = ''
   private logState: LogScanState = { atLogin: true }
   private resolveTimer: NodeJS.Timeout | null = null
+  // Deathloom fork: Loot Goblin wrote a file in the player folder (auto sync pushes it)
+  onPlayerFilesChanged: () => void = () => {}
   private characterBuilds = new CharacterBuilds(path.join(app.getPath('userData'), 'apt-data', 'pob-characters.json'))
 
   constructor (
@@ -165,7 +167,7 @@ export class PobImpact {
       isPackaged: app.isPackaged,
       resourcesPath: process.resourcesPath,
       documents: app.getPath('documents')
-    })
+    }, this.rawCfg?.pobDir ?? '')
   }
 
   // PoB folder in use (setting, else the bundled copy); '' if none
@@ -593,7 +595,17 @@ export class PobImpact {
     return Object.keys(clean).length ? JSON.stringify(clean) : ''
   }
 
-  private playerDir (): string {
+  // Settings with defaults filled in (undefined before the first settings arrive)
+  resolved (): PobConfig | undefined {
+    return this.rawCfg && withDefaults(this.rawCfg, this.defaults())
+  }
+
+  // Sign-in or player folder changed in Loot Goblin's build sync: pick up the new defaults
+  refreshDefaults () {
+    if (this.rawCfg) this.configure(this.rawCfg)
+  }
+
+  playerDir (): string {
     const cfg = this.cfg
     if (!cfg?.buildsDir) throw new Error('Missing in settings: Builds folder')
     // no player folder (PoB without build sharing): the builds folder itself
@@ -649,6 +661,7 @@ export class PobImpact {
     // Same line endings as PoB's files on Windows; Push/Pull compares bytes
     await fs.writeFile(activeFile, lines.join('\r\n').replace(/(\r\n)*$/, '') + '\r\n', 'utf8')
     this.logger.write(`info [PoB] active build set to ${rel}`)
+    this.onPlayerFilesChanged()
     if (remember && this.listsCharacters() && this.activeCharacter) {
       // picked by hand while playing this character: use it again next time
       await this.characterBuilds.set(this.activeCharacter, rel).catch((err: Error) => {

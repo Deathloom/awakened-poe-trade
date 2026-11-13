@@ -84,7 +84,7 @@ export class AppTray {
   }
 
   // Deathloom fork: starts the PoB window (same as runtime\Path of Building.exe from the PoB folder)
-  private openPob () {
+  openPob () {
     const dir = this.pobDir()
     // the git repo (and so the bundled copy) names it "Path{space}of{space}Building.exe";
     // PoB's own installer renames it to "Path of Building.exe"

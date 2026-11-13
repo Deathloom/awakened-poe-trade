@@ -465,6 +465,11 @@ function upgradeConfig (_config: Config): Config {
     config.pob.tradesKey ||= 'Ctrl + T'
     config.pob.hotkeysV1 = true
   }
+  if (!config.pob.hotkeysV2) {
+    // Ctrl+P opens Path of Building (added after hotkeysV1)
+    if (config.pob.openPobKey === undefined) config.pob.openPobKey = 'Ctrl + P'
+    config.pob.hotkeysV2 = true
+  }
   for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'stash-tracker']) {
     if (!config.widgets.some(w => w.wmType === type)) {
       config.widgets.push({
@@ -559,6 +564,14 @@ function getConfigForHost (): HostConfig {
     actions.push({
       shortcut: config.pob.guideKey,
       action: { type: 'trigger-event', target: 'campaign-guide' },
+      keepModKeys: true
+    })
+  }
+  // Deathloom fork: open the Path of Building window
+  if (config.pob?.openPobKey) {
+    actions.push({
+      shortcut: config.pob.openPobKey,
+      action: { type: 'trigger-event', target: 'open-pob' },
       keepModKeys: true
     })
   }
@@ -667,6 +680,8 @@ export function defaultPobConfig (): PobConfig {
     guideKey: 'Ctrl + H',
     tradesKey: 'Ctrl + T',
     hotkeysV1: true,
+    openPobKey: 'Ctrl + P',
+    hotkeysV2: true,
     loadouts: {},
     chatButtons: 'copy',
     hud: defaultHudConfig(),

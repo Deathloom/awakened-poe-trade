@@ -2,11 +2,12 @@
 //
 // - PoB folder: the PoB fork bundled inside the installed app
 //   (resources\PathOfBuilding, added by the Release workflow).
-// - Builds folder: Documents\Loot Goblin\Builds (the bundled PoB's default
+// - Builds folder: PoB's build save path as its build sync recorded it in
+//   BuildSync.json, else Documents\Loot Goblin\Builds (the bundled PoB's default
 //   build save path; not the install folder, which updates replace).
-// - Player: the player folder set in the bundled PoB's build sync
-//   (Documents\Loot Goblin\PathOfBuilding\BuildSync.json). With no player the
-//   builds folder itself is used (PoB without build sharing).
+// - Player: the player folder set in PoB's build sync (BuildSync.json: in
+//   Documents\Loot Goblin\PathOfBuilding for the bundled copy, in src for a git
+//   clone). With no player the builds folder itself is used (PoB without build sharing).
 //
 // Settings always win over these defaults; empty settings fields mean "default".
 
@@ -39,23 +40,43 @@ export function defaultBuildsDir (env: PobDefaultsEnv): string {
   return path.join(env.documents, APP_DOCS_FOLDER, 'Builds')
 }
 
-// Player folder from the bundled PoB's sync settings ('' if not set up)
-export function syncPlayer (env: PobDefaultsEnv): string {
+// Where PoB keeps its settings and BuildSync.json (same rule as PoB's Main.lua):
+// bundled copy (src\bundled.cfg) -> Documents\Loot Goblin\PathOfBuilding, git clone -> src
+export function pobUserDir (env: PobDefaultsEnv, pobDir: string): string {
+  if (!pobDir || fs.existsSync(path.join(pobDir, 'src', 'bundled.cfg'))) {
+    return path.join(env.documents, APP_DOCS_FOLDER, 'PathOfBuilding')
+  }
+  return path.join(pobDir, 'src')
+}
+
+function readBuildSync (env: PobDefaultsEnv, pobDir: string): any {
   try {
-    const file = path.join(env.documents, APP_DOCS_FOLDER, 'PathOfBuilding', 'BuildSync.json')
-    const data = JSON.parse(fs.readFileSync(file, 'utf8'))
-    const player = data?.settings?.player
-    return (typeof player === 'string' && /^[\w.-]+$/.test(player)) ? player : ''
+    return JSON.parse(fs.readFileSync(path.join(pobUserDir(env, pobDir), 'BuildSync.json'), 'utf8'))
   } catch {
-    return ''
+    return null
   }
 }
 
-export function pobDefaults (env: PobDefaultsEnv): PobDefaults {
+// Player folder from PoB's sync settings ('' if not set up)
+export function syncPlayer (env: PobDefaultsEnv, pobDir = bundledPobDir(env)): string {
+  const player = readBuildSync(env, pobDir)?.settings?.player
+  return (typeof player === 'string' && /^[\w.-]+$/.test(player)) ? player : ''
+}
+
+// PoB's build save path as its build sync recorded it ('' if unknown)
+export function syncBuildsDir (env: PobDefaultsEnv, pobDir = bundledPobDir(env)): string {
+  const dir = readBuildSync(env, pobDir)?.buildPath
+  return (typeof dir === 'string' && dir) ? path.normalize(dir).replace(/[\\/]+$/, '') : ''
+}
+
+// pobDir: the PoB folder from settings, if set (its sync settings decide the player)
+export function pobDefaults (env: PobDefaultsEnv, pobDir = ''): PobDefaults {
+  const bundled = bundledPobDir(env)
+  const inUse = pobDir || bundled
   return {
-    pobDir: bundledPobDir(env),
-    buildsDir: defaultBuildsDir(env),
-    player: syncPlayer(env)
+    pobDir: bundled,
+    buildsDir: syncBuildsDir(env, inUse) || defaultBuildsDir(env),
+    player: syncPlayer(env, inUse)
   }
 }
 

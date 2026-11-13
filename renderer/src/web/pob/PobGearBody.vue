@@ -13,6 +13,10 @@
       <div class="ml-auto flex items-center gap-x-2 shrink-0">
         <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200 text-sm" @click="allMods = !allMods">
           {{ allMods ? 'Hide mods' : 'Show mods' }}</button>
+        <button class="text-gray-500 hover:text-gray-200 text-sm" title="Build sharing: sign in with GitHub, Pull / Push"
+          :class="{ 'text-gray-200': showSync }" @click="showSync = !showSync"><i class="fas fa-cloud" /></button>
+        <button v-if="!hud" class="text-gray-500 hover:text-gray-200 text-sm" title="Import a PoB code or build link"
+          :class="{ 'text-gray-200': showImport }" @click="showImport = !showImport"><i class="fas fa-file-import" /></button>
         <button class="text-gray-500 hover:text-gray-200 text-sm" title="Pick the build and loadout"
           :class="{ 'text-gray-200': showPicker }" @click="showPicker = !showPicker"><i class="fas fa-exchange-alt" /></button>
         <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200" title="Reload from Path of Building"
@@ -21,7 +25,9 @@
     </div>
 
     <template v-if="visible">
-    <build-picker v-show="showPicker" class="shrink-0" @changed="onBuildChanged" />
+    <build-sync v-if="showSync" class="shrink-0 border-b border-gray-700" :hud="hud" @synced="pickerRef?.request()" />
+    <build-import v-if="showImport && !hud" class="shrink-0 border-b border-gray-700" @imported="pickerRef?.request()" />
+    <build-picker v-show="showPicker" ref="pickerRef" class="shrink-0" @changed="onBuildChanged" />
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
     <pob-tree v-else-if="tab === 'tree'" ref="treeRef" />
     <template v-else>
@@ -80,6 +86,8 @@ import { Host } from '@/web/background/IPC'
 import { openTradeSearch, openPriceCheck } from './gear-actions'
 import { useCopyFeedback } from './market'
 import BuildPicker from './BuildPicker.vue'
+import BuildSync from './BuildSync.vue'
+import BuildImport from './BuildImport.vue'
 import PobGems from './PobGems.vue'
 import PobTree from './PobTree.vue'
 import { pobText } from './labels'
@@ -100,6 +108,9 @@ const tradeError = ref<Record<string, string>>({})
 const TABS = [{ key: 'gear', label: 'Gear' }, { key: 'gems', label: 'Gems' }, { key: 'tree', label: 'Tree' }] as const
 const tab = ref<'gear' | 'gems' | 'tree'>('gear')
 const showPicker = ref(true)
+const showSync = ref(false)
+const showImport = ref(false)
+const pickerRef = ref<InstanceType<typeof BuildPicker> | null>(null)
 const gemsRef = ref<InstanceType<typeof PobGems> | null>(null)
 const treeRef = ref<InstanceType<typeof PobTree> | null>(null)
 const visible = computed(() => props.active)

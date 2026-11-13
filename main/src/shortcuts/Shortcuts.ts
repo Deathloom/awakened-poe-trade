@@ -24,6 +24,8 @@ export class Shortcuts {
   private clipboard: HostClipboard
   // Deathloom fork: set by main once the HUD window exists
   hud?: HudWindow
+  // Deathloom fork: opens the Path of Building window (tray's "Open Path of Building")
+  openPob?: () => void
 
   static async create (
     logger: Logger,
@@ -160,6 +162,11 @@ export class Shortcuts {
         } else if (entry.action.type === 'paste-in-chat') {
           typeInChat(entry.action.text, entry.action.send, this.clipboard)
         } else if (entry.action.type === 'trigger-event') {
+          // Deathloom fork: Ctrl+P opens Path of Building
+          if (entry.action.target === 'open-pob') {
+            this.openPob?.()
+            return
+          }
           this.server.sendEventTo('broadcast', {
             name: 'MAIN->CLIENT::widget-action',
             payload: { target: entry.action.target }

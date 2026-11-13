@@ -8,36 +8,64 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#35)
+- **Build sharing from the overlay** (cloud button in the build panel): Sign in with GitHub (code is copied, GitHub opens; finishes by itself), Pull / Push / Sync now with progress and results, player folder, Sync automatically. Uses the bundled PoB's sync (`src\SyncServer.lua`), so PoB and Loot Goblin share one sign-in and one sync state. Warns when Loot Goblin reads builds from another folder than PoB syncs.
+- Auto sync: Pull when Loot Goblin starts; Push a few seconds after Loot Goblin changes your folder (import, active build).
+- **Import a PoB code or link** (import button in the build panel): pobb.in, poe.ninja, pastebin, maxroll, pob.codes, rentry, poedb or the code itself. Pick name and folder, optionally make it the active build. No PoB window needed.
+- **Ctrl+P** opens Path of Building (Settings → Path of Building → Open Path of Building hotkey).
+- Empty Builds folder / Player settings now follow PoB's build sync (`BuildSync.json`), also for a PoB git clone.
+
 ### Fixed (#34)
 - Build panel: the Gems tab also showed the Gear list underneath.
 
-### Fixed (#33)
-- Tray **Open Path of Building** said "not found": the PoB repo and the bundled copy name the exe `Path{space}of{space}Building.exe`.
+## [1.0.7] - 2026-11-13
 
-### Auto update while the game is closed (#32)
-- A downloaded update installs by itself as soon as Path of Exile isn't running (checked once a minute, process list only), then Loot Goblin starts again. While you play it waits; the notification and tray item still let you update right away.
-- In-game notice (bottom of the screen) when an update starts downloading and when it's ready, because Windows hides its own notifications while a game runs full screen.
+### Fixed
+- Tray **Open Path of Building** said "not found": the PoB repo and the bundled copy name the exe `Path{space}of{space}Building.exe` (#33).
 
-### Updates (awaiting merge, #31)
-- Windows notification when an update starts downloading and when it's ready (click it to restart and update).
-- Tray menu shows **Restart to update to x.y.z** once an update is downloaded.
-- Updating on quit now shows the installer's progress and starts Loot Goblin again afterwards (upstream installed silently and left it closed).
-
-### Fixes (awaiting merge, #30)
-- Tree tab: ascendancy names in blue instead of yellow (yellow means "other mastery effect").
-- Switching character (dropdown or in game) now refreshes gear, gems and tree: a fetch still running for the old character is dropped, the first fetch after a switch may come after 5 s instead of 30 s, and the panels ask again by themselves when the rate limit allowed nothing yet.
-- HUD panels can't be resized past the game window or screen any more (older oversized panels shrink to fit).
-
-### Bundled Path of Building (awaiting merge)
-- The installer includes the Path of Building fork (`resources\PathOfBuilding`); tray menu **Open Path of Building**. PoB updates come with each Loot Goblin release (PoB's own updater is off in this copy).
-- Empty Path of Building settings now mean defaults: bundled PoB, builds in `Documents\Loot Goblin\Builds`, player from PoB's build sharing (or no player folder). Build impact is on by default for new installs.
-
-### In review (not merged yet)
-- Character dropdown in the build panel (#23).
-- Tree tab: keystones, ascendancy, notables, masteries and jewel sockets compared with your character (#24).
-- Windows installer "Loot Goblin", with self-update from this repo's releases (#25).
+## [1.0.6] - 2026-11-13
 
 ### Added
+- A downloaded update installs by itself as soon as Path of Exile isn't running (checked once a minute, process list only), then Loot Goblin starts again. While you play it waits; the notification and tray item still let you update right away (#32).
+- In-game notice (bottom of the screen) when an update starts downloading and when it's ready, because Windows hides its own notifications while a game runs full screen (#32).
+
+## [1.0.5] - 2026-11-13
+
+No changes (release to test updating from 1.0.4).
+
+## [1.0.4] - 2026-11-12
+
+### Added
+- Windows notification when an update starts downloading and when it's ready (click it to restart and update) (#31).
+- Tray menu shows **Restart to update to x.y.z** once an update is downloaded (#31).
+
+### Changed
+- Updating on quit now shows the installer's progress and starts Loot Goblin again afterwards (upstream installed silently and left it closed) (#31).
+
+## [1.0.3] - 2026-11-12
+
+### Fixed
+- Bundled Path of Building takes the player folder from the GitHub sign-in it shares with PoB (PoB fork #16).
+
+## [1.0.2] - 2026-11-12
+
+### Added
+- The installer includes the Path of Building fork (`resources\PathOfBuilding`); tray menu **Open Path of Building**. PoB updates come with each Loot Goblin release (PoB's own updater is off in this copy) (#29).
+- Empty Path of Building settings now mean defaults: bundled PoB, builds in `Documents\Loot Goblin\Builds`, player from PoB's build sharing (or no player folder). Build impact is on by default for new installs (#29).
+
+### Fixed
+- Tree tab: ascendancy names in blue instead of yellow (yellow means "other mastery effect") (#30).
+- Switching character (dropdown or in game) now refreshes gear, gems and tree: a fetch still running for the old character is dropped, the first fetch after a switch may come after 5 s instead of 30 s, and the panels ask again by themselves when the rate limit allowed nothing yet (#30).
+- HUD panels can't be resized past the game window or screen any more (older oversized panels shrink to fit) (#30).
+
+## [1.0.0] - 2026-11-12
+
+First Loot Goblin release.
+
+### Added
+- Windows installer "Loot Goblin", with self-update from this repo's releases (#25, #28).
+- Character dropdown in the build panel (#23).
+- Tree tab: keystones, ascendancy, notables, masteries and jewel sockets compared with your character (#24).
 - **Build impact** in the price check: shows what an item does to your PoB build, compared with the build's gear and with your current character (items, tree, gems and level from the public Characters tab) (#1, #4).
 - **Build panel** with Gear and Gems tabs. Copy, Trade and Price check buttons per item; build and loadout picker (#5, #8).
 - **Copy** button in the price check, for GGG's in-game market (#5).
