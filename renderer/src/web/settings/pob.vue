@@ -55,9 +55,13 @@
         <span class="flex-1">Trade companion hotkey</span>
         <hotkey-input v-model="pob.tradesKey" class="w-48" />
       </div>
+      <div class="flex items-center gap-x-2 mb-1">
+        <span class="flex-1">Open Path of Building hotkey</span>
+        <hotkey-input v-model="pob.openPobKey" class="w-48" />
+      </div>
       <div class="text-gray-500 text-sm mb-1">
         Each hotkey shows or hides its panel. A pinned panel (Show while playing, below) toggles over
-        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+T.
+        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+T; Ctrl+P opens Path of Building.
       </div>
       <div class="text-gray-500 text-sm">
         Shows the active build's items in the overlay (also in the widget menu, hammer icon).
@@ -212,6 +216,7 @@ export default defineComponent({
       props.config.pob.hud.clickThroughPanels ??= defaultHudConfig().clickThroughPanels
       if (props.config.pob.guideKey === undefined) props.config.pob.guideKey = null
       if (props.config.pob.tradesKey === undefined) props.config.pob.tradesKey = null
+      if (props.config.pob.openPobKey === undefined) props.config.pob.openPobKey = null
       return props.config.pob
     })
 

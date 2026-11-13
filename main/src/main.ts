@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, clipboard } from 'electron'
+import { app, clipboard, net } from 'electron'
 import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
 import { startServer, eventPipe, server } from './server'
@@ -17,6 +17,8 @@ import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
 import { PobImpact } from './pob/PobImpact'
 import { StashTracker } from './pob/StashTracker'
+import { PobSync } from './pob/PobSync'
+import { PobImport } from './pob/PobImport'
 
 if (!app.requestSingleInstanceLock()) {
   app.exit()
@@ -49,6 +51,43 @@ app.on('ready', async () => {
     }
   }
   app.on('will-quit', () => { pobImpact.stop() })
+  // Deathloom fork: build sync (sign in, Pull / Push) and PoB-code import from the overlay
+  const pobSync = new PobSync(eventPipe, logger, pobImpact)
+  pobImpact.onPlayerFilesChanged = () => { pobSync.schedulePush() }
+  const pobImport = new PobImport(async (url) => {
+    const res = await net.fetch(url, { headers: { 'User-Agent': `Loot Goblin/${app.getVersion()}` } })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.text()
+  })
+  eventPipe.onEventAnyClient('CLIENT->MAIN::pob-import', (req) => {
+    const send = eventPipe.replyTo()
+    const reply = (payload: Omit<Parameters<typeof send>[0] & { name: 'MAIN->CLIENT::pob-import' }, 'name'>['payload']) => {
+      send({ name: 'MAIN->CLIENT::pob-import', payload })
+    }
+    void (async () => {
+      try {
+        const playerDir = pobImpact.playerDir()
+        if (req.preview) {
+          reply({ requestId: req.requestId, ok: true, preview: await pobImport.preview(req.input, playerDir) })
+          return
+        }
+        const res = await pobImport.save(req.input, playerDir, req.name ?? '', req.folder ?? '', req.overwrite === true)
+        if ('exists' in res) {
+          reply({ requestId: req.requestId, ok: false, exists: true, error: `A build called "${res.exists}" already exists.` })
+          return
+        }
+        logger.write(`info [PoB] imported build ${res.rel}`)
+        if (req.setActive) {
+          await pobImpact.setActiveBuild(res.rel)
+        } else {
+          pobSync.schedulePush()
+        }
+        reply({ requestId: req.requestId, ok: true, saved: res.rel })
+      } catch (err) {
+        reply({ requestId: req.requestId, ok: false, error: (err as Error).message })
+      }
+    })()
+  })
   const stashTracker = new StashTracker(eventPipe, logger)
   // Deathloom fork: Copy buttons (market search text). Only the clipboard; nothing is sent to the game.
   eventPipe.onEventAnyClient('CLIENT->MAIN::write-clipboard', ({ text }) => {
@@ -63,6 +102,7 @@ app.on('ready', async () => {
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
       shortcuts.hud = hud
+      shortcuts.openPob = () => { tray.openPob() }
       gameLogWatcher.onLines = (lines, isHistory) => {
         hud.handleLogLines(lines)
         pobImpact.handleLogLines(lines, isHistory)
@@ -77,6 +117,7 @@ app.on('ready', async () => {
         appUpdater.checkAtStartup()
         tray.overlayKey = cfg.overlayKey
         pobImpact.configure(cfg.pob)
+        pobSync.configure()
         stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
         hud.configure(cfg.pob?.hud)
       })

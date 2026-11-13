@@ -64,6 +64,10 @@ export interface PobConfig {
   // Hotkeys that toggle the campaign guide / trade companion (pinned or not)
   guideKey: string | null
   tradesKey: string | null
+  // Hotkey that opens the Path of Building window
+  openPobKey?: string | null
+  // set once the Ctrl+P default was applied to an older config
+  hotkeysV2?: boolean
   // set once the Ctrl+G / Ctrl+H / Ctrl+T defaults were applied to an older config
   hotkeysV1?: boolean
   // Loadout picked in the build panel, per build file (path relative to the player folder).
@@ -357,6 +361,10 @@ export type IpcEvent =
   IpcPobGemsResult |
   IpcPobTreeRequest |
   IpcPobTreeResult |
+  IpcPobSyncRequest |
+  IpcPobSyncState |
+  IpcPobImportRequest |
+  IpcPobImportResult |
   IpcStashRequest |
   IpcStashResult |
   IpcStashSession |
@@ -614,6 +622,86 @@ type IpcPobDefaultsResult =
     pobDir: string
     buildsDir: string
     player: string
+  }>
+
+// Deathloom fork: build sync from Loot Goblin (runs PoB's src\SyncServer.lua).
+// Same sign-in and BuildSync.json as the PoB window.
+export interface PobSyncStatus {
+  credAvailable: boolean
+  signedIn: boolean
+  login?: string
+  // signed out, but a pasted fine-grained token is saved in PoB
+  usingToken: boolean
+  settings: { owner: string, repo: string, branch: string, root: string, player: string }
+  prefs: { autoSync: boolean, setupAsked: boolean }
+  // PoB's build save path (the folder that maps to the repo's poe1 folder)
+  buildPath: string
+}
+
+export interface PobSyncState {
+  // progress text while syncing or signing in, null when idle
+  busy: string | null
+  status: PobSyncStatus | null
+  // why the status couldn't be read (no PoB folder, PoB too old, ...)
+  error?: string
+  // device flow in progress: enter userCode on verificationUri
+  signIn: { userCode: string, verificationUri: string, expiresAt: number } | null
+  // last Pull / Push / Sync now (auto = started by Loot Goblin, not a button)
+  last: { time: number, title: string, success: boolean, auto: boolean, lines: string[] } | null
+  // message from the last sign-in (e.g. account can't see the repo)
+  notice?: string
+  // Loot Goblin reads builds from another folder than PoB syncs
+  mismatch?: string
+}
+
+type IpcPobSyncRequest =
+  Event<'CLIENT->MAIN::pob-sync', {
+    op: 'status' | 'signIn' | 'cancelSignIn' | 'signOut' | 'pull' | 'push' | 'syncNow' | 'configure'
+    // configure
+    player?: string
+    autoSync?: boolean
+  }>
+
+type IpcPobSyncState =
+  Event<'MAIN->CLIENT::pob-sync-state', PobSyncState>
+
+// Deathloom fork: import a PoB code or build link into the player folder
+export interface PobImportPreview {
+  // suggested file name (no .xml)
+  name: string
+  className?: string
+  ascendancy?: string
+  level?: number
+  mainSkill?: string
+  // sub folders of the player folder ('' = the player folder itself)
+  folders: string[]
+  // site the code came from, or 'code'
+  source: string
+}
+
+type IpcPobImportRequest =
+  Event<'CLIENT->MAIN::pob-import', {
+    requestId: number
+    // PoB code or a link (pobb.in, pastebin, poe.ninja, maxroll, ...)
+    input: string
+    // only decode and return a preview
+    preview?: boolean
+    name?: string
+    folder?: string
+    setActive?: boolean
+    overwrite?: boolean
+  }>
+
+type IpcPobImportResult =
+  Event<'MAIN->CLIENT::pob-import', {
+    requestId: number
+    ok: boolean
+    error?: string
+    // a build with that name already exists (save again with overwrite)
+    exists?: boolean
+    preview?: PobImportPreview
+    // saved file, relative to the player folder
+    saved?: string
   }>
 
 // Deathloom fork: build panel. Lists the player's builds and the active

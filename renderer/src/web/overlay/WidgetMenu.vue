@@ -34,6 +34,7 @@
           <li><b>{{ help.overlayKey }}</b>: open / close the overlay (this bar). Esc closes it too.</li>
           <li><b>{{ help.priceKey }}</b> over an item in game: price check, with what it does to your PoB build.</li>
           <li><b>{{ help.gearKey }}</b> build gear, <b>{{ help.guideKey }}</b> campaign guide, <b>{{ help.tradesKey }}</b> trade companion: show / hide.</li>
+          <li><b>{{ help.openPobKey }}</b> opens Path of Building. In the build panel, <i class="fas fa-cloud" /> shares builds (GitHub sign-in, Pull / Push) and <i class="fas fa-file-import" /> imports a PoB code or link.</li>
           <li>Pinned panels (Settings <i class="fas fa-cog"></i> → Path of Building → Show while playing) stay on screen while you play.
             Drag them by the top bar or any empty spot.</li>
           <li>Build gear: <i class="far fa-copy"></i> copies the name for the in-game market (press <b>/</b>, then Ctrl+V),
@@ -148,7 +149,8 @@ export default defineComponent({
         priceKey: pc?.hotkey ? `${pc.hotkeyHold} + ${pc.hotkey}` : 'the price check hotkey',
         gearKey: pob?.gearPanelKey || 'no hotkey',
         guideKey: pob?.guideKey || 'no hotkey',
-        tradesKey: pob?.tradesKey || 'no hotkey'
+        tradesKey: pob?.tradesKey || 'no hotkey',
+        openPobKey: pob?.openPobKey || 'No hotkey'
       }
     })
 
