@@ -8,6 +8,14 @@
         (the same numbers as PoB's item tooltip).
       </div>
     </div>
+    <div class="mb-4">
+      <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        When Loot Goblin or its Path of Building hits an error, it opens an issue in the group's private
+        POE-Builds/poe-builds repo with your GitHub sign-in (build sharing): version, error and the last log lines,
+        without your Windows user folder. Not sent when you're not signed in. Tray → Report a problem… for anything else.
+      </div>
+    </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Path of Building folder</div>
       <div class="flex gap-1">

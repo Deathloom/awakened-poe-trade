@@ -19,6 +19,7 @@ import { PobImpact } from './pob/PobImpact'
 import { StashTracker } from './pob/StashTracker'
 import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
+import { ErrorReporter } from './ErrorReporter'
 
 if (!app.requestSingleInstanceLock()) {
   app.exit()
@@ -54,6 +55,11 @@ app.on('ready', async () => {
   // Deathloom fork: build sync (sign in, Pull / Push) and PoB-code import from the overlay
   const pobSync = new PobSync(eventPipe, logger, pobImpact)
   pobImpact.onPlayerFilesChanged = () => { pobSync.schedulePush() }
+  // Deathloom fork: automatic problem reports (GitHub issues in the builds repo, via the sign-in)
+  const errorReporter = new ErrorReporter(logger, pobSync, eventPipe)
+  errorReporter.enabled = () => pobImpact.resolved()?.errorReports !== false
+  pobImpact.onCodeError = (message, detail) => { errorReporter.capture('pob', message, detail, 'ImpactServer') }
+  pobSync.onCodeError = (message) => { errorReporter.capture('pob', message, undefined, 'SyncServer') }
   const pobImport = new PobImport(async (url) => {
     const res = await net.fetch(url, { headers: { 'User-Agent': `Loot Goblin/${app.getVersion()}` } })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)

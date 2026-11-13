@@ -59,6 +59,9 @@ export interface PobConfig {
   characterAuto?: boolean
   // Use the character's passive tree, level and gems too (not just items)
   liveTreeAndGems: boolean
+  // Send problem reports (crashes, code errors) as GitHub issues to the builds repo
+  // with your GitHub sign-in. undefined = on
+  errorReports?: boolean
   // Hotkey that toggles the build gear panel (null = only from the widget menu)
   gearPanelKey: string | null
   // Hotkeys that toggle the campaign guide / trade companion (pinned or not)
@@ -377,7 +380,8 @@ export type IpcEvent =
   IpcHudGearActionRelay |
   IpcHudResize |
   IpcHudDims |
-  IpcHudTyping
+  IpcHudTyping |
+  IpcReportError
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -420,6 +424,15 @@ type IpcHudTyping =
   Event<'CLIENT->MAIN::hud-typing', {
     panel: HudPanel
     on: boolean
+  }>
+
+// Deathloom fork: an error in an overlay page, for the automatic problem report
+type IpcReportError =
+  Event<'CLIENT->MAIN::report-error', {
+    message: string
+    stack?: string
+    // page / component, e.g. "hud=gear" or the Vue component name
+    where?: string
   }>
 
 type IpcHudDims =

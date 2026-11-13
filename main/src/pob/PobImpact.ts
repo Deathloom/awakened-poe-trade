@@ -57,6 +57,8 @@ export class PobImpact {
   private characterAccount = ''
   private logState: LogScanState = { atLogin: true }
   private resolveTimer: NodeJS.Timeout | null = null
+  // Deathloom fork: Lua errors / crashes of the headless PoB (automatic problem report)
+  onCodeError: (message: string, detail?: string) => void = () => {}
   // Deathloom fork: Loot Goblin wrote a file in the player folder (auto sync pushes it)
   onPlayerFilesChanged: () => void = () => {}
   private characterBuilds = new CharacterBuilds(path.join(app.getPath('userData'), 'apt-data', 'pob-characters.json'))
@@ -389,6 +391,8 @@ export class PobImpact {
         const detail = this.stderrTail.slice(-3).join(' | ')
         const msg = `Path of Building exited (code ${String(code)})${detail ? ': ' + detail : ''}`
         this.logger.write(`warn [PoB] ${msg}`)
+        // stop() kills it on purpose (code null); anything else is a crash
+        if (code !== null && code !== 0 && this.proc === proc) this.onCodeError(`Headless PoB exited (code ${String(code)})`, detail)
         if (!started) reject(new Error(msg))
         if (this.proc === proc) this.cleanup(new Error(msg))
       })
@@ -427,7 +431,11 @@ export class PobImpact {
             this.pending.delete(reply.id)
             clearTimeout(p.timer)
             if (reply.ok) p.resolve(reply)
-            else p.reject(new Error(String(reply.error ?? 'Unknown error')))
+            else {
+              const msg = String(reply.error ?? 'Unknown error')
+              if (/\.lua:\d+:/.test(msg)) this.onCodeError(msg)
+              p.reject(new Error(msg))
+            }
           }
         }
       })

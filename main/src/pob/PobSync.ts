@@ -197,6 +197,20 @@ export class PobSync {
     }
   }
 
+  // Problem report (ErrorReporter): only when signed in; runs after any sync job
+  async report (r: { key: string, title: string, body: string, seen: string }): Promise<{ sent: boolean, reason?: string }> {
+    if (!this.state.status?.signedIn) return { sent: false, reason: 'not signed in to GitHub' }
+    let out: { sent: boolean, reason?: string } = { sent: false, reason: 'not run' }
+    await this.enqueue(async () => {
+      const [reply] = await this.run([{ cmd: 'report', ...r }])
+      out = { sent: reply.sent === true, reason: reply.reason ? String(reply.reason) : undefined }
+    })
+    return out
+  }
+
+  // Lua errors from SyncServer (code bugs, not "not signed in" messages)
+  onCodeError: (message: string) => void = () => {}
+
   // ---- Sign in with GitHub (device flow) --------------------------------
   private async startSignIn () {
     this.stopDevice()
@@ -291,6 +305,7 @@ export class PobSync {
       let next = 0
       let timer: NodeJS.Timeout | null = null
       let done = false
+      let c: Record<string, unknown> = {}
       const finish = (err?: Error) => {
         if (done) return
         done = true
@@ -312,7 +327,7 @@ export class PobSync {
           finish()
           return
         }
-        const c = commands[next++]
+        c = commands[next++]
         const long = ['pull', 'push', 'syncNow'].includes(String(c.cmd))
         arm(long ? LONG_TIMEOUT : SHORT_TIMEOUT, String(c.cmd))
         proc.stdin.write(JSON.stringify({ id: next, ...c }) + '\n')
@@ -354,7 +369,9 @@ export class PobSync {
             sendNext()
           } else if (reply.id === next) {
             if (!reply.ok) {
-              finish(new Error(String(reply.error ?? 'Unknown error')))
+              const msg = String(reply.error ?? 'Unknown error')
+              if (/\.lua:\d+:/.test(msg) && c.cmd !== 'report') this.onCodeError(msg)
+              finish(new Error(msg))
               return
             }
             replies.push(reply)
