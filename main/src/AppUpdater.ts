@@ -26,11 +26,14 @@ export class AppUpdater {
     this.onChange(info)
   }
 
-  // Deathloom fork: show the installer's progress and start Loot Goblin again afterwards
+  // Deathloom fork: install silently and start Loot Goblin again afterwards. The
+  // installer is the assisted (oneClick: false) kind, so a non-silent run shows the
+  // whole wizard and waits for Next; /S skips the pages and --force-run relaunches.
   installNow = () => {
     if (this._info.state !== 'update-downloaded' || this._installing) return
     this._installing = true
-    autoUpdater.quitAndInstall(false, true)
+    this.notify('Updating Loot Goblin', `Installing version ${this._info.version}. Loot Goblin starts again by itself in a few seconds.`)
+    autoUpdater.quitAndInstall(true, true)
   }
 
   // Deathloom fork: install a downloaded update by itself as soon as no Path of
@@ -46,7 +49,6 @@ export class AppUpdater {
       if (await isGameRunning() === false) {
         clearInterval(this._idleTimer)
         this._idleTimer = undefined
-        this.notify('Updating Loot Goblin', `Installing version ${this._info.version}. Loot Goblin starts again by itself.`)
         setTimeout(this.installNow, 3000)
       }
     }

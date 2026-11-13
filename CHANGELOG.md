@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#46)
+- **Updates install without clicking through the installer.** The installer is the step-by-step kind, so an update opened the whole wizard and waited for Next. Updates now install silently (notice first), then Loot Goblin starts again by itself.
+
 ### Security (#45)
 - **Local server only answers Loot Goblin's own pages.** It already listened only on this PC, but a web page open in your browser (or a DNS-rebinding page) could connect to its WebSocket and send overlay commands (chat, build push, problem reports, clipboard). Now the Host must be this PC's loopback address (or the host given with `--listen`) and browser requests must come from the overlay's own address. Refused attempts are logged.
 - Files served from URLs (app pages, `/uploads`) can't leave their folder; missing files answer 404 instead of an unhandled stream error.
