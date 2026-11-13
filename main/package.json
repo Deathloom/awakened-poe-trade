@@ -28,12 +28,12 @@
     "comlink": "^4.4.2",
     "electron": "^40.10.6",
     "electron-builder": "^26.9.0",
-    "electron-updater": "^6.8.3",
+    "electron-updater": "^6.8.11",
     "esbuild": "^0.28.0",
     "ini": "^6.0.0",
     "patch-package": "^8.0.1",
     "typescript": "^6.0.2",
-    "ws": "^8.20.0"
+    "ws": "^8.23.0"
   },
   "allowScripts": {
     "electron": true

@@ -1,3 +1,4 @@
+import { lockToAppPages } from '../safe-open'
 import path from 'path'
 import { BrowserWindow, dialog, shell, Menu, WebContents } from 'electron'
 import { OverlayController, OVERLAY_WINDOW_OPTS } from 'electron-overlay-window'
@@ -50,9 +51,14 @@ export class OverlayWindow {
       webviewWebContents.on('before-input-event', this.handleExtraCommands)
     })
 
-    this.window.webContents.setWindowOpenHandler((details) => {
-      shell.openExternal(details.url)
-      return { action: 'deny' }
+    // Deathloom fork: web links only, and the window stays on the overlay's pages
+    lockToAppPages(this.window.webContents)
+    // Deathloom fork: <webview> (wiki / trade site browser) gets no preload and no Node
+    this.window.webContents.on('will-attach-webview', (_e, webPreferences) => {
+      delete webPreferences.preload
+      webPreferences.nodeIntegration = false
+      webPreferences.nodeIntegrationInSubFrames = false
+      webPreferences.contextIsolation = true
     })
   }
 

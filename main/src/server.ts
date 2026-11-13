@@ -10,8 +10,34 @@ import { ConfigStore } from './host-files/ConfigStore'
 import { addFileUploadRoutes } from './host-files/file-uploads'
 import type { AppUpdater } from './AppUpdater'
 import type { Logger } from './RemoteLogger'
+import { isAllowedRequest, safeJoin } from './request-guard'
 
 export const server = createServer()
+
+// Deathloom fork: refuse requests and WebSocket upgrades from other web pages
+// (see request-guard.ts). Checked before any route or the WebSocket server sees them.
+const listenHost = process.argv.find(arg => arg.startsWith('--listen='))?.split('=')[1]?.split(':')[0] || undefined
+let rejectedCount = 0
+const serverEmit = server.emit.bind(server)
+server.emit = ((event: string, ...args: any[]) => {
+  if (event === 'request' || event === 'upgrade') {
+    const req = args[0]
+    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin }, { listenHost })) {
+      if (rejectedCount++ < 20) {
+        console.warn(`[server] refused ${event} ${String(req.url).slice(0, 80)} from origin=${String(req.headers.origin)} host=${String(req.headers.host)}`)
+      }
+      if (event === 'request') {
+        const res = args[1]
+        res.statusCode = 403
+        res.end()
+      } else {
+        args[1].destroy()
+      }
+      return true
+    }
+  }
+  return serverEmit(event, ...args)
+}) as typeof server.emit
 const websocketServer = new WebSocketServer({ noServer: true })
 let lastActiveClient: WebSocket
 // Deathloom fork: the HUD window ("show while playing") connects as a second
@@ -36,7 +62,18 @@ if (!process.env.VITE_DEV_SERVER_URL) {
       case '.svg': res.setHeader('content-type', 'image/svg+xml'); break;
     }
 
-    fs.createReadStream(path.join(__dirname, filePath))
+    // Deathloom fork: never serve files outside the app folder; missing file = 404 (not an unhandled stream error)
+    const full = safeJoin(__dirname, filePath)
+    if (!full) {
+      res.statusCode = 404
+      res.end()
+      return
+    }
+    fs.createReadStream(full)
+      .on('error', () => {
+        if (!res.headersSent) res.statusCode = 404
+        res.end()
+      })
       .pipe(res)
   })
 }

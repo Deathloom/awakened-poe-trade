@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (#45)
+- **Local server only answers Loot Goblin's own pages.** It already listened only on this PC, but a web page open in your browser (or a DNS-rebinding page) could connect to its WebSocket and send overlay commands (chat, build push, problem reports, clipboard). Now the Host must be this PC's loopback address (or the host given with `--listen`) and browser requests must come from the overlay's own address. Refused attempts are logged.
+- Files served from URLs (app pages, `/uploads`) can't leave their folder; missing files answer 404 instead of an unhandled stream error.
+- Links from pages open in the browser only if they're http(s); the overlay and HUD windows can't navigate away from the overlay's pages; the trade-site `<webview>` gets no preload or Node. The GitHub sign-in page only opens on github.com.
+- Update check also runs 90 s after start even if the overlay page never connects, so a broken release can still be replaced automatically.
+- Dependencies: electron-updater 6.8.11, ws 8.23.0, electron-builder 26.18 (with its tar / app-builder-lib fixes), esbuild 0.28.2 and other non-breaking audit fixes; AppImage patch regenerated for app-builder-lib 26.18. GitHub Actions in our workflows pinned by commit SHA.
+
 ### Changed (#44)
 - **Path of Building is no longer inside the installer** (726 MB → overlay only, ~100 MB). On first run Loot Goblin downloads PoB from our PoB fork's `master` branch into `%LOCALAPPDATA%\Loot Goblin\PathOfBuilding`: file by file from PoB's own `manifest.xml`, every file hash-checked, progress bar in the setup guide (and Settings → Path of Building), a notification for people who already finished the guide, **Try again** on failure. After that PoB updates itself with its own updater (Check for Update works in the PoB window); Loot Goblin also checks master at start while the PoB window is closed, so build impact stays current.
 - Updating from an older Loot Goblin: the installer moves the old `resources\PathOfBuilding` to the new folder first, so only changed files download (full download if that wasn't possible). A PoB-folder setting pointing at the old place is ignored. Settings, builds and the GitHub sign-in stay where they were.
