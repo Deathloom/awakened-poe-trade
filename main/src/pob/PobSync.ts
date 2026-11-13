@@ -284,7 +284,7 @@ export class PobSync {
   private async run (commands: Array<Record<string, unknown>>, onProgress?: (text: string) => void): Promise<any[]> {
     const pobDir = this.pobDir()
     if (!pobDir) {
-      throw new Error('No Path of Building folder (Settings → Path of Building).')
+      throw new Error(this.impact.installStatus() ?? 'No Path of Building folder (Settings → Path of Building).')
     }
     const srcDir = path.join(pobDir, 'src')
     const exe = path.join(pobDir, 'runtime', 'PoBHeadless.exe')

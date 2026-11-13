@@ -361,6 +361,8 @@ export type IpcEvent =
   IpcPobDefaultsResult |
   IpcPobSetupProbeRequest |
   IpcPobSetupProbeResult |
+  IpcPobInstallRequest |
+  IpcPobInstallState |
   IpcPobCopyBuildsRequest |
   IpcPobCopyBuildsResult |
   IpcPobBuildsRequest |
@@ -676,6 +678,31 @@ type IpcPobSetupProbeResult =
     // builds of a Path of Building that was installed before (Documents\Path of Building)
     existingPob?: { buildsDir: string, count: number }
   }>
+
+// Deathloom fork: Loot Goblin's own Path of Building (downloaded on first run
+// into %LOCALAPPDATA%\Loot Goblin\PathOfBuilding, then kept up to date)
+export interface PobInstallState {
+  // missing: not downloaded; installing: first download (or finishing a moved copy);
+  // checking / updating: looking for / getting a newer version; error: first download failed
+  state: 'missing' | 'installing' | 'checking' | 'updating' | 'ready' | 'error'
+  dir: string
+  version?: string
+  // files done / to do, bytes downloaded
+  done: number
+  total: number
+  bytes: number
+  message?: string
+  error?: string
+}
+
+type IpcPobInstallRequest =
+  Event<'CLIENT->MAIN::pob-install', {
+    // status: just send the state; start: download now / retry; repair: check every file
+    op: 'status' | 'start' | 'repair'
+  }>
+
+type IpcPobInstallState =
+  Event<'MAIN->CLIENT::pob-install-state', PobInstallState>
 
 // Deathloom fork: copy the builds of that earlier PoB install into the player
 // folder (main uses the folder it found itself, never a path from the page)

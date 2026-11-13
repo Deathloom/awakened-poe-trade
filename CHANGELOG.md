@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#44)
+- **Path of Building is no longer inside the installer** (726 MB → overlay only, ~100 MB). On first run Loot Goblin downloads PoB from our PoB fork's `master` branch into `%LOCALAPPDATA%\Loot Goblin\PathOfBuilding`: file by file from PoB's own `manifest.xml`, every file hash-checked, progress bar in the setup guide (and Settings → Path of Building), a notification for people who already finished the guide, **Try again** on failure. After that PoB updates itself with its own updater (Check for Update works in the PoB window); Loot Goblin also checks master at start while the PoB window is closed, so build impact stays current.
+- Updating from an older Loot Goblin: the installer moves the old `resources\PathOfBuilding` to the new folder first, so only changed files download (full download if that wasn't possible). A PoB-folder setting pointing at the old place is ignored. Settings, builds and the GitHub sign-in stay where they were.
+- Uninstalling removes the downloaded PoB (settings and builds in Documents\Loot Goblin stay).
+- Release workflow no longer bundles PoB; PoB is released with the PoB fork's **Release PoB (master)** workflow.
+
 ## [1.0.14] - 2026-11-13
 
 ### Fixed (#43)

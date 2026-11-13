@@ -10,6 +10,8 @@ export class AppTray {
   serverPort = 0
   // Deathloom fork: PoB folder in use (bundled copy or settings), for "Open Path of Building"
   pobDir: () => string = () => ''
+  // Deathloom fork: why Loot Goblin's PoB can't open yet (still downloading…), null = fine
+  pobStatus: (() => string | null) | null = null
   // Deathloom fork: "Restart to update" item once an update is downloaded
   updateReady: string | null = null
   installUpdate: () => void = () => {}
@@ -116,7 +118,7 @@ export class AppTray {
     if (!exe) {
       dialog.showMessageBox({
         title: 'Path of Building',
-        message: 'Path of Building was not found. Set the Path of Building folder in Settings → Path of Building.'
+        message: this.pobStatus?.() ?? 'Path of Building was not found. Set the Path of Building folder in Settings → Path of Building.'
       })
       return
     }

@@ -14,7 +14,7 @@ import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
 import { LiveGear, HttpError, type FetchFn } from './LiveGear'
-import { pobDefaults, withDefaults, type PobDefaults } from './defaults'
+import { pobDefaults, withDefaults, isLegacyPobSetting, type PobDefaults } from './defaults'
 import { findExistingBuilds, copyBuilds } from './ExistingPob'
 
 const STARTUP_TIMEOUT = 90_000
@@ -62,6 +62,8 @@ export class PobImpact {
   onCodeError: (message: string, detail?: string) => void = () => {}
   // Deathloom fork: Loot Goblin wrote a file in the player folder (auto sync pushes it)
   onPlayerFilesChanged: () => void = () => {}
+  // Deathloom fork: why Loot Goblin's PoB isn't usable yet (null = it is), from PobInstaller
+  installStatus: () => string | null = () => null
   private characterBuilds = new CharacterBuilds(path.join(app.getPath('userData'), 'apt-data', 'pob-characters.json'))
 
   constructor (
@@ -173,12 +175,26 @@ export class PobImpact {
     }, this.rawCfg?.pobDir ?? '')
   }
 
+  // Deathloom fork: Loot Goblin's PoB was downloaded or updated: use it (defaults
+  // change from '' to its folder) and restart the headless PoB on the new files
+  usesOwnPob (): boolean {
+    return !!this.rawCfg?.pobDir
+  }
+
+  refreshPob () {
+    this.stop()
+    this.configure(this.rawCfg)
+  }
+
   // PoB folder in use (setting, else the bundled copy); '' if none
   pobDir (): string {
     return this.rawCfg?.pobDir || this.defaults().pobDir
   }
 
   configure (raw: PobConfig | undefined) {
+    // Deathloom fork: a PoB folder setting pointing at the copy that used to be
+    // inside the install folder means "Loot Goblin's PoB" now
+    if (raw?.pobDir && isLegacyPobSetting(raw.pobDir)) raw = { ...raw, pobDir: '' }
     this.rawCfg = raw
     const cfg = raw && withDefaults(raw, this.defaults())
     this.logger.write(`info [PoB] settings: ${JSON.stringify(raw ?? null)}`)
@@ -538,6 +554,9 @@ export class PobImpact {
       !this.cfg.buildsDir && 'Builds folder'
     ].filter(Boolean)
     if (missing.length) {
+      // Deathloom fork: no PoB folder set and Loot Goblin's own isn't there yet
+      const pobStatus = !this.cfg.pobDir ? this.installStatus() : null
+      if (pobStatus) throw new Error(pobStatus)
       throw new Error(`Missing in settings: ${missing.join(', ')}`)
     }
     if (!this.proc) {
