@@ -41,7 +41,8 @@ export function reportKey (source: ReportSource, message: string, stack?: string
   return crypto.createHash('sha1').update(text).digest('hex').slice(0, 12)
 }
 
-// No home folder (Windows user name) in reports
+// No home folder (Windows user name) and no secrets in reports: GitHub tokens,
+// Authorization headers, POESESSID cookies and token-like query/JSON values
 export function scrub (text: string): string {
   const home = os.homedir()
   let out = text
@@ -50,6 +51,10 @@ export function scrub (text: string): string {
     out = out.split(home.replace(/\\/g, '/')).join('%USERPROFILE%')
   }
   return out
+    .replace(/\b(?:gh[opusr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,})\b/g, '<token>')
+    .replace(/\b(Bearer|token)\s+[A-Za-z0-9._~+/=-]{16,}/gi, '$1 <token>')
+    .replace(/(POESESSID\s*[=:]\s*"?)[A-Za-z0-9]+/gi, '$1<session>')
+    .replace(/((?:access_token|refresh_token|client_secret|device_code|password|secret)["']?\s*[=:]\s*["']?)[^\s"'&,}]+/gi, '$1<secret>')
 }
 
 export class ErrorReporter {

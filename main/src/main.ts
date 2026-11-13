@@ -21,6 +21,7 @@ import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
 import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
 import { ErrorReporter } from './ErrorReporter'
+import { isAllowedImportUrl, MAX_IMPORT_BYTES } from './pob/PobImport'
 import { applyStartWithWindows } from './StartWithWindows'
 
 if (!app.requestSingleInstanceLock()) {
@@ -75,10 +76,20 @@ app.on('ready', async () => {
     pobSync.configure()
   }
   let pobInstallStarted = false
+  // Deathloom fork: downloads only from the build sites PobImport allows (also after
+  // redirects), 15 s timeout, max 2 MB
   const pobImport = new PobImport(async (url) => {
-    const res = await net.fetch(url, { headers: { 'User-Agent': `Loot Goblin/${app.getVersion()}` } })
+    const res = await net.fetch(url, {
+      headers: { 'User-Agent': `Loot Goblin/${app.getVersion()}` },
+      signal: AbortSignal.timeout(15_000)
+    })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    return await res.text()
+    if (!isAllowedImportUrl(res.url || url)) throw new Error('the link redirected to another site')
+    const len = Number(res.headers.get('content-length') ?? 0)
+    if (len > MAX_IMPORT_BYTES) throw new Error('the build is too large')
+    const buf = Buffer.from(await res.arrayBuffer())
+    if (buf.length > MAX_IMPORT_BYTES) throw new Error('the build is too large')
+    return buf.toString('utf8')
   })
   eventPipe.onEventAnyClient('CLIENT->MAIN::pob-import', (req) => {
     const send = eventPipe.replyTo()
@@ -112,6 +123,8 @@ app.on('ready', async () => {
   const stashTracker = new StashTracker(eventPipe, logger)
   // Deathloom fork: Copy buttons (market search text). Only the clipboard; nothing is sent to the game.
   eventPipe.onEventAnyClient('CLIENT->MAIN::write-clipboard', ({ text }) => {
+    // Deathloom fork: plain text only, capped (item text and searches are a few KB)
+    if (typeof text !== 'string' || text.length > 100_000) return
     clipboard.writeText(text)
   })
 
