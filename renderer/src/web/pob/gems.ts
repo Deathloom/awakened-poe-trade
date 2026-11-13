@@ -153,9 +153,14 @@ export interface SocketNeeds {
   links: number
 }
 
+// PoE1 now: every gem fits every socket. A coloured socket only adds 10% quality
+// to a gem of the same colour, so colours never make an item "not fit".
 export interface SocketCheck {
-  // Colours still missing after using white sockets
+  // Coloured gems without a matching coloured socket (no quality bonus; not a problem)
   missing: { R: number, G: number, B: number }
+  // Coloured gems that get the matching-colour quality bonus, of how many coloured gems
+  bonus: number
+  coloured: number
   // Sockets too few overall
   short: number
   // Biggest link group on the item
@@ -196,36 +201,44 @@ export function checkSockets (needs: SocketNeeds, sockets: string | undefined): 
       if (c !== 'A') have.total++
     }
   }
-  let white = have.W
   const missing = { R: 0, G: 0, B: 0 }
+  let bonus = 0
   for (const c of ['R', 'G', 'B'] as const) {
-    const short = Math.max(0, needs[c] - have[c])
-    const fromWhite = Math.min(white, short)
-    white -= fromWhite
-    missing[c] = short - fromWhite
+    bonus += Math.min(needs[c], have[c])
+    missing[c] = Math.max(0, needs[c] - have[c])
   }
   const total = needs.R + needs.G + needs.B + needs.any
   const short = Math.max(0, total - have.total)
   const links = groups.reduce((m, g) => Math.max(m, g.filter(c => c !== 'A').length), 0)
   return {
     missing,
+    bonus,
+    coloured: needs.R + needs.G + needs.B,
     short,
     links,
-    ok: !missing.R && !missing.G && !missing.B && !short && links >= needs.links
+    ok: !short && links >= needs.links
   }
 }
 
+// Sockets and links the slot needs; gem colours only matter for the quality bonus
 export function needsText (n: SocketNeeds) {
-  const parts = (['R', 'G', 'B'] as const).filter(c => n[c]).map(c => `${n[c]}${c}`)
-  if (n.any) parts.push(`${n.any} any`)
-  return parts.join(' ') + (n.links > 1 ? ` · ${n.links}L` : '')
+  const total = n.R + n.G + n.B + n.any
+  return `${total}S` + (n.links > 1 ? ` · ${n.links}L` : '')
+}
+
+// Gem colours in the slot ("4G 2B"), for the matching-colour quality bonus
+export function coloursText (n: SocketNeeds) {
+  return (['R', 'G', 'B'] as const).filter(c => n[c]).map(c => `${n[c]}${c}`).join(' ')
+}
+
+// "colour bonus 2/6" (gems in a socket of their colour get +10% quality)
+export function bonusText (c: SocketCheck) {
+  return c.coloured ? `colour bonus ${c.bonus}/${c.coloured}` : ''
 }
 
 export function checkText (c: SocketCheck, needs: SocketNeeds) {
   if (c.ok) return ''
   const out: string[] = []
-  const miss = (['R', 'G', 'B'] as const).filter(k => c.missing[k]).map(k => `${c.missing[k]}${k}`)
-  if (miss.length) out.push(`needs ${miss.join(' ')} more`)
   if (c.short) out.push(`${c.short} socket${c.short > 1 ? 's' : ''} short`)
   if (c.links < needs.links) out.push(`${c.links}L, build wants ${needs.links}L`)
   return out.join(', ')
