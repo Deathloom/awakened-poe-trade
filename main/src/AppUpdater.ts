@@ -1,4 +1,5 @@
 import { app, Notification } from 'electron'
+import { execFile } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import type { ServerEvents } from './server'
 import type { UpdateInfo } from '../../ipc/types'
@@ -10,6 +11,7 @@ export class AppUpdater {
   private _installing = false
   private _notifiedVersion = ''
   onChange: (info: UpdateInfo) => void = () => {}
+  private _idleTimer: NodeJS.Timeout | undefined
 
   public readonly noAutoUpdatesReason:
     Extract<UpdateInfo, { state: 'update-available' }>['noDownloadReason'] = null
@@ -29,6 +31,27 @@ export class AppUpdater {
     if (this._info.state !== 'update-downloaded' || this._installing) return
     this._installing = true
     autoUpdater.quitAndInstall(false, true)
+  }
+
+  // Deathloom fork: install a downloaded update by itself as soon as no Path of
+  // Exile (1 or 2) process is running. Checks once a minute; only lists processes.
+  private installWhenGameClosed () {
+    if (process.platform !== 'win32' || this._idleTimer) return
+    const tick = async () => {
+      if (this._info.state !== 'update-downloaded' || this._installing) {
+        clearInterval(this._idleTimer)
+        this._idleTimer = undefined
+        return
+      }
+      if (await isGameRunning() === false) {
+        clearInterval(this._idleTimer)
+        this._idleTimer = undefined
+        this.notify('Updating Loot Goblin', `Installing version ${this._info.version}. Loot Goblin starts again by itself.`)
+        setTimeout(this.installNow, 3000)
+      }
+    }
+    this._idleTimer = setInterval(() => { void tick() }, 60 * 1000)
+    void tick()
   }
 
   private notify (title: string, body: string, onClick?: () => void) {
@@ -95,9 +118,10 @@ export class AppUpdater {
       if (this._notifiedVersion !== info.version) {
         this._notifiedVersion = info.version
         this.notify(`Loot Goblin ${info.version} is ready`,
-          'Click here to restart and update now, or it updates when you quit (it starts again by itself).',
+          'It installs by itself while Path of Exile is closed. Click here to update now.',
           this.installNow)
       }
+      this.installWhenGameClosed()
     })
     // on('download-progress') https://github.com/electron-userland/electron-builder/issues/2521
   }
@@ -116,4 +140,17 @@ export class AppUpdater {
       // handled by event
     }
   }
+}
+
+// Deathloom fork: true if any PathOfExile* process runs (PoE1 or PoE2, Steam or
+// standalone). null when it can't tell; callers treat that as "running".
+function isGameRunning (): Promise<boolean | null> {
+  return new Promise((resolve) => {
+    execFile('tasklist', ['/FI', 'IMAGENAME eq PathOfExile*', '/FO', 'CSV', '/NH'],
+      { timeout: 8000, windowsHide: true },
+      (err, stdout) => {
+        if (err) { resolve(null); return }
+        resolve(/pathofexile/i.test(stdout))
+      })
+  })
 }
