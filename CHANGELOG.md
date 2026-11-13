@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Auto update while the game is closed (#32)
+- A downloaded update installs by itself as soon as Path of Exile isn't running (checked once a minute, process list only), then Loot Goblin starts again. While you play it waits; the notification and tray item still let you update right away.
+- In-game notice (bottom of the screen) when an update starts downloading and when it's ready, because Windows hides its own notifications while a game runs full screen.
+
 ### Updates (awaiting merge, #31)
 - Windows notification when an update starts downloading and when it's ready (click it to restart and update).
 - Tray menu shows **Restart to update to x.y.z** once an update is downloaded.
