@@ -53,6 +53,9 @@ app.on('ready', async () => {
     }
   }
   app.on('will-quit', () => { pobImpact.stop() })
+  // Deathloom fork: update check even if the overlay page never connects (it normally
+  // starts with the first settings from the page), so a broken release can still be replaced
+  setTimeout(() => { appUpdater.checkAtStartup() }, 90_000)
   // Deathloom fork: build sync (sign in, Pull / Push) and PoB-code import from the overlay
   const pobSync = new PobSync(eventPipe, logger, pobImpact)
   pobImpact.onPlayerFilesChanged = () => { pobSync.schedulePush() }

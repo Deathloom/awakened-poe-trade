@@ -18,6 +18,7 @@ import type { PobSyncState, PobSyncStatus, IpcEventPayload } from '../../../ipc/
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import type { PobImpact } from './PobImpact'
+import { openWebLink } from '../safe-open'
 
 const REPLY_PREFIX = '@pob '
 const START_TIMEOUT = 30_000
@@ -224,7 +225,7 @@ export class PobSync {
     })
     // like PoB: the code is on the clipboard and GitHub opens in the browser
     clipboard.writeText(String(reply.userCode))
-    void shell.openExternal(String(reply.verificationUri))
+    openWebLink(String(reply.verificationUri), 'github.com')
     this.schedulePoll()
   }
 

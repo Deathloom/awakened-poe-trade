@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import fs from 'fs'
 import { app } from 'electron'
 import type { Server } from 'http'
+import { safeJoin } from '../request-guard'
 
 export function addFileUploadRoutes (server: Server) {
   const uploadsPath = path.join(app.getPath('userData'), 'apt-data', 'files')
@@ -10,7 +11,18 @@ export function addFileUploadRoutes (server: Server) {
   server.addListener('request', (req, res) => {
     if (req.method !== 'GET' || !req.url?.startsWith('/uploads/')) return
 
-    fs.createReadStream(path.join(uploadsPath, req.url.slice('/uploads/'.length)))
+    // Deathloom fork: stay inside the uploads folder; missing file = 404
+    const full = safeJoin(uploadsPath, req.url.slice('/uploads/'.length).split('?')[0])
+    if (!full) {
+      res.statusCode = 404
+      res.end()
+      return
+    }
+    fs.createReadStream(full)
+      .on('error', () => {
+        if (!res.headersSent) res.statusCode = 404
+        res.end()
+      })
       .pipe(res)
   })
 

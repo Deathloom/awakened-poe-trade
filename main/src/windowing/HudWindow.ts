@@ -1,3 +1,4 @@
+import { lockToAppPages } from '../safe-open'
 // Deathloom fork: "show while playing" HUD.
 // Pinned panels (campaign guide, trade companion, build gear) each get a small
 // window of their own that stays on top of the game while it has focus. Unlike
@@ -7,7 +8,7 @@
 // to the game.
 
 import path from 'path'
-import { BrowserWindow, screen, shell } from 'electron'
+import { BrowserWindow, screen } from 'electron'
 import { uIOhook } from 'uiohook-napi'
 import { OverlayController, type MoveresizeEvent } from 'electron-overlay-window'
 import type { PobHudConfig, HudPanel } from '../../../ipc/types'
@@ -262,10 +263,7 @@ export class HudWindow {
     pw.win = win
     pw.shown = undefined
     win.setMenu(null)
-    win.webContents.setWindowOpenHandler((details) => {
-      shell.openExternal(details.url)
-      return { action: 'deny' }
-    })
+    lockToAppPages(win.webContents)
     win.on('closed', () => { if (pw.win === win) pw.win = undefined })
     // clicked back into the game while typing: the panel asks again on its next click
     win.on('blur', () => { if (this.typing === panel) this.setTyping(panel, false) })
