@@ -20,7 +20,8 @@
         <div class="flex items-center gap-x-2 text-xs">
           <span class="text-gray-300 shrink-0">{{ sv.slot }}</span>
           <span class="text-gray-500 truncate flex-1" :title="sv.item?.baseName">{{ sv.item?.name ?? '' }}</span>
-          <span v-if="sv.rows.length" class="text-gray-500 shrink-0" title="Sockets the gems in this slot need (colours, biggest link)">{{ needsText(sv.needs) }}</span>
+          <span v-if="sv.rows.length" class="text-gray-500 shrink-0"
+            :title="`Sockets the gems in this slot need and the biggest link. Any gem fits any socket; a socket of the gem's colour adds 10% quality. Gem colours: ${coloursText(sv.needs) || 'none'}`">{{ needsText(sv.needs) }}</span>
           <span v-else class="text-gray-600 shrink-0">no gems</span>
         </div>
         <div v-if="sv.rows.length || sv.item?.sockets" class="flex items-center gap-x-2 text-xs py-px">
@@ -37,6 +38,8 @@
             <span v-else-if="!sv.item.sockets" class="text-gray-600">no sockets</span>
           </span>
           <span v-if="sv.item && sv.rows.length && !sv.buildCheck.ok" class="text-yellow-600">{{ checkText(sv.buildCheck, sv.needs) }}</span>
+          <span v-if="sv.item && sv.rows.length && sv.buildCheck.coloured" class="text-gray-500"
+            title="Gems in a socket of their colour get +10% quality">{{ bonusText(sv.buildCheck) }}</span>
         </div>
         <div v-if="sv.liveCheck && (sv.rows.length || sv.liveItem?.sockets)" class="flex items-center gap-x-2 text-xs py-px">
           <span class="w-14 shrink-0 text-gray-500 truncate" :title="sv.liveItem?.name">yours</span>
@@ -53,6 +56,8 @@
           </span>
           <span v-if="sv.liveItem && sv.rows.length" :class="sv.liveCheck.ok ? 'text-green-500' : 'text-red-400'">
             {{ sv.liveCheck.ok ? 'fits' : checkText(sv.liveCheck, sv.needs) }}</span>
+          <span v-if="sv.liveItem && sv.rows.length && sv.liveCheck.coloured" class="text-gray-500"
+            title="Gems in a socket of their colour get +10% quality">{{ bonusText(sv.liveCheck) }}</span>
         </div>
         <!-- Gems, one block per link group -->
         <div v-for="row of sv.rows" :key="row.group.index" class="mt-1 pl-1 border-l-2"
@@ -109,7 +114,7 @@ import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import type { PobGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
 import { pobText } from './labels'
 import { Host } from '@/web/background/IPC'
-import { compareGems, bySlot, parseSockets, needsText, checkText, type GemRow, type GemStatus, type GroupRow } from './gems'
+import { compareGems, bySlot, parseSockets, needsText, checkText, coloursText, bonusText, type GemRow, type GemStatus, type GroupRow } from './gems'
 
 const loading = ref(false)
 const showHidden = ref(false)
