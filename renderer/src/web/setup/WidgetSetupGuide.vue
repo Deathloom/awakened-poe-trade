@@ -24,6 +24,20 @@
               Needs a free GitHub account that was invited to <b>POE-Builds</b>. Without it everything else still works.
             </div>
             <BuildSync class="rounded" @synced="probe()" />
+            <div v-if="found?.existingPob" class="mt-3 p-2 rounded bg-gray-900">
+              <div class="mb-1"><i class="fas fa-folder-open mr-1" />Found {{ found.existingPob.count }} build{{ found.existingPob.count === 1 ? '' : 's' }}
+                from an earlier Path of Building in <span class="break-all text-gray-400">{{ found.existingPob.buildsDir }}</span></div>
+              <div class="text-gray-400 text-sm mb-2">
+                Copy them into Loot Goblin{{ found.player ? ` (your folder ${found.player})` : '' }}? The originals stay where they are;
+                builds with the same name are skipped.
+                <template v-if="found.player">If you're signed in with sync on, they're also uploaded to your folder in POE-Builds.</template>
+                <template v-else>They stay on this PC (sign in above first if you want them shared).</template>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="btn" :disabled="copying" @click="copyBuilds">{{ copying ? 'Copying…' : 'Copy builds' }}</button>
+                <span v-if="copyResult" class="text-sm" :class="copyResult.ok ? 'text-green-500' : 'text-red-400'">{{ copyResult.text }}</span>
+              </div>
+            </div>
             <div class="mt-3 text-sm text-gray-400">
               Not in POE-Builds yet?
               <button class="btn ml-1" @click="requestAccess"><i class="fab fa-github mr-1" />Request access</button>
@@ -355,6 +369,26 @@ async function checkCharacters () {
   } finally {
     checking.value = false
   }
+}
+
+// Builds of an earlier PoB install -> player folder (main picks the source folder itself)
+const copying = ref(false)
+const copyResult = ref<{ ok: boolean, text: string } | null>(null)
+function copyBuilds () {
+  if (copying.value) return
+  copying.value = true
+  copyResult.value = null
+  const requestId = nextId++
+  const listener = Host.onEvent('MAIN->CLIENT::pob-copy-builds', (e) => {
+    if (e.requestId !== requestId) return
+    listener.abort()
+    copying.value = false
+    copyResult.value = e.ok
+      ? { ok: true, text: `Copied ${e.copied ?? 0}${e.skipped ? `, ${e.skipped} already there` : ''}.` }
+      : { ok: false, text: e.error ?? 'Copy failed' }
+    probe()
+  })
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-copy-builds', payload: { requestId } })
 }
 
 // Public repo where join requests are filed; approving one invites the person (GitHub Action)

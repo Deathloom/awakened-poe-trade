@@ -127,6 +127,17 @@ app.on('ready', async () => {
           })
         })()
       })
+      eventPipe.onEventAnyClient('CLIENT->MAIN::pob-copy-builds', ({ requestId }) => {
+        const send = eventPipe.replyTo()
+        void pobImpact.copyExistingBuilds()
+          .then((res) => {
+            if (res.copied) pobSync.schedulePush()
+            send({ name: 'MAIN->CLIENT::pob-copy-builds', payload: { requestId, ok: true, ...res } })
+          })
+          .catch((err: Error) => {
+            send({ name: 'MAIN->CLIENT::pob-copy-builds', payload: { requestId, ok: false, error: err.message } })
+          })
+      })
       eventPipe.onEventAnyClient('CLIENT->MAIN::update-host-config', (cfg) => {
         overlay.updateOpts(cfg.overlayKey, cfg.windowTitle)
         shortcuts.updateActions(cfg.shortcuts, cfg.stashScroll, cfg.logKeys, cfg.restoreClipboard, cfg.language)
