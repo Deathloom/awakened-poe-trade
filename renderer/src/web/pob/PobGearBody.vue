@@ -23,7 +23,7 @@
     <template v-if="visible">
     <build-picker v-show="showPicker" class="shrink-0" @changed="onBuildChanged" />
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
-    <pob-tree v-if="tab === 'tree'" ref="treeRef" />
+    <pob-tree v-else-if="tab === 'tree'" ref="treeRef" />
     <template v-else>
     <div v-if="error" class="p-2 text-gray-400 text-sm">{{ error }}</div>
     <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm">Loading from Path of Building…</div>
