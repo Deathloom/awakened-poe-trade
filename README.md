@@ -32,8 +32,15 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Ledger** | What you sold and bought per currency, per league. |
 | **Market history** | 7-day poe.ninja trend, plus prices recorded while the app runs. |
 | **Show while playing** | The guide, trade companion and build panel can be pinned over the game as small windows you can drag and resize. You choose per panel whether clicks go through to the game. |
+| **Loot Goblin window** | A normal window for a second screen with everything in one place: All, Build, Levelling, Trades, Market, Trade site, Help and Settings tabs. Opens from the tray or when the game starts. |
+| **Levelling planner** | Campaign guide with quest gems to take or buy for your build, optional quests, gem swaps per level, the next passives to take and a tree map, all from your PoB build and the game log. |
+| **Market search** | Find an item by name and see who sells it, cheapest first. **Whisper** (GGG's buy message) and **Hideout** buttons, one chat message per click. |
+| **Trade site tab** | GGG's official trade site inside the Loot Goblin window, signed in separately (on GGG's own page; Loot Goblin never sees your login). Trade buttons open there. |
+| **Edit loadouts** | In the window: new loadouts, rename / copy / delete trees, item sets and skill sets, gem levels and quality, take or refund passives on the tree map. The old file is kept in `Build backups`. |
+| **Manage builds** | Rename, move to folders, duplicate and delete builds. Deletions sync; deleted builds are kept in `Deleted builds`. |
+| **Where panels show** | Per panel: in game, in the overlay and/or in the Loot Goblin window. |
 
-Shift+Space opens the full overlay. Hover the menu icons to see their names and hotkeys, or press **?** for a quick how-to.
+Shift+Space opens the full overlay. Hover the menu icons to see their names and hotkeys, or press **?** for a quick how-to. The Loot Goblin window's **Help** tab has the full help, an FAQ and links to build guides.
 
 ## Setting it up
 
@@ -41,6 +48,36 @@ Shift+Space opens the full overlay. Hover the menu icons to see their names and 
 2. Press Ctrl+G, click the cloud button and **Sign in with GitHub**. Your player folder becomes your GitHub name and everyone's builds are pulled.
    Leave the folder fields in **Settings → Path of Building** empty to use the defaults (Loot Goblin's PoB, `Documents\Loot Goblin\Builds`); **Browse…** sets your own.
 3. Optional, in the same settings page: choose which panels show while playing, and set the chat buttons to copy or send.
+
+## Don't have a build yet?
+
+Pick a guide, copy its Path of Building code or pobb.in link, and import it with the import button in the build panel.
+
+- [poe.ninja builds](https://poe.ninja/builds): what the top ladder characters play, each with a PoB code
+- [Maxroll](https://maxroll.gg/poe): written build guides (league starters, endgame)
+- [Mobalytics](https://mobalytics.gg/poe/builds): build guides updated each patch
+- [poebuilds.cc](https://www.poebuilds.cc): build guide videos sorted by league, class and skill
+- [pobb.in](https://pobb.in): shared Path of Building codes
+
+Atlas trees: [Maxroll atlas passive tree](https://maxroll.gg/poe/getting-started/atlas-passive-tree), [Maxroll atlas progression](https://maxroll.gg/poe/getting-started/atlas-progression-guide), [PoE-Vault atlas tree strategies](https://www.poe-vault.com/guides/atlas-passive-skill-tree-strategies).
+
+## FAQ
+
+**Can I get banned for using it?** Loot Goblin stays inside GGG's rules for third-party tools: it reads the game's log file and your clipboard (never game memory or files), never buys or trades by itself, and sends at most one chat command per click. It doesn't read your pathofexile.com login; the stash tracker and live character comparison were removed for that reason.
+
+**Do I need a GitHub account?** Only to share builds with the group and send problem reports. Everything else works without one.
+
+**Who can see my builds?** Nobody until you approve them: each player has a private builds repo.
+
+**Where are my files?** `Documents\Loot Goblin\Builds` (your player folder inside it), with `Deleted builds` and `Build backups` next to it.
+
+**Whisper / Hideout did nothing in game.** With Chat buttons on "copy", the command is on your clipboard: Enter, Ctrl+V, Enter in game. Set it to "send" for one message per click. `/hideout name` only works when the seller lets visitors in; instant buyout uses GGG's Travel to Hideout on the trade site.
+
+**The game crashes with panels over it.** Use Windowed Fullscreen and try Solid background (Settings → Path of Building). On PoE 3.30, switching the game's renderer from Vulkan to DirectX 12 fixed a crash.
+
+**How do updates work?** Loot Goblin updates itself and installs when the game isn't running (or click Install now in the window). What's new shows the changes.
+
+More in the app: Loot Goblin window → **Help**.
 
 ## Changes
 

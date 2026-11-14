@@ -8,6 +8,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.59] - 2026-11-14
+
+### Added (#101)
+- **Help tab in the Loot Goblin window:** how to use everything (hotkeys, every tab and button, market search, trade site, loadouts, build sharing, campaign guide), an **FAQ**, and **Get a build**: links to popular build guide sites (poe.ninja builds, Maxroll, Mobalytics, poebuilds.cc, pobb.in) and atlas tree guides. The ? on the overlay bar links to it.
+- **Setup guide** updated for everything new: "No build yet? Get one" links on the Build step, the Trade site tab and market search on the Trades step, and where to choose where panels show.
+
+### Changed (#101)
+- README and in-app tips updated to match the current features.
+
 ## [1.0.58] - 2026-11-14
 
 ### Changed (#100)

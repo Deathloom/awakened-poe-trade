@@ -58,6 +58,7 @@
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[1]} 1 0` }"><MarketOverview /></div>
         </div>
         <DesktopSettings v-else-if="view === 'settings'" />
+        <HelpBody v-else-if="view === 'help'" />
       </div>
     </div>
     <!-- Trade site: kept alive once opened (stays signed in and keeps its page) -->
@@ -86,6 +87,7 @@ import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
 import TradeSiteBody from './TradeSiteBody.vue'
+import HelpBody from '../help/HelpBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { inWindow } from './panels'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
@@ -106,6 +108,7 @@ const VIEWS = [
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
   { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Loot Goblin never sees your login)" },
+  { key: 'help', label: 'Help', icon: 'fa-question-circle', title: 'How to use it, where to get a build, FAQ' },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Loot Goblin settings (same as Shift+Space → Settings)' }
 ] as const
 type View = typeof VIEWS[number]['key']
