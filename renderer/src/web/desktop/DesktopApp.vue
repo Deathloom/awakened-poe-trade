@@ -42,7 +42,12 @@
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
         <LevellingBody v-else-if="view === 'levelling'" />
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
-        <MarketHistoryBody v-else-if="view === 'market'" :active="true" fill />
+        <!-- Market: watchlist | poe.ninja overview (drag the line to resize) -->
+        <div v-else-if="view === 'market'" ref="marketEl" class="flex h-full min-h-0">
+          <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[0]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
+          <SplitGutter dir="x" @drag="d => market.drag(0, d, marketEl?.clientWidth ?? 0)" @end="market.save" @reset="market.reset" />
+          <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[1]} 1 0` }"><MarketOverview /></div>
+        </div>
         <DesktopSettings v-else-if="view === 'settings'" />
       </div>
     </div>
@@ -61,6 +66,7 @@ import PobGearBody from '../pob/PobGearBody.vue'
 import PobTreeMap from '../pob/PobTreeMap.vue'
 import LevellingBody from './LevellingBody.vue'
 import PlaySessionBody from '../companion/PlaySessionBody.vue'
+import MarketOverview from '../market-history/MarketOverview.vue'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
@@ -113,6 +119,8 @@ const colsEl = ref<HTMLElement>()
 const rowsEl = ref<HTMLElement>()
 const cols = useSplit('all-cols', [0.34, 0.36, 0.3])
 const rows = useSplit('all-right', [0.36, 0.22, 0.2, 0.22])
+const marketEl = ref<HTMLElement>()
+const market = useSplit('market', [0.5, 0.5])
 
 // downloaded update ready to install (main broadcasts the updater state)
 const readyVersion = computed(() => Host.updateInfo.value.state === 'update-downloaded' ? Host.updateInfo.value.version : null)
