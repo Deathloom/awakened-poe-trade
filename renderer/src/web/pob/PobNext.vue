@@ -83,15 +83,22 @@
           <div v-if="!swap.add.length && !swap.drop.length" class="text-xs text-gray-500">Same gems.</div>
         </div>
 
-        <!-- gems the build keeps below max level -->
+        <!-- gems the build keeps below max level (folds away; collapsed by default) -->
         <div v-if="holds.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
-          <div class="lg-head"><i class="fas fa-hand-paper mr-1 text-gray-500" />Hold gem levels</div>
-          <div v-for="g of holds" :key="'h' + g.name" class="flex items-baseline gap-x-2 text-xs">
-            <span :class="gemClass(g)">{{ g.name }}</span>
-            <span class="text-yellow-300">stop at level {{ g.level }}</span>
-            <span class="text-gray-600">(max {{ g.maxLevel }}<template v-if="g.levelReq">, needs character level {{ g.levelReq }}</template>)</span>
-          </div>
-          <div class="lg-sub">Don't click the gem's level-up arrow past this (e.g. lower reservation). From the build's gem levels in Path of Building.</div>
+          <button class="lg-head w-full flex items-baseline text-left hover:text-gray-100" @click="toggleHolds">
+            <i class="fas fa-hand-paper mr-1 text-gray-500" />Hold gem levels
+            <span class="ml-2 text-gray-600 normal-case">{{ holds.length }} gems<template v-if="holdsNow.length">, {{ holdsNow.length }} usable now</template></span>
+            <i class="fas ml-auto text-gray-500" :class="holdsOpen ? 'fa-chevron-up' : 'fa-chevron-down'" />
+          </button>
+          <template v-if="holdsOpen">
+            <div class="flex flex-wrap gap-x-3 gap-y-px text-xs">
+              <span v-for="g of holds" :key="'h' + g.name" class="whitespace-nowrap" :class="(g.levelReq ?? 1) > level ? 'opacity-50' : ''"
+                :title="`Stop at level ${g.level} (max ${g.maxLevel}${g.levelReq ? `, needs character level ${g.levelReq}` : ''})`">
+                <span :class="gemClass(g)">{{ g.name }}</span> <span class="text-yellow-300">L{{ g.level }}</span>
+              </span>
+            </div>
+            <div class="lg-sub">Don't level these past the number shown (e.g. lower reservation). Faded: you can't use them yet. Hover for details. From the build's gem levels in Path of Building.</div>
+          </template>
         </div>
 
         <!-- gems from quests and vendors -->
@@ -341,6 +348,14 @@ const actTimes = computed(() => Object.entries(progress.value?.actMs ?? {})
 
 // gems the build keeps below their normal max level
 const holds = computed(() => uniqueGems.value.filter(g => g.level != null && g.maxLevel != null && g.level < g.maxLevel))
+const holdsNow = computed(() => holds.value.filter(g => (g.levelReq ?? 1) <= level.value))
+// Hold gem levels list: collapsed by default (it gets long), choice remembered
+const HOLDS_KEY = 'deathloom.next.holds-open.v1'
+const holdsOpen = ref((() => { try { return localStorage.getItem(HOLDS_KEY) === '1' } catch { return false } })())
+function toggleHolds () {
+  holdsOpen.value = !holdsOpen.value
+  try { localStorage.setItem(HOLDS_KEY, holdsOpen.value ? '1' : '0') } catch {}
+}
 
 // manual ticks per character: which of the build's gems you have
 const TICKS_KEY = 'deathloom.gem-ticks.v1'

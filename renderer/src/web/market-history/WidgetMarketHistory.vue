@@ -32,7 +32,17 @@ export default {
 
 <script setup lang="ts">
 import Widget from '../overlay/Widget.vue'
+import { inject as injectWm, watch as watchPlacement } from 'vue'
+import type { WidgetManager } from '../overlay/interfaces'
+import { useInOverlay } from '../desktop/panels'
 import MarketHistoryBody from './MarketHistoryBody.vue'
 
-defineProps<{ config: MarketHistoryWidget }>()
+const props = defineProps<{ config: MarketHistoryWidget }>()
+// Where panels show: not in the overlay → hidden and out of the widget menu
+const wmPlace = injectWm<WidgetManager>('wm')!
+const shown = useInOverlay('market')
+watchPlacement(shown, (on) => {
+  wmPlace.setFlag(props.config.wmId, 'menu::skip', !on)
+  if (!on && props.config.wmWants === 'show') wmPlace.hide(props.config.wmId)
+}, { immediate: true })
 </script>

@@ -15,6 +15,7 @@ import { useI18n } from 'vue-i18n'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { PriceCheckWidget } from '@/web/overlay/widgets'
+import { openTradeLink } from '@/web/desktop/trade-tab'
 
 export default defineComponent({
   props: {
@@ -37,7 +38,8 @@ export default defineComponent({
       open (isExternal: boolean) {
         const link = props.getLink()
         if (isExternal) {
-          window.open(link)
+          // Deathloom fork: Loot Goblin window's Trade site tab (setting) or the browser
+          openTradeLink(link)
         } else {
           showBrowser(link)
         }

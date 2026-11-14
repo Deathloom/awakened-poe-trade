@@ -128,6 +128,39 @@
     </div>
 
     <div class="mt-6 mb-2">
+      <ui-toggle :modelValue="pob.tradeLinksInWindow !== false" @update:modelValue="v => pob.tradeLinksInWindow = v">
+        Open Trade buttons in the Loot Goblin window (Trade site tab)</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        The official trade site in its own tab, signed in separately from your browser (sign in on GGG's own page;
+        Loot Goblin never sees your login). Off: Trade buttons open your browser as before.
+      </div>
+    </div>
+
+    <div class="mt-6 mb-2">
+      <div class="mb-1">Where panels show</div>
+      <div class="text-gray-500 text-sm mb-2">
+        Pick for each panel where you want it: <b>In game</b> (a small window over the game, below),
+        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Loot Goblin window</b> (its All tab).
+        A panel that's in neither In game nor the overlay opens the Loot Goblin window when you press its hotkey.
+      </div>
+      <table class="mb-2">
+        <tr class="text-gray-500 text-sm">
+          <td class="pr-4"></td><td class="pr-4">In game</td><td class="pr-4">Overlay</td><td>Loot Goblin window</td>
+        </tr>
+        <tr v-for="p of PANELS" :key="p.key">
+          <td class="pr-4 py-0.5">{{ p.label }}</td>
+          <td class="pr-4"><ui-toggle v-if="p.hud" v-model="pob.hud[p.hud]" /><span v-else class="text-gray-600 text-sm">—</span></td>
+          <td class="pr-4">
+            <ui-toggle v-if="p.overlay" :modelValue="placement(p.key).overlay !== false" @update:modelValue="v => setPlacement(p.key, 'overlay', v)" />
+            <span v-else class="text-gray-600 text-sm">—</span></td>
+          <td>
+            <ui-toggle v-if="p.window" :modelValue="placement(p.key).window !== false" @update:modelValue="v => setPlacement(p.key, 'window', v)" />
+            <span v-else class="text-gray-600 text-sm">{{ p.key === 'search' ? 'Trade site tab' : '—' }}</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="mt-6 mb-2">
       <div class="mb-1">Show while playing</div>
       <div class="text-gray-500 text-sm mb-2">
         Pinned panels stay on screen while the game has focus, in a small window of their own that never
@@ -177,6 +210,8 @@ import PobInstallStatus from '@/web/pob/PobInstallStatus.vue'
 import { configProp } from './utils'
 import { defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import { Host } from '@/web/background/IPC'
+import { PANELS } from '@/web/desktop/panels'
+import type { PanelKey, PanelPlacement } from '@ipc/types'
 
 export default defineComponent({
   name: 'Path of Building',
@@ -271,6 +306,14 @@ export default defineComponent({
       async copyFromFolder () {
         const picked = await pickFolder('Builds folder of the other Path of Building', existingPob.value?.buildsDir ?? '')
         if (picked) copyBuilds(picked)
+      },
+      PANELS,
+      placement (key: PanelKey): PanelPlacement {
+        return pob.value.panels?.[key] ?? {}
+      },
+      setPlacement (key: PanelKey, where: 'overlay' | 'window', on: boolean) {
+        pob.value.panels ??= {}
+        pob.value.panels[key] = { ...pob.value.panels[key], [where]: on }
       },
       HUD_PANELS: [
         { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },

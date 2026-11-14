@@ -35,6 +35,7 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
+import { inOverlay } from '../desktop/panels'
 import TradeCompanionBody from './TradeCompanionBody.vue'
 
 const props = defineProps<{ config: TradeCompanionWidget }>()
@@ -46,7 +47,8 @@ if (!props.config.wmFlags.includes('invisible-on-blur')) {
   props.config.wmFlags = [...props.config.wmFlags, 'invisible-on-blur']
 }
 const wm = inject<WidgetManager>('wm')!
-const inHud = computed(() => Boolean(AppConfig().pob?.hud?.trades))
+// pinned to the HUD, or set to not show in the overlay (Where panels show)
+const inHud = computed(() => Boolean(AppConfig().pob?.hud?.trades) || !inOverlay('trades'))
 
 function onIncoming () {
   if (props.config.wmWants === 'hide') wm.show(props.config.wmId)

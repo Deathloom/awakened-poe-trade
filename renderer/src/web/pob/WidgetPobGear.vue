@@ -38,6 +38,7 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
+import { inOverlay } from '../desktop/panels'
 import PobGearBody from './PobGearBody.vue'
 
 const props = defineProps<{
@@ -45,7 +46,8 @@ const props = defineProps<{
 }>()
 
 const wm = inject<WidgetManager>('wm')!
-const inHud = computed(() => Boolean(AppConfig().pob?.hud?.gear))
+// pinned to the HUD, or set to not show in the overlay (Where panels show)
+const inHud = computed(() => Boolean(AppConfig().pob?.hud?.gear) || !inOverlay('gear'))
 
 // Pinned to the HUD window: hide this widget and drop it from the widget menu
 watch(inHud, (pinned) => {
