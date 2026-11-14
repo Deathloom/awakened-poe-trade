@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.34] - 2026-11-14
+
+### Added (#73)
+- **The guide ticks things off from the game log.** When the game says "You have received a Passive Skill Point" (or respec points), the matching quest on the guide gets a ✓. When a boss starts talking (Brutus, Fairgraves, Merveil, …), its kill line gets a ✓. Quest hand-ins themselves aren't in the game log, so quests without a passive or respec reward aren't ticked.
+- **Exact quest points in the levelling planner**: for characters followed from level 2, quest points come from those game-log lines instead of the guide's estimate.
+- **Settings → Path of Building: Copy builds from another Path of Building**, right under the Path of Building status. Copies the builds of your normal PoB install (found in Documents) or of a folder you pick; originals stay, same-named builds are skipped.
+
 ## [1.0.33] - 2026-11-14
 
 ### Changed (#72): campaign guide

@@ -15,8 +15,8 @@
       <label class="text-xs text-gray-400" :title="char?.manual ? 'Typed in. The next level-up in game replaces it.' : 'From Client.txt (\'is now level\'). Type to change.'">Level
         <input type="number" min="1" max="100" class="w-12 bg-gray-700 rounded px-1 ml-1" :value="level" @change="setLevel(($event.target as HTMLInputElement).value)">
       </label>
-      <label class="text-xs text-gray-400" :title="levels.questPoints == null ? 'From the campaign guide (optional quests counted as done). Type /passives in game for the exact number.' : 'Typed in. Clear the box to follow the campaign guide again.'">Quest points
-        <input type="number" min="0" max="30" class="w-10 bg-gray-700 rounded px-1 ml-1" :placeholder="String(guidePoints)"
+      <label class="text-xs text-gray-400" :title="levels.questPoints == null ? (loggedPoints != null ? 'From the game log: quest passive points received since level 2.' : 'From the campaign guide (optional quests counted as done). Type /passives in game for the exact number.') : 'Typed in. Clear the box to follow the campaign guide again.'">Quest points
+        <input type="number" min="0" max="30" class="w-10 bg-gray-700 rounded px-1 ml-1" :placeholder="String(loggedPoints ?? guidePoints)"
           :value="levels.questPoints ?? ''" @change="setQuestPoints(($event.target as HTMLInputElement).value)">
       </label>
       <span v-if="plan" class="text-xs text-gray-500">{{ plan.available }} passive points</span>
@@ -142,7 +142,7 @@
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobPlan, PobPlanGem, PobPlanNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
-import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, saveCharLevels, type CharLevels } from '../companion/char-level'
+import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf, saveCharLevels, type CharLevels } from '../companion/char-level'
 import { CAMPAIGN_STEP_KEY, STEPS, loadCampaignStep, questPassivesBefore } from '../companion/campaign-route'
 import { planQuestGems } from '../companion/quest-gems'
 import { currentPlan } from './plan-store'
@@ -159,7 +159,12 @@ const char = computed(() => currentChar(levels.value))
 const levelKnown = computed(() => char.value != null)
 const level = computed(() => char.value?.level ?? 1)
 const guidePoints = computed(() => questPassivesBefore(guideStep.value))
-const questPoints = computed(() => levels.value.questPoints ?? guidePoints.value)
+// exact count from the game log when the character was followed from level 2
+const loggedPoints = computed(() => {
+  const p = progressOf(levels.value, char.value?.name)
+  return p && p.firstLevel <= 2 ? p.passives : null
+})
+const questPoints = computed(() => levels.value.questPoints ?? loggedPoints.value ?? guidePoints.value)
 
 function update (v: CharLevels) {
   levels.value = v

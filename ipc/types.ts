@@ -786,6 +786,8 @@ type IpcPobInstallState =
 type IpcPobCopyBuildsRequest =
   Event<'CLIENT->MAIN::pob-copy-builds', {
     requestId: number
+    // folder picked by the player (default: the earlier PoB install found in Documents)
+    source?: string
   }>
 
 type IpcPobCopyBuildsResult =

@@ -180,9 +180,9 @@ app.on('ready', async () => {
           })
         })()
       })
-      eventPipe.onEventAnyClient('CLIENT->MAIN::pob-copy-builds', ({ requestId }) => {
+      eventPipe.onEventAnyClient('CLIENT->MAIN::pob-copy-builds', ({ requestId, source }) => {
         const send = eventPipe.replyTo()
-        void pobImpact.copyExistingBuilds()
+        void pobImpact.copyExistingBuilds(typeof source === 'string' && source ? source : undefined)
           .then((res) => {
             if (res.copied) pobSync.schedulePush()
             send({ name: 'MAIN->CLIENT::pob-copy-builds', payload: { requestId, ok: true, ...res } })

@@ -41,6 +41,22 @@
         Leave empty to use Loot Goblin's own Path of Building (downloaded once, keeps itself up to date; tray menu → Open Path of Building).
       </div>
       <PobInstallStatus v-if="!pob.pobDir" class="mt-2" />
+      <!-- Deathloom fork: bring builds over from another Path of Building -->
+      <div class="mt-2 p-2 rounded bg-gray-900">
+        <div class="mb-1"><i class="fas fa-file-import mr-1" />Copy builds from another Path of Building</div>
+        <div class="text-gray-500 text-sm mb-2">
+          <template v-if="existingPob">Found {{ existingPob.count }} build{{ existingPob.count === 1 ? '' : 's' }} in
+            <span class="break-all text-gray-400">{{ existingPob.buildsDir }}</span>.</template>
+          <template v-else>No other Path of Building found in Documents. Pick its builds folder yourself.</template>
+          Copied into your Loot Goblin builds{{ defaults.player || pob.player ? ` (folder ${pob.player || defaults.player})` : '' }}; the originals stay
+          where they are, builds with the same name are skipped. With build sync on, they're uploaded too.
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" class="px-2 bg-gray-800 rounded" :disabled="copying || !existingPob" @click="copyBuilds()">{{ copying ? 'Copying…' : 'Copy builds' }}</button>
+          <button type="button" class="px-2 bg-gray-800 rounded" :disabled="copying" @click="copyFromFolder">Choose folder…</button>
+          <span v-if="copyResult" class="text-sm" :class="copyResult.ok ? 'text-green-500' : 'text-red-400'">{{ copyResult.text }}</span>
+        </div>
+      </div>
     </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Builds folder</div>
@@ -214,9 +230,48 @@ export default defineComponent({
       return p.replace(/[\\/]+$/, '').split(/[\\/]/).pop() ?? ''
     }
 
+    // Builds of an earlier Path of Building (found in Documents) or a folder the player picks
+    const existingPob = ref<{ buildsDir: string, count: number } | null>(null)
+    function probeExisting () {
+      const requestId = nextId++
+      const listener = Host.onEvent('MAIN->CLIENT::pob-setup-probe', (e) => {
+        if (e.requestId !== requestId) return
+        listener.abort()
+        existingPob.value = e.existingPob ?? null
+      })
+      Host.sendEvent({ name: 'CLIENT->MAIN::pob-setup-probe', payload: { requestId } })
+    }
+    probeExisting()
+    const copying = ref(false)
+    const copyResult = ref<{ ok: boolean, text: string } | null>(null)
+    function copyBuilds (source?: string) {
+      if (copying.value) return
+      copying.value = true
+      copyResult.value = null
+      const requestId = nextId++
+      const listener = Host.onEvent('MAIN->CLIENT::pob-copy-builds', (e) => {
+        if (e.requestId !== requestId) return
+        listener.abort()
+        copying.value = false
+        copyResult.value = e.ok
+          ? { ok: true, text: `Copied ${e.copied ?? 0}${e.skipped ? `, ${e.skipped} already there` : ''}.` }
+          : { ok: false, text: e.error ?? 'Copy failed' }
+        probeExisting()
+      })
+      Host.sendEvent({ name: 'CLIENT->MAIN::pob-copy-builds', payload: { requestId, source } })
+    }
+
     return {
       pob,
       defaults,
+      existingPob,
+      copying,
+      copyResult,
+      copyBuilds,
+      async copyFromFolder () {
+        const picked = await pickFolder('Builds folder of the other Path of Building', existingPob.value?.buildsDir ?? '')
+        if (picked) copyBuilds(picked)
+      },
       HUD_PANELS: [
         { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },
         { key: 'trades', label: 'Trade companion', hotkey: 'tradesKey' },

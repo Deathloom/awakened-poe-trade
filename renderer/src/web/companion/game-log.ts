@@ -12,6 +12,11 @@ export type LogEvent =
   | { type: 'area', level: number, code: string }
   | { type: 'tradeResult', accepted: boolean }
   | { type: 'level', char: string, cls: string, level: number }
+  // quest rewards ("You have received a Passive Skill Point." / "2 Passive Respec Points.")
+  | { type: 'questPoint', kind: 'passive' | 'respec', count: number }
+  // someone speaking (NPC / boss dialogue; local chat looks the same, so only
+  // match it against known boss names)
+  | { type: 'speech', speaker: string }
 
 // English only (the game client's language must be English for these)
 const JOINED = /^: (?<char>.+) has joined the area\.$/
@@ -21,6 +26,10 @@ const TRADE_ACCEPTED = /^: Trade accepted\.$/
 const TRADE_CANCELLED = /^: Trade cancelled\.$/
 // also shown for party members in the same area
 const LEVEL_UP = /^: (?<char>.+) \((?<cls>[^)]+)\) is now level (?<level>\d+)$/
+const PASSIVE_POINT = /^: You have received (?:a|(?<n>\d+)) Passive Skill Points?\.$/
+const RESPEC_POINTS = /^: You have received (?:a|(?<n>\d+)) Passive Respec Points?\.$/
+// "Brutus, the Warden: Your crime is trespass." (no channel prefix like # $ % & @)
+const SPEECH = /^(?<speaker>[A-Z][^:#$%&@<>]{1,40}): \S/
 const GENERATING = /Generating level (?<level>\d+) area "(?<code>[^"]+)"/
 
 export function parseLogLine (line: string, language = 'en'): LogEvent | null {
@@ -35,13 +44,18 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if (TRADE_ACCEPTED.test(text)) return { type: 'tradeResult', accepted: true }
   if (TRADE_CANCELLED.test(text)) return { type: 'tradeResult', accepted: false }
   if ((m = text.match(LEVEL_UP))) return { type: 'level', char: m.groups!.char, cls: m.groups!.cls, level: Number(m.groups!.level) }
+  if ((m = text.match(PASSIVE_POINT))) return { type: 'questPoint', kind: 'passive', count: Number(m.groups!.n ?? 1) }
+  if ((m = text.match(RESPEC_POINTS))) return { type: 'questPoint', kind: 'respec', count: Number(m.groups!.n ?? 1) }
   if ((m = text.match(JOINED))) return { type: 'joined', char: m.groups!.char }
   if ((m = text.match(LEFT))) return { type: 'left', char: m.groups!.char }
 
   let direction: 'from' | 'to'
   if ((m = text.match(_$.CHAT_WHISPER_FROM))) direction = 'from'
   else if ((m = text.match(_$.CHAT_WHISPER_TO))) direction = 'to'
-  else return null
+  else {
+    if ((m = text.match(SPEECH))) return { type: 'speech', speaker: m.groups!.speaker.trim() }
+    return null
+  }
   const char = m.groups!.char_name
   const body = m.groups!.body
 

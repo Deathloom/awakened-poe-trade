@@ -690,12 +690,12 @@ export class PobImpact {
   }
 
   // Copy the earlier PoB install's builds into the player folder (or the builds folder)
-  async copyExistingBuilds () {
-    const found = await this.existingBuilds()
-    if (!found) throw new Error('No other Path of Building builds found')
+  async copyExistingBuilds (source?: string) {
+    const from = source || (await this.existingBuilds())?.buildsDir
+    if (!from) throw new Error('No other Path of Building builds found')
     const target = this.playerDir()
-    const res = await copyBuilds(found.buildsDir, target)
-    this.logger.write(`info [PoB] copied ${res.copied} builds from ${found.buildsDir} (${res.skipped} already there)`)
+    const res = await copyBuilds(from, target)
+    this.logger.write(`info [PoB] copied ${res.copied} builds from ${from} (${res.skipped} already there)`)
     return { ...res, target }
   }
 
