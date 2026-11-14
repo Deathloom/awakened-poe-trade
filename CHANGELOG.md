@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.63] - 2026-11-14
+
+### Added (#105)
+- **Every window panel now also works in game:** Tree map, Atlas tree, This session, Market history and Market overview can be pinned over the game (Settings → Path of Building → Show while playing) and shown in the overlay (Shift+Space menu), like the guide, trade companion and build panel.
+- **Hotkeys for them:** set one per panel in Settings → Path of Building (none by default, so they can't clash with the game's keys). A pinned panel toggles over the game; otherwise the hotkey opens it in the overlay, or the Loot Goblin window's tab if it's switched off there.
+- Settings → Where panels show lists the Atlas tree and Market overview too.
+
 ## [1.0.62] - 2026-11-14
 
 ### Fixed (#104)

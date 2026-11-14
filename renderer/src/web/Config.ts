@@ -8,6 +8,7 @@ import type { StashSearchWidget } from './stash-search/widget'
 import type { ItemCheckWidget } from './item-check/widget'
 import type { ItemSearchWidget } from './item-search/widget'
 import { registry as widgetRegistry } from './overlay/widget-registry.js'
+import { PANEL_WIDGET_TYPES } from './desktop/panel-defs'
 
 const _config = shallowRef<Config | null>(null)
 let _lastSavedConfig: Config | null = null
@@ -443,6 +444,7 @@ function upgradeConfig (_config: Config): Config {
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
   config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }
+  config.pob.panelKeys ??= {}
   if (typeof config.pob.hud.x === 'number' && typeof config.pob.hud.y === 'number') {
     // one HUD window per panel now: the old shared spot goes to the guide, trades below it
     const { x, y } = config.pob.hud
@@ -454,7 +456,7 @@ function upgradeConfig (_config: Config): Config {
   if (typeof config.pob.hud.clickThrough === 'boolean') {
     // was one setting for all panels
     const on = config.pob.hud.clickThrough
-    config.pob.hud.clickThroughPanels = { guide: on, trades: on, gear: on }
+    config.pob.hud.clickThroughPanels = { ...defaultHudConfig().clickThroughPanels, guide: on, trades: on, gear: on }
     delete config.pob.hud.clickThrough
   }
   config.pob.hud.clickThroughPanels = { ...defaultHudConfig().clickThroughPanels, ...config.pob.hud.clickThroughPanels }
@@ -475,7 +477,7 @@ function upgradeConfig (_config: Config): Config {
   if (config.pob.stash) config.pob.stash.enabled = false
   // live character data off (character-window endpoints are outside GGG's official API)
   config.pob.liveGear = false
-  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'setup-guide', 'market-search']) {
+  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'setup-guide', 'market-search', ...PANEL_WIDGET_TYPES]) {
     if (!config.widgets.some(w => w.wmType === type)) {
       config.widgets.push({
         ...defaultConfig().widgets.find(w => w.wmType === type)!,
@@ -587,6 +589,16 @@ function getConfigForHost (): HostConfig {
       keepModKeys: true
     })
   }
+  // Deathloom fork: hotkeys of the panels added in 1.0.63 (tree map, atlas, …)
+  for (const [panel, key] of Object.entries(config.pob?.panelKeys ?? {})) {
+    if (key) {
+      actions.push({
+        shortcut: key,
+        action: { type: 'trigger-event', target: `panel:${panel}` },
+        keepModKeys: true
+      })
+    }
+  }
   for (const command of config.commands) {
     if (command.hotkey) {
       actions.push({
@@ -661,11 +673,20 @@ export function defaultHudConfig (): PobHudConfig {
     guide: false,
     trades: false,
     gear: false,
-    clickThroughPanels: { guide: false, trades: false, gear: false },
+    clickThroughPanels: { guide: false, trades: false, gear: false, tree: false, atlas: false, session: false, market: false, overview: false },
     autoHideTrades: true,
     opaque: false,
     opacity: 90,
-    pos: { guide: { x: 10, y: 90 }, trades: { x: 10, y: 420 }, gear: { x: 440, y: 90 } }
+    pos: {
+      guide: { x: 10, y: 90 },
+      trades: { x: 10, y: 420 },
+      gear: { x: 440, y: 90 },
+      tree: { x: 880, y: 90 },
+      atlas: { x: 880, y: 90 },
+      session: { x: 880, y: 440 },
+      market: { x: 440, y: 440 },
+      overview: { x: 440, y: 440 }
+    }
   }
 }
 
@@ -686,6 +707,7 @@ export function defaultPobConfig (): PobConfig {
     tradesKey: 'Ctrl + T',
     hotkeysV1: true,
     openPobKey: 'Ctrl + P',
+    panelKeys: {},
     hotkeysV2: true,
     loadouts: {},
     chatButtons: 'copy',

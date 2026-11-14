@@ -13,6 +13,13 @@
     <CampaignGuideBody v-if="HUD_PANEL === 'guide'" :tall="Boolean(dims)" />
     <TradeCompanionBody v-else-if="HUD_PANEL === 'trades'" compact @incoming="showTrades" @empty="hideTradesIfAuto" />
     <PobGearBody v-else-if="HUD_PANEL === 'gear'" :active="!hidden.gear" hud />
+    <!-- panels added in 1.0.63 (tree map, atlas, session, market history, market overview) -->
+    <div v-else-if="extra" class="flex flex-col p-1 rounded-b bg-gray-900"
+      :style="{ width: `var(--hud-w, ${extra.w})`, height: `var(--hud-h, ${extra.h})` }">
+      <div class="flex-1 min-h-0 flex flex-col rounded" :class="{ 'bg-gray-800': extra.boxed }">
+        <component :is="extra.body" v-if="!hidden[HUD_PANEL]" v-bind="extra.props" />
+      </div>
+    </div>
     <!-- resize by the bottom-right corner -->
     <div class="hud-resize" data-no-drag title="Drag to resize (Settings: Reset positions and sizes)"
       @pointerdown.stop="resizeStart" @pointerup.stop="resizeEnd" />
@@ -27,11 +34,21 @@ import { AppConfig } from '@/web/Config'
 import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import PobGearBody from '../pob/PobGearBody.vue'
+import { PANEL_BODY_BY_PANEL } from '../overlay/panel-widgets'
+import { useLeagues } from '@/web/background/Leagues'
+import { usePoeninja } from '@/web/background/Prices'
+import type { HudPanel } from '@ipc/types'
 
 document.documentElement.classList.add('hud')
 
 const playing = ref(true)
-const hidden = ref({ guide: true, trades: true, gear: true })
+const hidden = ref<Record<HudPanel, boolean>>({ guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true })
+const extra = PANEL_BODY_BY_PANEL[HUD_PANEL]
+// market panels need leagues and poe.ninja prices (the overlay and window load them too)
+if (HUD_PANEL === 'market' || HUD_PANEL === 'overview') {
+  usePoeninja()
+  useLeagues().load()
+}
 const hiddenByAlt = ref(false)
 // size set by dragging the corner: from settings, live while resizing
 const liveDims = ref<{ w: number, h: number } | null>(null)
