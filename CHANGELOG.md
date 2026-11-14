@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (#48)
+- **No secrets in problem reports.** GitHub tokens, Authorization headers, POESESSID cookies and token/password values are blanked out of the error text, stack and log lines before a report is sent (home folder was already removed).
+- **Safer build imports.** Links only download from the supported build sites over https, also after redirects; 15 s timeout and 2 MB limit; a PoB code that unpacks to more than 32 MB is refused (protects against "zip bomb" codes).
+- Clipboard writes from the overlay pages are plain text up to 100 KB.
+
 ### Added (#47)
 - **Start Loot Goblin with Windows** (Settings → Path of Building, and the setup guide's extras step). On by default: Loot Goblin starts in the tray when you sign in to Windows. Installed app only.
 
