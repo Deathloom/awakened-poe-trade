@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.49] - 2026-11-14
+
+### Changed (#89)
+- Market history: clear **Open on poe.ninja** and **Delete** buttons instead of small icons.
+
 ## [1.0.48] - 2026-11-14
 
 ### Fixed (#87)

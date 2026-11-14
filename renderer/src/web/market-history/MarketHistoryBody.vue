@@ -17,8 +17,10 @@
           <span v-else class="text-gray-600 shrink-0 text-xs">no price</span>
           <span v-if="w.change != null" class="text-xs shrink-0 w-12 text-right" :class="w.change >= 0 ? 'text-green-500' : 'text-red-400'">
             {{ w.change >= 0 ? '+' : '' }}{{ Math.round(w.change) }}%</span>
-          <button class="text-gray-500 hover:text-gray-200 shrink-0" title="poe.ninja (full history)" :disabled="!w.now" @click="w.now && open(w.now.url)"><i class="fas fa-external-link-alt" /></button>
-          <button class="text-gray-600 hover:text-gray-300 shrink-0" title="Stop watching" @click="removeWatch(w.key)"><i class="fas fa-times" /></button>
+          <button class="btn-mini shrink-0" title="Open this item on poe.ninja (full history)" :disabled="!w.now" @click="w.now && open(w.now.url)">
+            <i class="fas fa-external-link-alt mr-1" />Open on poe.ninja</button>
+          <button class="btn-mini shrink-0 hover:text-red-300" title="Stop watching this item" @click="removeWatch(w.key)">
+            <i class="fas fa-trash-alt mr-1" />Delete</button>
         </div>
         <div class="flex gap-x-2 items-end pt-1">
           <div class="flex-1">
@@ -107,3 +109,11 @@ const lineOptions = {
   tooltip: { enabled: true, theme: 'dark', x: { format: 'dd MMM HH:mm' }, y: { formatter: (v: number) => `${fmt(v)} c` } }
 }
 </script>
+
+<style lang="postcss" scoped>
+.btn-mini {
+  @apply bg-gray-700 text-gray-300 rounded px-2 text-xs;
+  &:hover:not(:disabled) { @apply text-gray-100; }
+  &:disabled { @apply opacity-50; }
+}
+</style>
