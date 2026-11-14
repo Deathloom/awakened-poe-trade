@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.58] - 2026-11-14
+
+### Changed (#100)
+- **All tab layout:** Trades and Market history moved to the left column, under the build panel (drag the lines to resize). The right column now has the tree map and This session, with room for the atlas tree that's coming next.
+
 ## [1.0.57] - 2026-11-14
 
 ### Fixed (#99)
