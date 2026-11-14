@@ -46,7 +46,7 @@
 
         <!-- passives -->
         <div class="rounded px-1 py-1 mb-1 bg-gray-900">
-          <div class="flex items-baseline text-xs text-gray-400 pb-px">
+          <div class="lg-head flex items-baseline"><i class="fas fa-shoe-prints mr-1 text-gray-500" />
             <span>Next passives</span>
             <span class="ml-2 text-gray-600">{{ Math.min(plan.taken, plan.order.length) + plan.kept }} / {{ plan.order.length + plan.kept }} of this tree by now</span>
             <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showAll = !showAll">{{ showAll ? 'Next only' : 'Whole order' }}</button>
@@ -64,18 +64,18 @@
         </div>
 
         <div v-if="plan.refund.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
-          <div class="text-xs text-gray-400 pb-px">Refund when you switch to this tree ({{ plan.refund.length }})</div>
+          <div class="lg-head"><i class="fas fa-undo mr-1 text-gray-500" />Refund when you switch to this tree ({{ plan.refund.length }})</div>
           <div class="text-xs text-gray-500">{{ plan.refund.map(n => n.name).join(', ') }}</div>
         </div>
 
         <div v-if="plan.ascendancy.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
-          <div class="text-xs text-gray-400 pb-px">Ascendancy in this tree{{ plan.ascendancyClass ? ` (${plan.ascendancyClass})` : '' }}</div>
+          <div class="lg-head"><i class="fas fa-crown mr-1 text-gray-500" />Ascendancy in this tree{{ plan.ascendancyClass ? ` (${plan.ascendancyClass})` : '' }}</div>
           <div class="text-blue-300">{{ plan.ascendancy.map(a => a.name).join(', ') }}</div>
         </div>
 
         <!-- gems: swap at the next step -->
         <div v-if="swap" class="rounded px-1 py-1 mb-1 bg-gray-900">
-          <div class="text-xs text-gray-400 pb-px">At level {{ swap.level }} (next tree "{{ swap.title }}"<template v-if="plan.nextSkillSet">, skill set "{{ plan.nextSkillSet }}"</template>)</div>
+          <div class="lg-head"><i class="fas fa-exchange-alt mr-1 text-gray-500" />At level {{ swap.level }} (next tree "{{ swap.title }}"<template v-if="plan.nextSkillSet">, skill set "{{ plan.nextSkillSet }}"</template>)</div>
           <div v-if="swap.add.length" class="flex flex-wrap gap-x-3"><span class="text-xs text-green-500 w-10">add</span>
             <span v-for="g of swap.add" :key="'s+' + g.name" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span></div>
           <div v-if="swap.drop.length" class="flex flex-wrap gap-x-3"><span class="text-xs text-red-400 w-10">drop</span>
@@ -85,7 +85,7 @@
 
         <!-- gems from quests and vendors -->
         <div v-if="questGems" class="rounded px-1 py-1 mb-1 bg-gray-900">
-          <div class="flex items-baseline text-xs text-gray-400 pb-px">
+          <div class="lg-head flex items-baseline"><i class="fas fa-gem mr-1 text-gray-500" />
             <span>Quest gems for this build ({{ questGems.className }})</span>
             <span class="ml-2 text-gray-600">act {{ guideAct }}</span>
             <button class="ml-auto text-gray-500 hover:text-gray-200" @click="allActs = !allActs">{{ allActs ? 'This act' : 'All acts' }}</button>
@@ -105,16 +105,16 @@
 
         <!-- gems -->
         <div class="rounded px-1 py-1 mb-1 bg-gray-900">
-          <div class="text-xs text-gray-400 pb-px">Gems<span v-if="plan.skillSet" class="text-gray-600"> · skill set "{{ plan.skillSet }}"</span></div>
+          <div class="lg-head"><i class="fas fa-gem mr-1 text-gray-500" />Gems<span v-if="plan.skillSet" class="text-gray-600"> · skill set "{{ plan.skillSet }}"</span></div>
           <div v-if="newGems.length" class="pb-1">
-            <div class="text-xs text-gray-500">New in this step</div>
+            <div class="lg-sub">New in this step</div>
             <div class="flex flex-wrap gap-x-3">
               <span v-for="g of newGems" :key="'n' + g.name" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}
                 <span class="text-xs text-gray-600">{{ g.reqLevel > level ? `lvl ${g.reqLevel}` : '' }}</span></span>
             </div>
           </div>
           <div v-if="upcoming.length" class="pb-1">
-            <div class="text-xs text-gray-500">Coming up</div>
+            <div class="lg-sub">Coming up</div>
             <div v-for="g of upcoming" :key="'u' + g.name" class="flex items-baseline gap-x-2">
               <span class="w-12 text-xs text-gray-500 shrink-0">lvl {{ g.reqLevel }}</span>
               <span :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span>
@@ -133,7 +133,7 @@
 
         <!-- vendor recipes for this point of the campaign -->
         <div class="rounded px-1 py-1 mb-1 bg-gray-900 text-xs">
-          <div class="flex items-baseline text-gray-400 pb-px">
+          <div class="lg-head flex items-baseline"><i class="fas fa-store mr-1 text-gray-500" />
             <span>Vendor recipes (act {{ guideAct }})</span>
             <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showRecipes = !showRecipes">{{ showRecipes ? 'hide' : `show ${recipes.length}` }}</button>
           </div>
@@ -150,7 +150,7 @@
 
         <!-- character stats from the game log -->
         <div class="rounded px-1 py-1 mb-1 bg-gray-900 text-xs">
-          <div class="flex items-baseline text-gray-400 pb-px">
+          <div class="lg-head flex items-baseline"><i class="fas fa-scroll mr-1 text-gray-500" />
             <span>From the game log<template v-if="char"> · {{ char.name }}</template></span>
             <button class="ml-auto text-gray-500 hover:text-gray-200" :disabled="rebuilding"
               title="Read the whole Client.txt again and rebuild every character's quests, passives, deaths and act times"
@@ -408,3 +408,19 @@ function gemTitle (g: PobPlanGem) {
   return [`${g.name}${g.support ? ' (support)' : ''}`, `Needs level ${g.reqLevel}`, g.group ?? g.slot].filter(Boolean).join('\n')
 }
 </script>
+
+<style>
+/* Deathloom fork: one look for section headers across the levelling pane */
+.lg-head {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  border-bottom: 1px solid #374151;
+  padding-bottom: 2px;
+  margin-bottom: 3px;
+}
+.lg-head button, .lg-head .normal-case { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.lg-sub { font-size: 0.7rem; color: #6b7280; margin-top: 2px; }
+</style>

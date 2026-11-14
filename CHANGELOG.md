@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.38] - 2026-11-14
+
+### Changed (#77): easier to read
+- **The guide shows what's what:** quests in yellow with a scroll icon, bosses in red with a skull, items and objects in green with a box, places in blue with a pin; plain text is what you do. Each task is a bullet, the current zone is bold, and a small legend sits under the list.
+- **Levelling tab sections have proper headers** (small caps with an icon and a line under them): Next passives, Refund, Ascendancy, At level N, Quest gems, Gems, Vendor recipes, From the game log.
+
 ## [1.0.37] - 2026-11-14
 
 ### Added (#76)
