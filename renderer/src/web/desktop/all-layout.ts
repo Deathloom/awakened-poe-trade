@@ -16,8 +16,8 @@ export interface AllPanelDef {
 }
 
 // Trade site is left out on purpose: it is one live page (stays signed in and
-// keeps its place), so it lives on its own tab. Atlas tree: not in the
-// default layout (Edit layout → Add panel).
+// keeps its place), so it lives on its own tab. Default layout (Gerhard,
+// 14 Nov 2026): Build / Trades / Market history | Levelling | Tree map / Atlas tree.
 export const ALL_PANELS: AllPanelDef[] = [
   { id: 'gear', label: 'Build (gear, gems, tree)', icon: 'fa-hammer', settingsKey: 'gear' },
   { id: 'guide', label: 'Levelling guide', icon: 'fa-route', settingsKey: 'guide' },
@@ -44,9 +44,9 @@ export function defaultLayout (): AllLayout {
   return {
     v: 1,
     cols: [
-      { w: 0.34, items: [{ id: 'gear', h: 0.6 }, { id: 'trades', h: 0.2 }, { id: 'market', h: 0.2 }] },
-      { w: 0.36, items: [{ id: 'guide', h: 1 }] },
-      { w: 0.3, items: [{ id: 'tree', h: 0.65 }, { id: 'session', h: 0.35 }] }
+      { w: 0.33, items: [{ id: 'gear', h: 0.6 }, { id: 'trades', h: 0.2 }, { id: 'market', h: 0.2 }] },
+      { w: 0.33, items: [{ id: 'guide', h: 1 }] },
+      { w: 0.34, items: [{ id: 'tree', h: 0.5 }, { id: 'atlas', h: 0.5 }] }
     ]
   }
 }
