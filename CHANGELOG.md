@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-11-14
+
+### Security (#55)
+- Electron 40 → **43.8.10** (clears the high-severity Electron advisories for ≤42.11.15). Electron 44's async clipboard rewrite and 45's safeStorage change are a later step. Dev runs: Electron now downloads its binary on the first `npm run dev` instead of during `npm ci`.
+- Dev runs show version **0.0.0-dev** instead of upstream's 3.29.108 (releases still get their version from the Release workflow).
+
 ## [1.0.19] - 2026-11-14
 
 ### Added (#49)
