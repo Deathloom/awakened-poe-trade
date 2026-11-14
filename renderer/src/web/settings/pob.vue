@@ -94,6 +94,14 @@
         <hotkey-input v-model="pob.tradesKey" class="w-48" />
       </div>
       <div class="flex items-center gap-x-2 mb-1">
+        <span class="flex-1">Market search hotkey <span class="text-gray-500 text-sm">(optional)</span></span>
+        <hotkey-input :modelValue="pob.marketSearchKey ?? null" class="w-48" @update:modelValue="v => { pob.marketSearchKey = v }" />
+      </div>
+      <div class="flex items-center gap-x-2 mb-1">
+        <span class="flex-1">Friends' trade board hotkey <span class="text-gray-500 text-sm">(optional)</span></span>
+        <hotkey-input :modelValue="pob.boardKey ?? null" class="w-48" @update:modelValue="v => { pob.boardKey = v }" />
+      </div>
+      <div class="flex items-center gap-x-2 mb-1">
         <span class="flex-1">Post hovered item to the friends' trade board <span class="text-gray-500 text-sm">(optional)</span></span>
         <hotkey-input :modelValue="pob.boardPostKey ?? null" class="w-48" @update:modelValue="v => { pob.boardPostKey = v }" />
       </div>

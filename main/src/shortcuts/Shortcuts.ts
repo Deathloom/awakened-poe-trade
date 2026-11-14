@@ -9,7 +9,7 @@ import type { ShortcutAction, HudPanel } from '../../../ipc/types'
 
 // Deathloom fork: Loot Goblin window tab for a panel that's in neither the overlay nor in game
 const WINDOW_VIEW: Record<string, string> = {
-  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market'
+  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', board: 'board', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market'
 }
 const EXTRA = new Set(['tree', 'atlas', 'session', 'market', 'overview'])
 import type { Logger } from '../RemoteLogger'
@@ -194,14 +194,14 @@ export class Shortcuts {
           }
           // Deathloom fork: panel set to not show in the overlay: the hotkey opens
           // the Loot Goblin window on its tab instead (the game keeps focus)
-          const placeKey = hudPanel ?? (entry.action.target === 'market-search' ? 'search' : null)
+          const placeKey = hudPanel ?? (entry.action.target === 'market-search' ? 'search' : entry.action.target === 'trade-board' ? 'board' : null)
           if (placeKey && this.panelOverlayOff?.(placeKey)) {
             this.openWindowView?.(WINDOW_VIEW[placeKey] ?? placeKey)
             return
           }
           // Deathloom fork: the build gear panel has buttons, so it needs the overlay focused;
           // unpinned guide / companion only show with the overlay active
-          if (entry.action.target === 'pob-gear' || hudPanel) {
+          if (entry.action.target === 'pob-gear' || entry.action.target === 'market-search' || entry.action.target === 'trade-board' || hudPanel) {
             this.areaTracker.removeListeners()
             this.overlay.assertOverlayActive()
           }

@@ -89,6 +89,9 @@ export interface PobConfig {
   openPobKey?: string | null
   // Hotkey that copies the hovered item and opens the friends' trade board post form (none by default)
   boardPostKey?: string | null
+  // Hotkeys that open market search / the friends' trade board in the overlay (none by default)
+  marketSearchKey?: string | null
+  boardKey?: string | null
   // Hotkeys of the panels added in 1.0.63 (tree map, atlas, session, market, overview); none by default
   panelKeys?: Partial<Record<HudPanel, string | null>>
   // set once the Ctrl+P default was applied to an older config

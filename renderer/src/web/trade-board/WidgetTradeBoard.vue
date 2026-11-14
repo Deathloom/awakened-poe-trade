@@ -32,7 +32,7 @@ export default {
 </script>
 
 <script setup lang="ts">
-import { inject, watch } from 'vue'
+import { inject, onUnmounted, watch } from 'vue'
 import Widget from '../overlay/Widget.vue'
 import type { WidgetManager } from '../overlay/interfaces'
 import { Host } from '@/web/background/IPC'
@@ -56,4 +56,11 @@ watch(shown, (on) => {
   wm.setFlag(props.config.wmId, 'menu::skip', !on)
   if (!on && props.config.wmWants === 'show') wm.hide(props.config.wmId)
 }, { immediate: true })
+// hotkey (Settings → Path of Building): toggles it in the overlay (focused, so you can type)
+const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
+  if (e.target !== 'trade-board' || !shown.value) return
+  if (props.config.wmWants === 'hide' || !wm.active.value) wm.show(props.config.wmId)
+  else wm.hide(props.config.wmId)
+})
+onUnmounted(() => { hotkey.abort() })
 </script>

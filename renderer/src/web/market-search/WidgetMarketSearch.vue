@@ -33,7 +33,8 @@ export default {
 </script>
 
 <script setup lang="ts">
-import { inject as injectWm, nextTick, ref, watch } from 'vue'
+import { inject as injectWm, nextTick, onUnmounted, ref, watch } from 'vue'
+import { Host } from '@/web/background/IPC'
 import Widget from '../overlay/Widget.vue'
 import type { WidgetManager } from '../overlay/interfaces'
 import { useInOverlay } from '../desktop/panels'
@@ -51,4 +52,11 @@ watch(shown, (on) => {
   wmPlace.setFlag(props.config.wmId, 'menu::skip', !on)
   if (!on && props.config.wmWants === 'show') wmPlace.hide(props.config.wmId)
 }, { immediate: true })
+// hotkey (Settings → Path of Building): toggles it in the overlay (focused, so you can type)
+const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
+  if (e.target !== 'market-search' || !shown.value) return
+  if (props.config.wmWants === 'hide' || !wmPlace.active.value) wmPlace.show(props.config.wmId)
+  else wmPlace.hide(props.config.wmId)
+})
+onUnmounted(() => { hotkey.abort() })
 </script>

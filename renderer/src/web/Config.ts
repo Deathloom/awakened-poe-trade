@@ -582,6 +582,21 @@ function getConfigForHost (): HostConfig {
       keepModKeys: true
     })
   }
+  // Deathloom fork: market search / friends' board in the overlay
+  if (config.pob?.marketSearchKey) {
+    actions.push({
+      shortcut: config.pob.marketSearchKey,
+      action: { type: 'trigger-event', target: 'market-search' },
+      keepModKeys: true
+    })
+  }
+  if (config.pob?.boardKey) {
+    actions.push({
+      shortcut: config.pob.boardKey,
+      action: { type: 'trigger-event', target: 'trade-board' },
+      keepModKeys: true
+    })
+  }
   // Deathloom fork: post the hovered item to the friends' trade board
   if (config.pob?.boardPostKey) {
     actions.push({

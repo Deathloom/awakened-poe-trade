@@ -53,7 +53,7 @@
           <h2>In game</h2>
           <ul>
             <li><b>Price check</b>: hover an item and press the price check key. You see prices and what the item does to your PoB build.</li>
-            <li><b>Market search</b> (overlay menu, <i class="fas fa-search-dollar" />): type an item name, pick it, and see who sells it, cheapest first.
+            <li><b>Market search</b> (overlay menu, <i class="fas fa-search-dollar" />, or its hotkey from Settings → Path of Building): type an item name, pick it, and see who sells it, cheapest first.
               <b>Whisper</b> uses GGG's own buy message, <b>Hideout</b> is <code>/hideout name</code> (works when the seller lets visitors in).
               Instant buyout listings open in the Trade site tab, where you click GGG's "Travel to Hideout".</li>
             <li><b>Panels over the game</b>: pin the build, guide or trade companion (Settings → Path of Building → Where panels show).
