@@ -121,6 +121,9 @@ export interface PobConfig {
   // Open the desktop window (all panels, for a second screen) when the game starts
   // (key name kept from 1.0.22, when it opened with Loot Goblin)
   desktopAtStart?: boolean
+  // Optional second Loot Goblin window (third screen): its own panels, layout
+  // and look; off by default
+  window2?: { enabled: boolean, atStart?: boolean }
   // First-run setup guide was shown (absent = show it the next time the overlay opens)
   setupDone?: boolean
 }

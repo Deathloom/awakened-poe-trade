@@ -4,8 +4,10 @@
 import { ref } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
+import { IS_DESKTOP, IS_DESKTOP2 } from '@/web/hud/is-hud'
 
-const isDesktop = new URLSearchParams(window.location.search).has('desktop')
+// trade pages open in window 1 (window 2 keeps its own Trade site tab for browsing)
+const isDesktop = IS_DESKTOP && !IS_DESKTOP2
 
 // page the Trade site tab should show next (read once by the tab)
 export const tradeTabUrl = ref<string | undefined>(

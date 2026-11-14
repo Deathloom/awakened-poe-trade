@@ -4,6 +4,7 @@
 import { ref, watch } from 'vue'
 import type { PanelKey } from '@ipc/types'
 import { inWindow } from './panels'
+import { readWindowKey, windowKey } from '@/web/hud/is-hud'
 
 export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board'
 
@@ -95,7 +96,7 @@ function normalise (l: AllLayout) {
 
 function load (): AllLayout {
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY) ?? 'null')
+    const saved = JSON.parse(readWindowKey(KEY) ?? 'null')
     if (valid(saved)) { normalise(saved); return saved }
   } catch {}
   return fromOldSplits()
@@ -104,7 +105,7 @@ function load (): AllLayout {
 export const layout = ref<AllLayout>(load())
 
 export function saveLayout () {
-  try { localStorage.setItem(KEY, JSON.stringify(layout.value)) } catch {}
+  try { localStorage.setItem(windowKey(KEY), JSON.stringify(layout.value)) } catch {}
 }
 
 export function resetLayout () {

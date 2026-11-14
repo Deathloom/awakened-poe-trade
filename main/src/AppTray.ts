@@ -17,6 +17,8 @@ export class AppTray {
   installUpdate: () => void = () => {}
   // Deathloom fork: desktop window (all panels, for a second screen)
   openDesktop: () => void = () => {}
+  // Deathloom fork: optional second window (Settings → Path of Building)
+  openDesktop2: (() => void) | null = null
 
   constructor (server: ServerEvents) {
     let trayImage = nativeImage.createFromPath(
@@ -55,6 +57,9 @@ export class AppTray {
         label: 'Open Loot Goblin window',
         click: () => { this.openDesktop() }
       },
+      ...(this.openDesktop2
+        ? [{ label: 'Open second Loot Goblin window', click: () => { this.openDesktop2?.() } }]
+        : []),
       {
         label: 'Settings/League',
         click: () => {

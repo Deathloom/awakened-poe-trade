@@ -6,6 +6,9 @@
 // replies meant for the overlay don't go to it). It never draws over the game
 // and is not always on top. Its position and size are kept in
 // apt-data/desktop-window.json (not in the overlay's settings).
+// Window 2 (optional, for a third screen, off by default) is a second instance
+// with id 2: ?desktop=2, own position file desktop-window-2.json, its own
+// layout and look (renderer); trade pages and panel hotkeys go to window 1.
 
 import path from 'path'
 import fs from 'fs'
@@ -25,9 +28,15 @@ export class DesktopWindow {
   private win?: BrowserWindow
   private port = 0
   private openWhenReady = false
-  private readonly boundsFile = path.join(app.getPath('userData'), 'apt-data', 'desktop-window.json')
+  private readonly boundsFile: string
 
-  constructor (private logger: Logger) {}
+  constructor (private logger: Logger, readonly id: 1 | 2 = 1) {
+    this.boundsFile = path.join(app.getPath('userData'), 'apt-data', id === 1 ? 'desktop-window.json' : 'desktop-window-2.json')
+  }
+
+  close () {
+    if (this.win && !this.win.isDestroyed()) this.win.close()
+  }
 
   setPort (port: number) {
     this.port = port
@@ -74,9 +83,9 @@ export class DesktopWindow {
     let win: BrowserWindow
     try {
       win = new BrowserWindow({
-        title: 'Loot Goblin',
+        title: this.id === 1 ? 'Loot Goblin' : 'Loot Goblin (2)',
         icon: path.join(__dirname, process.env.STATIC!, 'icon.png'),
-        ...(saved ? { x: saved.x, y: saved.y, width: saved.width, height: saved.height } : DEFAULT_SIZE),
+        ...(saved ? { x: saved.x, y: saved.y, width: saved.width, height: saved.height } : this.id === 1 ? DEFAULT_SIZE : centred(DEFAULT_SIZE.width, DEFAULT_SIZE.height)),
         minWidth: MIN_SIZE.width,
         minHeight: MIN_SIZE.height,
         show: false,
@@ -122,7 +131,7 @@ export class DesktopWindow {
     const view = this.pendingView
     this.pendingTrade = undefined
     this.pendingView = undefined
-    void win.loadURL(`${base}${base.includes('?') ? '&' : '?'}desktop=1` +
+    void win.loadURL(`${base}${base.includes('?') ? '&' : '?'}desktop=${this.id}` +
       (trade ? `&trade=${encodeURIComponent(trade)}` : '') +
       (view ? `&view=${encodeURIComponent(view)}` : ''))
   }

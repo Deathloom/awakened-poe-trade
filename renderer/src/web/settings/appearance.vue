@@ -4,6 +4,10 @@
     <div class="text-gray-500 text-sm mb-4">
       Changes show straight away in this window; Save applies them to the overlay, the in-game panels and the Loot Goblin window.
     </div>
+    <div v-if="isWindow2" class="mb-4 p-2 rounded bg-gray-800">
+      <ui-toggle :modelValue="ownLook" @update:modelValue="setOwnLook">This window has its own look</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">{{ ownLook ? 'Changes below only apply to this second window.' : 'Off: this window looks like the main Loot Goblin window.' }}</div>
+    </div>
 
     <div class="mb-4">
       <div class="mb-1">Theme</div>
@@ -97,10 +101,10 @@
 import { defineComponent, computed, watch, onUnmounted, shallowRef, type PropType } from 'vue'
 import UiRadio from '@/web/ui/UiRadio.vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
-import { AppConfig, type Config } from '@/web/Config'
+import { AppConfig, surfaceAppearance, type Config } from '@/web/Config'
 import { Host } from '@/web/background/IPC'
 import { THEMES, FONTS, applyAppearance, defaultAppearance } from '@/web/appearance'
-import { IS_HUD, IS_DESKTOP } from '@/web/hud/is-hud'
+import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from '@/web/hud/is-hud'
 import { configModelValue } from './utils'
 
 const MAX_IMAGE_BYTES = 15_000_000
@@ -117,15 +121,23 @@ export default defineComponent({
   },
   setup (props) {
     // settings edits a copy of the config: preview it, put the saved look back on close
-    const a = computed(() => props.config.appearance)
+    // second window with its own look: edit that copy instead
+    const ownLook = computed(() => IS_DESKTOP2 && props.config.window2Appearance != null)
+    const a = computed(() => surfaceAppearance(props.config))
     watch(a, (v) => { applyAppearance(v, SURFACE) }, { deep: true, immediate: true })
-    onUnmounted(() => { applyAppearance(AppConfig().appearance, SURFACE) })
+    onUnmounted(() => { applyAppearance(surfaceAppearance(AppConfig()), SURFACE) })
 
     const fileEl = shallowRef<HTMLInputElement | null>(null)
     const error = shallowRef('')
 
     return {
       a,
+      isWindow2: IS_DESKTOP2,
+      ownLook,
+      setOwnLook (on: boolean) {
+        if (on) props.config.window2Appearance = JSON.parse(JSON.stringify(props.config.appearance))
+        else delete props.config.window2Appearance
+      },
       THEMES,
       FONTS,
       error,
@@ -147,12 +159,16 @@ export default defineComponent({
         try {
           const ext = file.type === 'image/jpeg' ? '.jpg' : '.' + file.type.split('/')[1]
           const name = await Host.importFile(new File([file], 'background' + ext, { type: file.type }))
-          props.config.appearance.windowBgImage = name
+          a.value.windowBgImage = name
         } catch {
           error.value = "Couldn't save the picture."
         }
       },
       reset () {
+        if (ownLook.value) {
+          props.config.window2Appearance = defaultAppearance()
+          return
+        }
         props.config.appearance = defaultAppearance()
         props.config.fontSize = 16
       }

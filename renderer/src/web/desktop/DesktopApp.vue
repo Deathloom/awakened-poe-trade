@@ -3,7 +3,7 @@
        normal window for a second screen; live with the game like the overlay. -->
   <div class="desktop-root relative flex flex-col h-full text-gray-200">
     <div class="flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0">
-      <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Loot Goblin</span>
+      <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Loot Goblin<span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
       <button v-for="v of VIEWS" :key="v.key" class="px-3 py-0.5 rounded"
         :class="view === v.key ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         :title="v.title" @click="setView(v.key)">
@@ -53,9 +53,9 @@
       <LabSiteBody />
     </div>
     <!-- first-run setup (opens by itself on a new install) -->
-    <WidgetSetupGuide desktop />
+    <WidgetSetupGuide v-if="!IS_DESKTOP2" desktop />
     <!-- after an update (not while the setup guide is open) -->
-    <WhatsNew :active="!desktopSetupShown" />
+    <WhatsNew v-if="!IS_DESKTOP2" :active="!desktopSetupShown" />
   </div>
 </template>
 
@@ -76,6 +76,7 @@ import TradeSiteBody from './TradeSiteBody.vue'
 import LabSiteBody from './LabSiteBody.vue'
 import HelpBody from '../help/HelpBody.vue'
 import { tradeTabRequest } from './trade-tab'
+import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
 import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
@@ -107,7 +108,7 @@ type View = typeof VIEWS[number]['key']
 const VIEW_KEY = 'deathloom.desktop-view.v1'
 function loadView (): View {
   try {
-    let v = localStorage.getItem(VIEW_KEY)
+    let v = readWindowKey(VIEW_KEY)
     if (v === 'guide' || v === 'next') v = 'levelling' // before 1.0.30
     return VIEWS.some(x => x.key === v) ? v as View : 'overview'
   } catch { return 'overview' }
@@ -119,14 +120,16 @@ function viewFromHotkey (v: string) {
 }
 const askedView = new URLSearchParams(window.location.search).get('view')
 if (askedView) viewFromHotkey(askedView)
-Host.onEvent('MAIN->CLIENT::desktop-view', (e) => { viewFromHotkey(e.view) })
+// hotkeys, Help and Lab buttons go to window 1 (the main hub)
+if (!IS_DESKTOP2) Host.onEvent('MAIN->CLIENT::desktop-view', (e) => { viewFromHotkey(e.view) })
 function setView (v: View) {
   view.value = v
-  try { localStorage.setItem(VIEW_KEY, v) } catch {}
+  try { localStorage.setItem(windowKey(VIEW_KEY), v) } catch {}
 }
 watch(view, (v) => {
   const label = VIEWS.find(x => x.key === v)?.label
-  document.title = v === 'overview' ? 'Loot Goblin' : `Loot Goblin · ${label}`
+  const name = IS_DESKTOP2 ? 'Loot Goblin (2)' : 'Loot Goblin'
+  document.title = v === 'overview' ? name : `${name} · ${label}`
 }, { immediate: true })
 
 // Trade site tab: mounted the first time it's shown, then kept

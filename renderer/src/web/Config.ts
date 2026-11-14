@@ -2,7 +2,7 @@ import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
 import { HostConfig, ShortcutAction, PobConfig, PobHudConfig } from '@ipc/types'
-import { IS_HUD, IS_DESKTOP } from './hud/is-hud'
+import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from './hud/is-hud'
 import { applyAppearance, defaultAppearance, type AppearanceConfig } from './appearance'
 import type * as widget from './overlay/widgets'
 import type { StashSearchWidget } from './stash-search/widget'
@@ -27,7 +27,12 @@ export function AppConfig (type?: string) {
 export function updateConfig (updates: Config) {
   _config.value = deepReactive(JSON.parse(JSON.stringify(updates)))
   document.documentElement.style.fontSize = `${_config.value!.fontSize}px`
-  applyAppearance(_config.value!.appearance, IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay')
+  applyAppearance(surfaceAppearance(_config.value!), IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay')
+}
+
+// Deathloom fork: the second Loot Goblin window may have its own look
+export function surfaceAppearance (cfg: Config): AppearanceConfig {
+  return (IS_DESKTOP2 && cfg.window2Appearance) ? cfg.window2Appearance : cfg.appearance
 }
 
 export function saveConfig (opts?: { isTemporary: boolean }) {
@@ -132,6 +137,8 @@ export interface Config {
   pob: PobConfig
   // Deathloom fork: Settings → Appearance
   appearance: AppearanceConfig
+  // Deathloom fork: second Loot Goblin window's own look (absent = same as above)
+  window2Appearance?: AppearanceConfig
 }
 
 export const defaultConfig = (): Config => ({
@@ -447,6 +454,7 @@ function upgradeConfig (_config: Config): Config {
   // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
   config.pob ??= defaultPobConfig()
   config.appearance = { ...defaultAppearance(), ...config.appearance }
+  if (config.window2Appearance) config.window2Appearance = { ...defaultAppearance(), ...config.window2Appearance }
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
   config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }

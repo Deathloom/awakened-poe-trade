@@ -1,6 +1,7 @@
 // Deathloom fork: resizable panels in the Loot Goblin window. Sizes are
 // fractions (they add up to 1), saved per layout in localStorage.
 import { ref, type Ref } from 'vue'
+import { readWindowKey, windowKey } from '@/web/hud/is-hud'
 
 const MIN = 0.08
 
@@ -8,12 +9,12 @@ export function useSplit (key: string, defaults: number[]) {
   const storageKey = `deathloom.split.${key}.v1`
   let start = defaults
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null')
+    const saved = JSON.parse(readWindowKey(storageKey) ?? 'null')
     if (Array.isArray(saved) && saved.length === defaults.length && saved.every(n => typeof n === 'number' && n > 0)) start = saved
   } catch {}
   const sizes: Ref<number[]> = ref([...start])
   function save () {
-    try { localStorage.setItem(storageKey, JSON.stringify(sizes.value)) } catch {}
+    try { localStorage.setItem(windowKey(storageKey), JSON.stringify(sizes.value)) } catch {}
   }
   // the gutter between pane i and pane j (default the next one) moved by
   // deltaPx inside a container totalPx long. With some panes hidden, `shown`

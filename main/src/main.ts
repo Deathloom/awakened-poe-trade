@@ -164,6 +164,9 @@ app.on('ready', async () => {
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
       // Deathloom fork: all panels in a normal window (second screen)
       const desktop = new DesktopWindow(logger)
+      // optional second window (third screen), off by default
+      const desktop2 = new DesktopWindow(logger, 2)
+      let window2On = false
       let firstRunChecked = false
       tray.openDesktop = () => { desktop.open() }
       openDesktopWindow = () => { desktop.open() }
@@ -195,8 +198,8 @@ app.on('ready', async () => {
       // Deathloom fork: find Client.txt next to the game once its window shows up
       poeWindow.onAttach(() => { void gameLogWatcher.findFromGameProcess() })
       // Deathloom fork: "Open the Loot Goblin window when the game starts"
-      OverlayController.events.on('attach', () => { desktop.gameStarted() })
-      OverlayController.events.on('detach', () => { desktop.gameClosed() })
+      OverlayController.events.on('attach', () => { desktop.gameStarted(); desktop2.gameStarted() })
+      OverlayController.events.on('detach', () => { desktop.gameClosed(); desktop2.gameClosed() })
       // Deathloom fork: first-run setup guide asks what was found
       eventPipe.onEventAnyClient('CLIENT->MAIN::pob-setup-probe', ({ requestId, accountName }) => {
         const send = eventPipe.replyTo()
@@ -250,6 +253,16 @@ app.on('ready', async () => {
         shortcuts.panelOverlayOff = (panel) => (cfg.pob?.panels as Record<string, { overlay?: boolean } | undefined> | undefined)?.[panel]?.overlay === false
         applyStartWithWindows(cfg.pob?.startWithWindows !== false)
         desktop.configure(cfg.pob?.desktopAtStart === true)
+        const w2 = cfg.pob?.window2
+        desktop2.configure(w2?.enabled === true && w2.atStart === true)
+        if (w2?.enabled !== true && window2On) desktop2.close()
+        if ((w2?.enabled === true) !== window2On) {
+          window2On = w2?.enabled === true
+          tray.openDesktop2 = window2On ? () => { desktop2.open() } : null
+          tray.rebuildMenu()
+          // switched on in Settings (not at app start): show it straight away
+          if (window2On && firstRunChecked) desktop2.open({ focus: false })
+        }
         // first run (setup guide not done yet): open the Loot Goblin window, which
         // shows the setup guide, so it can be done before playing
         if (!firstRunChecked) {
@@ -264,6 +277,7 @@ app.on('ready', async () => {
       overlay.loadAppPage(port)
       hud.setPort(port)
       desktop.setPort(port)
+      desktop2.setPort(port)
       tray.serverPort = port
     },
     // fixes(linux): window is black instead of transparent
