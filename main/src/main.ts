@@ -197,6 +197,12 @@ app.on('ready', async () => {
           })
         })()
       })
+      // Deathloom fork: the overlay's level recorder asks once at start for the lines
+      // written while Loot Goblin was closed
+      eventPipe.onEventAnyClient('CLIENT->MAIN::game-log-catchup', () => {
+        const lines = gameLogWatcher.takeCatchUp()
+        if (lines?.length) eventPipe.replyTo()({ name: 'MAIN->CLIENT::game-log-catchup', payload: { lines } })
+      })
       eventPipe.onEventAnyClient('CLIENT->MAIN::read-game-log', ({ requestId }) => {
         const send = eventPipe.replyTo()
         gameLogWatcher.readHistory()

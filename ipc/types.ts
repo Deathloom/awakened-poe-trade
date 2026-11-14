@@ -455,6 +455,8 @@ export type IpcEvent =
   IpcSaveConfig |
   IpcUpdaterState |
   IpcGameLog |
+  IpcGameLogCatchUpRequest |
+  IpcGameLogCatchUp |
   IpcClientIsActive |
   IpcLogEntry |
   IpcHostConfig |
@@ -686,6 +688,14 @@ type IpcOcrText =
 
 type IpcGameLog =
   Event<'MAIN->CLIENT::game-log', {
+    lines: string[]
+  }>
+
+// Deathloom fork: lines written while Loot Goblin was closed (level recorder only)
+type IpcGameLogCatchUpRequest =
+  Event<'CLIENT->MAIN::game-log-catchup', Record<string, never>>
+type IpcGameLogCatchUp =
+  Event<'MAIN->CLIENT::game-log-catchup', {
     lines: string[]
   }>
 

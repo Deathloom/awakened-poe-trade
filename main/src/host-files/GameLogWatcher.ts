@@ -17,6 +17,9 @@ const POSSIBLE_PATH =
     path.join(app.getPath('home'), 'Library/Caches/com.GGG.PathOfExile/Logs/Client.txt')
   ] : []
 
+// lines Loot Goblin reads (levels, quest rewards, zones, passives, deaths, dialogue)
+const KEEP = /\] : |Successfully (un)?allocated|Generating level|LOADING SCREEN|Abnormal disconnect|\] [A-Z][^:#$%&@<>]{1,40}: /
+
 export class GameLogWatcher {
   private _wantedPath: string | null = null
   // Deathloom fork: main-process listeners (HUD: are we in a zone yet?).
@@ -31,10 +34,40 @@ export class GameLogWatcher {
     readBuff: Buffer
   } | null = null
 
+  // Deathloom fork: where reading stopped last time (saved after every read), so
+  // lines written while Loot Goblin was closed (an update, a restart) aren't missed
+  private posFile = path.join(app.getPath('userData'), 'game-log-position.json')
+  private posSaving = Promise.resolve()
+  private catchUp: string[] | null = null
+  private catchUpAsked = false
+
   constructor (
     private server: ServerEvents,
     private logger: Logger,
   ) {}
+
+  private savePosition () {
+    if (!this._state) return
+    const data = JSON.stringify({ path: this._state.path, offset: this._state.offset })
+    this.posSaving = this.posSaving.then(() => fs.writeFile(this.posFile, data)).catch(() => {})
+  }
+
+  private async readSavedPosition (): Promise<{ path: string, offset: number } | null> {
+    try {
+      const v = JSON.parse(await fs.readFile(this.posFile, 'utf8'))
+      return typeof v?.path === 'string' && Number.isFinite(v.offset) ? v : null
+    } catch { return null }
+  }
+
+  // Lines (levels, passives, atlas, session) written since Loot Goblin last read
+  // the log, once. The overlay asks when it starts; if the log isn't open yet,
+  // they're broadcast as soon as it is.
+  takeCatchUp (): string[] | null {
+    if (!this._state) { this.catchUpAsked = true; return null }
+    const lines = this.catchUp
+    this.catchUp = null
+    return lines ?? []
+  }
 
   async restart (logFile: string) {
     if (this._wantedPath !== logFile) {
@@ -84,9 +117,21 @@ export class GameLogWatcher {
   // planner rebuilds every character's progress from them
   async readHistory (): Promise<string[]> {
     if (!this._state) throw new Error('Client.txt not found yet (start the game, or set the path in Settings → General)')
-    const KEEP = /\] : |Successfully (un)?allocated|Generating level|LOADING SCREEN|Abnormal disconnect|\] [A-Z][^:#$%&@<>]{1,40}: /
     const text = await fs.readFile(this._state.path, 'utf8')
     return text.split(/\r?\n/).filter(l => KEEP.test(l))
+  }
+
+  private async readCatchUp (file: fs.FileHandle, logFile: string, size: number) {
+    const saved = await this.readSavedPosition()
+    if (!saved || saved.path !== logFile || saved.offset >= size || saved.offset < 0) return null
+    // the log was replaced (smaller than before) or the gap is huge: skip it
+    const gap = size - saved.offset
+    if (gap > 32 * 1024 * 1024) return null
+    const buf = Buffer.allocUnsafe(gap)
+    const { bytesRead } = await file.read(buf, 0, gap, saved.offset)
+    const lines = buf.toString('utf8', 0, bytesRead).split('\n').map(l => l.trim()).filter(l => KEEP.test(l))
+    this.logger.write(`info [GameLogWatcher] ${lines.length} lines written while Loot Goblin was closed`)
+    return lines
   }
 
   private async open (logFile: string) {
@@ -102,6 +147,13 @@ export class GameLogWatcher {
         readBuff: Buffer.allocUnsafe(64 * 1024),
       }
       this.logger.write(`info [GameLogWatcher] Reading ${logFile}`)
+      this.catchUp = await this.readCatchUp(file, logFile, stats.size).catch(() => null)
+      this.savePosition()
+      if (this.catchUpAsked) {
+        this.catchUpAsked = false
+        const lines = this.takeCatchUp()
+        if (lines?.length) this.server.sendEventTo('broadcast', { name: 'MAIN->CLIENT::game-log-catchup', payload: { lines } })
+      }
       // Deathloom fork: the last bit of the existing log tells whether we're already in a zone
       if (this.onLines) {
         const tail = Math.min(stats.size, 256 * 1024)
@@ -140,6 +192,7 @@ export class GameLogWatcher {
 
     if (bytesRead) {
       this._state.offset += bytesRead
+      this.savePosition()
       this.readToEOF()
     } else {
       this._state.isReading = false
