@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: desktop window (index.html?desktop). All panels in one
        normal window for a second screen; live with the game like the overlay. -->
-  <div class="desktop-root relative flex flex-col h-full text-gray-200 bg-gray-900">
+  <div class="desktop-root relative flex flex-col h-full text-gray-200">
     <div class="flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0">
       <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Loot Goblin</span>
       <button v-for="v of VIEWS" :key="v.key" class="px-3 py-0.5 rounded"
@@ -156,7 +156,12 @@ const playingHelp = 'Panels update live from the game (Client.txt). Clicking her
 
 <style>
 html.desktop, html.desktop body {
-  background: #111827;
+  /* Deathloom fork: Settings → Appearance (window background) */
+  background-color: var(--window-bg, #1a202c);
+  background-image: var(--window-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 html.desktop #app {
   justify-content: flex-start;

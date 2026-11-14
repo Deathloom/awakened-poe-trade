@@ -2,7 +2,8 @@ import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
 import { HostConfig, ShortcutAction, PobConfig, PobHudConfig } from '@ipc/types'
-import { IS_HUD } from './hud/is-hud'
+import { IS_HUD, IS_DESKTOP } from './hud/is-hud'
+import { applyAppearance, defaultAppearance, type AppearanceConfig } from './appearance'
 import type * as widget from './overlay/widgets'
 import type { StashSearchWidget } from './stash-search/widget'
 import type { ItemCheckWidget } from './item-check/widget'
@@ -26,6 +27,7 @@ export function AppConfig (type?: string) {
 export function updateConfig (updates: Config) {
   _config.value = deepReactive(JSON.parse(JSON.stringify(updates)))
   document.documentElement.style.fontSize = `${_config.value!.fontSize}px`
+  applyAppearance(_config.value!.appearance, IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay')
 }
 
 export function saveConfig (opts?: { isTemporary: boolean }) {
@@ -128,6 +130,8 @@ export interface Config {
   showAttachNotification: boolean
   // Deathloom fork: Path of Building build impact
   pob: PobConfig
+  // Deathloom fork: Settings → Appearance
+  appearance: AppearanceConfig
 }
 
 export const defaultConfig = (): Config => ({
@@ -138,6 +142,7 @@ export const defaultConfig = (): Config => ({
   restoreClipboard: false,
   showAttachNotification: true,
   pob: defaultPobConfig(),
+  appearance: defaultAppearance(),
   commands: [{
     text: '/hideout',
     hotkey: 'F5',
@@ -441,6 +446,7 @@ function upgradeConfig (_config: Config): Config {
 
   // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
   config.pob ??= defaultPobConfig()
+  config.appearance = { ...defaultAppearance(), ...config.appearance }
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
   config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }

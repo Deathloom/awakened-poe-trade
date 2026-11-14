@@ -1,8 +1,29 @@
+// Deathloom fork: gray (surfaces/text) and blue (accent) come from CSS variables
+// set by src/web/appearance.ts; defaults in App.vue (:root)
+const scale = (v) => Object.fromEntries([100, 200, 300, 400, 500, 600, 700, 800, 900]
+  .map(n => [n, `rgb(var(--${v}-${n}) / <alpha-value>)`]))
+// panel backgrounds (gray 800/900) follow the panel opacity setting
+const panel = (n) => `rgb(var(--g-${n}) / calc(<alpha-value> * var(--panel-alpha, 1)))`
+const r = (rem) => `calc(${rem}rem * var(--round, 1))`
+
 module.exports = {
   content: ['./src/**/*.{ts,vue}'],
   theme: {
     extend: {
       fontFamily: {
+      },
+      backgroundColor: {
+        gray: { ...scale('g'), 800: panel(800), 900: panel(900) }
+      },
+      borderRadius: {
+        none: '0px',
+        sm: r(0.125),
+        DEFAULT: r(0.25),
+        md: r(0.375),
+        lg: r(0.5),
+        xl: r(0.75),
+        '2xl': r(1),
+        '3xl': r(1.5)
       }
     },
     colors: {
@@ -12,17 +33,7 @@ module.exports = {
       black: '#000',
       white: '#fff',
 
-      gray: {
-        100: '#f7fafc',
-        200: '#edf2f7',
-        300: '#e2e8f0',
-        400: '#cbd5e0',
-        500: '#a0aec0',
-        600: '#718096',
-        700: '#4a5568',
-        800: '#2d3748',
-        900: '#1a202c',
-      },
+      gray: scale('g'),
       red: {
         100: '#fff5f5',
         200: '#fed7d7',
@@ -78,17 +89,8 @@ module.exports = {
         800: '#285e61',
         900: '#234e52',
       },
-      blue: {
-        100: '#ebf8ff',
-        200: '#bee3f8',
-        300: '#90cdf4',
-        400: '#63b3ed',
-        500: '#4299e1',
-        600: '#3182ce',
-        700: '#2b6cb0',
-        800: '#2c5282',
-        900: '#2a4365',
-      },
+      blue: scale('b'),
+      accent: 'rgb(var(--accent) / <alpha-value>)',
       indigo: {
         100: '#ebf4ff',
         200: '#c3dafe',
