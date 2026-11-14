@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.46] - 2026-11-14
+
+### Changed (#85)
+- **Private builds are now the default.** Your builds sync to your own private repo (builds-<your GitHub name>), and you get a friend's builds once they approve your **Request access**. Existing installs switch over once with this update; you can still untick **Private builds** in build sync.
+
 ## [1.0.45] - 2026-11-14
 
 ### Fixed (#84)
