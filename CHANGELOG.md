@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.29] - 2026-11-14
+
+### Added (#68)
+- **Settings in the Loot Goblin window.** New **Settings** tab with the same pages as Shift+Space → Settings (Path of Building first). Save applies to every window straight away; Cancel undoes unsaved changes. If settings change in another window while you're editing, you get a note.
+- **Next on the All tab.** The levelling planner now also sits in the All grid (top right, next to the guide).
+
 ## [1.0.28] - 2026-11-14
 
 ### Added (#67)
