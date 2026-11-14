@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.70] - 2026-11-14
+
+### Changed (#112)
+- **Atlas tree panel on the All tab (and in game / overlay) has the full toolbar:** Search atlas and Edit were only on the Atlas tab.
+
 ## [1.0.69] - 2026-11-14
 
 ### Added (#111)
