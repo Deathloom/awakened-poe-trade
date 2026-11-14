@@ -121,13 +121,31 @@
               <span v-if="g.group || g.slot" class="text-xs text-gray-600 truncate">{{ g.group ?? g.slot }}</span>
             </div>
           </div>
-          <div class="text-xs text-gray-500">
-            Usable now: {{ usableNow.length }} of {{ uniqueGems.length }}
+          <div class="text-xs text-gray-500" title="Gems of this step's skill set you can socket at your level (level-1 requirement). Changes when you reach the next gem's level or the next levelling tree.">
+            Gems in this step usable at level {{ level }}: {{ usableNow.length }} of {{ uniqueGems.length }}<template v-if="upcoming.length">
+              · next: {{ upcoming[0].name }} at {{ upcoming[0].reqLevel }}</template>
             <button class="ml-1 hover:text-gray-200" @click="showUsable = !showUsable">{{ showUsable ? 'hide' : 'show' }}</button>
           </div>
           <div v-if="showUsable" class="flex flex-wrap gap-x-3">
             <span v-for="g of usableNow" :key="'a' + g.name" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span>
           </div>
+        </div>
+
+        <!-- vendor recipes for this point of the campaign -->
+        <div class="rounded px-1 py-1 mb-1 bg-gray-900 text-xs">
+          <div class="flex items-baseline text-gray-400 pb-px">
+            <span>Vendor recipes (act {{ guideAct }})</span>
+            <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showRecipes = !showRecipes">{{ showRecipes ? 'hide' : `show ${recipes.length}` }}</button>
+          </div>
+          <template v-if="showRecipes">
+            <div v-for="r of recipes" :key="r.name" class="pb-1">
+              <div><span class="text-gray-200">{{ r.name }}</span>
+                <span v-for="t of r.tags" :key="t" class="ml-1 px-1 rounded bg-gray-800 text-gray-500">{{ t }}</span></div>
+              <div class="text-gray-400 pl-2">{{ r.give }} → <span class="text-green-300">{{ r.get }}</span></div>
+              <div v-if="r.note" class="text-gray-600 pl-2">{{ r.note }}</div>
+            </div>
+            <div class="text-gray-600">Sell the items together to any vendor. League challenges often ask for some of these.</div>
+          </template>
         </div>
 
         <!-- character stats from the game log -->
@@ -172,6 +190,7 @@ import type { PobPlan, PobPlanGem, PobPlanNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf, rebuildFromLog, saveCharLevels, type CharLevels } from '../companion/char-level'
 import { AppConfig } from '@/web/Config'
+import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, loadCampaignStep, questPassivesBefore } from '../companion/campaign-route'
 import { planQuestGems } from '../companion/quest-gems'
 import { currentPlan } from './plan-store'
@@ -292,6 +311,9 @@ const campaignTime = computed(() => {
 const actTimes = computed(() => Object.entries(progress.value?.actMs ?? {})
   .filter(([a]) => Number(a) >= 1 && Number(a) <= 10)
   .map(([a, ms]) => `Act ${a}: ${fmtMs(ms)}`).join('\n'))
+
+const showRecipes = ref(false)
+const recipes = computed(() => VENDOR_RECIPES.filter(r => r.fromAct <= guideAct.value))
 
 // whole Client.txt -> every character's progress
 const rebuilding = ref(false)

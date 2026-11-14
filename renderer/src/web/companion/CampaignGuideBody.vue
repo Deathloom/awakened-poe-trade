@@ -38,6 +38,12 @@
                     :title="`${p.v}: ${p.passive} passive skill point${p.passive > 1 ? 's' : ''}${p.respec ? ` + ${p.respec} respec points` : ''}`">+{{ p.passive }} passive</span>
                   <span v-else-if="p.respec" class="ml-1 px-1 rounded bg-gray-700 text-gray-400"
                     :title="`${p.v}: ${p.respec} respec points only. Skippable (Orbs of Regret do the same).`">respec · skippable</span>
+                  <span v-else-if="questTag(p) === 'skip'" class="ml-1 px-1 rounded bg-gray-800 text-gray-500"
+                    title="Nothing your build needs: only gems you don't use. Skip the hand-in unless you want the gems.">skippable</span>
+                  <span v-else-if="questTag(p) === 'items'" class="ml-1 px-1 rounded bg-gray-800 text-gray-400"
+                    title="The reward is an item (pick one). Worth it if it fills a slot or gives resistances.">item reward</span>
+                  <span v-else-if="questTag(p) === 'gems'" class="ml-1 px-1 rounded bg-gray-800 text-gray-500"
+                    title="Gem reward. Open the Loot Goblin window to see which gem your build takes.">gems</span>
                   <template v-if="gemFor(p.offer)">
                     <span v-if="gemFor(p.offer)!.take" class="ml-1 px-1 rounded bg-gray-700 text-green-300"
                       :title="`Quest reward for your build: pick ${gemFor(p.offer)!.take!.name}`"><i class="fas fa-gem mr-1" />take {{ gemFor(p.offer)!.take!.name }}</span>
@@ -56,7 +62,7 @@
                 <i v-else-if="p.k === 'dir'" class="fas fa-arrow-up text-gray-300 mx-px" :style="{ transform: `rotate(${Number(p.v)}deg)` }" :title="`direction ${p.v}°`" />
                 <span v-else-if="p.k === 'portal'" class="text-purple-300">{{ p.v === 'set' ? 'a portal' : 'the portal' }}</span>
                 <span v-else-if="p.k === 'ascend'" class="text-yellow-400">Ascend ({{ p.v }} Labyrinth)</span>
-                <span v-else-if="p.k === 'crafting'" class="text-gray-400">crafting recipe</span>
+                <span v-else-if="p.k === 'crafting'" class="text-gray-400" :title="p.recipes?.length ? 'Bench recipe found here' : ''">crafting recipe<template v-if="p.recipes?.length">: <span class="text-gray-200">{{ p.recipes.join(', ') }}</span></template></span>
                 <span v-else class="text-gray-100">{{ p.v }}</span>
               </template>
               <div v-for="(sub, si) of (s.i === index ? t.subs ?? [] : [])" :key="si" class="pl-3 text-gray-500">
@@ -90,7 +96,7 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
+import { type RoutePart, STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
 import { planQuestGems, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
@@ -144,6 +150,17 @@ const questGems = computed(() => {
   const plan = planQuestGems(p.className, [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])])
   return new Map((plan?.steps ?? []).map(st => [st.id, st]))
 })
+// what a hand-in is worth: 'skip' (only gems the build doesn't use), 'items', 'gems' (build unknown here)
+function questTag (p: Exclude<RoutePart, string>): 'skip' | 'items' | 'gems' | null {
+  if (p.passive || p.respec) return null
+  const r = p.rewards ?? []
+  if (r.includes('questItem')) return null // keys / quest items: needed to go on
+  if (r.includes('items')) return 'items'
+  if (!r.length) return null
+  if (!currentPlan.value) return 'gems'
+  const g = gemFor(p.offer)
+  return g && (g.take || g.buy.length) ? null : 'skip'
+}
 function gemFor (offer: string | undefined) {
   return offer ? questGems.value.get(offer) : undefined
 }

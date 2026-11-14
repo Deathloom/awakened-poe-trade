@@ -30,7 +30,23 @@ def parts_of(text):
         args = arg.split('|') if arg else []
         if kind == 'quest':
             q = quests.get(args[0], {})
-            out.append({'k': 'quest', 'id': args[0], 'offer': args[1] if len(args) > 1 else args[0], 'v': q.get('name', args[0])})
+            offer = args[1] if len(args) > 1 else args[0]
+            part = {'k': 'quest', 'id': args[0], 'offer': offer, 'v': q.get('name', args[0])}
+            # what the hand-in gives (game data): quest items (keys, books), other items, gems
+            o = q.get('reward_offers', {}).get(offer, {})
+            ids = list(o.get('quest', {}).keys())
+            kinds = set()
+            for i in ids:
+                if '/QuestItems/' in i:
+                    kinds.add('questItem')
+                elif '/Gems/' in i:
+                    kinds.add('gems')
+                else:
+                    kinds.add('items')
+            if o.get('vendor'):
+                kinds.add('vendor')
+            part['rewards'] = sorted(kinds)
+            out.append(part)
         elif kind in ('enter', 'area', 'waypoint') and args:
             out.append({'k': 'area' if kind != 'waypoint' else 'waypoint', 'v': areas.get(args[0], {}).get('name', args[0])})
         elif kind == 'waypoint':
@@ -44,6 +60,10 @@ def parts_of(text):
         else:
             # kill, arena, generic, quest_text, trial, logout, waypoint_get, crafting
             part = {'k': kind}
+            if kind == 'crafting' and current_area_for_parts[0]:
+                recipes = areas.get(current_area_for_parts[0], {}).get('crafting_recipes', [])
+                if recipes:
+                    part['recipes'] = recipes
             if args:
                 part['v'] = args[0]
             out.append(part)
@@ -68,6 +88,7 @@ def parts_of(text):
 
 
 steps = []
+current_area_for_parts = [None]
 
 
 def new_step(area_id, via):
@@ -112,6 +133,7 @@ for act in range(1, 11):
             continue
         # trailing " #Label" comments are only for readers of the file
         line = re.sub(r'\s+#[^{}]*$', '', line)
+        current_area_for_parts[0] = steps[-1]['areaId'] if steps else '1_1_1'
         if not steps:
             steps.append({'zone': areas['1_1_1']['name'], 'areaId': '1_1_1', 'act': 1, 'town': False, 'via': 'start', 'tasks': []})
         m = re.search(r'\{enter\|([^}]+)\}', line)
