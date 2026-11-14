@@ -4,7 +4,7 @@
     "module": "esnext",
     "strict": true,
     "jsx": "preserve",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "isolatedModules": true,
     "esModuleInterop": true,
@@ -23,5 +23,6 @@
     "src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue",
     "public/data/*/client_strings.js"
   ],
+  "exclude": ["src/assets/vite-plugin-make-indexes.ts", "src/assets/make-index-files.mjs"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

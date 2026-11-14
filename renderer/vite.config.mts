@@ -9,9 +9,6 @@ export default defineConfig({
     target: 'esnext',
     assetsInlineLimit: 0
   },
-  optimizeDeps: {
-    esbuildOptions: { target: 'esnext' }
-  },
   plugins: [
     vue({
       template: {

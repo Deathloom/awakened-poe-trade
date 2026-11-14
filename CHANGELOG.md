@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (#116)
+- **Build tools updated:** Vite 5 → 8, @vitejs/plugin-vue 4 → 6, vue-tsc 2 → 3, TypeScript 5.6 → 5.9, electron-builder 26.9 → 26.18. Clears the high-severity Vite dev-server advisory and the vue-tsc/esbuild ones. No change to what the app does. Remaining npm audit items are lint tools (no fix released yet) and a minimatch ReDoS inside the installer builder; none ship in the app.
+
 ## [1.0.73] - 2026-11-14
 
 ### Added (#115)
