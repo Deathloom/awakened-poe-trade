@@ -8,6 +8,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.60] - 2026-11-14
+
+### Added (#102)
+- **Customisable All tab:** press **Edit layout** (top right of the Loot Goblin window) to arrange the All tab your way. Drag a panel by its bar to move it (drop it on a column's left or right edge for a new column, up to 5), × takes it off, **Add panel** puts it back. Market overview (poe.ninja) and Market search can now go on the All tab too. **Reset layout** goes back to the default. Your current sizes carry over.
+
+### Changed (#102)
+- Double-clicking a line between panels evens out just those panels instead of resetting the whole tab.
+- Switching a panel back on for the window in Settings → Where panels show puts it back on the All tab if you had taken it off.
+
 ## [1.0.59] - 2026-11-14
 
 ### Added (#101)

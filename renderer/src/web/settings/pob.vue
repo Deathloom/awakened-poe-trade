@@ -140,7 +140,7 @@
       <div class="mb-1">Where panels show</div>
       <div class="text-gray-500 text-sm mb-2">
         Pick for each panel where you want it: <b>In game</b> (a small window over the game, below),
-        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Loot Goblin window</b> (its All tab).
+        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Loot Goblin window</b> (its All tab; arrange it there with Edit layout).
         A panel that's in neither In game nor the overlay opens the Loot Goblin window when you press its hotkey.
       </div>
       <table class="mb-2">
