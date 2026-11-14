@@ -16,6 +16,7 @@ import { AppTray } from './AppTray'
 import { OverlayVisibility } from './windowing/OverlayVisibility'
 import { HudWindow } from './windowing/HudWindow'
 import { DesktopWindow } from './windowing/DesktopWindow'
+import { OverlayController } from 'electron-overlay-window'
 import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
 import { PobImpact } from './pob/PobImpact'
@@ -163,6 +164,9 @@ app.on('ready', async () => {
       }
       // Deathloom fork: find Client.txt next to the game once its window shows up
       poeWindow.onAttach(() => { void gameLogWatcher.findFromGameProcess() })
+      // Deathloom fork: "Open the Loot Goblin window when the game starts"
+      OverlayController.events.on('attach', () => { desktop.gameStarted() })
+      OverlayController.events.on('detach', () => { desktop.gameClosed() })
       // Deathloom fork: first-run setup guide asks what was found
       eventPipe.onEventAnyClient('CLIENT->MAIN::pob-setup-probe', ({ requestId, accountName }) => {
         const send = eventPipe.replyTo()
