@@ -16,7 +16,7 @@ export type LogEvent =
   | { type: 'questPoint', kind: 'passive' | 'respec', count: number }
   // someone speaking (NPC / boss dialogue; local chat looks the same, so only
   // match it against known boss names)
-  | { type: 'speech', speaker: string }
+  | { type: 'speech', speaker: string, text: string }
   // /passives: "22 Passive Skill Points from quests:" then "(1 from The Marooned Mariner)" per quest
   | { type: 'passivesList', total: number }
   | { type: 'passiveFrom', quest: string, count: number }
@@ -41,7 +41,7 @@ const LEVEL_UP = /^: (?<char>.+) \((?<cls>[^)]+)\) is now level (?<level>\d+)$/
 const PASSIVE_POINT = /^: You have received (?:a|(?<n>\d+)) Passive Skill Points?\.$/
 const RESPEC_POINTS = /^: You have received (?:a|(?<n>\d+)) Passive Respec Points?\.$/
 // "Brutus, the Warden: Your crime is trespass." (no channel prefix like # $ % & @)
-const SPEECH = /^(?<speaker>[A-Z][^:#$%&@<>]{1,40}): \S/
+const SPEECH = /^(?<speaker>[A-Z][^:#$%&@<>]{1,40}): (?<text>\S.*)$/
 const PASSIVES_LIST = /^: (?<n>\d+) Passive Skill Points? from quests:$/
 const PASSIVE_FROM = /^: \((?<n>\d+) from (?<quest>.+)\)$/
 const ALLOC = /^Successfully (?<un>un)?allocated passive skill id: (?<id>[^,]+), name: (?<name>.+)$/
@@ -82,7 +82,7 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if ((m = text.match(_$.CHAT_WHISPER_FROM))) direction = 'from'
   else if ((m = text.match(_$.CHAT_WHISPER_TO))) direction = 'to'
   else {
-    if ((m = text.match(SPEECH))) return { type: 'speech', speaker: m.groups!.speaker.trim() }
+    if ((m = text.match(SPEECH))) return { type: 'speech', speaker: m.groups!.speaker.trim(), text: m.groups!.text }
     return null
   }
   const char = m.groups!.char_name

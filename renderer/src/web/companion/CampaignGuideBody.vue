@@ -15,6 +15,15 @@
         <button class="hover:text-gray-200" title="Start over (new character)" @click="reset"><i class="fas fa-undo" /></button>
       </div>
     </div>
+    <!-- Labyrinth: shown while in the lab, closes after Izaro or on leaving -->
+    <div v-if="lab" class="mx-1 mt-1 px-2 py-1 rounded bg-yellow-900 bg-opacity-40 border border-yellow-800 text-xs flex items-center gap-x-2">
+      <i class="fas fa-dungeon text-yellow-400" />
+      <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${lab.name} Labyrinth` }}</span>
+      <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
+      <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens your browser)"
+        @click="openPoelab"><i class="fas fa-external-link-alt mr-1" />Today's layout on poelab.com</button>
+      <button class="text-gray-500 hover:text-gray-200" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
+    </div>
     <div ref="listEl" class="p-1 min-h-0" :class="{ 'overflow-y-auto flex-1': tall }">
       <div v-for="s of visible" :key="s.i" class="flex gap-x-2 px-1 rounded" :data-current="s.i === index ? '1' : undefined"
         :class="s.i === index ? 'bg-gray-800' : (s.i < index ? 'opacity-50' : '')">
@@ -193,6 +202,15 @@ watch([index, () => props.tall], () => {
   }).catch(() => {})
 }, { immediate: true })
 
+// Labyrinth panel (difficulty from the area level)
+const lab = ref<{ name: string, level: number, done: boolean } | null>(null)
+function labName (level: number) {
+  return level >= 75 ? 'Eternal' : level >= 68 ? 'Merciless' : level >= 55 ? 'Cruel' : 'Normal'
+}
+function openPoelab () {
+  window.open('https://www.poelab.com/', '_blank')
+}
+
 function move (d: number) {
   // skip the other bandit choices' steps
   let i = index.value + d
@@ -209,6 +227,15 @@ const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
     if (ev.type === 'area') {
       areaLevel.value = ev.level
       areaAct = actFromAreaCode(ev.code)
+      // Labyrinth areas: "Labyrinth_Airlock" (plaza), "1_Labyrinth_…"
+      if (/Labyrinth/i.test(ev.code)) {
+        if (!lab.value || lab.value.done) lab.value = { name: labName(ev.level), level: ev.level, done: false }
+      } else if (lab.value) {
+        lab.value = null
+      }
+    }
+    if (ev.type === 'speech' && ev.speaker === 'Izaro' && /^Triumphant at last/.test(ev.text) && lab.value) {
+      lab.value = { ...lab.value, done: true }
     }
     if (ev.type === 'zone') {
       lastZone.value = ev.name

@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.39] - 2026-11-14
+
+### Added (#78)
+- **Hold gem levels:** the Levelling tab lists gems your build keeps below max level (e.g. Clarity at 5 to reserve less) with "stop at level N", from the gem levels in your Path of Building build.
+- **Tick the gems you have:** under Gems, "tick what you have" (per character, saved on this PC). Gems you can use at your level but haven't ticked show as **Missing**. The game log has no gem info, so this is manual.
+- **Labyrinth panel:** when you enter the lab, the guide shows the lab (Normal / Cruel / Merciless / Eternal) and a **Today's layout on poelab.com** button that opens poelab in your browser. It says "Labyrinth done" after Izaro and closes when you leave.
+
 ## [1.0.38] - 2026-11-14
 
 ### Changed (#77): easier to read
