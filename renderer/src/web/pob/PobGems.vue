@@ -24,7 +24,10 @@
             :title="`Sockets the gems in this slot need and the biggest link. Any gem fits any socket; a socket of the gem's colour adds 10% quality. Gem colours: ${coloursText(sv.needs) || 'none'}`">{{ needsText(sv.needs) }}</span>
           <span v-else class="text-gray-600 shrink-0">no gems</span>
         </div>
-        <div v-if="sv.rows.length || sv.item?.sockets" class="flex items-center gap-x-2 text-xs py-px">
+        <div v-if="sv.slot === NO_SLOT" class="text-xs text-gray-500 py-px">
+          These link groups have no gear piece set in PoB, so put them wherever you have the sockets. Tip: set the slot in PoB's Skills tab to see them on the right item.
+        </div>
+        <div v-if="sv.slot !== NO_SLOT && (sv.rows.length || sv.item?.sockets)" class="flex items-center gap-x-2 text-xs py-px">
           <span class="w-14 shrink-0 text-gray-500">build</span>
           <span class="flex items-center">
             <template v-for="(grp, gi) of parseSockets(sv.item?.sockets)" :key="gi">
@@ -41,7 +44,7 @@
           <span v-if="sv.item && sv.rows.length && sv.buildCheck.coloured" class="text-gray-500"
             title="Gems in a socket of their colour get +10% quality">{{ bonusText(sv.buildCheck) }}</span>
         </div>
-        <div v-if="sv.liveCheck && (sv.rows.length || sv.liveItem?.sockets)" class="flex items-center gap-x-2 text-xs py-px">
+        <div v-if="sv.slot !== NO_SLOT && sv.liveCheck && (sv.rows.length || sv.liveItem?.sockets)" class="flex items-center gap-x-2 text-xs py-px">
           <span class="w-14 shrink-0 text-gray-500 truncate" :title="sv.liveItem?.name">yours</span>
           <span class="flex items-center">
             <template v-for="(grp, gi) of parseSockets(sv.liveItem?.sockets)" :key="gi">
@@ -86,7 +89,7 @@
       <div v-if="view.hidden.length" class="px-1 pb-1 text-xs text-gray-500">
         <button class="hover:text-gray-200" @click="showHidden = !showHidden">
           <i class="fas" :class="showHidden ? 'fa-caret-down' : 'fa-caret-right'" />
-          {{ view.hidden.length }} group{{ view.hidden.length > 1 ? 's' : '' }} only for PoB's calculations or switched off
+          {{ view.hidden.length }} group{{ view.hidden.length > 1 ? 's' : '' }} switched off in PoB
         </button>
         <div v-if="showHidden">
           <div v-for="row of view.hidden" :key="row.group.index" class="text-gray-600">
@@ -114,7 +117,7 @@ import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import type { PobGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
 import { pobText } from './labels'
 import { Host } from '@/web/background/IPC'
-import { compareGems, bySlot, parseSockets, needsText, checkText, coloursText, bonusText, type GemRow, type GemStatus, type GroupRow } from './gems'
+import { NO_SLOT, compareGems, bySlot, parseSockets, needsText, checkText, coloursText, bonusText, type GemRow, type GemStatus, type GroupRow } from './gems'
 
 const loading = ref(false)
 const showHidden = ref(false)

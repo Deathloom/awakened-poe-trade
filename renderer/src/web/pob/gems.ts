@@ -254,8 +254,10 @@ export interface SlotView {
   liveCheck?: SocketCheck
 }
 
-// Groups by slot in inventory order. Hidden: groups with no slot (PoB uses them
-// for damage calculations, e.g. auras from party members) and groups switched off.
+// Groups by slot in inventory order. Groups with no slot set in PoB (common in
+// levelling builds) get their own card at the end, so their gems still show.
+// Hidden: groups switched off in PoB.
+export const NO_SLOT = 'No slot set in PoB'
 export function bySlot (
   comparison: GemsComparison,
   items: PobSocketedItem[],
@@ -264,13 +266,14 @@ export function bySlot (
   const bySlotName = new Map<string, GroupRow[]>()
   const hidden: GroupRow[] = []
   for (const row of comparison.groups) {
-    if (!isShownGroup(row.group)) {
+    if (!row.group.enabled) {
       hidden.push(row)
       continue
     }
-    const list = bySlotName.get(row.group.slot!) ?? []
+    const slot = row.group.slot || NO_SLOT
+    const list = bySlotName.get(slot) ?? []
     list.push(row)
-    bySlotName.set(row.group.slot!, list)
+    bySlotName.set(slot, list)
   }
   // Every gear piece gets a card, with or without gems
   const slotNames = [...new Set([
@@ -281,6 +284,7 @@ export function bySlot (
   slotNames.sort((a, b) => {
     const ia = SLOT_ORDER.indexOf(a)
     const ib = SLOT_ORDER.indexOf(b)
+    if (a === NO_SLOT || b === NO_SLOT) return a === NO_SLOT ? 1 : -1
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b)
   })
   const slots = slotNames.map(slot => {
