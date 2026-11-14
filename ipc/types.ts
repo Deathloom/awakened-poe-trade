@@ -13,9 +13,12 @@ export interface HostConfig {
 }
 
 // Deathloom fork: panels pinned over the game while it has focus
-export type HudPanel = 'guide' | 'trades' | 'gear'
+export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview'
+// panels added after the first three (1.0.63): pinned flag and hotkey live in
+// hud.<panel> (optional) and pob.panelKeys
+export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview'] as const
 
-export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree'
+export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview'
 
 export interface PanelPlacement {
   overlay?: boolean
@@ -26,6 +29,12 @@ export interface PobHudConfig {
   guide: boolean
   trades: boolean
   gear: boolean
+  // panels added in 1.0.63 (undefined = not pinned)
+  tree?: boolean
+  atlas?: boolean
+  session?: boolean
+  market?: boolean
+  overview?: boolean
   // Per panel: mouse clicks go through to the game while playing (the panel is read-only then)
   clickThroughPanels: Record<HudPanel, boolean>
   // older single setting (moved into clickThroughPanels)
@@ -78,6 +87,8 @@ export interface PobConfig {
   tradesKey: string | null
   // Hotkey that opens the Path of Building window
   openPobKey?: string | null
+  // Hotkeys of the panels added in 1.0.63 (tree map, atlas, session, market, overview); none by default
+  panelKeys?: Partial<Record<HudPanel, string | null>>
   // set once the Ctrl+P default was applied to an older config
   hotkeysV2?: boolean
   // set once the Ctrl+G / Ctrl+H / Ctrl+T defaults were applied to an older config
@@ -571,7 +582,7 @@ type IpcHudState =
     // false while the overlay is active (Shift+Space) or the game isn't focused
     playing: boolean
     // pinned panels hidden with their hotkey
-    hidden: { guide: boolean, trades: boolean, gear: boolean }
+    hidden: Record<HudPanel, boolean>
   }>
 
 type IpcHudPanel =

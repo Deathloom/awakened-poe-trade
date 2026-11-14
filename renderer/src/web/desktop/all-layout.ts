@@ -22,10 +22,10 @@ export const ALL_PANELS: AllPanelDef[] = [
   { id: 'gear', label: 'Build (gear, gems, tree)', icon: 'fa-hammer', settingsKey: 'gear' },
   { id: 'guide', label: 'Levelling guide', icon: 'fa-route', settingsKey: 'guide' },
   { id: 'tree', label: 'Tree map', icon: 'fa-project-diagram', settingsKey: 'tree' },
-  { id: 'atlas', label: 'Atlas tree', icon: 'fa-globe' },
+  { id: 'atlas', label: 'Atlas tree', icon: 'fa-globe', settingsKey: 'atlas' },
   { id: 'trades', label: 'Trade companion', icon: 'fa-handshake', settingsKey: 'trades' },
   { id: 'market', label: 'Market history', icon: 'fa-chart-line', settingsKey: 'market' },
-  { id: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins' },
+  { id: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins', settingsKey: 'overview' },
   { id: 'search', label: 'Market search', icon: 'fa-search' },
   { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' }
 ]

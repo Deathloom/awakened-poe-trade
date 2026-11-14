@@ -15,6 +15,8 @@ import WidgetCampaignGuide from '../companion/WidgetCampaignGuide.vue'
 import WidgetMarketHistory from '../market-history/WidgetMarketHistory.vue'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WidgetMarketSearch from '../market-search/WidgetMarketSearch.vue'
+import WidgetPanel from './WidgetPanel.vue'
+import { panelWidgetSpecs } from './panel-widgets'
 
 type WidgetComponent = Component & { widget: WidgetSpec }
 
@@ -44,3 +46,7 @@ registry.widgets.push(WidgetCampaignGuide as unknown as WidgetComponent)
 registry.widgets.push(WidgetMarketHistory as unknown as WidgetComponent)
 registry.widgets.push(WidgetSetupGuide as unknown as WidgetComponent)
 registry.widgets.push(WidgetMarketSearch as unknown as WidgetComponent)
+// tree map, atlas tree, this session, market overview (one widget type each)
+for (const spec of panelWidgetSpecs()) {
+  registry.widgets.push({ ...(WidgetPanel as object), widget: spec } as unknown as WidgetComponent)
+}

@@ -93,6 +93,10 @@
         <span class="flex-1">Trade companion hotkey</span>
         <hotkey-input v-model="pob.tradesKey" class="w-48" />
       </div>
+      <div v-for="p of EXTRA_PANELS" :key="p.panel" class="flex items-center gap-x-2 mb-1">
+        <span class="flex-1">{{ p.label }} hotkey <span class="text-gray-500 text-sm">(optional)</span></span>
+        <hotkey-input :modelValue="pob.panelKeys?.[p.panel] ?? null" class="w-48" @update:modelValue="v => setPanelKey(p.panel, v)" />
+      </div>
       <div class="flex items-center gap-x-2 mb-1">
         <span class="flex-1">Open Path of Building hotkey</span>
         <hotkey-input v-model="pob.openPobKey" class="w-48" />
@@ -100,6 +104,7 @@
       <div class="text-gray-500 text-sm mb-1">
         Each hotkey shows or hides its panel. A pinned panel (Show while playing, below) toggles over
         the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+T; Ctrl+P opens Path of Building.
+        The other panels have no hotkey until you set one (pick keys the game doesn't use).
       </div>
       <div class="text-gray-500 text-sm">
         Shows the active build's items in the overlay (also in the widget menu, hammer icon).
@@ -149,7 +154,7 @@
         </tr>
         <tr v-for="p of PANELS" :key="p.key">
           <td class="pr-4 py-0.5">{{ p.label }}</td>
-          <td class="pr-4"><ui-toggle v-if="p.hud" v-model="pob.hud[p.hud]" /><span v-else class="text-gray-600 text-sm">—</span></td>
+          <td class="pr-4"><ui-toggle v-if="p.hud" :modelValue="Boolean(pob.hud[p.hud])" @update:modelValue="v => { if (p.hud) pob.hud[p.hud] = v }" /><span v-else class="text-gray-600 text-sm">—</span></td>
           <td class="pr-4">
             <ui-toggle v-if="p.overlay" :modelValue="placement(p.key).overlay !== false" @update:modelValue="v => setPlacement(p.key, 'overlay', v)" />
             <span v-else class="text-gray-600 text-sm">—</span></td>
@@ -173,8 +178,8 @@
           <td class="pr-4"></td><td class="pr-4">Pinned</td><td>Clicks go through while playing</td>
         </tr>
         <tr v-for="p of HUD_PANELS" :key="p.key">
-          <td class="pr-4 py-0.5">{{ p.label }} <span class="text-gray-500 text-sm">({{ pob[p.hotkey] || 'no hotkey' }})</span></td>
-          <td class="pr-4"><ui-toggle v-model="pob.hud[p.key]" /></td>
+          <td class="pr-4 py-0.5">{{ p.label }} <span class="text-gray-500 text-sm">({{ hotkeyOf(p) || 'no hotkey' }})</span></td>
+          <td class="pr-4"><ui-toggle :modelValue="Boolean(pob.hud[p.key])" @update:modelValue="v => { pob.hud[p.key] = v }" /></td>
           <td><ui-toggle v-if="pob.hud[p.key]" v-model="pob.hud.clickThroughPanels[p.key]" /></td>
         </tr>
       </table>
@@ -185,7 +190,7 @@
       <template v-if="pob.hud.trades">
         <ui-toggle v-model="pob.hud.autoHideTrades" class="mb-1">Trade companion opens on a trade whisper and closes when no trades are left</ui-toggle>
       </template>
-      <template v-if="pob.hud.guide || pob.hud.trades || pob.hud.gear">
+      <template v-if="HUD_PANELS.some(p => pob.hud[p.key])">
         <ui-toggle v-model="pob.hud.opaque" class="mb-1">Solid background (no see-through window)</ui-toggle>
         <div class="flex items-center gap-2 mb-1">
           <span class="shrink-0">Opacity</span>
@@ -211,7 +216,8 @@ import { configProp } from './utils'
 import { defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import { Host } from '@/web/background/IPC'
 import { PANELS } from '@/web/desktop/panels'
-import type { PanelKey, PanelPlacement } from '@ipc/types'
+import type { PanelKey, PanelPlacement, HudPanel } from '@ipc/types'
+import { EXTRA_PANELS } from '@/web/desktop/panel-defs'
 
 export default defineComponent({
   name: 'Path of Building',
@@ -318,8 +324,16 @@ export default defineComponent({
       HUD_PANELS: [
         { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },
         { key: 'trades', label: 'Trade companion', hotkey: 'tradesKey' },
-        { key: 'gear', label: 'Build gear', hotkey: 'gearPanelKey' }
-      ] as const,
+        { key: 'gear', label: 'Build gear', hotkey: 'gearPanelKey' },
+        ...EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: null }))
+      ] as Array<{ key: HudPanel, label: string, hotkey: 'guideKey' | 'tradesKey' | 'gearPanelKey' | null }>,
+      EXTRA_PANELS,
+      hotkeyOf (p: { key: HudPanel, hotkey: 'guideKey' | 'tradesKey' | 'gearPanelKey' | null }) {
+        return p.hotkey ? pob.value[p.hotkey] : pob.value.panelKeys?.[p.key]
+      },
+      setPanelKey (panel: HudPanel, key: string | null) {
+        pob.value.panelKeys = { ...pob.value.panelKeys, [panel]: key }
+      },
       // applied when the settings window is closed, like every other setting
       resetHudPositions () {
         pob.value.hud.pos = defaultHudConfig().pos

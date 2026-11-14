@@ -86,8 +86,12 @@ function hintFor (type: string): string | undefined {
     case 'pob-gear': return 'Build gear' + key(pob?.gearPanelKey)
     case 'campaign-guide': return 'Campaign guide' + key(pob?.guideKey)
     case 'trade-companion': return 'Trade companion' + key(pob?.tradesKey)
-    case 'market-history': return 'Market history (price trends of starred items)'
+    case 'market-history': return 'Market history (price trends of starred items)' + key(pob?.panelKeys?.market)
     case 'market-search': return 'Market search (find an item and whisper the seller)'
+    case 'tree-map': return 'Tree map' + key(pob?.panelKeys?.tree)
+    case 'atlas-tree': return 'Atlas tree' + key(pob?.panelKeys?.atlas)
+    case 'play-session': return 'This session' + key(pob?.panelKeys?.session)
+    case 'market-overview': return 'Market overview (poe.ninja)' + key(pob?.panelKeys?.overview)
     case 'stash-search': return 'Stash search'
     case 'image-strip': return 'Image strip'
     case 'delve-grid': return 'Delve grid'

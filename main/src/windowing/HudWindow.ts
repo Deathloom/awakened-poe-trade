@@ -18,11 +18,16 @@ import type { GameWindow } from './GameWindow'
 import type { OverlayWindow } from './OverlayWindow'
 
 export type { HudPanel }
-const PANELS: HudPanel[] = ['guide', 'trades', 'gear']
+const PANELS: HudPanel[] = ['guide', 'trades', 'gear', 'tree', 'atlas', 'session', 'market', 'overview']
 const DEFAULT_POS: Record<HudPanel, { x: number, y: number }> = {
   guide: { x: 10, y: 90 },
   trades: { x: 10, y: 420 },
-  gear: { x: 440, y: 90 }
+  gear: { x: 440, y: 90 },
+  tree: { x: 880, y: 90 },
+  atlas: { x: 880, y: 90 },
+  session: { x: 880, y: 440 },
+  market: { x: 440, y: 440 },
+  overview: { x: 440, y: 440 }
 }
 
 // Not in a zone: the game just started ("***** LOG FILE OPENING *****" is the
@@ -47,14 +52,19 @@ export class HudWindow {
   private windows: Record<HudPanel, PanelWindow> = {
     guide: { size: { width: 320, height: 200 } },
     trades: { size: { width: 384, height: 60 } },
-    gear: { size: { width: 416, height: 300 } }
+    gear: { size: { width: 416, height: 300 } },
+    tree: { size: { width: 480, height: 400 } },
+    atlas: { size: { width: 544, height: 430 } },
+    session: { size: { width: 352, height: 400 } },
+    market: { size: { width: 416, height: 400 } },
+    overview: { size: { width: 480, height: 430 } }
   }
 
   private resize?: { panel: HudPanel, cursorX: number, cursorY: number, w: number, h: number, lastW: number, lastH: number, timer: NodeJS.Timeout, started: number }
   private drag?: { panel: HudPanel, cursorX: number, cursorY: number, x: number, y: number, timer: NodeJS.Timeout, started: number }
   // Pinned panels start closed each time the app starts; their hotkey opens and
   // closes them (a trade whisper opens the trade companion). Not saved.
-  private hidden: Record<HudPanel, boolean> = { guide: true, trades: true, gear: true }
+  private hidden: Record<HudPanel, boolean> = { guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true }
   // Only show once a character is in a zone, not on the login / character select screens
   private inWorld = false
   // no Client.txt being read: can't tell, so behave as before (show with the game)

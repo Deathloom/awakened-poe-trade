@@ -5,7 +5,13 @@ import { typeInChat, stashSearch } from './text-box'
 import { WidgetAreaTracker } from '../windowing/WidgetAreaTracker'
 import { HostClipboard } from './HostClipboard'
 import { OcrWorker } from '../vision/link-main'
-import type { ShortcutAction } from '../../../ipc/types'
+import type { ShortcutAction, HudPanel } from '../../../ipc/types'
+
+// Deathloom fork: Loot Goblin window tab for a panel that's in neither the overlay nor in game
+const WINDOW_VIEW: Record<string, string> = {
+  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market'
+}
+const EXTRA = new Set(['tree', 'atlas', 'session', 'market', 'overview'])
 import type { Logger } from '../RemoteLogger'
 import type { HudWindow } from '../windowing/HudWindow'
 import type { OverlayWindow } from '../windowing/OverlayWindow'
@@ -177,9 +183,11 @@ export class Shortcuts {
           })
           // Deathloom fork: build gear / campaign guide / trade companion pinned to the HUD window
           // toggle there, without opening the overlay
-          const hudPanel = entry.action.target === 'campaign-guide' ? 'guide'
+          // panels added in 1.0.63: target "panel:<panel>" (tree, atlas, session, market, overview)
+          const extraPanel = entry.action.target.startsWith('panel:') && EXTRA.has(entry.action.target.slice(6)) ? entry.action.target.slice(6) as HudPanel : null
+          const hudPanel: HudPanel | null = entry.action.target === 'campaign-guide' ? 'guide'
             : entry.action.target === 'trade-companion' ? 'trades'
-              : entry.action.target === 'pob-gear' ? 'gear' : null
+              : entry.action.target === 'pob-gear' ? 'gear' : extraPanel
           if (hudPanel && this.hud?.isPinned(hudPanel)) {
             this.hud.togglePanel(hudPanel)
             return
@@ -188,7 +196,7 @@ export class Shortcuts {
           // the Loot Goblin window on its tab instead (the game keeps focus)
           const placeKey = hudPanel ?? (entry.action.target === 'market-search' ? 'search' : null)
           if (placeKey && this.panelOverlayOff?.(placeKey)) {
-            this.openWindowView?.(placeKey === 'gear' ? 'build' : placeKey === 'guide' ? 'levelling' : placeKey === 'search' ? 'trade' : placeKey)
+            this.openWindowView?.(WINDOW_VIEW[placeKey] ?? placeKey)
             return
           }
           // Deathloom fork: the build gear panel has buttons, so it needs the overlay focused;

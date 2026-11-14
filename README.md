@@ -31,7 +31,7 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Trade companion** (Ctrl+T) | Opens on an incoming trade whisper, with Invite / Trade / Thanks / Kick buttons. They copy the command to the clipboard, or send it if you turn that on. |
 | **Ledger** | What you sold and bought per currency, per league. |
 | **Market history** | 7-day poe.ninja trend, plus prices recorded while the app runs. |
-| **Show while playing** | The guide, trade companion and build panel can be pinned over the game as small windows you can drag and resize. You choose per panel whether clicks go through to the game. |
+| **Show while playing** | Any panel (guide, trade companion, build, tree map, atlas tree, this session, market history, market overview) can be pinned over the game as a small window you can drag and resize, or shown in the overlay, each with its own hotkey. You choose per panel whether clicks go through to the game. |
 | **Loot Goblin window** | A normal window for a second screen with everything in one place: All (arrange it yourself: add, remove, move and resize panels), Build, Levelling, Atlas (atlas tree builds, what you have taken, edit and share), Trades, Market, Trade site, Help and Settings tabs. Opens from the tray or when the game starts. |
 | **Levelling planner** | Campaign guide with quest gems to take or buy for your build, optional quests, gem swaps per level, the next passives to take and a tree map, all from your PoB build and the game log. |
 | **Market search** | Find an item by name and see who sells it, cheapest first. **Whisper** (GGG's buy message) and **Hideout** buttons, one chat message per click. |

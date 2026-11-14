@@ -121,6 +121,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { EXTRA_PANELS } from '@/web/desktop/panel-defs'
 import { AppConfig } from '@/web/Config'
 import type { PriceCheckWidget } from '@/web/overlay/widgets'
 import { Host } from '@/web/background/IPC'
@@ -146,7 +147,9 @@ const keys = computed(() => {
     { key: pob?.gearPanelKey, label: 'Build panel' },
     { key: pob?.guideKey, label: 'Campaign guide' },
     { key: pob?.tradesKey, label: 'Trade companion' },
-    { key: pob?.openPobKey, label: 'Open Path of Building' }
+    { key: pob?.openPobKey, label: 'Open Path of Building' },
+    // panels added in 1.0.63: no hotkey until the player sets one
+    ...EXTRA_PANELS.map(p => ({ key: pob?.panelKeys?.[p.panel] ?? '', label: p.label }))
   ]
 })
 
