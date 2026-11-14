@@ -128,7 +128,9 @@ export class PobSync {
         return
       case 'configure':
         await this.enqueue(async () => {
-          const [reply] = await this.run([{ cmd: 'configure', player: req.player, autoSync: req.autoSync }])
+          const repoPrefix = req.repoPrefix === undefined ? undefined
+            : (req.repoPrefix === '' || req.repoPrefix === 'builds-') ? req.repoPrefix : undefined
+          const [reply] = await this.run([{ cmd: 'configure', player: req.player, autoSync: req.autoSync, repoPrefix }])
           this.setStatus(reply)
           this.impact.refreshDefaults()
           this.publish({ error: undefined })
