@@ -8,6 +8,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.35] - 2026-11-14
+
+### Added (#74): more from the game log
+- **/passives syncs your quests.** Type /passives in game once: the guide ticks exactly the quests listed there and the planner uses that number of quest points.
+- **Passives you take are ticked in Next passives** (✓), and the next 5 skip what you already took. Shows unspent points too. Small passives with the same name ("Intelligence") are matched in order, so they can be slightly off.
+- **Character stats** in the Levelling tab: deaths (and in this act), campaign time (hover for each act), Kitava's resistance penalty after acts 5 and 10, atlas points.
+- **Rebuild from game log** button: reads your whole Client.txt and fills all of the above for every character made since the log started.
+- The Loot Goblin window's top bar shows **AFK** when you're AFK in game.
+- Fixed: single respec points (not from quests) no longer tick a quest.
+- All of it only reads the game's own log file (Client.txt); nothing is sent to the game.
+
 ## [1.0.34] - 2026-11-14
 
 ### Added (#73)

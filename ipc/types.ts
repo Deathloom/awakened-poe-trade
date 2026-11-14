@@ -447,6 +447,8 @@ export type IpcEvent =
   IpcPobTreeResult |
   IpcPobTreeMapRequest |
   IpcPobPlanRequest |
+  IpcReadGameLogRequest |
+  IpcReadGameLogResult |
   IpcPobPlanResult |
   IpcPobTreeMapResult |
   IpcPobSyncRequest |
@@ -942,6 +944,17 @@ type IpcPobGemsResult =
   }>
 
 // Deathloom fork: passive tree tab
+type IpcReadGameLogRequest =
+  Event<'CLIENT->MAIN::read-game-log', { requestId: number }>
+
+type IpcReadGameLogResult =
+  Event<'MAIN->CLIENT::read-game-log', {
+    requestId: number
+    ok: boolean
+    error?: string
+    lines?: string[]
+  }>
+
 type IpcPobPlanRequest =
   Event<'CLIENT->MAIN::pob-plan', {
     requestId: number

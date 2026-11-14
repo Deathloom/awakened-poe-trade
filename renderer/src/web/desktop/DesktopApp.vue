@@ -35,7 +35,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { loadSession, SESSION_KEY } from '../companion/char-level'
 import { Host } from '@/web/background/IPC'
 import PobGearBody from '../pob/PobGearBody.vue'
 import PobTreeMap from '../pob/PobTreeMap.vue'
@@ -85,7 +86,12 @@ watch(view, (v) => {
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
-const status = computed(() => playing.value == null ? '' : playing.value ? 'In game' : 'Not playing')
+// AFK from the game log (": AFK mode is now ON")
+const session = ref(loadSession())
+const onSession = (e: StorageEvent) => { if (e.key === SESSION_KEY) session.value = loadSession() }
+window.addEventListener('storage', onSession)
+onUnmounted(() => { window.removeEventListener('storage', onSession) })
+const status = computed(() => playing.value == null ? '' : playing.value ? (session.value.afk ? 'In game · AFK' : 'In game') : 'Not playing')
 const playingHelp = 'Panels update live from the game (Client.txt). Clicking here takes focus away from the game. Not affiliated with or endorsed by Grinding Gear Games.'
 </script>
 

@@ -180,6 +180,12 @@ app.on('ready', async () => {
           })
         })()
       })
+      eventPipe.onEventAnyClient('CLIENT->MAIN::read-game-log', ({ requestId }) => {
+        const send = eventPipe.replyTo()
+        gameLogWatcher.readHistory()
+          .then((lines) => { send({ name: 'MAIN->CLIENT::read-game-log', payload: { requestId, ok: true, lines } }) })
+          .catch((err: Error) => { send({ name: 'MAIN->CLIENT::read-game-log', payload: { requestId, ok: false, error: err.message } }) })
+      })
       eventPipe.onEventAnyClient('CLIENT->MAIN::pob-copy-builds', ({ requestId, source }) => {
         const send = eventPipe.replyTo()
         void pobImpact.copyExistingBuilds(typeof source === 'string' && source ? source : undefined)

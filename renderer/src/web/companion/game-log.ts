@@ -17,6 +17,18 @@ export type LogEvent =
   // someone speaking (NPC / boss dialogue; local chat looks the same, so only
   // match it against known boss names)
   | { type: 'speech', speaker: string }
+  // /passives: "22 Passive Skill Points from quests:" then "(1 from The Marooned Mariner)" per quest
+  | { type: 'passivesList', total: number }
+  | { type: 'passiveFrom', quest: string, count: number }
+  // a passive taken / refunded (character tree, or the atlas tree for atlas_* ids)
+  | { type: 'passiveAlloc', id: string, name: string, on: boolean, atlas: boolean }
+  | { type: 'death', char: string }
+  | { type: 'kitava', which: 'cruel' | 'merciless' }
+  | { type: 'atlasPoint', count: number }
+  | { type: 'afk', on: boolean }
+  // "[LOADING SCREEN] (The Coast) Duration = 4.1 seconds"
+  | { type: 'loading', zone: string, seconds: number }
+  | { type: 'disconnect' }
 
 // English only (the game client's language must be English for these)
 const JOINED = /^: (?<char>.+) has joined the area\.$/
@@ -30,6 +42,14 @@ const PASSIVE_POINT = /^: You have received (?:a|(?<n>\d+)) Passive Skill Points
 const RESPEC_POINTS = /^: You have received (?:a|(?<n>\d+)) Passive Respec Points?\.$/
 // "Brutus, the Warden: Your crime is trespass." (no channel prefix like # $ % & @)
 const SPEECH = /^(?<speaker>[A-Z][^:#$%&@<>]{1,40}): \S/
+const PASSIVES_LIST = /^: (?<n>\d+) Passive Skill Points? from quests:$/
+const PASSIVE_FROM = /^: \((?<n>\d+) from (?<quest>.+)\)$/
+const ALLOC = /^Successfully (?<un>un)?allocated passive skill id: (?<id>[^,]+), name: (?<name>.+)$/
+const SLAIN = /^: (?<char>.+) has been slain\.$/
+const KITAVA = /^: You have been permanently weakened by Kitava's (?<which>cruel|merciless) affliction/
+const ATLAS_POINT = /^: You have received (?:an|(?<n>\d+)) Atlas Skill Points?\.$/
+const AFK = /^: AFK mode is now (?<on>ON|OFF)/
+const LOADING = /^\[LOADING SCREEN\] \((?<zone>.+)\) Duration = (?<s>[\d.]+) seconds/
 const GENERATING = /Generating level (?<level>\d+) area "(?<code>[^"]+)"/
 
 export function parseLogLine (line: string, language = 'en'): LogEvent | null {
@@ -46,6 +66,15 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if ((m = text.match(LEVEL_UP))) return { type: 'level', char: m.groups!.char, cls: m.groups!.cls, level: Number(m.groups!.level) }
   if ((m = text.match(PASSIVE_POINT))) return { type: 'questPoint', kind: 'passive', count: Number(m.groups!.n ?? 1) }
   if ((m = text.match(RESPEC_POINTS))) return { type: 'questPoint', kind: 'respec', count: Number(m.groups!.n ?? 1) }
+  if ((m = text.match(PASSIVES_LIST))) return { type: 'passivesList', total: Number(m.groups!.n) }
+  if ((m = text.match(PASSIVE_FROM))) return { type: 'passiveFrom', quest: m.groups!.quest, count: Number(m.groups!.n) }
+  if ((m = text.match(ALLOC))) return { type: 'passiveAlloc', id: m.groups!.id.trim(), name: m.groups!.name.trim(), on: !m.groups!.un, atlas: m.groups!.id.startsWith('atlas_') }
+  if ((m = text.match(SLAIN))) return { type: 'death', char: m.groups!.char }
+  if ((m = text.match(KITAVA))) return { type: 'kitava', which: m.groups!.which as 'cruel' | 'merciless' }
+  if ((m = text.match(ATLAS_POINT))) return { type: 'atlasPoint', count: Number(m.groups!.n ?? 1) }
+  if ((m = text.match(AFK))) return { type: 'afk', on: m.groups!.on === 'ON' }
+  if ((m = text.match(LOADING))) return { type: 'loading', zone: m.groups!.zone, seconds: Number(m.groups!.s) }
+  if (text.startsWith('Abnormal disconnect')) return { type: 'disconnect' }
   if ((m = text.match(JOINED))) return { type: 'joined', char: m.groups!.char }
   if ((m = text.match(LEFT))) return { type: 'left', char: m.groups!.char }
 
