@@ -7,7 +7,7 @@
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { STEPS, loadCampaignStep, actFromAreaCode, findStep } from './campaign-route'
+import { STEPS, loadCampaignStep, actFromAreaCode, findStep, onlyActive } from './campaign-route'
 
 export interface CharLevel { name: string, cls: string, level: number, at: number }
 // Campaign progress from Client.txt, per character: quest rewards received and
@@ -124,7 +124,9 @@ export function progressOf (v: CharLevels, name: string | undefined): CharProgre
 function tickQuest (p: CharProgress, kind: 'passive' | 'respec', guideIndex: number): number {
   const end = Math.min(STEPS.length, guideIndex + 4)
   for (let i = 0; i < end; i++) {
+    if (!onlyActive(STEPS[i].only)) continue
     for (const t of STEPS[i].tasks) {
+      if (!onlyActive(t.only)) continue
       for (const part of t.parts) {
         if (typeof part === 'string' || part.k !== 'quest') continue
         const name = String(part.v)

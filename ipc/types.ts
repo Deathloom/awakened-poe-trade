@@ -218,6 +218,8 @@ export interface PobPlan {
   // the next levelling step's skill set (swap gems when passing this step's level)
   nextGems?: PobPlanGem[]
   nextSkillSet?: string
+  // Configuration tab bandit: None (kill all), Oak, Kraityn, Alira
+  bandit?: string
 }
 
 export interface PobTreeAlloc {

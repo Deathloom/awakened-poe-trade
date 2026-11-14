@@ -191,7 +191,7 @@ import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf, rebuildFromLog, saveCharLevels, type CharLevels } from '../companion/char-level'
 import { AppConfig } from '@/web/Config'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
-import { CAMPAIGN_STEP_KEY, STEPS, loadCampaignStep, questPassivesBefore } from '../companion/campaign-route'
+import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
 import { planQuestGems } from '../companion/quest-gems'
 import { currentPlan } from './plan-store'
 
@@ -247,6 +247,8 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-plan', (e) => {
   error.value = null
   plan.value = e.plan ?? null
   currentPlan.value = plan.value
+  // the guide (every window) follows the build's bandit choice
+  if (e.plan) saveBandit(banditFromPob(e.plan.bandit))
 })
 // the build or loadout changed in another panel
 const buildsListener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => { if (e.ok) request() })
