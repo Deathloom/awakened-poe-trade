@@ -5,7 +5,7 @@ import { ref, watch } from 'vue'
 import type { PanelKey } from '@ipc/types'
 import { inWindow } from './panels'
 
-export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'session'
+export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session'
 
 export interface AllPanelDef {
   id: AllPanelId
@@ -16,11 +16,13 @@ export interface AllPanelDef {
 }
 
 // Trade site is left out on purpose: it is one live page (stays signed in and
-// keeps its place), so it lives on its own tab.
+// keeps its place), so it lives on its own tab. Atlas tree: not in the
+// default layout (Edit layout → Add panel).
 export const ALL_PANELS: AllPanelDef[] = [
   { id: 'gear', label: 'Build (gear, gems, tree)', icon: 'fa-hammer', settingsKey: 'gear' },
   { id: 'guide', label: 'Levelling guide', icon: 'fa-route', settingsKey: 'guide' },
   { id: 'tree', label: 'Tree map', icon: 'fa-project-diagram', settingsKey: 'tree' },
+  { id: 'atlas', label: 'Atlas tree', icon: 'fa-globe' },
   { id: 'trades', label: 'Trade companion', icon: 'fa-handshake', settingsKey: 'trades' },
   { id: 'market', label: 'Market history', icon: 'fa-chart-line', settingsKey: 'market' },
   { id: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins' },

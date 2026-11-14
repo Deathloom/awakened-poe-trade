@@ -31,6 +31,7 @@
       <div class="h-full min-h-0">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
         <LevellingBody v-else-if="view === 'levelling'" />
+        <div v-else-if="view === 'atlas'" class="h-full min-h-0 flex flex-col rounded bg-gray-800"><AtlasTreeMap /></div>
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
         <!-- Market: watchlist | poe.ninja overview (drag the line to resize) -->
         <div v-else-if="view === 'market'" ref="marketEl" class="flex h-full min-h-0">
@@ -69,6 +70,7 @@ import TradeSiteBody from './TradeSiteBody.vue'
 import HelpBody from '../help/HelpBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import AllLayout from './AllLayout.vue'
+import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 import { desktopSetupShown } from '../setup/setup-state'
@@ -84,6 +86,7 @@ const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
   { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
+  { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, what you have taken (from the game log), edit and share' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
   { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Loot Goblin never sees your login)" },

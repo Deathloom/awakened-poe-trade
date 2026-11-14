@@ -31,6 +31,12 @@
               <i class="fas fa-exchange-alt" /> picks the build and loadout, <i class="fas fa-pen" /> edits loadouts, <i class="fas fa-folder-open" /> manages builds,
               <i class="fas fa-file-import" /> imports a PoB code or link, <i class="fas fa-cloud" /> shares builds.</li>
             <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take.</li>
+            <li><b>Atlas</b>: the atlas passive tree. <i class="fas fa-file-import" /> adds an atlas build from a pathofexile.com atlas tree link or code
+              (poeplanner links use their own format), the drop-down picks one, <i class="fas fa-link" /> copies its link to share with friends.
+              Green = taken, orange = still to take. Loot Goblin ticks atlas passives as you allocate them in game; it can't see what you took
+              before, so use <i class="fas fa-check-double" /> → "I have this whole build" (or "I have nothing" after a respec or in a new league).
+              <b>Edit</b>: click a passive to take it with the path to it, or refund it with what hangs off it; notables with a choice let you pick the effect.
+              Atlas builds are kept on this PC. Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
             <li><b>Trades</b>: incoming and outgoing trade whispers and your ledger.</li>
             <li><b>Market</b>: your watchlist and a poe.ninja market overview.</li>
             <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Loot Goblin never sees your login.</li>

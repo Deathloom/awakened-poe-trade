@@ -65,6 +65,9 @@ export interface CharLevels {
   // quest passive points typed in (null = from the game log or the campaign guide)
   questPoints: number | null
   progress: Record<string, CharProgress>
+  // Atlas passives taken, by name (count; refunds subtract). The atlas is the
+  // account's, not a character's; only what's allocated while Loot Goblin runs
+  atlas?: Record<string, number>
 }
 
 export const CHAR_LEVELS_KEY = 'deathloom.char-levels.v1'
@@ -80,7 +83,8 @@ export function loadCharLevels (): CharLevels {
       selected: typeof raw.selected === 'string' ? raw.selected : '',
       manual: raw.manual && typeof raw.manual.name === 'string' && Number.isFinite(raw.manual.level) ? raw.manual : null,
       questPoints: Number.isFinite(raw.questPoints) ? raw.questPoints : null,
-      progress: raw.progress && typeof raw.progress === 'object' ? raw.progress : {}
+      progress: raw.progress && typeof raw.progress === 'object' ? raw.progress : {},
+      atlas: raw.atlas && typeof raw.atlas === 'object' ? raw.atlas : undefined
     }
   } catch { return empty }
 }
@@ -176,7 +180,7 @@ function lineTime (line: string): number | null {
 // levelling planner): replays the lines with a guide position per character,
 // so counts and ticks are complete for characters made since the log started.
 export function rebuildFromLog (current: CharLevels, lines: string[], lang: string): CharLevels {
-  let v: CharLevels = { ...current, chars: [], progress: {} }
+  let v: CharLevels = { ...current, chars: [], progress: {}, atlas: {} }
   const guide = new Map<string, number>()
   let act: number | null = null
   for (const line of lines) {
@@ -222,8 +226,14 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
     } else if (ev.type === 'passiveFrom') {
       if (passivesList) passivesList.push(ev.quest)
     } else if (ev.type === 'passiveAlloc') {
+      if (ev.atlas) {
+        v ??= { ...start, progress: { ...start.progress } }
+        const atlas = { ...(v.atlas ?? {}) }
+        atlas[ev.name] = Math.max(0, (atlas[ev.name] ?? 0) + (ev.on ? 1 : -1))
+        v.atlas = atlas
+        continue
+      }
       const p = prog()
-      if (ev.atlas) continue
       const alloc = { ...(p.alloc ?? {}) }
       alloc[ev.name] = Math.max(0, (alloc[ev.name] ?? 0) + (ev.on ? 1 : -1))
       p.alloc = alloc
