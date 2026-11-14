@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobTreeAlloc, PobTreeMapLayout, PobTreeMapNode } from '@ipc/types'
-import { currentPlan as plan, currentTaken as takenSet } from './plan-store'
+import { currentPlan as plan, currentTaken as takenSet, mapHave } from './plan-store'
 
 const props = defineProps<{
   // levelling view: colours from the levelling plan (taken / next / later) and
@@ -129,13 +129,37 @@ const levelPlan = computed(() => {
   // otherwise the plan's guess from your level
   const taken = takenSet.value
   const done = (i: number) => taken ? taken.has(i) : i < p.taken
-  const have = order.filter((_, i) => done(i))
+  const target = new Set([...kept, ...order])
+  const have = new Set([...kept, ...order.filter((_, i) => done(i))])
+  // Deathloom fork: the game log only names passives, so a same-named passive
+  // taken/refunded off the build can leave a hole. Anything on the build's path
+  // from the class start to a taken passive must be taken (unreachable otherwise)
+  const lay = layout.value
+  if (lay) {
+    const adj = new Map<number, number[]>()
+    const add = (a: number, b: number) => { const l = adj.get(a); if (l) l.push(b); else adj.set(a, [b]) }
+    for (const [a, b] of lay.links) { add(a, b); add(b, a) }
+    const starts = lay.nodes.filter(n => n[3] === 5 || n[3] === 6).map(n => n[0])
+    const parent = new Map<number, number>()
+    const q = starts.slice()
+    const seen = new Set(q)
+    for (let i = 0; i < q.length; i++) {
+      for (const nb of adj.get(q[i]) ?? []) {
+        if (seen.has(nb) || !target.has(nb)) continue
+        seen.add(nb); parent.set(nb, q[i]); q.push(nb)
+      }
+    }
+    for (const id of [...have]) {
+      for (let c = parent.get(id); c != null && target.has(c) && !have.has(c); c = parent.get(c)) have.add(c)
+    }
+  }
   return {
-    target: new Set([...kept, ...order]),
-    have: new Set([...kept, ...have]),
-    next: order.filter((_, i) => !done(i)).slice(0, 5)
+    target,
+    have,
+    next: order.filter(id => !have.has(id)).slice(0, 5)
   }
 })
+watch(levelPlan, (lp) => { mapHave.value = lp?.have ?? null }, { immediate: true })
 const hasLive = computed(() => levelPlan.value != null || live.value != null)
 const buildSet = computed(() => levelPlan.value?.target ?? new Set(alloc.value?.ids ?? []))
 const liveSet = computed(() => levelPlan.value?.have ?? new Set(live.value?.ids ?? []))
