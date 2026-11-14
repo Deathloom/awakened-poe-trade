@@ -3,6 +3,8 @@
        Goblin window (main opens the window while pob.setupDone is unset), so it can
        be done before playing; the overlay shows it the first time it opens if it
        wasn't finished. Run again: Shift+Space bar (wand) or the window's Settings tab. -->
+  <!-- one root element: the overlay puts v-show and an id on every widget -->
+  <div class="contents">
   <div v-if="desktop && visible" class="absolute inset-0 z-40 bg-black bg-opacity-60" />
   <div v-if="visible" :class="[$style.window, desktop ? 'z-50 border border-gray-600 shadow-lg' : '']" class="layout-column text-gray-100">
     <AppTitleBar @close="close" title="Loot Goblin setup" />
@@ -214,6 +216,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 

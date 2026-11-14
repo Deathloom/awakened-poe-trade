@@ -83,6 +83,17 @@
           <div v-if="!swap.add.length && !swap.drop.length" class="text-xs text-gray-500">Same gems.</div>
         </div>
 
+        <!-- gems the build keeps below max level -->
+        <div v-if="holds.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
+          <div class="lg-head"><i class="fas fa-hand-paper mr-1 text-gray-500" />Hold gem levels</div>
+          <div v-for="g of holds" :key="'h' + g.name" class="flex items-baseline gap-x-2 text-xs">
+            <span :class="gemClass(g)">{{ g.name }}</span>
+            <span class="text-yellow-300">stop at level {{ g.level }}</span>
+            <span class="text-gray-600">(max {{ g.maxLevel }}<template v-if="g.levelReq">, needs character level {{ g.levelReq }}</template>)</span>
+          </div>
+          <div class="lg-sub">Don't click the gem's level-up arrow past this (e.g. lower reservation). From the build's gem levels in Path of Building.</div>
+        </div>
+
         <!-- gems from quests and vendors -->
         <div v-if="questGems" class="rounded px-1 py-1 mb-1 bg-gray-900">
           <div class="lg-head flex items-baseline"><i class="fas fa-gem mr-1 text-gray-500" />
@@ -121,6 +132,19 @@
               <span v-if="g.group || g.slot" class="text-xs text-gray-600 truncate">{{ g.group ?? g.slot }}</span>
             </div>
           </div>
+          <!-- manual "have it" ticks (the game log has no gem info) -->
+          <div class="lg-sub flex items-baseline">
+            <span>Your gems<template v-if="char"> ({{ char.name }})</template>: {{ haveCount }} of {{ uniqueGems.length }}</span>
+            <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showTicks = !showTicks">{{ showTicks ? 'hide' : 'tick what you have' }}</button>
+          </div>
+          <div v-if="showTicks" class="flex flex-wrap gap-x-3 gap-y-px text-xs pb-1">
+            <label v-for="g of uniqueGems" :key="'t' + g.name" class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" :checked="hasGem(g.name)" @change="toggleGem(g.name)">
+              <span :class="[gemClass(g), hasGem(g.name) ? '' : 'underline decoration-dotted']">{{ g.name }}</span>
+            </label>
+          </div>
+          <div v-else-if="missingGems.length" class="text-xs pb-1"><span class="text-red-300">Missing:</span>
+            <span v-for="g of missingGems" :key="'m' + g.name" class="ml-2" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span></div>
           <div class="text-xs text-gray-500" title="Gems of this step's skill set you can socket at your level (level-1 requirement). Changes when you reach the next gem's level or the next levelling tree.">
             Gems in this step usable at level {{ level }}: {{ usableNow.length }} of {{ uniqueGems.length }}<template v-if="upcoming.length">
               · next: {{ upcoming[0].name }} at {{ upcoming[0].reqLevel }}</template>
@@ -314,6 +338,29 @@ const actTimes = computed(() => Object.entries(progress.value?.actMs ?? {})
   .filter(([a]) => Number(a) >= 1 && Number(a) <= 10)
   .map(([a, ms]) => `Act ${a}: ${fmtMs(ms)}`).join('\n'))
 
+// gems the build keeps below their normal max level
+const holds = computed(() => uniqueGems.value.filter(g => g.level != null && g.maxLevel != null && g.level < g.maxLevel))
+
+// manual ticks per character: which of the build's gems you have
+const TICKS_KEY = 'deathloom.gem-ticks.v1'
+function loadTicks (): Record<string, string[]> {
+  try { return JSON.parse(localStorage.getItem(TICKS_KEY) ?? '{}') ?? {} } catch { return {} }
+}
+const ticks = ref<Record<string, string[]>>(loadTicks())
+const showTicks = ref(false)
+const tickOwner = computed(() => char.value?.name ?? '')
+function hasGem (name: string) { return (ticks.value[tickOwner.value] ?? []).includes(name) }
+function toggleGem (name: string) {
+  const list = new Set(ticks.value[tickOwner.value] ?? [])
+  if (list.has(name)) list.delete(name)
+  else list.add(name)
+  ticks.value = { ...ticks.value, [tickOwner.value]: [...list] }
+  try { localStorage.setItem(TICKS_KEY, JSON.stringify(ticks.value)) } catch {}
+}
+const haveCount = computed(() => uniqueGems.value.filter(g => hasGem(g.name)).length)
+// usable at your level and not ticked
+const missingGems = computed(() => (ticks.value[tickOwner.value]?.length ?? 0) ? usableNow.value.filter(g => !hasGem(g.name)) : [])
+
 const showRecipes = ref(false)
 const recipes = computed(() => VENDOR_RECIPES.filter(r => r.fromAct <= guideAct.value))
 
@@ -405,7 +452,7 @@ function gemClass (g: PobPlanGem) {
   return g.support ? `${c} opacity-80` : c
 }
 function gemTitle (g: PobPlanGem) {
-  return [`${g.name}${g.support ? ' (support)' : ''}`, `Needs level ${g.reqLevel}`, g.group ?? g.slot].filter(Boolean).join('\n')
+  return [`${g.name}${g.support ? ' (support)' : ''}`, `Needs level ${g.reqLevel}`, g.level != null && g.maxLevel != null && g.level < g.maxLevel ? `Build keeps it at level ${g.level}` : '', g.group ?? g.slot].filter(Boolean).join('\n')
 }
 </script>
 

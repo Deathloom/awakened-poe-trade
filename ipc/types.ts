@@ -188,6 +188,10 @@ export interface PobPlanNode {
 export interface PobPlanGem {
   name: string
   reqLevel: number
+  // the build's gem level, the gem's normal max and the character level that gem level needs
+  level?: number
+  maxLevel?: number
+  levelReq?: number
   support: boolean
   colour?: number
   group?: string

@@ -11,6 +11,16 @@
       <span class="ml-auto text-xs text-gray-500" :title="playingHelp">{{ status }}</span>
     </div>
 
+    <!-- an update is downloaded: install from here (it also installs by itself once the game is closed) -->
+    <div v-if="readyVersion && dismissed !== readyVersion"
+      class="flex items-center gap-x-3 px-3 py-1 bg-green-900 border-b border-green-700 text-sm shrink-0">
+      <i class="fas fa-download text-green-300" />
+      <span class="text-green-100">Loot Goblin <b>{{ readyVersion }}</b> is downloaded and ready to install.</span>
+      <span class="text-xs text-green-300">{{ playing ? 'Installing restarts Loot Goblin (the game keeps running).' : 'Takes a few seconds; Loot Goblin starts again by itself.' }}</span>
+      <button class="ml-auto px-3 rounded bg-green-600 hover:bg-green-500 text-white" @click="installUpdate">Install now</button>
+      <button class="text-green-300 hover:text-white" title="Later (installs by itself when the game isn't running)" @click="dismissed = readyVersion">Later</button>
+    </div>
+
     <div v-if="view === 'overview'" class="desktop-grid flex-1 min-h-0 p-2">
       <div class="area-build min-h-0"><PobGearBody :active="true" desktop /></div>
       <div class="area-level min-h-0"><LevellingBody /></div>
@@ -86,6 +96,13 @@ watch(view, (v) => {
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
+// downloaded update ready to install (main broadcasts the updater state)
+const readyVersion = computed(() => Host.updateInfo.value.state === 'update-downloaded' ? Host.updateInfo.value.version : null)
+const dismissed = ref<string | null>(null)
+function installUpdate () {
+  Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'update-and-restart' } })
+}
+
 // AFK from the game log (": AFK mode is now ON")
 const session = ref(loadSession())
 const onSession = (e: StorageEvent) => { if (e.key === SESSION_KEY) session.value = loadSession() }

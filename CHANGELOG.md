@@ -9,7 +9,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ## [Unreleased]
 
 ### Changed (#60)
-- **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, stash search, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys.
+- **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys.
+
+## [1.0.41] - 2026-11-14
+
+### Added (#80)
+- **Update banner in the Loot Goblin window:** when a new version is downloaded, a green bar says so with **Install now** (Loot Goblin restarts; the game keeps running) and **Later** (it still installs by itself when the game isn't running).
+
+## [1.0.40] - 2026-11-14
+
+### Fixed (#79)
+- The setup guide had two top-level elements, which made Vue warn ("Runtime directive used on component with non-element root node") every time the overlay redrew. No visible change.
+
+## [1.0.39] - 2026-11-14
+
+### Added (#78)
+- **Hold gem levels:** the Levelling tab lists gems your build keeps below max level (e.g. Clarity at 5 to reserve less) with "stop at level N", from the gem levels in your Path of Building build.
+- **Tick the gems you have:** under Gems, "tick what you have" (per character, saved on this PC). Gems you can use at your level but haven't ticked show as **Missing**. The game log has no gem info, so this is manual.
+- **Labyrinth panel:** when you enter the lab, the guide shows the lab (Normal / Cruel / Merciless / Eternal) and a **Today's layout on poelab.com** button that opens poelab in your browser. It says "Labyrinth done" after Izaro and closes when you leave.
 
 ## [1.0.38] - 2026-11-14
 
