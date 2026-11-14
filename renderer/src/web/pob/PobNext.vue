@@ -371,6 +371,10 @@ function loadTicks (): Record<string, string[]> {
   try { return JSON.parse(localStorage.getItem(TICKS_KEY) ?? '{}') ?? {} } catch { return {} }
 }
 const ticks = ref<Record<string, string[]>>(loadTicks())
+// ticked in another window (Build panel → Gems → For my level)
+const onTicks = (e: StorageEvent) => { if (e.key === TICKS_KEY) ticks.value = loadTicks() }
+window.addEventListener('storage', onTicks)
+onUnmounted(() => { window.removeEventListener('storage', onTicks) })
 const showTicks = ref(false)
 const tickOwner = computed(() => char.value?.name ?? '')
 function hasGem (name: string) { return (ticks.value[tickOwner.value] ?? []).includes(name) }
