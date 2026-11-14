@@ -13,16 +13,15 @@
 
     <div v-if="view === 'overview'" class="desktop-grid flex-1 min-h-0 p-2">
       <div class="area-build min-h-0"><PobGearBody :active="true" desktop /></div>
-      <div class="area-guide min-h-0"><CampaignGuideBody tall /></div>
-      <div class="area-next min-h-0"><PobNext /></div>
+      <div class="area-level min-h-0"><LevellingBody /></div>
+      <div class="area-tree min-h-0 flex flex-col rounded bg-gray-800"><PobTreeMap levelling compact /></div>
       <div class="area-trades min-h-0"><TradeCompanionBody fill /></div>
       <div class="area-market min-h-0"><MarketHistoryBody :active="true" fill /></div>
     </div>
     <div v-else class="flex-1 min-h-0 p-2">
-      <div class="h-full min-h-0" :class="view === 'guide' ? 'single-guide' : ''">
+      <div class="h-full min-h-0">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
-        <PobNext v-else-if="view === 'next'" />
-        <CampaignGuideBody v-else-if="view === 'guide'" tall />
+        <LevellingBody v-else-if="view === 'levelling'" />
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
         <MarketHistoryBody v-else-if="view === 'market'" :active="true" fill />
         <DesktopSettings v-else-if="view === 'settings'" />
@@ -35,8 +34,8 @@
 import { computed, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import PobGearBody from '../pob/PobGearBody.vue'
-import PobNext from '../pob/PobNext.vue'
-import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
+import PobTreeMap from '../pob/PobTreeMap.vue'
+import LevellingBody from './LevellingBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
@@ -51,8 +50,7 @@ useLeagues().load()
 const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
-  { key: 'next', label: 'Next', icon: 'fa-shoe-prints', title: 'Levelling planner: next passives and gems for your level' },
-  { key: 'guide', label: 'Guide', icon: 'fa-route', title: 'Campaign guide' },
+  { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Loot Goblin settings (same as Shift+Space → Settings)' }
@@ -62,7 +60,8 @@ type View = typeof VIEWS[number]['key']
 const VIEW_KEY = 'deathloom.desktop-view.v1'
 function loadView (): View {
   try {
-    const v = localStorage.getItem(VIEW_KEY)
+    let v = localStorage.getItem(VIEW_KEY)
+    if (v === 'guide' || v === 'next') v = 'levelling' // before 1.0.30
     return VIEWS.some(x => x.key === v) ? v as View : 'overview'
   } catch { return 'overview' }
 }
@@ -93,30 +92,30 @@ html.desktop #app {
 .desktop-grid {
   display: grid;
   gap: 0.5rem;
-  grid-template-columns: minmax(26rem, 1.3fr) minmax(20rem, 1fr) minmax(22rem, 1fr);
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: minmax(26rem, 1.2fr) minmax(24rem, 1fr) minmax(22rem, 1fr);
+  grid-template-rows: 1.4fr 1fr 1fr;
   grid-template-areas:
-    "build guide next"
-    "build trades market";
+    "build level tree"
+    "build level trades"
+    "build level market";
 }
 @media (max-width: 1250px) {
   .desktop-grid {
     grid-template-columns: minmax(24rem, 1.2fr) minmax(20rem, 1fr);
-    grid-template-rows: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 2fr 1fr 1fr 1fr;
     grid-template-areas:
-      "build guide"
-      "build next"
-      "build trades"
-      "build market";
+      "build level"
+      "tree level"
+      "trades market"
+      "trades market";
     overflow-y: auto;
   }
 }
 .area-build { grid-area: build; }
-.area-guide { grid-area: guide; --hud-w: 100%; --hud-h: 100%; }
+.area-level { grid-area: level; }
+.area-tree { grid-area: tree; }
 .area-trades { grid-area: trades; }
 .area-market { grid-area: market; }
-.area-next { grid-area: next; }
-.single-guide { --hud-w: 100%; --hud-h: 100%; }
 .desktop-root .widget-default-style {
   max-height: none;
 }

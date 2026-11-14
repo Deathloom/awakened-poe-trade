@@ -72,6 +72,36 @@
           <div class="text-blue-300">{{ plan.ascendancy.map(a => a.name).join(', ') }}</div>
         </div>
 
+        <!-- gems: swap at the next step -->
+        <div v-if="swap" class="rounded px-1 py-1 mb-1 bg-gray-900">
+          <div class="text-xs text-gray-400 pb-px">At level {{ swap.level }} (next tree "{{ swap.title }}"<template v-if="plan.nextSkillSet">, skill set "{{ plan.nextSkillSet }}"</template>)</div>
+          <div v-if="swap.add.length" class="flex flex-wrap gap-x-3"><span class="text-xs text-green-500 w-10">add</span>
+            <span v-for="g of swap.add" :key="'s+' + g.name" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span></div>
+          <div v-if="swap.drop.length" class="flex flex-wrap gap-x-3"><span class="text-xs text-red-400 w-10">drop</span>
+            <span v-for="g of swap.drop" :key="'s-' + g.name" class="text-gray-500 line-through" :title="gemTitle(g)">{{ g.name }}</span></div>
+          <div v-if="!swap.add.length && !swap.drop.length" class="text-xs text-gray-500">Same gems.</div>
+        </div>
+
+        <!-- gems from quests and vendors -->
+        <div v-if="questGems" class="rounded px-1 py-1 mb-1 bg-gray-900">
+          <div class="flex items-baseline text-xs text-gray-400 pb-px">
+            <span>Quest gems for this build ({{ questGems.className }})</span>
+            <span class="ml-2 text-gray-600">act {{ guideAct }}</span>
+            <button class="ml-auto text-gray-500 hover:text-gray-200" @click="allActs = !allActs">{{ allActs ? 'This act' : 'All acts' }}</button>
+          </div>
+          <div v-if="!questRows.length" class="text-xs text-gray-500">Nothing to pick up from quests {{ allActs ? '' : 'in this act' }}.</div>
+          <div v-for="(q, i) of questRows" :key="i" class="pb-px" :class="q.act < guideAct ? 'opacity-50' : ''">
+            <div class="text-xs text-gray-500">{{ allActs ? `A${q.act} · ` : '' }}{{ q.quest }} <span class="text-gray-600">({{ q.npc }})</span></div>
+            <div class="flex flex-wrap items-baseline gap-x-3 pl-2">
+              <span v-if="q.take"><span class="text-xs text-yellow-500">take</span> <span :class="gemClass(q.take)" :title="gemTitle(q.take)">{{ q.take.name }}</span></span>
+              <span v-if="q.buy.length"><span class="text-xs text-gray-500">buy</span>
+                <span v-for="g of q.buy" :key="g.name" class="ml-2" :class="gemClass(g)" :title="`${gemTitle(g)}\nSold by ${g.vendor}`">{{ g.name }}</span></span>
+            </div>
+          </div>
+          <div v-if="questGems.notFromQuests.length" class="text-xs text-gray-600 pt-px" :title="questGems.notFromQuests.map(g => g.name).join(', ')">
+            Not from quests: {{ questGems.notFromQuests.length }} (drops, trade or transfigured)</div>
+        </div>
+
         <!-- gems -->
         <div class="rounded px-1 py-1 mb-1 bg-gray-900">
           <div class="text-xs text-gray-400 pb-px">Gems<span v-if="plan.skillSet" class="text-gray-600"> · skill set "{{ plan.skillSet }}"</span></div>
@@ -113,7 +143,9 @@ import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobPlan, PobPlanGem, PobPlanNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, saveCharLevels, type CharLevels } from '../companion/char-level'
-import { CAMPAIGN_STEP_KEY, loadCampaignStep, questPassivesBefore } from '../companion/campaign-route'
+import { CAMPAIGN_STEP_KEY, STEPS, loadCampaignStep, questPassivesBefore } from '../companion/campaign-route'
+import { planQuestGems } from '../companion/quest-gems'
+import { currentPlan } from './plan-store'
 
 const levels = ref<CharLevels>(loadCharLevels())
 const guideStep = ref(loadCampaignStep())
@@ -161,6 +193,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-plan', (e) => {
   }
   error.value = null
   plan.value = e.plan ?? null
+  currentPlan.value = plan.value
 })
 // the build or loadout changed in another panel
 const buildsListener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => { if (e.ok) request() })
@@ -220,6 +253,36 @@ const newGems = computed(() => {
   if (!prev) return []
   const had = new Set(prev.map(g => g.name))
   return uniqueGems.value.filter(g => !had.has(g.name))
+})
+
+// gems that change when the character passes this step's level
+const swap = computed(() => {
+  const p = plan.value
+  const next = p?.phases[p.phase]
+  if (!p?.nextGems || !next) return null
+  const cur = new Set(uniqueGems.value.map(g => g.name))
+  const nxt = unique(p.nextGems)
+  const nextNames = new Set(nxt.map(g => g.name))
+  return {
+    level: (p.phases[p.phase - 1]?.level ?? 0) + 1,
+    title: next.title,
+    add: nxt.filter(g => !cur.has(g.name)),
+    drop: uniqueGems.value.filter(g => !nextNames.has(g.name))
+  }
+})
+
+const guideAct = computed(() => STEPS[guideStep.value]?.act ?? 1)
+const allActs = ref(false)
+const questGems = computed(() => {
+  const p = plan.value
+  if (!p) return null
+  const wanted = [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])]
+  return planQuestGems(p.className, wanted)
+})
+const questRows = computed(() => {
+  const q = questGems.value
+  if (!q) return []
+  return allActs.value ? q.steps : q.steps.filter(s => s.act === guideAct.value || s.act === guideAct.value + 1)
 })
 
 // PoB gem colours: 1 = str, 2 = dex, 3 = int

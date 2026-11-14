@@ -5,7 +5,13 @@
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1 text-xs shrink-0">
       <span v-if="alloc" class="text-gray-300">{{ alloc.ascendancy ?? alloc.className }}</span>
       <span v-if="alloc" class="text-gray-500">{{ alloc.points }} points · {{ alloc.ascendancyPoints }} ascendancy</span>
-      <template v-if="live">
+      <template v-if="levellingOn && levelPlan">
+        <span class="text-gray-400">Levelling: {{ plan?.phases[plan.phase - 1]?.title }}</span>
+        <span><i class="fas fa-circle text-green-500" /> taken by now</span>
+        <span><i class="fas fa-circle text-cyan-300" /> next ({{ levelPlan.next.length }})</span>
+        <span><i class="fas fa-circle text-orange-400" /> later</span>
+      </template>
+      <template v-else-if="live">
         <span class="text-gray-400">{{ character }}: {{ live.points }} points<template v-if="live.level"> · level {{ live.level }}</template></span>
         <span><i class="fas fa-circle text-green-500" /> have ({{ counts.both }})</span>
         <span><i class="fas fa-circle text-orange-400" /> to take ({{ counts.build }})</span>
@@ -13,17 +19,18 @@
       </template>
       <span v-else-if="alloc"><i class="fas fa-circle text-yellow-400" /> in the build</span>
       <span class="flex-1" />
-      <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200 w-40" placeholder="Search nodes / stats" spellcheck="false">
+      <input v-if="!compact" v-model="search" class="px-1 rounded bg-gray-800 text-gray-200 w-40" placeholder="Search nodes / stats" spellcheck="false">
+      <button v-if="levellingOn && levelPlan" class="text-gray-500 hover:text-gray-200" title="Zoom to the next passives" @click="focusNext"><i class="fas fa-crosshairs" /></button>
       <button class="text-gray-500 hover:text-gray-200" title="Fit the tree in the window" @click="fit"><i class="fas fa-expand" /></button>
       <button class="text-gray-500 hover:text-gray-200" title="Reload (and fetch the character again, rate-limited)"
         :disabled="loading" @click="request(true)"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
     </div>
     <div v-if="error" class="px-2 text-gray-400">{{ error }}</div>
     <div v-else-if="liveError" class="px-2 pb-1 text-xs text-gray-500">{{ liveError }}</div>
-    <div v-if="alloc && (alloc.clusterNodes || live?.clusterNodes)" class="px-2 pb-1 text-xs text-gray-600">
+    <div v-if="!compact && alloc && (alloc.clusterNodes || live?.clusterNodes)" class="px-2 pb-1 text-xs text-gray-600">
       Cluster jewel nodes are not drawn ({{ alloc.clusterNodes }} in the build<template v-if="live">, {{ live.clusterNodes }} on the character</template>).
     </div>
-    <div ref="boxRef" class="relative flex-1 min-h-0 rounded overflow-hidden" style="background: #0b0f17; min-height: 20rem;"
+    <div ref="boxRef" class="relative flex-1 min-h-0 rounded overflow-hidden" :style="{ background: '#1a2232', minHeight: compact ? '12rem' : '20rem' }"
       @wheel.prevent="onWheel" @mousedown="onDown" @mousemove="onMove" @mouseleave="hover = null" @dblclick="fit">
       <canvas ref="canvasRef" class="absolute inset-0" :style="{ cursor: dragging ? 'grabbing' : 'grab' }" />
       <div v-if="!layout && loading" class="absolute inset-0 flex items-center justify-center text-gray-500">Loading the tree from Path of Building…</div>
@@ -42,6 +49,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobTreeAlloc, PobTreeMapLayout, PobTreeMapNode } from '@ipc/types'
+import { currentPlan as plan } from './plan-store'
+
+const props = defineProps<{
+  // levelling view: colours from the levelling plan (taken / next / later) and
+  // zoom to the next passives (Loot Goblin window)
+  levelling?: boolean
+  // smaller header (All tab)
+  compact?: boolean
+}>()
+const levellingOn = computed(() => props.levelling === true)
 import { Host } from '@/web/background/IPC'
 
 const loading = ref(false)
@@ -72,8 +89,10 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-tree-map', (e) => {
   live.value = e.live
   character.value = e.character ?? 'Character'
   liveError.value = e.liveError ?? null
-  if (newVersion || !fitted) fit()
-  else draw()
+  if (newVersion || !fitted) {
+    if (levellingOn.value && levelPlan.value) focusNext()
+    else fit()
+  } else draw()
 })
 const characterListener = Host.onEvent('MAIN->CLIENT::pob-character', () => { request() })
 
@@ -96,8 +115,22 @@ const byId = computed(() => {
   for (const n of layout.value?.nodes ?? []) m.set(n[0], n)
   return m
 })
-const buildSet = computed(() => new Set(alloc.value?.ids ?? []))
-const liveSet = computed(() => new Set(live.value?.ids ?? []))
+// levelling view: "build" = the levelling tree, "live" = what should be taken by now
+const levelPlan = computed(() => {
+  const p = plan.value
+  if (!levellingOn.value || !p) return null
+  const kept = Array.isArray(p.keptIds) ? p.keptIds : []
+  const order = p.order.map(n => n.id)
+  return {
+    target: new Set([...kept, ...order]),
+    have: new Set([...kept, ...order.slice(0, p.taken)]),
+    next: order.slice(p.taken, p.taken + 5)
+  }
+})
+const hasLive = computed(() => levelPlan.value != null || live.value != null)
+const buildSet = computed(() => levelPlan.value?.target ?? new Set(alloc.value?.ids ?? []))
+const liveSet = computed(() => levelPlan.value?.have ?? new Set(live.value?.ids ?? []))
+const nextIndex = computed(() => new Map((levelPlan.value?.next ?? []).map((id, i) => [id, i + 1])))
 
 // Only the build's (and the character's) ascendancy is drawn
 function visibleNode (n: PobTreeMapNode) {
@@ -109,7 +142,7 @@ function visibleNode (n: PobTreeMapNode) {
 type State = 'both' | 'build' | 'live' | 'none'
 function stateOf (id: number): State {
   const b = buildSet.value.has(id)
-  if (!live.value) return b ? 'build' : 'none'
+  if (!hasLive.value) return b ? 'build' : 'none'
   const l = liveSet.value.has(id)
   return b && l ? 'both' : b ? 'build' : l ? 'live' : 'none'
 }
@@ -126,10 +159,10 @@ const COLORS: Record<State, string> = {
   both: '#22c55e',
   build: '#fb923c',
   live: '#c084fc',
-  none: '#374151'
+  none: '#5b6b84'
 }
 function color (s: State) {
-  return !live.value && s === 'build' ? '#facc15' : COLORS[s]
+  return !hasLive.value && s === 'build' ? '#facc15' : COLORS[s]
 }
 
 const searchHits = computed(() => {
@@ -171,6 +204,31 @@ function fit () {
   fitted = true
   draw()
 }
+
+// zoom to the next passives of the levelling plan (with what's around them)
+function focusNext () {
+  const box = boxRef.value; const lp = levelPlan.value
+  if (!box || !layout.value || !lp) return
+  const ids = lp.next.length ? lp.next : [...lp.have].slice(-5)
+  let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity
+  for (const id of ids) {
+    const n = byId.value.get(id)
+    if (!n) continue
+    minX = Math.min(minX, n[1]); maxX = Math.max(maxX, n[1])
+    minY = Math.min(minY, n[2]); maxY = Math.max(maxY, n[2])
+  }
+  if (!isFinite(minX)) { fit(); return }
+  const w = box.clientWidth; const h = box.clientHeight
+  const pad = 1600
+  scale = Math.min(0.3, w / (maxX - minX + pad), h / (maxY - minY + pad))
+  offX = w / 2 - (minX + maxX) / 2 * scale
+  offY = h / 2 - (minY + maxY) / 2 * scale
+  fitted = true
+  draw()
+}
+watch(() => levelPlan.value?.next.join(','), (now, before) => {
+  if (now != null && now !== before && layout.value) focusNext()
+})
 
 function onWheel (e: WheelEvent) {
   const rect = boxRef.value!.getBoundingClientRect()
@@ -233,9 +291,13 @@ function onMove (e: MouseEvent) {
   if (!best) { hover.value = null; return }
   const s = stateOf(best[0])
   const key = String(best[0])
-  const status = !live.value
-    ? (s === 'build' ? ['In the build', 'text-yellow-400'] : ['', ''])
-    : STATUS_TEXT[s]
+  const status = levelPlan.value && nextIndex.value.has(best[0])
+    ? [`Next: ${nextIndex.value.get(best[0])} of ${levelPlan.value.next.length}`, 'text-cyan-300']
+    : levelPlan.value
+      ? (s === 'both' ? ['Taken by now', 'text-green-400'] : s === 'build' ? ['Later in this tree', 'text-orange-400'] : ['', ''])
+      : !live.value
+          ? (s === 'build' ? ['In the build', 'text-yellow-400'] : ['', ''])
+          : STATUS_TEXT[s]
   hover.value = {
     name: best[6],
     stats: best[8],
@@ -260,7 +322,7 @@ function linkState (a: number, b: number): State {
   // a link is "taken" by whoever has both ends
   const inBuild = buildSet.value.has(a) && buildSet.value.has(b)
   const inLive = liveSet.value.has(a) && liveSet.value.has(b)
-  if (!live.value) return inBuild ? 'build' : 'none'
+  if (!hasLive.value) return inBuild ? 'build' : 'none'
   return inBuild && inLive ? 'both' : inBuild ? 'build' : inLive ? 'live' : 'none'
 }
 function paint () {
@@ -316,7 +378,7 @@ function paint () {
     const r = KIND_RADIUS[kind] ?? 10
     if (kind === 5) {
       ctx.beginPath(); ctx.arc(n[1], n[2], r * 3, 0, Math.PI * 2)
-      ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 4; ctx.stroke()
+      ctx.strokeStyle = '#7b8aa3'; ctx.lineWidth = 4; ctx.stroke()
       continue
     }
     if (kind === 3 && st === 'none') continue // unallocated masteries are just art
@@ -326,12 +388,17 @@ function paint () {
     } else {
       ctx.arc(n[1], n[2], r, 0, Math.PI * 2)
     }
-    ctx.fillStyle = st === 'none' ? (kind === 0 ? '#1f2937' : '#2d3748') : color(st)
+    const isNext = nextIndex.value.has(n[0])
+    ctx.fillStyle = isNext ? '#67e8f9' : st === 'none' ? (kind === 0 ? '#46536a' : '#56647d') : color(st)
     ctx.fill()
     if (kind === 1 || kind === 2) {
       ctx.lineWidth = kind === 2 ? 5 : 3
-      ctx.strokeStyle = st === 'none' ? '#6b7280' : '#f9fafb'
+      ctx.strokeStyle = st === 'none' ? '#a3b1c6' : '#f9fafb'
       ctx.stroke()
+    }
+    if (isNext) {
+      ctx.beginPath(); ctx.arc(n[1], n[2], r + 12, 0, Math.PI * 2)
+      ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 6; ctx.stroke()
     }
     if (hits?.has(n[0])) {
       ctx.beginPath(); ctx.arc(n[1], n[2], r + 14, 0, Math.PI * 2)
@@ -348,13 +415,30 @@ function paint () {
       if (!visibleNode(n) || (n[3] !== 1 && n[3] !== 2)) continue
       const x = n[1] * scale + offX; const y = n[2] * scale + offY
       if (x < -50 || y < -20 || x > w + 50 || y > h + 20) continue
-      ctx.fillStyle = stateOf(n[0]) === 'none' ? '#6b7280' : '#e5e7eb'
+      ctx.fillStyle = stateOf(n[0]) === 'none' ? '#a3b1c6' : '#f3f4f6'
       ctx.fillText(n[6], x, y + (KIND_RADIUS[n[3]] ?? 10) * scale + 12)
     }
   }
+  // numbers on the next passives
+  if (nextIndex.value.size) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.font = 'bold 12px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    for (const [id, i] of nextIndex.value) {
+      const n = nodes.get(id)
+      if (!n) continue
+      const x = n[1] * scale + offX; const y = n[2] * scale + offY - (KIND_RADIUS[n[3]] ?? 10) * scale - 12
+      ctx.fillStyle = '#0e7490'
+      ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#ecfeff'
+      ctx.fillText(String(i), x, y + 0.5)
+    }
+    ctx.textBaseline = 'alphabetic'
+  }
 }
 
-watch([searchHits, buildSet, liveSet], () => draw())
+watch([searchHits, buildSet, liveSet, nextIndex], () => draw())
 let ro: ResizeObserver | null = null
 onMounted(() => {
   ro = new ResizeObserver(() => { if (fitted) draw(); else fit() })
