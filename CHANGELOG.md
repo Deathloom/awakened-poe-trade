@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (#57)
+- Vue 3.2.37 → **3.5.45** and vue-i18n 10 → **11.4** (clears the high-severity advisories for vue and @intlify), plus non-breaking audit fixes in the renderer's build tools.
+
 ## [1.0.20] - 2026-11-14
 
 ### Security (#55)
