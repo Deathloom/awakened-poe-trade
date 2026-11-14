@@ -49,7 +49,7 @@
         Sync automatically
       </label>
       <label v-if="!hud" class="flex items-center gap-x-2 text-gray-400 cursor-pointer"
-        title="Each player keeps builds in their own private repo (builds-<name>). You only get the builds of players who approved your request. Turn on once the group has switched.">
+        title="Each player keeps builds in their own private repo (builds-<GitHub name>). You only get the builds of players who approved your request. On by default; untick to use the old shared repo.">
         <input type="checkbox" :checked="perPlayer" @change="setPerPlayer(($event.target as HTMLInputElement).checked)">
         Private builds (per player)
       </label>
