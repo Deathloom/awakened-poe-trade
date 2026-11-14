@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#58)
+- **Trade ledger, campaign guide progress and market watchlist now survive a restart.** The installed app's local server used a new random port on every start, and the panels' saved data is tied to the port, so it started empty each time. It now uses a fixed port (47284, this PC only); if that's taken it falls back to a random one for that run. Data from earlier runs can't be recovered.
+
 ## [1.0.20] - 2026-11-14
 
 ### Security (#55)
