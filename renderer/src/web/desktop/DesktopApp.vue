@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: desktop window (index.html?desktop). All panels in one
        normal window for a second screen; live with the game like the overlay. -->
-  <div class="desktop-root flex flex-col h-full text-gray-200 bg-gray-900">
+  <div class="desktop-root relative flex flex-col h-full text-gray-200 bg-gray-900">
     <div class="flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0">
       <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Loot Goblin</span>
       <button v-for="v of VIEWS" :key="v.key" class="px-3 py-0.5 rounded"
@@ -27,6 +27,8 @@
         <DesktopSettings v-else-if="view === 'settings'" />
       </div>
     </div>
+    <!-- first-run setup (opens by itself on a new install) -->
+    <WidgetSetupGuide desktop />
   </div>
 </template>
 
@@ -39,6 +41,7 @@ import LevellingBody from './LevellingBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
+import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 
