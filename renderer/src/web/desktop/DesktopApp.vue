@@ -21,12 +21,19 @@
       <button class="text-green-300 hover:text-white" title="Later (installs by itself when the game isn't running)" @click="dismissed = readyVersion">Later</button>
     </div>
 
-    <div v-if="view === 'overview'" class="desktop-grid flex-1 min-h-0 p-2">
-      <div class="area-build min-h-0"><PobGearBody :active="true" desktop /></div>
-      <div class="area-level min-h-0"><LevellingBody /></div>
-      <div class="area-tree min-h-0 flex flex-col rounded bg-gray-800"><PobTreeMap levelling compact /></div>
-      <div class="area-trades min-h-0"><TradeCompanionBody fill /></div>
-      <div class="area-market min-h-0"><MarketHistoryBody :active="true" fill /></div>
+    <!-- All: three columns and the right column's rows can be resized (drag the lines) -->
+    <div v-if="view === 'overview'" ref="colsEl" class="flex flex-1 min-h-0 p-2">
+      <div class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[0]} 1 0` }"><PobGearBody :active="true" desktop /></div>
+      <SplitGutter dir="x" @drag="d => cols.drag(0, d, colsEl?.clientWidth ?? 0)" @end="cols.save" @reset="cols.reset" />
+      <div class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[1]} 1 0` }"><LevellingBody /></div>
+      <SplitGutter dir="x" @drag="d => cols.drag(1, d, colsEl?.clientWidth ?? 0)" @end="cols.save" @reset="cols.reset" />
+      <div ref="rowsEl" class="min-w-0 min-h-0 flex flex-col" :style="{ flex: `${cols.sizes.value[2]} 1 0` }">
+        <div class="min-h-0 flex flex-col rounded bg-gray-800" :style="{ flex: `${rows.sizes.value[0]} 1 0` }"><PobTreeMap levelling compact /></div>
+        <SplitGutter dir="y" @drag="d => rows.drag(0, d, rowsEl?.clientHeight ?? 0)" @end="rows.save" @reset="rows.reset" />
+        <div class="min-h-0" :style="{ flex: `${rows.sizes.value[1]} 1 0` }"><TradeCompanionBody fill /></div>
+        <SplitGutter dir="y" @drag="d => rows.drag(1, d, rowsEl?.clientHeight ?? 0)" @end="rows.save" @reset="rows.reset" />
+        <div class="min-h-0" :style="{ flex: `${rows.sizes.value[2]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
+      </div>
     </div>
     <div v-else class="flex-1 min-h-0 p-2">
       <div class="h-full min-h-0">
@@ -51,6 +58,8 @@ import { Host } from '@/web/background/IPC'
 import PobGearBody from '../pob/PobGearBody.vue'
 import PobTreeMap from '../pob/PobTreeMap.vue'
 import LevellingBody from './LevellingBody.vue'
+import SplitGutter from './SplitGutter.vue'
+import { useSplit } from './split'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
@@ -96,6 +105,12 @@ watch(view, (v) => {
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
+// All tab layout (fractions, saved)
+const colsEl = ref<HTMLElement>()
+const rowsEl = ref<HTMLElement>()
+const cols = useSplit('all-cols', [0.34, 0.36, 0.3])
+const rows = useSplit('all-right', [0.45, 0.3, 0.25])
+
 // downloaded update ready to install (main broadcasts the updater state)
 const readyVersion = computed(() => Host.updateInfo.value.state === 'update-downloaded' ? Host.updateInfo.value.version : null)
 const dismissed = ref<string | null>(null)
@@ -119,33 +134,6 @@ html.desktop, html.desktop body {
 html.desktop #app {
   justify-content: flex-start;
 }
-.desktop-grid {
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: minmax(26rem, 1.2fr) minmax(24rem, 1fr) minmax(22rem, 1fr);
-  grid-template-rows: 1.4fr 1fr 1fr;
-  grid-template-areas:
-    "build level tree"
-    "build level trades"
-    "build level market";
-}
-@media (max-width: 1250px) {
-  .desktop-grid {
-    grid-template-columns: minmax(24rem, 1.2fr) minmax(20rem, 1fr);
-    grid-template-rows: 2fr 1fr 1fr 1fr;
-    grid-template-areas:
-      "build level"
-      "tree level"
-      "trades market"
-      "trades market";
-    overflow-y: auto;
-  }
-}
-.area-build { grid-area: build; }
-.area-level { grid-area: level; }
-.area-tree { grid-area: tree; }
-.area-trades { grid-area: trades; }
-.area-market { grid-area: market; }
 .desktop-root .widget-default-style {
   max-height: none;
 }

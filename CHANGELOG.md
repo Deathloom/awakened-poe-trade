@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.42] - 2026-11-14
+
+### Added (#81)
+- **Resize the panels in the Loot Goblin window:** drag the lines between panels. On the All tab: the three columns, and tree map / trades / market on the right. In the Levelling pane: guide vs. next steps (the guide now starts smaller). Sizes are remembered; double-click a line to reset.
+
 ### Changed (#60)
 - **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys.
 
