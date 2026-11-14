@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.82] - 2026-11-15
+
+### Added (#128)
+- **Mastery picks written on the passive tree:** under each mastery in the build, the effect to pick (from the levelling tree, else the build), in a small yellow box. Always shown for masteries among the next 5 (cyan border), otherwise once you zoom in a little.
+
 ## [1.0.81] - 2026-11-15
 
 ### Fixed (#127)
