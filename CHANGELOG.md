@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.61] - 2026-11-14
+
+### Added (#103)
+- **Atlas tab** in the Loot Goblin window (also an All tab panel: Edit layout → Add panel → Atlas tree): the whole atlas passive tree from GGG's official export (3.30.0), with pan, zoom, hover and search.
+- **Atlas builds:** add one from a pathofexile.com atlas tree link or code, keep as many as you like, pick the active one, rename, delete, copy its link to share, or open it on pathofexile.com.
+- **What you've taken:** atlas passives you allocate in game are ticked from the game log (green = taken, orange = to take). Set the starting point with "I have this whole build" or "I have nothing".
+- **Edit:** click a passive to take it with the path to it, or refund it with what hangs off it. Notables with a choice let you pick the effect.
+
 ## [1.0.60] - 2026-11-14
 
 ### Added (#102)
