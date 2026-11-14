@@ -63,7 +63,11 @@ import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from './char-level'
 const s = ref<PlaySession>(loadPlaySession())
 const me = ref(currentChar(loadCharLevels())?.name ?? '')
 const now = ref(Date.now())
-const timer = setInterval(() => { now.value = Date.now() }, 1000)
+// live map timer: only while the window is shown and you're in a map (keeps
+// the Loot Goblin window idle while you play)
+const timer = setInterval(() => {
+  if (document.visibilityState === 'visible' && currentMapMs(s.value) != null) now.value = Date.now()
+}, 1000)
 const onStorage = (e: StorageEvent) => {
   if (e.key === PLAY_SESSION_KEY) s.value = loadPlaySession()
   if (e.key === CHAR_LEVELS_KEY) me.value = currentChar(loadCharLevels())?.name ?? ''

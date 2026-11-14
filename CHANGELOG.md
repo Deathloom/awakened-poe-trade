@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.45] - 2026-11-14
+
+### Fixed (#84)
+- **Guide no longer jumps when you visit another act's town** (e.g. back to Lioneye's Watch from act 2 to hand in a quest). It stays on your step; a town only moves the guide when the route goes there next.
+- The session panel's map timer only runs while the Loot Goblin window is shown and you're in a map.
+
 ## [1.0.44] - 2026-11-14
 
 ### Added (#83)
