@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.32] - 2026-11-14
+
+### Added (#71)
+- **What's new after each update.** The first time you open the Loot Goblin window or the overlay (Shift+Space) after an update, a popup lists what changed since the version you had (this changelog). Shown once per update, in whichever window opens first. **Settings tab → What's new** shows it again. New installs skip it (the setup guide welcomes them).
+
 ## [1.0.31] - 2026-11-14
 
 ### Changed (#70): first run in the Loot Goblin window

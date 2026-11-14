@@ -29,6 +29,8 @@
     </div>
     <!-- first-run setup (opens by itself on a new install) -->
     <WidgetSetupGuide desktop />
+    <!-- after an update (not while the setup guide is open) -->
+    <WhatsNew :active="!desktopSetupShown" />
   </div>
 </template>
 
@@ -42,6 +44,8 @@ import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
+import WhatsNew from '../whats-new/WhatsNew.vue'
+import { desktopSetupShown } from '../setup/setup-state'
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 

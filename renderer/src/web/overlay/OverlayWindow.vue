@@ -18,6 +18,7 @@
     >{{ logs }}</pre>
     <loading-animation />
     <update-toast />
+    <WhatsNew :active="overlayActive" />
     <div v-if="showEditingNotification"
       class="widget-default-style p-6 bg-blue-600 mx-auto text-center text-base mt-6"
       style="min-width: 30rem; z-index: 998; width: fit-content; position: absolute; left: 0; right: 0;">
@@ -40,6 +41,7 @@ import { registry } from './widget-registry.js'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
 import LoadingAnimation from './LoadingAnimation.vue'
 import UpdateToast from './UpdateToast.vue'
+import WhatsNew from '../whats-new/WhatsNew.vue'
 // ---
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
@@ -50,7 +52,8 @@ type WMID = Widget['wmId']
 export default defineComponent({
   components: {
     LoadingAnimation,
-    UpdateToast
+    UpdateToast,
+    WhatsNew
   },
   setup () {
     usePoeninja()
@@ -302,6 +305,7 @@ export default defineComponent({
       handleBackgroundClick,
       isVisible,
       overlayKey: computed(() => AppConfig().overlayKey),
+      overlayActive: active,
       get showLogs () { return !active.value && AppConfig().logKeys },
       logs: computed(() => sliceLastLines(Host.logs.value, 11)),
       showEditingNotification: computed(() => !active.value && showEditingNotification.value),
