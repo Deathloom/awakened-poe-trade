@@ -53,7 +53,7 @@ app.on('ready', async () => {
   const gameLogWatcher = new GameLogWatcher(eventPipe, logger)
   const gameConfig = new GameConfig(eventPipe, logger)
   const poeWindow = new GameWindow()
-  const appUpdater = new AppUpdater(eventPipe)
+  const appUpdater = new AppUpdater(eventPipe, logger)
   const _httpProxy = new HttpProxy(server, logger)
   const pobImpact = new PobImpact(eventPipe, logger)
   tray.pobDir = () => pobImpact.pobDir()

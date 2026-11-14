@@ -42,7 +42,7 @@ function checkForUpdates () {
 }
 
 function openDownloadPage () {
-  window.open('https://snosme.github.io/awakened-poe-trade/download')
+  window.open('https://github.com/Deathloom/awakened-poe-trade/releases/latest')
 }
 
 function quitAndInstall () {
@@ -72,7 +72,8 @@ export default defineComponent({
         case 'update-not-available':
           return { str1: t('updates.latest'), str2: t('updates.last_checked', [fmtTime(rawInfo.checkedAt)]), action: checkForUpdates, actionText: t('updates.check_now') }
         case 'error':
-          return { str1: t('updates.maybe_outdated'), str2: t('updates.error'), action: openDownloadPage, actionText: t('updates.downloads_page') }
+          // Deathloom fork: try again from here (the releases page is linked above)
+          return { str1: t('updates.maybe_outdated'), str2: "Couldn't reach GitHub to check.", action: checkForUpdates, actionText: 'Check again' }
         case 'update-downloaded':
           return { str1: t('updates.available', [rawInfo.version]), str2: t('updates.installed_on_exit'), action: quitAndInstall, actionText: t('updates.install_now') }
         case 'update-available':
