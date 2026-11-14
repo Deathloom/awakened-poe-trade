@@ -11,6 +11,10 @@ on:
       version:
         description: 'Version (x.y.z, higher than the last release)'
         required: true
+      test_build:
+        description: 'Test build: leave it as a draft release (installers check published releases only, so nobody gets it). Use a low version like 0.99.x, so the next real release updates it.'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -53,6 +57,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish release
+      if: ${{ !inputs.test_build }}
       shell: bash
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
