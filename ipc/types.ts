@@ -502,6 +502,8 @@ export type IpcEvent =
   IpcPobSyncState |
   IpcBoardRequest |
   IpcBoardState |
+  IpcAtlasFilesRequest |
+  IpcAtlasFilesState |
   IpcPobImportRequest |
   IpcPobImportResult |
   IpcStashRequest |
@@ -946,6 +948,37 @@ export interface BoardRawListing {
   commentCount: number
   comments: BoardRawComment[]
 }
+// Deathloom fork: atlas builds as files in the player folders (synced with builds)
+export interface AtlasFileBuild {
+  player: string
+  name: string
+  code: string
+  at: number
+  own: boolean
+}
+export interface AtlasFilesState {
+  // a builds folder is set (else atlas builds stay in this window's storage)
+  available: boolean
+  own: string
+  builds: AtlasFileBuild[]
+  // the request this state answers (op results)
+  requestId?: number
+  error?: string
+  // name the save / rename ended up with
+  saved?: string
+}
+type IpcAtlasFilesRequest =
+  Event<'CLIENT->MAIN::atlas-files', {
+    op: 'list' | 'save' | 'rename' | 'delete'
+    requestId?: number
+    name?: string
+    code?: string
+    newName?: string
+    overwrite?: boolean
+  }>
+type IpcAtlasFilesState =
+  Event<'MAIN->CLIENT::atlas-files', AtlasFilesState>
+
 export interface BoardState {
   // what's running ('Loading…', 'Posting…'), null when idle
   busy: string | null

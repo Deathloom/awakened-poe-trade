@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added
+- **Ready-made atlas trees** (Atlas tab, magic wand): pick the content you farm (Strongboxes, Expedition, Shrines, Essence, Breach, … one or more), Map sustain on or off and the points (up to 150). Loot Goblin takes that content's notables (and multiple-choice notables set to that content) by the shortest path from the start, then map sustain, then small passives with the points left, and says which notables didn't fit. Uses only GGG's official atlas data. The result is a normal atlas build: edit it, copy the link.
+- **Atlas builds sync with your builds:** they're saved as files in your builds folder (`<player>/Atlas/<name>.txt`, each holding the pathofexile.com link), so Push uploads them and friends who can see your builds see your atlas builds after Pull (under their name, read-only; Copy makes it yours). Atlas builds you had on this PC move into the folder once. Delete moves the file to Deleted builds like builds.
+
 ## [1.0.70] - 2026-11-14
 
 ### Changed (#112)

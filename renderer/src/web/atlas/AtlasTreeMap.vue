@@ -6,23 +6,30 @@
     <div class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 text-xs shrink-0">
       <select class="rounded bg-gray-800 px-1 max-w-[12rem]" :value="store.active ?? ''" title="Active atlas build" @change="onPick">
         <option value="">No atlas build</option>
-        <option v-for="b of store.builds" :key="b.id" :value="b.id">{{ b.name }}</option>
+        <optgroup v-for="g of groups" :key="g.label" :label="g.label">
+          <option v-for="b of g.builds" :key="b.id" :value="b.id">{{ b.name }}</option>
+        </optgroup>
       </select>
-      <button class="text-gray-400 hover:text-gray-100" title="Add an atlas build from a link or code" @click="importOpen = !importOpen"><i class="fas fa-file-import" /></button>
+      <i v-if="synced" class="fas fa-cloud text-gray-600" title="Atlas builds are saved in your builds folder (Atlas) and sync with your builds: friends who can see your builds see them too" />
+      <button class="text-gray-400 hover:text-gray-100" title="Add an atlas build from a link or code" @click="importOpen = !importOpen; genOpen = false"><i class="fas fa-file-import" /></button>
+      <button class="hover:text-gray-100" :class="genOpen ? 'text-yellow-300' : 'text-gray-400'" title="Ready-made atlas tree: pick the content you farm"
+        @click="genOpen = !genOpen; importOpen = false"><i class="fas fa-magic" /></button>
       <template v-if="activeBuild && renaming">
         <input v-model="renameText" class="w-36 px-1 rounded bg-gray-800" spellcheck="false" @keydown.enter="rename" @keydown.esc="renaming = false">
         <button class="text-green-400" title="Save the name" @click="rename"><i class="fas fa-check" /></button>
       </template>
       <template v-else-if="activeBuild && deleting">
-        <span class="text-red-300">Delete "{{ activeBuild.name }}" from this PC?</span>
+        <span class="text-red-300">Delete "{{ activeBuild.name }}"{{ synced ? '' : ' from this PC' }}?</span>
         <button class="px-2 rounded bg-red-700 hover:bg-red-600 text-white" @click="remove">Delete</button>
         <button class="text-gray-400 hover:text-gray-100" @click="deleting = false">Keep</button>
       </template>
       <template v-else-if="activeBuild">
-        <button class="text-gray-400 hover:text-gray-100" title="Rename" @click="renameText = activeBuild.name; renaming = true"><i class="fas fa-i-cursor" /></button>
+        <span v-if="!activeBuild.own" class="text-gray-500" :title="`${activeBuild.owner}'s atlas build (from build sync): read-only, copy it to change it`"><i class="fas fa-user-friends" /> {{ activeBuild.owner }}</span>
+        <button v-if="!activeBuild.own" class="text-gray-400 hover:text-gray-100" title="Copy to your atlas builds (then you can edit it)" @click="copyToMine(activeBuild.id)"><i class="fas fa-copy" /></button>
+        <button v-if="activeBuild.own" class="text-gray-400 hover:text-gray-100" title="Rename" @click="renameText = activeBuild.name; renaming = true"><i class="fas fa-i-cursor" /></button>
         <button class="text-gray-400 hover:text-gray-100" title="Copy the atlas tree link (share it with friends)" @click="copyLink"><i class="fas" :class="copied ? 'fa-check text-green-400' : 'fa-link'" /></button>
         <button class="text-gray-400 hover:text-gray-100" title="Open on pathofexile.com (your browser)" @click="openSite"><i class="fas fa-external-link-alt" /></button>
-        <button class="text-gray-400 hover:text-red-400" title="Delete this atlas build (from this PC)" @click="deleting = true"><i class="fas fa-trash" /></button>
+        <button v-if="activeBuild.own" class="text-gray-400 hover:text-red-400" :title="synced ? 'Delete this atlas build (moves to Deleted builds; the next sync removes it on GitHub)' : 'Delete this atlas build (from this PC)'" @click="deleting = true"><i class="fas fa-trash" /></button>
         <span class="text-gray-500">{{ points }} / {{ ATLAS.points ?? '?' }} points</span>
       </template>
       <template v-if="spec">
@@ -31,7 +38,7 @@
       </template>
       <span class="flex-1" />
       <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200" :class="compact ? 'w-28' : 'w-36'" placeholder="Search atlas" spellcheck="false">
-      <button v-if="activeBuild" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
+      <button v-if="activeBuild?.own" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
         @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
       <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: what Loot Goblin saw you allocate in game. Set it here when you already have a tree."
@@ -45,13 +52,31 @@
       <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" @click="doImport">Add</button>
       <span v-if="importError" class="text-red-400 w-full">{{ importError }}</span>
     </div>
+    <div v-if="genOpen" class="px-2 pb-1 text-xs shrink-0">
+      <div class="text-gray-400 pb-1">Pick what you farm. Loot Goblin takes that content's notables{{ genSustain ? ' and general map sustain' : '' }} by the shortest path from the start, within the points. Only GGG's own atlas data is used.</div>
+      <div class="flex flex-wrap gap-1 pb-1">
+        <button v-for="c of CONTENTS" :key="c.id" class="px-2 rounded"
+          :class="genPick.includes(c.id) ? 'bg-yellow-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'"
+          :title="`${CONTENT_NOTABLES[c.id]} notables`" @click="togglePick(c.id)">{{ c.label }}</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="flex items-center gap-1"><input v-model="genSustain" type="checkbox"> Map sustain</label>
+        <label class="flex items-center gap-1">Points <input v-model.number="genBudget" type="number" min="10" :max="ATLAS.points ?? 150" class="w-14 px-1 rounded bg-gray-800"></label>
+        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" :disabled="!genPick.length && !genSustain" @click="doGenerate">Make atlas build</button>
+      </div>
+      <div v-if="genResult" class="pt-1 text-gray-400">
+        Made "{{ genResult.name }}": {{ genResult.points }} points, {{ genResult.notables.length }} notables. It's a normal atlas build: Edit it, copy the link to use it in game.
+        <span v-if="genResult.missed.length" class="text-orange-300">Didn't fit: {{ genResult.missed.join(', ') }} (more points or fewer contents).</span>
+      </div>
+    </div>
+    <div v-if="lastError" class="px-2 pb-1 text-xs text-red-400 shrink-0">{{ lastError }}</div>
     <div v-if="trackOpen" class="px-2 pb-1 text-xs text-gray-400 shrink-0">
       Loot Goblin ticks atlas passives as you allocate them in game (Client.txt). It can't see what you took before, so:
       <button v-if="spec" class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setTakenFrom(spec.nodes)">I have this whole build</button>
       <button class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setTakenFrom(null)">I have nothing (respecced / new league)</button>
     </div>
     <div v-if="spec?.unknown" class="px-2 pb-1 text-xs text-gray-500">{{ spec.unknown }} passives in this code aren't on the {{ ATLAS.version }} atlas tree (older or newer tree).</div>
-    <div v-if="!store.builds.length && !importOpen" class="px-2 pb-1 text-xs text-gray-500">
+    <div v-if="!store.builds.length && !importOpen && !genOpen" class="px-2 pb-1 text-xs text-gray-500">
       No atlas build yet: press <i class="fas fa-file-import" /> and paste an atlas tree link. Atlas guides (Help tab) link their trees; or start empty with a link to your own tree from pathofexile.com.
     </div>
 
@@ -78,7 +103,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, pointsOf, statsOf, type AtlasNode } from './atlas-tree'
-import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, setTakenFrom, takenNodes, taken } from './atlas-store'
+import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, setTakenFrom, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
+import { CONTENTS, CONTENT_NOTABLES, generateAtlas, type GenResult } from './atlas-generator'
 
 defineProps<{ compact?: boolean }>()
 
@@ -98,6 +124,31 @@ function doImport () {
     importText.value = ''; importName.value = ''; importError.value = ''; importOpen.value = false
   } catch (err) { importError.value = (err as Error).message }
 }
+// yours first, then each friend's (from build sync)
+const groups = computed(() => {
+  const out: Array<{ label: string, builds: AtlasBuild[] }> = []
+  const own = store.value.builds.filter(b => b.own)
+  if (own.length) out.push({ label: 'Yours', builds: own })
+  const by = new Map<string, AtlasBuild[]>()
+  for (const b of store.value.builds) if (!b.own) (by.get(b.owner ?? '?') ?? by.set(b.owner ?? '?', []).get(b.owner ?? '?')!).push(b)
+  for (const [owner, builds] of by) out.push({ label: owner, builds })
+  return out
+})
+// ---- ready-made trees ----
+const genOpen = ref(false)
+const genPick = ref<string[]>([])
+const genSustain = ref(true)
+const genBudget = ref<number>(ATLAS.points ?? 150)
+const genResult = ref<GenResult | null>(null)
+function togglePick (id: string) {
+  genPick.value = genPick.value.includes(id) ? genPick.value.filter(x => x !== id) : [...genPick.value, id]
+}
+function doGenerate () {
+  const r = generateAtlas({ contents: genPick.value, sustain: genSustain.value, budget: Number(genBudget.value) || (ATLAS.points ?? 150) })
+  addBuild(r.name, r.code)
+  genResult.value = r
+}
+watch(() => activeBuild.value?.own, (own) => { if (own === false) editMode.value = false })
 const renaming = ref(false)
 const renameText = ref('')
 const deleting = ref(false)
