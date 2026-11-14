@@ -839,13 +839,16 @@ export class PobImpact {
       className: reply.className,
       ascendancyClass: reply.ascendancyClass,
       kept: reply.kept,
+      keptIds: list(reply.keptIds),
       taken: reply.taken,
       order: list(reply.order),
       refund: list(reply.refund),
       ascendancy: list(reply.ascendancy),
       skillSet: reply.skillSet,
       gems: list(reply.gems),
-      previousGems: reply.previousGems ? list(reply.previousGems) : undefined
+      previousGems: reply.previousGems ? list(reply.previousGems) : undefined,
+      nextGems: reply.nextGems ? list(reply.nextGems) : undefined,
+      nextSkillSet: reply.nextSkillSet
     }
     return { build: reply.build as PobBuildInfo, plan }
   }

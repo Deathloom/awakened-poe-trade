@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.30] - 2026-11-14
+
+### Changed (#69): Loot Goblin window
+- **Guide and Next are one Levelling tab.** Campaign guide on top; under it the levelling planner with two new blocks: **Quest gems for this build** (per quest in this act and the next: which reward to *take* for your class and what to *buy* from the vendor afterwards; "All acts" shows the whole campaign) and **At level N** (gems to add and drop when you pass the current levelling tree's level, from the next tree's skill set). Quest/vendor data: Exile Leveling's game-data export (MIT, HeartofPhos), regenerated each league with `tools/gen-quest-gems.py`.
+- **All tab:** build | levelling | tree map, trades, market. The tree map there shows the levelling plan: green = taken by now, cyan with numbers = next 5, orange = later in this tree, and zooms in on the next passives (crosshair button zooms back).
+- **Tree map is brighter**: lighter background, unallocated nodes and links easier to see.
+- Needs Path of Building with PoB fork PR #26 (`keptIds`, next step's gems).
+
 ## [1.0.29] - 2026-11-14
 
 ### Added (#68)

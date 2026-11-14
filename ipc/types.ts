@@ -206,6 +206,7 @@ export interface PobPlan {
   ascendancyClass?: string
   // nodes carried over from the previous levelling tree
   kept: number
+  keptIds: number[]
   // nodes of order[] that should be taken by now
   taken: number
   order: PobPlanNode[]
@@ -214,6 +215,9 @@ export interface PobPlan {
   skillSet?: string
   gems: PobPlanGem[]
   previousGems?: PobPlanGem[]
+  // the next levelling step's skill set (swap gems when passing this step's level)
+  nextGems?: PobPlanGem[]
+  nextSkillSet?: string
 }
 
 export interface PobTreeAlloc {
