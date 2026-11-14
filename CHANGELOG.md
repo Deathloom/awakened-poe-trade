@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.83] - 2026-11-15
+
+### Added (#129)
+- **Lab tab in the Loot Goblin window:** poelab.com (today's labyrinth layouts) opens inside Loot Goblin instead of your browser. The campaign guide's **Today's layout on poelab.com** button (overlay, in-game panel or window) opens the window on this tab without taking focus from the game. The site is shown as-is in its own session, ads included; links to other sites open in your browser (pop-up ads can't flood it). It stays loaded once opened, like the Trade site tab.
+
+### Security (#129)
+- In-app site tabs (Trade site, Lab) only hold the page itself to its allowed sites; redirects inside frames on the page (ads, captchas) no longer bounce out to your browser.
+
 ## [1.0.82] - 2026-11-15
 
 ### Added (#128)

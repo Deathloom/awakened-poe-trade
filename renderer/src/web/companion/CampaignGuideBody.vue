@@ -23,8 +23,8 @@
       <i class="fas fa-dungeon text-yellow-400" />
       <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${lab.name} Labyrinth` }}</span>
       <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
-      <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens your browser)"
-        @click="openPoelab"><i class="fas fa-external-link-alt mr-1" />Today's layout on poelab.com</button>
+      <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Loot Goblin window)"
+        @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
       <button class="text-gray-500 hover:text-gray-200" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
     </div>
     <div ref="listEl" class="p-1 min-h-0" :class="{ 'overflow-y-auto flex-1': tall }">
@@ -225,8 +225,9 @@ const lab = ref<{ name: string, level: number, done: boolean } | null>(null)
 function labName (level: number) {
   return level >= 75 ? 'Eternal' : level >= 68 ? 'Merciless' : level >= 55 ? 'Cruel' : 'Normal'
 }
+// the Loot Goblin window's Lab tab (opens the window without taking focus from the game)
 function openPoelab () {
-  window.open('https://www.poelab.com/', '_blank')
+  Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'lab' } })
 }
 
 function move (d: number) {

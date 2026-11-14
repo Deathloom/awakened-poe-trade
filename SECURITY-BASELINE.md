@@ -13,8 +13,8 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 1.1 | Electron kept current (security fixes) | ✅ 45.3.2 (latest at review) | `main/package.json`; Dependabot + weekly upstream check |
 | 1.2 | `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true` on every window, stated explicitly | ✅ | Overlay, HUD, Desktop windows |
 | 1.3 | No preload scripts in app windows; webviews get theirs removed | ✅ | `safe-open.ts` `hardenWebview`, `trade-tab.ts` |
-| 1.4 | `<webview>`: sandboxed, `webSecurity` on, no insecure content, only http(s) sources; trade tab only GGG's trade site in its own session | ✅ | `hardenWebview`, `prepareTradeWebview` |
-| 1.5 | Web pages inside the app get no browser permissions (camera, mic, notifications, …) | ✅ | `denyWebviewPermissions` (default session), trade-tab session |
+| 1.4 | `<webview>`: sandboxed, `webSecurity` on, no insecure content, only http(s) sources; trade tab only GGG's trade site, Lab tab only poelab.com, each in its own session | ✅ | `hardenWebview`, `prepareTradeWebview` |
+| 1.5 | Web pages inside the app get no browser permissions (camera, mic, notifications, …) | ✅ | `denyWebviewPermissions` (default session), trade and lab tab sessions |
 | 1.6 | App windows can't navigate away from the app's own pages; popups denied | ✅ | `lockToAppPages`, `guardTradeWebview` |
 | 1.7 | `shell.openExternal` only with http(s) links (other schemes can start programs) | ✅ | `openWebLink`; remaining direct calls use fixed URLs |
 | 1.8 | Content-Security-Policy on app pages | ⚠️ open | Pages come from the local server only; a CSP needs testing against webviews, websocket and poecdn images. Planned. |
