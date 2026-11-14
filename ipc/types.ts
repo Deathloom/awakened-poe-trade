@@ -699,6 +699,10 @@ type IpcUserAction =
     // window's Trade site tab (opens the window if needed, without focus)
     action: 'open-trade-tab'
     url: string
+  } | {
+    // Deathloom fork: open the Loot Goblin window on a tab (e.g. Help)
+    action: 'open-window-view'
+    view: string
   }>
 
 // Deathloom fork: main → Loot Goblin window: show this trade site page

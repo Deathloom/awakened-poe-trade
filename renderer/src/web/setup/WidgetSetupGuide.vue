@@ -28,7 +28,9 @@
             <p v-else class="mb-2">A few quick steps set up the overlay. Every step can be skipped and you can run this guide again
               any time: press <b>{{ overlayKey }}</b> and click <i class="fas fa-magic" /> on the top bar.</p>
             <p class="mb-3 text-gray-400">Loot Goblin is price checking, your Path of Building build next to every item,
-              a campaign guide and a trade companion. It never types into the game unless you click a button that says so.</p>
+              a campaign guide and levelling planner, market search, a trade companion and the official trade site, with
+              everything also in the Loot Goblin window for a second screen. It never types into the game unless you click a
+              button that says so.</p>
             <div class="mb-1">Share builds with your group (optional)</div>
             <div class="text-gray-400 text-sm mb-2">
               Needs a free GitHub account that was invited to <b>POE-Builds</b>. Without it everything else still works.
@@ -106,13 +108,20 @@
 
           <!-- 3. Character -->
           <template v-else-if="step === 2">
-            <div class="text-xl mb-2">Your character</div>
+            <div class="text-xl mb-2">Your build</div>
             <p class="mb-2 text-gray-400">Loot Goblin compares items, gems and the passive tree with your
               Path of Building build. Comparing with your live character (what it wears now) is turned off:
               GGG's rules don't allow shared apps to read character data from pathofexile.com outside its
               official API, and we don't risk anyone's account.</p>
             <p class="mb-2 text-gray-400">Keep your build in PoB up to date (re-import your character in PoB
               and save) and the panels follow it.</p>
+            <div class="mt-3 mb-1"><i class="fas fa-hammer mr-1" />No build yet? Get one</div>
+            <p class="mb-2 text-gray-400 text-sm">Pick a guide, copy its Path of Building code or pobb.in link, then use
+              <i class="fas fa-file-import" /> in the build panel to import it. Links open in your browser.</p>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="site of BUILD_SITES" :key="site.url" class="btn" :title="site.what" @click="openLink(site.url)">
+                <i class="fas fa-external-link-alt mr-1 text-xs" />{{ site.name }}</button>
+            </div>
           </template>
 
           <!-- 4. Panels -->
@@ -135,6 +144,8 @@
                 <td class="pr-4"><hotkey-input v-model="pob.openPobKey" class="w-40" /></td>
               </tr>
             </table>
+            <div class="text-gray-500 text-sm mb-2">More choices (which panels show in the overlay and in the Loot Goblin window):
+              Settings → Path of Building → Where panels show.</div>
             <div class="text-gray-500 text-sm mb-3">"Clicks go through" means the panel can't be clicked while you play
               (press {{ overlayKey }} to click it). Drag a panel by its top bar; resize it from the bottom-right corner.</div>
             <template v-if="pob.hud.guide || pob.hud.trades || pob.hud.gear">
@@ -162,6 +173,13 @@
                 send it to game chat (one command per click, like a chat hotkey)</label>
             </div>
             <ui-toggle v-model="pob.hud.autoHideTrades">Open on a trade whisper, close when no trades are left</ui-toggle>
+            <div class="mt-3 mb-1"><i class="fas fa-search-dollar mr-1" />Buying</div>
+            <div class="text-gray-400 text-sm mb-2">Market search (overlay menu) finds an item by name; its Whisper and Hideout
+              buttons work the same way as these. Instant buyout uses GGG's own Travel to Hideout on the trade site.</div>
+            <ui-toggle :modelValue="pob.tradeLinksInWindow !== false" @update:modelValue="pob.tradeLinksInWindow = $event">
+              Open Trade buttons in the Loot Goblin window's Trade site tab</ui-toggle>
+            <div class="text-gray-500 text-sm mt-1">GGG's own trade site, signed in separately from your browser (you sign in on
+              GGG's page; Loot Goblin never sees your login). Off: Trade buttons open your browser.</div>
             <div class="text-gray-500 text-sm mt-1">Only applies when the trade companion is pinned (previous step).
               The Ledger tab keeps your sales and buys per league.</div>
           </template>
@@ -197,7 +215,10 @@
                 <b>{{ pob.tradesKey || 'no hotkey' }}</b> trade companion, <b>{{ pob.openPobKey || 'no hotkey' }}</b> Path of Building.</li>
               <li>Build panel: <i class="fas fa-cloud" /> build sharing (Pull / Push), <i class="fas fa-file-import" /> import a PoB code or link,
                 <i class="fas fa-exchange-alt" /> pick the build and loadout.</li>
-              <li><i class="fas fa-question-circle" /> on the top bar is a short how-to, <i class="fas fa-magic" /> runs this guide again.</li>
+              <li>Loot Goblin window (tray icon, double-click): everything in one place, plus the Trade site tab.
+                Build tab: <i class="fas fa-pen" /> edit loadouts, <i class="fas fa-folder-open" /> manage builds.</li>
+              <li><i class="fas fa-question-circle" /> on the top bar is a short how-to; the window's <b>Help</b> tab has the full help,
+                an FAQ and links to build guides. <i class="fas fa-magic" /> runs this guide again.</li>
               <li>Something wrong? Tray icon → Report a problem…</li>
             </ul>
             <div class="text-gray-500 text-sm mt-3">
@@ -252,13 +273,17 @@ import BuildSync from '@/web/pob/BuildSync.vue'
 import PobInstallStatus from '@/web/pob/PobInstallStatus.vue'
 import { IS_HUD } from '@/web/hud/is-hud'
 import { desktopSetupShown } from './setup-state'
+import { BUILD_SITES } from '@/web/help/build-sites'
 
 // desktop: shown in the Loot Goblin window (no widget manager; saves itself)
 const props = defineProps<{ config?: WidgetT, desktop?: boolean }>()
 const wm = props.desktop ? null : inject<WidgetManager>('wm')!
 const visible = computed(() => props.desktop ? desktopSetupShown.value : props.config?.wmWants === 'show')
 
-const STEPS = ['Welcome', 'Folders', 'Character', 'Panels', 'Trades', 'Extras', 'Done']
+const STEPS = ['Welcome', 'Folders', 'Build', 'Panels', 'Trades', 'Extras', 'Done']
+function openLink (url: string) {
+  window.open(url)
+}
 const PANELS = [
   { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },
   { key: 'trades', label: 'Trade companion', hotkey: 'tradesKey' },

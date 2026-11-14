@@ -158,6 +158,10 @@ app.on('ready', async () => {
       if (desktopRequested) desktop.open()
       // Trade site tab: open GGG trade pages from the overlay in the window
       eventPipe.onEventAnyClient('CLIENT->MAIN::user-action', (e) => {
+        if (e.action === 'open-window-view') {
+          shortcuts.openWindowView?.(e.view)
+          return
+        }
         if (e.action !== 'open-trade-tab') return
         const ok = desktop.openTrade(e.url, (url) => {
           eventPipe.sendEventTo('broadcast', { name: 'MAIN->CLIENT::open-trade-tab', payload: { url } })
