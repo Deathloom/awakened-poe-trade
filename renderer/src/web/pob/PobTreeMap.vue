@@ -49,7 +49,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobTreeAlloc, PobTreeMapLayout, PobTreeMapNode } from '@ipc/types'
-import { currentPlan as plan } from './plan-store'
+import { currentPlan as plan, currentTaken as takenSet } from './plan-store'
 
 const props = defineProps<{
   // levelling view: colours from the levelling plan (taken / next / later) and
@@ -121,10 +121,15 @@ const levelPlan = computed(() => {
   if (!levellingOn.value || !p) return null
   const kept = Array.isArray(p.keptIds) ? p.keptIds : []
   const order = p.order.map(n => n.id)
+  // taken passives from the game log when known (moves only once you allocate),
+  // otherwise the plan's guess from your level
+  const taken = takenSet.value
+  const done = (i: number) => taken ? taken.has(i) : i < p.taken
+  const have = order.filter((_, i) => done(i))
   return {
     target: new Set([...kept, ...order]),
-    have: new Set([...kept, ...order.slice(0, p.taken)]),
-    next: order.slice(p.taken, p.taken + 5)
+    have: new Set([...kept, ...have]),
+    next: order.filter((_, i) => !done(i)).slice(0, 5)
   }
 })
 const hasLive = computed(() => levelPlan.value != null || live.value != null)
