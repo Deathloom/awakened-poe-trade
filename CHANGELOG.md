@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.74] - 2026-11-14
+
 ### Security (#117)
 - **Web pages inside Loot Goblin are locked down further:** the overlay's built-in browser (wiki / trade site) now runs sandboxed with web security on and only opens web links, and pages shown inside the app can't ask for camera, microphone, notifications or location. The app's own windows state Electron's secure settings explicitly.
 - **Security baseline** ([SECURITY-BASELINE.md](SECURITY-BASELINE.md)) with automatic checks on every change and weekly: dependency advisories, Electronegativity, OpenSSF Scorecard. The Release workflow no longer pastes the version text into scripts.
