@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.76] - 2026-11-14
+
+### Fixed (#121)
+- **Appearance in the Loot Goblin window:** Settings there now has the Appearance page too, and its preview shows in the window.
+- **Saving settings in the overlay reaches the other windows straight away** (the Loot Goblin window and in-game panels used to update only after the overlay closed, e.g. when you switched windows). Applies to every setting, not just themes.
+
 ## [1.0.75] - 2026-11-14
 
 ### Added (#120)

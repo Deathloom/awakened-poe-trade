@@ -2,7 +2,7 @@
   <!-- Deathloom fork: themes and look settings (src/web/appearance.ts) -->
   <div class="max-w-md p-2">
     <div class="text-gray-500 text-sm mb-4">
-      Changes show straight away here; Save keeps them for the overlay, the in-game panels and the Loot Goblin window.
+      Changes show straight away in this window; Save applies them to the overlay, the in-game panels and the Loot Goblin window.
     </div>
 
     <div class="mb-4">
@@ -100,9 +100,11 @@ import UiToggle from '@/web/ui/UiToggle.vue'
 import { AppConfig, type Config } from '@/web/Config'
 import { Host } from '@/web/background/IPC'
 import { THEMES, FONTS, applyAppearance, defaultAppearance } from '@/web/appearance'
+import { IS_HUD, IS_DESKTOP } from '@/web/hud/is-hud'
 import { configModelValue } from './utils'
 
 const MAX_IMAGE_BYTES = 15_000_000
+const SURFACE = IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay'
 
 export default defineComponent({
   name: 'Appearance',
@@ -116,8 +118,8 @@ export default defineComponent({
   setup (props) {
     // settings edits a copy of the config: preview it, put the saved look back on close
     const a = computed(() => props.config.appearance)
-    watch(a, (v) => { applyAppearance(v, 'overlay') }, { deep: true, immediate: true })
-    onUnmounted(() => { applyAppearance(AppConfig().appearance, 'overlay') })
+    watch(a, (v) => { applyAppearance(v, SURFACE) }, { deep: true, immediate: true })
+    onUnmounted(() => { applyAppearance(AppConfig().appearance, SURFACE) })
 
     const fileEl = shallowRef<HTMLInputElement | null>(null)
     const error = shallowRef('')
