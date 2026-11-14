@@ -69,26 +69,42 @@ export function planQuestGems (className: string | undefined, wanted: WantedGem[
   for (const g of start) have.add(key(g))
 
   const steps: QuestGemStep[] = []
+  // a quest's reward offers together: every pick first, then what to buy
+  // (Mercy Mission: Nessa's support gem pick before her shop)
+  const groups: Array<typeof QUESTS> = []
   for (const q of QUESTS) {
-    const offered = Object.entries(q.take)
-      .filter(([, mask]) => mask & bit)
-      .map(([name]) => byKey.get(key(name)))
-      .filter((g): g is WantedGem => g != null && !have.has(key(g.name)))
-      // skill gems before supports, then the earliest usable
-      .sort((a, b) => Number(a.support) - Number(b.support) || a.reqLevel - b.reqLevel)
-    const take = offered[0] ?? null
-    if (take) have.add(key(take.name))
-    const buy: QuestGemStep['buy'] = []
-    for (const [name, [mask, vendor]] of Object.entries(q.buy)) {
-      if (mask !== 0 && !(mask & bit)) continue
-      const g = byKey.get(key(name))
-      if (!g || have.has(key(g.name))) continue
-      have.add(key(g.name))
-      buy.push({ ...g, vendor })
+    const last = groups[groups.length - 1]
+    // "a1q5" + "a1q5b" = one hand-in with two picks; "a1q2b" / "a1q2" are two separate hand-ins
+    if (last && q.id === last[0].id + 'b') last.push(q)
+    else groups.push([q])
+  }
+  for (const group of groups) {
+    const picks = new Map<string, { take: WantedGem | null, also: string[] }>()
+    for (const q of group) {
+      const offered = Object.entries(q.take)
+        .filter(([, mask]) => mask & bit)
+        .map(([name]) => byKey.get(key(name)))
+        .filter((g): g is WantedGem => g != null && !have.has(key(g.name)))
+        // skill gems before supports, then the earliest usable
+        .sort((a, b) => Number(a.support) - Number(b.support) || a.reqLevel - b.reqLevel)
+      const take = offered[0] ?? null
+      if (take) have.add(key(take.name))
+      picks.set(q.id, { take, also: offered.slice(1).map(g => g.name) })
     }
-    buy.sort((a, b) => a.reqLevel - b.reqLevel || a.name.localeCompare(b.name))
-    if (take || buy.length) {
-      steps.push({ id: q.id, quest: q.quest, act: q.act, npc: q.npc, take, alsoOffered: offered.slice(1).map(g => g.name), buy })
+    for (const q of group) {
+      const buy: QuestGemStep['buy'] = []
+      for (const [name, [mask, vendor]] of Object.entries(q.buy)) {
+        if (mask !== 0 && !(mask & bit)) continue
+        const g = byKey.get(key(name))
+        if (!g || have.has(key(g.name))) continue
+        have.add(key(g.name))
+        buy.push({ ...g, vendor })
+      }
+      buy.sort((a, b) => a.reqLevel - b.reqLevel || a.name.localeCompare(b.name))
+      const { take, also } = picks.get(q.id)!
+      if (take || buy.length) {
+        steps.push({ id: q.id, quest: q.quest, act: q.act, npc: q.npc, take, alsoOffered: also, buy })
+      }
     }
   }
   const notFromQuests = [...byKey.values()].filter(g => !have.has(key(g.name)))

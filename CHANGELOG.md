@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed
+- **Campaign guide showed only one reward for quests that give two.** Mercy Mission now shows the flask (item reward) and Nessa's support gem pick, and Breaking Some Eggs shows both gem picks. Picks come before what to buy, so a gem you can take for free is no longer listed as "buy".
+
+### Added
+- **Optional quests in the campaign guide**, marked "optional": A Fixture of Fate (the Library: Golden Pages, then Siosa's gem pick and shop), A Dirty Job (Fetid Pool, 2 respec points), The King's Feast (Utula), Bestel's Epic (Riptide), In Memory of Greust and The Wings of Vastiri, each with its hand-in and reward. The ➕ button at the top of the guide hides or shows them.
+
 ## [1.0.53] - 2026-11-14
 
 ### Changed (#94)
