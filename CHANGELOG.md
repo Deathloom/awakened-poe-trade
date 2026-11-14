@@ -8,9 +8,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.26] - 2026-11-14
+
+### Changed (#65)
+- **Trade whispers are shared between windows.** Sold or ✕ in the Loot Goblin window closes the trade in the HUD too (and the other way round), and a window opened later still shows the open trades. Open trades older than 3 hours drop off.
+
 ### Changed (#64): GGG rules
 - "Not affiliated with Grinding Gear Games" now also shows in the app (Settings → About, the setup guide's last step, the Loot Goblin window), not only in the README.
 - Requests the app makes to pathofexile.com, poe.ninja and poeprices now say who they come from: the User-Agent ends in `LootGoblin/<version> (+github link)`.
+
+## [1.0.25] - 2026-11-14
 
 ### Changed (#63)
 - **Open the Loot Goblin window when the game starts** (was: when Loot Goblin starts). Opens without taking focus, once per game launch; if you close it while playing it stays closed until the next launch. Turning it on while the game runs opens it right away. Same setting, so it stays ticked.

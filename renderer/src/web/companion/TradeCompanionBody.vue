@@ -104,13 +104,36 @@ const BUY_BUTTONS = [
   { key: 'ty', label: 'Thanks', cmd: (c: string) => `@${c} ty!` }
 ]
 
-const trades = ref<TradeEntry[]>([])
+// Deathloom fork: the whisper list is shared by every window that shows it
+// (overlay or HUD, Loot Goblin window) through localStorage, so Sold / dismiss
+// in one window closes the trade everywhere, and a window opened later still
+// shows the open trades. Entries older than 3 h are dropped.
+const TRADES_KEY = 'deathloom.trades-open.v1'
+const MAX_AGE = 3 * 60 * 60_000
+function loadTrades (): TradeEntry[] {
+  try {
+    const list = JSON.parse(localStorage.getItem(TRADES_KEY) || '[]') as TradeEntry[]
+    const cutoff = Date.now() - MAX_AGE
+    return Array.isArray(list) ? list.filter(t => t && typeof t.id === 'string' && t.at > cutoff).slice(0, 30) : []
+  } catch { return [] }
+}
+function saveTrades (list: TradeEntry[]) {
+  try { localStorage.setItem(TRADES_KEY, JSON.stringify(list.slice(0, 30))) } catch {}
+}
+// change the newest stored list and save it
+function updateTrades (fn: (list: TradeEntry[]) => void) {
+  const list = loadTrades()
+  fn(list)
+  trades.value = list
+  saveTrades(list)
+}
+
+const trades = ref<TradeEntry[]>(loadTrades())
 const inArea = ref(new Set<string>())
 const pressed = ref<string | null>(null)
 const ledger = shallowRef<TradeEntry[]>(loadLedger())
 const ledgerLeague = ref('')
-let lastActive: TradeEntry | null = null
-let nextId = Date.now()
+let lastActiveId: string | null = null
 
 const mode = computed(() => chatMode())
 const modeHelp = computed(() => mode.value === 'send'
@@ -124,22 +147,30 @@ watch(() => openTrades.value.length, (n, prev) => { if (n === 0 && prev > 0) emi
 function handle (e: LogEvent) {
   if (e.type === 'trade') {
     ledgerLeague.value = e.league
-    // Same player, same item: a repeated whisper, not a new trade
-    const dup = trades.value.find(t => !t.done && t.char === e.char && t.item === e.item && t.direction === e.direction)
-    if (dup) { dup.at = Date.now(); return }
-    trades.value.unshift({
-      id: String(nextId++),
-      at: Date.now(),
-      direction: e.direction,
-      char: e.char,
-      item: e.item,
-      price: e.price,
-      league: e.league,
-      tab: e.tab,
-      message: e.message
+    let isNew = false
+    updateTrades((list) => {
+      // Same player, same item: a repeated whisper, not a new trade
+      // (or another window has just added this one)
+      const dup = list.find(t => !t.done && t.char === e.char && t.item === e.item && t.direction === e.direction)
+      if (dup) {
+        isNew = Date.now() - dup.at < 5000
+        dup.at = Date.now()
+        return
+      }
+      isNew = true
+      list.unshift({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        at: Date.now(),
+        direction: e.direction,
+        char: e.char,
+        item: e.item,
+        price: e.price,
+        league: e.league,
+        tab: e.tab,
+        message: e.message
+      })
     })
-    trades.value = trades.value.slice(0, 30)
-    if (e.direction === 'from') emit('incoming')
+    if (isNew && e.direction === 'from') emit('incoming')
   } else if (e.type === 'joined') {
     inArea.value = new Set(inArea.value).add(e.char)
   } else if (e.type === 'left') {
@@ -148,12 +179,15 @@ function handle (e: LogEvent) {
     inArea.value = new Set()
   } else if (e.type === 'tradeResult' && e.accepted) {
     // The trade with someone in the area that was touched last; else the newest such trade
-    const inAreaTrades = openTrades.value.filter(t => inArea.value.has(t.char))
-    const t = (lastActive && !lastActive.done && inArea.value.has(lastActive.char) ? lastActive : null) ?? inAreaTrades[0]
-    if (!t) return
-    t.done = true
-    ledger.value = appendToLedger({ ...t, at: Date.now() })
-    trades.value = [...trades.value]
+    let doneTrade: TradeEntry | undefined
+    updateTrades((list) => {
+      const open = list.filter(t => !t.done && inArea.value.has(t.char))
+      const last = open.find(t => t.id === lastActiveId)
+      doneTrade = last ?? open[0]
+      if (doneTrade) doneTrade.done = true
+    })
+    // (the ledger skips it if another window logged the same trade)
+    if (doneTrade) ledger.value = appendToLedger({ ...doneTrade, at: Date.now() })
   }
 }
 
@@ -165,23 +199,25 @@ const logListener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
   }
 })
 const stopLedgerSync = onLedgerChange((list) => { ledger.value = list })
-onUnmounted(() => { logListener.abort(); stopLedgerSync() })
+const onTradesStorage = (e: StorageEvent) => { if (e.key === TRADES_KEY) trades.value = loadTrades() }
+window.addEventListener('storage', onTradesStorage)
+onUnmounted(() => { logListener.abort(); stopLedgerSync(); window.removeEventListener('storage', onTradesStorage) })
 
 let pressTimer: ReturnType<typeof setTimeout> | undefined
 function press (t: TradeEntry, text: string, key: string) {
-  lastActive = t
+  lastActiveId = t.id
   runChat(text)
   pressed.value = t.id + key
   clearTimeout(pressTimer)
   pressTimer = setTimeout(() => { pressed.value = null }, 1500)
-  if (key === 'sold') t.done = true
-  trades.value = [...trades.value]
+  if (key === 'sold') dismiss(t.id)
 }
 
 function dismiss (id: string) {
-  const t = trades.value.find(x => x.id === id)
-  if (t) t.done = true
-  trades.value = [...trades.value]
+  updateTrades((list) => {
+    const t = list.find(x => x.id === id)
+    if (t) t.done = true
+  })
 }
 
 const ledgerForLeague = computed(() => {
