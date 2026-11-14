@@ -8,7 +8,11 @@
         :class="view === v.key ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         :title="v.title" @click="setView(v.key)">
         <i class="fas mr-1" :class="v.icon" />{{ v.label }}</button>
-      <span class="ml-auto text-xs text-gray-500" :title="playingHelp">{{ status }}</span>
+      <button v-if="view === 'overview'" class="ml-auto px-2 py-0.5 rounded text-xs"
+        :class="editLayout ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
+        title="Add, remove, move and resize the panels on the All tab" @click="editLayout = !editLayout">
+        <i class="fas fa-th mr-1" />{{ editLayout ? 'Done' : 'Edit layout' }}</button>
+      <span class="text-xs text-gray-500" :class="view === 'overview' ? 'ml-3' : 'ml-auto'" :title="playingHelp">{{ status }}</span>
     </div>
 
     <!-- an update is downloaded: install from here (it also installs by itself once the game is closed) -->
@@ -21,31 +25,8 @@
       <button class="text-green-300 hover:text-white" title="Later (installs by itself when the game isn't running)" @click="dismissed = readyVersion">Later</button>
     </div>
 
-    <!-- All: three columns and the right column's rows can be resized (drag the lines) -->
-    <div v-if="view === 'overview'" ref="colsEl" class="flex flex-1 min-h-0 p-2">
-      <!-- left: gear, trades, market | middle: levelling | right: tree map, session.
-           Panels switched off for the window (Settings → Where panels show) are left out. -->
-      <template v-for="(c, n) of visCols" :key="c">
-        <SplitGutter v-if="n > 0" dir="x" @drag="d => cols.drag(visCols[n - 1], d, colsEl?.clientWidth ?? 0, c, visCols)" @end="cols.save" @reset="cols.reset" />
-        <div v-if="c === 0" :ref="el => { leftEl = el as HTMLElement }" class="min-w-0 min-h-0 flex flex-col" :style="{ flex: `${cols.sizes.value[0]} 1 0` }">
-          <template v-for="(r, m) of visLeft" :key="r">
-            <SplitGutter v-if="m > 0" dir="y" @drag="d => left.drag(visLeft[m - 1], d, leftEl?.clientHeight ?? 0, r, visLeft)" @end="left.save" @reset="left.reset" />
-            <div v-if="r === 0" class="min-h-0" :style="{ flex: `${left.sizes.value[0]} 1 0` }"><PobGearBody :active="true" desktop /></div>
-            <div v-else-if="r === 1" class="min-h-0" :style="{ flex: `${left.sizes.value[1]} 1 0` }"><TradeCompanionBody fill /></div>
-            <div v-else class="min-h-0" :style="{ flex: `${left.sizes.value[2]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
-          </template>
-        </div>
-        <div v-else-if="c === 1" class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[1]} 1 0` }"><LevellingBody /></div>
-        <div v-else :ref="el => { rowsEl = el as HTMLElement }" class="min-w-0 min-h-0 flex flex-col" :style="{ flex: `${cols.sizes.value[2]} 1 0` }">
-          <template v-for="(r, m) of visRows" :key="r">
-            <SplitGutter v-if="m > 0" dir="y" @drag="d => rows.drag(visRows[m - 1], d, rowsEl?.clientHeight ?? 0, r, visRows)" @end="rows.save" @reset="rows.reset" />
-            <div v-if="r === 0" class="min-h-0 flex flex-col rounded bg-gray-800" :style="{ flex: `${rows.sizes.value[0]} 1 0` }"><PobTreeMap levelling compact /></div>
-            <div v-else class="min-h-0" :style="{ flex: `${rows.sizes.value[1]} 1 0` }"><PlaySessionBody /></div>
-          </template>
-        </div>
-      </template>
-      <div v-if="!visCols.length" class="m-auto text-gray-500">Every panel is switched off for this window (Settings → Path of Building → Where panels show).</div>
-    </div>
+    <!-- All: customisable (Edit layout in the top bar) -->
+    <AllLayout v-if="view === 'overview'" :editing="editLayout" @done="editLayout = false" />
     <div v-else-if="view !== 'trade'" class="flex-1 min-h-0 p-2">
       <div class="h-full min-h-0">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
@@ -77,9 +58,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { loadSession, SESSION_KEY } from '../companion/char-level'
 import { Host } from '@/web/background/IPC'
 import PobGearBody from '../pob/PobGearBody.vue'
-import PobTreeMap from '../pob/PobTreeMap.vue'
 import LevellingBody from './LevellingBody.vue'
-import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import MarketOverview from '../market-history/MarketOverview.vue'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
@@ -89,7 +68,7 @@ import DesktopSettings from './DesktopSettings.vue'
 import TradeSiteBody from './TradeSiteBody.vue'
 import HelpBody from '../help/HelpBody.vue'
 import { tradeTabRequest } from './trade-tab'
-import { inWindow } from './panels'
+import AllLayout from './AllLayout.vue'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 import { desktopSetupShown } from '../setup/setup-state'
@@ -147,19 +126,9 @@ watch(tradeTabRequest, () => { setView('trade') })
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
-// All tab layout (fractions, saved)
-const colsEl = ref<HTMLElement>()
-let rowsEl: HTMLElement | undefined
-let leftEl: HTMLElement | undefined
-// All tab: which panels show (Where panels show → Loot Goblin window)
-const visLeft = computed(() => [inWindow('gear'), inWindow('trades'), inWindow('market')].flatMap((on, i) => on ? [i] : []))
-const visRows = computed(() => [inWindow('tree'), inWindow('session')].flatMap((on, i) => on ? [i] : []))
-const visCols = computed(() => [visLeft.value.length > 0, inWindow('guide'), visRows.value.length > 0]
-  .flatMap((on, i) => on ? [i] : []))
-const cols = useSplit('all-cols', [0.34, 0.36, 0.3])
-// left column: gear | trades | market (from 1.0.58; before that trades and market were on the right)
-const left = useSplit('all-left', [0.6, 0.2, 0.2])
-const rows = useSplit('all-right-v2', [0.65, 0.35])
+// All tab: Edit layout mode (left when you switch tabs)
+const editLayout = ref(false)
+watch(view, (v) => { if (v !== 'overview') editLayout.value = false })
 const marketEl = ref<HTMLElement>()
 const market = useSplit('market', [0.5, 0.5])
 

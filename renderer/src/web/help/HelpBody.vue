@@ -26,7 +26,7 @@
           <h2>The Loot Goblin window</h2>
           <p>A normal window for your second screen with everything in one place. Open it from the tray (double-click), or let it open when the game starts (Settings → Path of Building).</p>
           <ul>
-            <li><b>All</b>: build, levelling, tree map, trades, market history and This session at once. Drag the lines between panels to resize; double-click a line to reset it.</li>
+            <li><b>All</b>: build, levelling, tree map, trades, market history and This session at once. Drag the lines between panels to resize; double-click a line to even those panels out. <b>Edit layout</b> (top right) lets you move panels (drag them by their bar; drop on a column's edge for a new column), take them off with ×, add more (market overview, market search) and Reset layout.</li>
             <li><b>Build</b>: gear, gems, tree and Tree map of the active build.
               <i class="fas fa-exchange-alt" /> picks the build and loadout, <i class="fas fa-pen" /> edits loadouts, <i class="fas fa-folder-open" /> manages builds,
               <i class="fas fa-file-import" /> imports a PoB code or link, <i class="fas fa-cloud" /> shares builds.</li>

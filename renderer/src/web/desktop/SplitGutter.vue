@@ -1,11 +1,11 @@
 <template>
   <!-- Deathloom fork: drag handle between two panels (double-click: default sizes) -->
   <div :class="dir === 'x' ? 'split-gutter split-x' : 'split-gutter split-y'"
-    :title="'Drag to resize · double-click to reset'" @mousedown.prevent="start" @dblclick="emit('reset')" />
+    :title="`Drag to resize · double-click to ${resetLabel ?? 'reset'}`" @mousedown.prevent="start" @dblclick="emit('reset')" />
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ dir: 'x' | 'y' }>()
+const props = defineProps<{ dir: 'x' | 'y', resetLabel?: string }>()
 const emit = defineEmits<{
   (e: 'drag', deltaPx: number): void
   (e: 'end' | 'reset'): void

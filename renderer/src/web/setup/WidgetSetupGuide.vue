@@ -216,6 +216,7 @@
               <li>Build panel: <i class="fas fa-cloud" /> build sharing (Pull / Push), <i class="fas fa-file-import" /> import a PoB code or link,
                 <i class="fas fa-exchange-alt" /> pick the build and loadout.</li>
               <li>Loot Goblin window (tray icon, double-click): everything in one place, plus the Trade site tab.
+                All tab: <b>Edit layout</b> to add, remove and move panels.
                 Build tab: <i class="fas fa-pen" /> edit loadouts, <i class="fas fa-folder-open" /> manage builds.</li>
               <li><i class="fas fa-question-circle" /> on the top bar is a short how-to; the window's <b>Help</b> tab has the full help,
                 an FAQ and links to build guides. <i class="fas fa-magic" /> runs this guide again.</li>
