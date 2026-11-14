@@ -68,15 +68,18 @@ export function removeWatch (key: string) {
 
 // Add a price point if the last one is older than minGap
 export function record (key: string, chaos: number, minGap = 55 * 60_000) {
-  // newest copy first: another window may have recorded a point already
-  watchlist.value = load()
-  const w = watchlist.value.find(x => x.key === key)
+  // newest copy first: another window may have recorded a point already.
+  // Only touch the shared list when a point is added: replacing it every time
+  // re-ran the panel's watcher, which called record() again, endlessly (the
+  // overlay froze after starring an item)
+  const fresh = load()
+  const w = fresh.find(x => x.key === key)
   if (!w) return
   const last = w.points[w.points.length - 1]
   const now = Date.now()
   if (last && now - last[0] < minGap) return
   w.points.push([now, chaos])
   if (w.points.length > MAX_POINTS) w.points.splice(0, w.points.length - MAX_POINTS)
-  watchlist.value = [...watchlist.value]
+  watchlist.value = fresh
   save()
 }

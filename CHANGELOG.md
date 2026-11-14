@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.48] - 2026-11-14
+
+### Fixed (#87)
+- **Starring an item's poe.ninja price froze the overlay** (you had to restart Loot Goblin). The market history panel kept re-recording the price in a loop.
+
+### Changed (#57)
+- Updated Vue (3.5) and vue-i18n (11) under the hood. Nothing should look different.
+
 ## [1.0.47] - 2026-11-14
 
 ### Added (#86)
