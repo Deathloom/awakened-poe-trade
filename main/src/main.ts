@@ -1,6 +1,7 @@
 'use strict'
 
-import { app, clipboard, net } from 'electron'
+import { app, clipboard, net, session } from 'electron'
+import { denyWebviewPermissions } from './safe-open'
 import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
 import { promises as fs } from 'node:fs'
@@ -50,6 +51,7 @@ app.enableSandbox()
 let tray: AppTray
 
 app.on('ready', async () => {
+  denyWebviewPermissions(session.defaultSession)
   tray = new AppTray(eventPipe)
   const logger = new Logger(eventPipe)
   const gameLogWatcher = new GameLogWatcher(eventPipe, logger)

@@ -41,3 +41,28 @@ export function lockToAppPages (contents: WebContents): void {
     }
   })
 }
+
+// Deathloom fork: <webview> pages (wiki / trade site browser in the overlay)
+// run sandboxed with web security on, and only load web links.
+export function hardenWebview (webPreferences: Electron.WebPreferences, src?: string): boolean {
+  delete webPreferences.preload
+  webPreferences.nodeIntegration = false
+  webPreferences.nodeIntegrationInSubFrames = false
+  webPreferences.contextIsolation = true
+  webPreferences.sandbox = true
+  webPreferences.webSecurity = true
+  webPreferences.allowRunningInsecureContent = false
+  return !src || src === 'about:blank' || isWebLink(src)
+}
+
+// Deathloom fork: web pages shown inside the app (webviews) get no browser
+// permissions (camera, mic, notifications, geolocation, …). The app's own
+// windows keep Electron's defaults.
+export function denyWebviewPermissions (ses: Electron.Session): void {
+  ses.setPermissionRequestHandler((wc, _perm, cb) => {
+    cb(wc.getType() !== 'webview')
+  })
+  ses.setPermissionCheckHandler((wc) => {
+    return wc == null || wc.getType() !== 'webview'
+  })
+}

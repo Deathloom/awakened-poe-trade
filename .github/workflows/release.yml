@@ -29,14 +29,16 @@ jobs:
         node-version: 22
     - name: Check version
       shell: bash
+      env:
+        V: ${{ inputs.version }}
       run: |
-        [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 1.2.3"; exit 1; }
+        [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 1.2.3"; exit 1; }
     - name: Create draft release
       shell: bash
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        V: ${{ inputs.version }}
       run: |
-        V="${{ inputs.version }}"
         if gh release view "v$V" >/dev/null 2>&1; then
           echo "Release v$V already exists. Use a higher version, or delete that release (and its tag) first."
           exit 1
@@ -48,8 +50,11 @@ jobs:
       working-directory: ./renderer
     - run: npm ci
       working-directory: ./main
-    - run: npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
+    - run: npm version "$V" --no-git-tag-version --allow-same-version
       working-directory: ./main
+      shell: bash
+      env:
+        V: ${{ inputs.version }}
     - run: npm run build
       working-directory: ./main
     - run: npm run package -- --win -p always
@@ -61,8 +66,8 @@ jobs:
       shell: bash
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        V: ${{ inputs.version }}
       run: |
-        V="${{ inputs.version }}"
         gh release view "v$V" --json assets --jq '.assets[].name' | tee assets.txt
         grep -q '^latest.yml$' assets.txt || { echo "latest.yml missing - not publishing"; exit 1; }
         grep -q 'Setup.*\.exe$' assets.txt || { echo "installer missing - not publishing"; exit 1; }
