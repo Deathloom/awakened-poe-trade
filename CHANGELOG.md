@@ -8,6 +8,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.50] - 2026-11-14
+
+### Added (#90)
+- **Market tab, now in two halves** (drag the line to resize): your watchlist on the left, and a poe.ninja market overview on the right:
+  - **Prices:** everything poe.ninja prices for your league, most valuable first, with a 7-day mini graph.
+  - **Rising / Falling:** the biggest moves over 7 days.
+  - **Outlook:** items that climbed steadily all week, and where they'd be in 3 days if the trend holds. It's a projection from the last 7 days to help you plan, not a promise.
+  - Filter by group (currency, scarabs, crafting, divination cards, uniques, gems, maps…), search, and a minimum price to hide cheap noise.
+  - Star an item in the list to add it to your watchlist; open it on poe.ninja with one click.
+
 ## [1.0.49] - 2026-11-14
 
 ### Changed (#89)

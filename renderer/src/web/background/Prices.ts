@@ -10,6 +10,14 @@ interface NinjaDenseInfo {
   variant?: string
 }
 
+// Deathloom fork: one priced item for the market overview
+export interface NinjaListing extends NinjaDenseInfo {
+  ns: string
+  // poe.ninja category slug (currency, scarabs, unique-weapons...)
+  category: string
+  url: string
+}
+
 type PriceDatabase = Array<{ ns: string, url: string, lines: string }>
 const RETRY_INTERVAL_MS = 4 * 60 * 1000
 const UPDATE_INTERVAL_MS = 31 * 60 * 1000
@@ -33,6 +41,8 @@ export const usePoeninja = createGlobalState(() => {
   const xchgRate = shallowRef<number | undefined>(undefined)
 
   const isLoading = shallowRef(false)
+  // Deathloom fork: bumped when new prices arrive (market overview recomputes)
+  const dbVersion = shallowRef(0)
   let PRICES_DB: PriceDatabase = []
   let lastUpdateTime = 0
   let downloadController: AbortController | undefined
@@ -57,6 +67,8 @@ export const usePoeninja = createGlobalState(() => {
       const jsonBlob = await response.text()
 
       PRICES_DB = splitJsonBlob(jsonBlob)
+      allCache = null
+      dbVersion.value++
       const divine = findPriceByQuery({ ns: 'ITEM', name: 'Divine Orb', variant: undefined })
       if (divine && divine.chaos >= 30) {
         xchgRate.value = divine.chaos
@@ -65,6 +77,24 @@ export const usePoeninja = createGlobalState(() => {
     } finally {
       isLoading.value = false
     }
+  }
+
+  // Deathloom fork: every priced item (market overview), parsed once per download
+  let allCache: NinjaListing[] | null = null
+  function allItems (): NinjaListing[] {
+    if (allCache) return allCache
+    const out: NinjaListing[] = []
+    for (const { ns, url, lines } of PRICES_DB) {
+      for (const m of lines.matchAll(/\{"name":[^{}]*\}/g)) {
+        try {
+          const info = JSON.parse(m[0]) as NinjaDenseInfo
+          if (typeof info.chaos !== 'number' || !info.name) continue
+          out.push({ ...info, ns, category: url, url: `https://poe.ninja/poe1/economy/${selectedLeagueToUrl()}/${url}/${denseInfoToDetailsId(info)}` })
+        } catch {}
+      }
+    }
+    allCache = out
+    return out
   }
 
   function queuePricesFetch () {
@@ -140,6 +170,8 @@ export const usePoeninja = createGlobalState(() => {
   watch(leagues.selectedId, () => {
     xchgRate.value = undefined
     PRICES_DB = []
+    allCache = null
+    dbVersion.value++
     load(true)
   })
 
@@ -148,6 +180,9 @@ export const usePoeninja = createGlobalState(() => {
     findPriceByQuery,
     autoCurrency,
     queuePricesFetch,
+    allItems,
+    dbVersion: readonly(dbVersion),
+    isLoading: readonly(isLoading),
     initialLoading: () => isLoading.value && !PRICES_DB.length
   }
 })

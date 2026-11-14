@@ -7,7 +7,7 @@
     </div>
     <div class="overflow-y-auto min-h-0 p-1">
       <div v-if="!items.length" class="p-1 text-gray-500">
-        Nothing watched yet. Price-check an item and press the <i class="far fa-star" /> next to its poe.ninja price.
+        Nothing watched yet. Press the <i class="far fa-star" /> next to an item in the market list, or next to its poe.ninja price in a price check.
       </div>
       <div v-for="w of items" :key="w.key" class="rounded bg-gray-900 mb-1 p-1">
         <div class="flex items-center gap-x-2">
