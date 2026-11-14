@@ -86,7 +86,8 @@ export interface PobConfig {
   hud: PobHudConfig
   // Stash tracker (personal, opt-in): reads stash tabs with your POESESSID
   stash: PobStashConfig
-  // Open the desktop window (all panels, for a second screen) when Loot Goblin starts
+  // Open the desktop window (all panels, for a second screen) when the game starts
+  // (key name kept from 1.0.22, when it opened with Loot Goblin)
   desktopAtStart?: boolean
   // First-run setup guide was shown (absent = show it the next time the overlay opens)
   setupDone?: boolean

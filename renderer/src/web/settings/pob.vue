@@ -15,7 +15,7 @@
       </div>
     </div>
     <div class="mb-4">
-      <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Loot Goblin window when it starts</ui-toggle>
+      <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Loot Goblin window when the game starts</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         A normal window with all panels (build, guide, trades, market) for a second screen. Also from the tray:
         double-click the icon or "Open Loot Goblin window". It remembers its screen, position and size.

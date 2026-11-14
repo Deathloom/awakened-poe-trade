@@ -24,7 +24,6 @@ export class DesktopWindow {
   private win?: BrowserWindow
   private port = 0
   private openWhenReady = false
-  private configured = false
   private readonly boundsFile = path.join(app.getPath('userData'), 'apt-data', 'desktop-window.json')
 
   constructor (private logger: Logger) {}
@@ -37,11 +36,26 @@ export class DesktopWindow {
     }
   }
 
-  // Settings: open the desktop window each time Loot Goblin starts
-  configure (openAtStart: boolean) {
-    if (this.configured) return
-    this.configured = true
-    if (openAtStart) this.open({ focus: false })
+  // Settings: open the desktop window when the game starts (once per game
+  // session; if it's closed while playing it stays closed until the next launch)
+  private openWithGame = false
+  private gameRunning = false
+  configure (openWithGame: boolean) {
+    const turnedOn = openWithGame && !this.openWithGame
+    this.openWithGame = openWithGame
+    // switched on while the game is already running: open now
+    // (also when Loot Goblin starts while the game is already running)
+    if (turnedOn && this.gameRunning) this.open({ focus: false })
+  }
+
+  gameStarted () {
+    if (this.gameRunning) return
+    this.gameRunning = true
+    if (this.openWithGame) this.open({ focus: false })
+  }
+
+  gameClosed () {
+    this.gameRunning = false
   }
 
   open (opts: { focus: boolean } = { focus: true }) {
