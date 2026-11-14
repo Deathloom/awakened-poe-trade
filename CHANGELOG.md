@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.66] - 2026-11-14
+
+### Added (#108)
+- **Friends' trade board** (Board tab in the window, overlay menu, All tab → Add panel): three tabs. **Give**: free items for the group; press **Claim** and the poster sees who wants it, with Whisper / Invite buttons. **Sell**: priced items for friends first; **Whisper** sends a buy message. **Wanted**: what someone needs; **I have one** tells them, **Whisper** contacts them.
+- **Post** from the window or overlay: paste the item text (Ctrl+C on the item in game) or type a name, set a price for Sell, and the character friends should whisper. Or set the new **Post hovered item to the friends' trade board** hotkey (Settings → Path of Building, none by default) and press it on an item in game.
+- Only your group sees it: listings are GitHub issues in the group's private builds repo, posted with your own GitHub sign-in (the same as build sync), so the poster's name can't be faked and only the poster can mark a listing done or remove it. Every chat button sends or copies one message per click; nothing happens by itself. Needs Path of Building fork PR #33 (updates itself).
+
 ## [1.0.65] - 2026-11-14
 
 ### Fixed (#107)

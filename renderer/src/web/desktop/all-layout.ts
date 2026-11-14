@@ -5,7 +5,7 @@ import { ref, watch } from 'vue'
 import type { PanelKey } from '@ipc/types'
 import { inWindow } from './panels'
 
-export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session'
+export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board'
 
 export interface AllPanelDef {
   id: AllPanelId
@@ -27,6 +27,7 @@ export const ALL_PANELS: AllPanelDef[] = [
   { id: 'market', label: 'Market history', icon: 'fa-chart-line', settingsKey: 'market' },
   { id: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins', settingsKey: 'overview' },
   { id: 'search', label: 'Market search', icon: 'fa-search' },
+  { id: 'board', label: "Friends' trade board", icon: 'fa-people-carry', settingsKey: 'board' },
   { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' }
 ]
 const IDS = new Set(ALL_PANELS.map(p => p.id))

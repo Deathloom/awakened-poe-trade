@@ -33,6 +33,7 @@
         <LevellingBody v-else-if="view === 'levelling'" />
         <div v-else-if="view === 'atlas'" class="h-full min-h-0 flex flex-col rounded bg-gray-800"><AtlasTreeMap /></div>
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
+        <TradeBoardBody v-else-if="view === 'board'" fill />
         <!-- Market: watchlist | poe.ninja overview (drag the line to resize) -->
         <div v-else-if="view === 'market'" ref="marketEl" class="flex h-full min-h-0">
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[0]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
@@ -64,6 +65,7 @@ import MarketOverview from '../market-history/MarketOverview.vue'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
+import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
 import TradeSiteBody from './TradeSiteBody.vue'
@@ -88,6 +90,7 @@ const VIEWS = [
   { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
   { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, what you have taken (from the game log), edit and share' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
+  { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
   { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Loot Goblin never sees your login)" },
   { key: 'help', label: 'Help', icon: 'fa-question-circle', title: 'How to use it, where to get a build, FAQ' },

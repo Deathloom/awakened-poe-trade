@@ -18,7 +18,7 @@ export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session
 // hud.<panel> (optional) and pob.panelKeys
 export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview'] as const
 
-export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview'
+export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board'
 
 export interface PanelPlacement {
   overlay?: boolean
@@ -87,6 +87,8 @@ export interface PobConfig {
   tradesKey: string | null
   // Hotkey that opens the Path of Building window
   openPobKey?: string | null
+  // Hotkey that copies the hovered item and opens the friends' trade board post form (none by default)
+  boardPostKey?: string | null
   // Hotkeys of the panels added in 1.0.63 (tree map, atlas, session, market, overview); none by default
   panelKeys?: Partial<Record<HudPanel, string | null>>
   // set once the Ctrl+P default was applied to an older config
@@ -495,6 +497,8 @@ export type IpcEvent =
   IpcPobTreeMapResult |
   IpcPobSyncRequest |
   IpcPobSyncState |
+  IpcBoardRequest |
+  IpcBoardState |
   IpcPobImportRequest |
   IpcPobImportResult |
   IpcStashRequest |
@@ -921,6 +925,49 @@ type IpcPobSyncRequest =
 
 type IpcPobSyncState =
   Event<'MAIN->CLIENT::pob-sync-state', PobSyncState>
+
+// Deathloom fork: friends' trade board. Listings are GitHub issues in the
+// group's builds repo (PoB's SyncServer.lua, the player's own GitHub sign-in).
+export interface BoardRawComment {
+  author?: string
+  body: string
+  created?: string
+}
+export interface BoardRawListing {
+  number: number
+  title: string
+  body: string
+  author?: string
+  created?: string
+  updated?: string
+  commentCount: number
+  comments: BoardRawComment[]
+}
+export interface BoardState {
+  // what's running ('Loading…', 'Posting…'), null when idle
+  busy: string | null
+  signedIn: boolean | null
+  login?: string
+  listings: BoardRawListing[]
+  // last successful list
+  updated: number | null
+  error?: string
+  // bumped after each post / comment / close that went through
+  done: number
+}
+
+type IpcBoardRequest =
+  Event<'CLIENT->MAIN::board', {
+    op: 'state' | 'list' | 'post' | 'comment' | 'close'
+    kind?: 'give' | 'sell' | 'wanted'
+    title?: string
+    body?: string
+    number?: number
+    reason?: 'completed' | 'not_planned'
+  }>
+
+type IpcBoardState =
+  Event<'MAIN->CLIENT::board-state', BoardState>
 
 // Deathloom fork: import a PoB code or build link into the player folder
 export interface PobImportPreview {

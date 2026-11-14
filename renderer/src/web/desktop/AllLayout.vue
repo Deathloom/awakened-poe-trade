@@ -81,6 +81,7 @@ import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import MarketOverview from '../market-history/MarketOverview.vue'
 import MarketSearchBody from '../market-search/MarketSearchBody.vue'
 import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
+import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
 import {
   ALL_PANELS, layout, saveLayout, resetLayout, panelDef, shownBySettings, inLayout,
   removePanel, addPanel, movePanel, resize, useSettingsSync, type AllPanelId, type DropTarget
@@ -99,7 +100,8 @@ const BODIES: Record<AllPanelId, Component> = {
   market: MarketHistoryBody,
   overview: MarketOverview,
   search: MarketSearchBody,
-  session: PlaySessionBody
+  session: PlaySessionBody,
+  board: TradeBoardBody
 }
 function body (id: AllPanelId) { return BODIES[id] }
 function props (id: AllPanelId): Record<string, unknown> {
@@ -108,6 +110,7 @@ function props (id: AllPanelId): Record<string, unknown> {
     case 'tree': return { levelling: true, compact: true }
     case 'atlas': return { compact: true }
     case 'trades': return { fill: true }
+    case 'board': return { fill: true }
     case 'market': return { active: true, fill: true }
     default: return {}
   }

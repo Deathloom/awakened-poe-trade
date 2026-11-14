@@ -477,7 +477,7 @@ function upgradeConfig (_config: Config): Config {
   if (config.pob.stash) config.pob.stash.enabled = false
   // live character data off (character-window endpoints are outside GGG's official API)
   config.pob.liveGear = false
-  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'setup-guide', 'market-search', ...PANEL_WIDGET_TYPES]) {
+  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'setup-guide', 'market-search', 'trade-board', ...PANEL_WIDGET_TYPES]) {
     if (!config.widgets.some(w => w.wmType === type)) {
       config.widgets.push({
         ...defaultConfig().widgets.find(w => w.wmType === type)!,
@@ -580,6 +580,13 @@ function getConfigForHost (): HostConfig {
       shortcut: config.pob.openPobKey,
       action: { type: 'trigger-event', target: 'open-pob' },
       keepModKeys: true
+    })
+  }
+  // Deathloom fork: post the hovered item to the friends' trade board
+  if (config.pob?.boardPostKey) {
+    actions.push({
+      shortcut: config.pob.boardPostKey,
+      action: { type: 'copy-item', target: 'board-post', focusOverlay: true }
     })
   }
   if (config.pob?.tradesKey) {

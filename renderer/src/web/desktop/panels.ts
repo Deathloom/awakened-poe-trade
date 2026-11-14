@@ -13,6 +13,7 @@ export const PANELS: Array<{ key: PanelKey, label: string, hud?: HudPanel, overl
   { key: 'market', label: 'Market history', hud: 'market', overlay: true, window: true, view: 'market' },
   { key: 'overview', label: 'Market overview (poe.ninja)', hud: 'overview', overlay: true, window: true, view: 'market' },
   { key: 'search', label: 'Market search', overlay: true, window: false, view: 'trade' },
+  { key: 'board', label: "Friends' trade board", overlay: true, window: true, view: 'board' },
   { key: 'tree', label: 'Tree map', hud: 'tree', overlay: true, window: true, view: 'build' },
   { key: 'atlas', label: 'Atlas tree', hud: 'atlas', overlay: true, window: true, view: 'atlas' },
   { key: 'session', label: 'This session', hud: 'session', overlay: true, window: true, view: 'overview' }
