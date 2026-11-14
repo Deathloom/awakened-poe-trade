@@ -180,7 +180,7 @@ function lineTime (line: string): number | null {
 // levelling planner): replays the lines with a guide position per character,
 // so counts and ticks are complete for characters made since the log started.
 export function rebuildFromLog (current: CharLevels, lines: string[], lang: string): CharLevels {
-  let v: CharLevels = { ...current, chars: [], progress: {}, atlas: {} }
+  let v: CharLevels = { ...current, chars: [], progress: {} }
   const guide = new Map<string, number>()
   let act: number | null = null
   for (const line of lines) {
@@ -195,7 +195,9 @@ export function rebuildFromLog (current: CharLevels, lines: string[], lang: stri
     v = applyLogLines(v, [line], lang, guide.get(name) ?? 0) ?? v
   }
   // keep the player's own choices
-  return { ...v, selected: current.selected, manual: current.manual, questPoints: current.questPoints }
+  // atlas kept as it was: the whole log spans leagues, and a new league's empty
+  // atlas leaves no line in it
+  return { ...v, selected: current.selected, manual: current.manual, questPoints: current.questPoints, atlas: current.atlas }
 }
 
 // Client.txt lines -> updated store (null: nothing changed)
@@ -296,7 +298,7 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
 
 // Called once in the overlay window
 export function startLevelRecorder () {
-  Host.onEvent('MAIN->CLIENT::game-log', (e) => {
+  const record = (e: { lines: string[] }) => {
     const session = loadSession()
     const before = JSON.stringify(session)
     const v = applyLogLines(loadCharLevels(), e.lines, AppConfig().language, loadCampaignStep(), session)
@@ -305,5 +307,10 @@ export function startLevelRecorder () {
     const levels = v ?? loadCharLevels()
     const play = applySessionLines(loadPlaySession(), e.lines, AppConfig().language, currentChar(levels)?.name ?? '')
     if (play) savePlaySession(play)
-  })
+  }
+  Host.onEvent('MAIN->CLIENT::game-log', record)
+  // lines written while Loot Goblin was closed (an update or restart): levels,
+  // passives and atlas allocations made meanwhile still count
+  Host.onEvent('MAIN->CLIENT::game-log-catchup', record)
+  Host.sendEvent({ name: 'CLIENT->MAIN::game-log-catchup', payload: {} })
 }

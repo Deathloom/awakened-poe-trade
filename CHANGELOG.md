@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.64] - 2026-11-14
+
+### Fixed (#106)
+- **Nothing missed while Loot Goblin was closed:** it remembers how far it read the game log, and on start it catches up on levels, passives, atlas passives and session events written meanwhile (an update, a restart). Old trade whispers aren't replayed. No more "Rebuild from log" after an update.
+- "Rebuild from log" in the levelling planner no longer resets what's taken on the atlas (the log spans leagues).
+- **Campaign guide vendor recipes say what to do and what you get**, e.g. sell white boots + Quicksilver Flask + Orb of Augmentation to any vendor together → magic boots with 10% movement speed (+5% more each time with movement speed boots, up to 30%).
+
 ## [1.0.63] - 2026-11-14
 
 ### Added (#105)

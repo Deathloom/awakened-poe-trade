@@ -71,7 +71,30 @@ export function onlyActive (only: string | undefined, bandit: BanditFlag = loadB
 }
 
 // In route order
-export const STEPS = (ROUTE_JSON as unknown as { steps: RouteStep[] }).steps
+export const STEPS = clarifyVendorLines((ROUTE_JSON as unknown as { steps: RouteStep[] }).steps)
+
+// Deathloom fork: the route's vendor recipe lines listed only the ingredients.
+// Say what to do and what you get (checked against poedb / poewiki 14 Nov 2026).
+function clarifyVendorLines (steps: RouteStep[]): RouteStep[] {
+  const text = (sub: RoutePart[]) => sub.map(p => typeof p === 'string' ? p : String(p.v ?? '')).join('')
+  const g = (v: string): RoutePart => ({ k: 'generic', v })
+  const CLEAR: Record<string, RoutePart[]> = {
+    'Vendor Quicksilver Flask + Orb of Augmentation + Normal Boots': [
+      'Recipe: sell a white (normal) ', g('Boots'), ' + ', g('Quicksilver Flask'), ' + ', g('Orb of Augmentation'),
+      ' to any vendor together → magic boots with 10% increased movement speed'
+    ],
+    'Vendor Quicksilver Flask + Orb of Augmentation + Movement Speed Boots': [
+      'Already have movement speed boots? Same recipe with them → +5% more (up to 30%); their other mods are lost'
+    ]
+  }
+  for (const st of steps) {
+    for (const t of st.tasks) {
+      if (!t.subs) continue
+      t.subs = t.subs.map(sub => CLEAR[text(sub)] ?? sub)
+    }
+  }
+  return steps
+}
 
 function stepPassives (st: RouteStep, bandit: BanditFlag): number {
   if (!onlyActive(st.only, bandit)) return 0
