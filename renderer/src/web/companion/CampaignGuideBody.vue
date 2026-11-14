@@ -32,7 +32,8 @@
               <template v-for="(p, pi) of t.parts" :key="pi">
                 <template v-if="typeof p === 'string'">{{ p }}</template>
                 <template v-else-if="p.k === 'quest'">
-                  <span class="text-yellow-200">{{ p.v }}</span>
+                  <span class="text-yellow-200" :class="{ 'line-through opacity-60': doneQuests.has(String(p.v)) }">{{ p.v }}</span>
+                  <i v-if="doneQuests.has(String(p.v))" class="fas fa-check text-green-500 ml-1" title="Reward received (game log)" />
                   <span v-if="p.passive" class="ml-1 px-1 rounded bg-yellow-900 text-yellow-300"
                     :title="`${p.v}: ${p.passive} passive skill point${p.passive > 1 ? 's' : ''}${p.respec ? ` + ${p.respec} respec points` : ''}`">+{{ p.passive }} passive</span>
                   <span v-else-if="p.respec" class="ml-1 px-1 rounded bg-gray-700 text-gray-400"
@@ -44,7 +45,8 @@
                       :title="`Then buy from ${gemFor(p.offer)!.buy[0].vendor}`"><i class="fas fa-coins mr-1" />buy {{ gemFor(p.offer)!.buy.map(g => g.name).join(', ') }}</span>
                   </template>
                 </template>
-                <span v-else-if="p.k === 'kill'" class="text-red-300">{{ p.v }}</span>
+                <span v-else-if="p.k === 'kill'" class="text-red-300" :class="{ 'line-through opacity-60': doneBosses.has(String(p.v)) }">{{ p.v }}<i
+                  v-if="doneBosses.has(String(p.v))" class="fas fa-check text-green-500 ml-1" title="Boss met (game log)" /></span>
                 <span v-else-if="p.k === 'arena'" class="text-red-200">{{ p.v }}</span>
                 <span v-else-if="p.k === 'area'" class="text-blue-200">{{ p.v }}</span>
                 <span v-else-if="p.k === 'waypoint'" class="text-blue-300"><i class="fas fa-dungeon" /> {{ p.v ?? 'waypoint' }}</span>
@@ -91,6 +93,7 @@ import { parseLogLine } from './game-log'
 import { STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
 import { planQuestGems, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
+import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
 
 const index = ref(loadIndex())
 // Deathloom fork: overlay, HUD and desktop window each show the guide; keep them on the same step
@@ -118,6 +121,15 @@ const listEl = ref<HTMLElement>()
 // quest passive points from the steps already passed (the guide doesn't know
 // which side quests you actually did; it's a reminder, /passives in game is exact)
 const passivesSoFar = computed(() => questPassivesBefore(index.value))
+
+// quests whose reward arrived and bosses met (game log, recorded by the overlay)
+const levels = ref(loadCharLevels())
+const onLevels = (e: StorageEvent) => { if (e.key === CHAR_LEVELS_KEY) levels.value = loadCharLevels() }
+window.addEventListener('storage', onLevels)
+onUnmounted(() => { window.removeEventListener('storage', onLevels) })
+const progress = computed(() => progressOf(levels.value, currentChar(levels.value)?.name ?? ''))
+const doneQuests = computed(() => new Set(progress.value?.quests ?? []))
+const doneBosses = computed(() => new Set(progress.value?.bosses ?? []))
 
 // tasks of the current and the next two steps (all with "show the whole act")
 function showTasks (i: number) {
