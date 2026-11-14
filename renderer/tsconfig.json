@@ -8,6 +8,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "allowJs": true,
     "useDefineForClassFields": true,
     "sourceMap": true,

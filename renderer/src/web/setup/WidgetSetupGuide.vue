@@ -1,7 +1,10 @@
 <template>
-  <!-- Deathloom fork: first-run setup guide. Shows once by itself (pob.setupDone),
-       then only from the Shift+Space bar (wand button next to ?). -->
-  <div v-if="config.wmWants === 'show'" :class="$style.window" class="layout-column text-gray-100">
+  <!-- Deathloom fork: first-run setup guide. On a new install it opens in the Loot
+       Goblin window (main opens the window while pob.setupDone is unset), so it can
+       be done before playing; the overlay shows it the first time it opens if it
+       wasn't finished. Run again: Shift+Space bar (wand) or the window's Settings tab. -->
+  <div v-if="desktop && visible" class="absolute inset-0 z-40 bg-black bg-opacity-60" />
+  <div v-if="visible" :class="[$style.window, desktop ? 'z-50 border border-gray-600 shadow-lg' : '']" class="layout-column text-gray-100">
     <AppTitleBar @close="close" title="Loot Goblin setup" />
     <div class="flex grow min-h-0">
       <div class="pl-2 pt-2 bg-gray-900 flex flex-col gap-1 shrink-0" style="min-width: 11rem;">
@@ -17,7 +20,10 @@
           <!-- 1. Welcome + build sharing -->
           <template v-if="step === 0">
             <div class="text-xl mb-2">Welcome to Loot Goblin</div>
-            <p class="mb-2">A few quick steps set up the overlay. Every step can be skipped and you can run this guide again
+            <p v-if="desktop" class="mb-2">A few quick steps set up Loot Goblin. You don't need to be in game: everything you set
+              here is used by the overlay and the in-game panels once you play. Every step can be skipped; run this guide again
+              any time from this window's <b>Settings</b> tab, or in game: press <b>{{ overlayKey }}</b> and click <i class="fas fa-magic" />.</p>
+            <p v-else class="mb-2">A few quick steps set up the overlay. Every step can be skipped and you can run this guide again
               any time: press <b>{{ overlayKey }}</b> and click <i class="fas fa-magic" /> on the top bar.</p>
             <p class="mb-3 text-gray-400">Loot Goblin is price checking, your Path of Building build next to every item,
               a campaign guide and a trade companion. It never types into the game unless you click a button that says so.</p>
@@ -99,34 +105,12 @@
           <!-- 3. Character -->
           <template v-else-if="step === 2">
             <div class="text-xl mb-2">Your character</div>
-            <p class="mb-2 text-gray-400">Loot Goblin can compare items and gems with what your character is wearing now,
-              not only with the PoB build. It reads your public Characters tab on pathofexile.com (no login).</p>
-            <ui-toggle v-model="pob.liveGear" class="mb-2">Compare with my character's gear</ui-toggle>
-            <template v-if="pob.liveGear">
-              <div class="mb-1">Account name</div>
-              <div class="flex gap-1 mb-1">
-                <input v-model.trim="pob.accountName"
-                  class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic"
-                  placeholder="e.g. YourName#1234" @keydown.enter="checkCharacters">
-                <button class="btn" :disabled="!pob.accountName || checking" @click="checkCharacters">
-                  {{ checking ? 'Checking…' : 'Check' }}</button>
-              </div>
-              <div class="text-gray-500 text-sm mb-2">Including the <code>#1234</code> part, as shown on your profile.</div>
-              <div v-if="charError" class="text-red-400 text-sm mb-2">{{ charError }}</div>
-              <div v-else-if="characters" class="text-green-500 text-sm mb-2">
-                <i class="fas fa-check mr-1" />Found {{ characters.length }} character{{ characters.length === 1 ? '' : 's' }}{{ characters.length ? ': ' + characters.slice(0, 4).map(c => c.name).join(', ') + (characters.length > 4 ? ', …' : '') : '' }}
-              </div>
-              <ui-toggle :modelValue="pob.characterAuto !== false" @update:modelValue="pob.characterAuto = $event" class="mb-1">
-                Follow the character I'm playing</ui-toggle>
-              <div class="text-gray-500 text-sm mb-2">When you log into a character, Loot Goblin switches to it by itself.</div>
-              <template v-if="pob.characterAuto === false && characters?.length">
-                <div class="mb-1">Character</div>
-                <select v-model="pob.character" class="rounded bg-gray-900 px-1 mb-2">
-                  <option v-for="c of characters" :key="c.name" :value="c.name">{{ c.name }} ({{ c.league }}, {{ c.level }})</option>
-                </select>
-              </template>
-              <ui-toggle v-model="pob.liveTreeAndGems">Use the character's passive tree, level and gems too</ui-toggle>
-            </template>
+            <p class="mb-2 text-gray-400">Loot Goblin compares items, gems and the passive tree with your
+              Path of Building build. Comparing with your live character (what it wears now) is turned off:
+              GGG's rules don't allow shared apps to read character data from pathofexile.com outside its
+              official API, and we don't risk anyone's account.</p>
+            <p class="mb-2 text-gray-400">Keep your build in PoB up to date (re-import your character in PoB
+              and save) and the panels follow it.</p>
           </template>
 
           <!-- 4. Panels -->
@@ -199,14 +183,6 @@
                 repo with your GitHub sign-in (version, error, last log lines; no Windows user folder). Only when signed in.
                 Tray icon → Report a problem… for anything else.</div>
             </div>
-            <div class="mb-3">
-              <ui-toggle v-model="pob.stash.enabled">Stash tracker (personal)</ui-toggle>
-              <div class="text-yellow-500 text-sm mt-1">Values your stash tabs. It needs your POESESSID login cookie,
-                which is a grey area (GGG's official stash access needs an approved app). Read-only, refresh by hand.
-                Never share your POESESSID.</div>
-              <div v-if="pob.stash.enabled" class="text-gray-400 text-sm mt-1">Finish setting it up in Settings
-                <i class="fas fa-cog" /> → Path of Building → Stash tracker (league and POESESSID).</div>
-            </div>
           </template>
 
           <!-- 7. Done -->
@@ -222,6 +198,10 @@
               <li><i class="fas fa-question-circle" /> on the top bar is a short how-to, <i class="fas fa-magic" /> runs this guide again.</li>
               <li>Something wrong? Tray icon → Report a problem…</li>
             </ul>
+            <div class="text-gray-500 text-sm mt-3">
+              Loot Goblin is not affiliated with or endorsed by Grinding Gear Games. It reads the game's log file and your clipboard,
+              never game memory, never buys anything by itself, and only sends a chat command when you click a button.
+            </div>
           </template>
         </div>
         <div class="border-t bg-gray-900 border-gray-600 p-2 flex items-center gap-x-2">
@@ -260,7 +240,7 @@ export default {
 import { computed, inject, onUnmounted, ref, watch } from 'vue'
 import type { IpcEventPayload } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
-import { AppConfig, pushHostConfig, defaultPobConfig, defaultHudConfig } from '@/web/Config'
+import { AppConfig, pushHostConfig, saveConfig, defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import type { WidgetManager, PriceCheckWidget } from '../overlay/interfaces'
 import AppTitleBar from '@/web/ui/AppTitlebar.vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
@@ -268,9 +248,12 @@ import HotkeyInput from '@/web/settings/HotkeyInput.vue'
 import BuildSync from '@/web/pob/BuildSync.vue'
 import PobInstallStatus from '@/web/pob/PobInstallStatus.vue'
 import { IS_HUD } from '@/web/hud/is-hud'
+import { desktopSetupShown } from './setup-state'
 
-const props = defineProps<{ config: WidgetT }>()
-const wm = inject<WidgetManager>('wm')!
+// desktop: shown in the Loot Goblin window (no widget manager; saves itself)
+const props = defineProps<{ config?: WidgetT, desktop?: boolean }>()
+const wm = props.desktop ? null : inject<WidgetManager>('wm')!
+const visible = computed(() => props.desktop ? desktopSetupShown.value : props.config?.wmWants === 'show')
 
 const STEPS = ['Welcome', 'Folders', 'Character', 'Panels', 'Trades', 'Extras', 'Done']
 const PANELS = [
@@ -284,7 +267,6 @@ const step = ref(0)
 const pob = computed(() => {
   const cfg = AppConfig()
   cfg.pob ??= defaultPobConfig()
-  cfg.pob.stash ??= defaultPobConfig().stash
   cfg.pob.hud ??= defaultHudConfig()
   cfg.pob.hud.clickThroughPanels ??= defaultHudConfig().clickThroughPanels
   return cfg.pob
@@ -299,29 +281,37 @@ const priceKey = computed(() => {
   return pc?.hotkey ? `${pc.hotkeyHold} + ${pc.hotkey}` : 'the price check hotkey'
 })
 
-// Shows once by itself, the first time the overlay is opened after install
-if (!IS_HUD) {
+// Shows once by itself: in the Loot Goblin window on a new install, else the
+// first time the overlay is opened
+if (props.desktop) {
+  if (!pob.value.setupDone) desktopSetupShown.value = true
+} else if (!IS_HUD && wm) {
   watch(wm.active, (active) => {
     if (!active || pob.value.setupDone) return
     pob.value.setupDone = true
     step.value = 0
-    wm.show(props.config.wmId)
+    wm.show(props.config!.wmId)
   }, { immediate: true })
 }
 
-// Run again from the top bar
-watch(() => props.config.wmWants, (wants) => {
-  if (wants === 'show') probe()
-})
+// Run again (top bar / Settings tab)
+watch(visible, (shown) => {
+  if (shown) {
+    step.value = 0
+    probe()
+  }
+}, { immediate: true })
 
 // Changes apply right away (main gets them; the overlay saves when this closes)
 let pushTimer: ReturnType<typeof setTimeout> | null = null
 watch(() => JSON.stringify([AppConfig().pob, AppConfig().clientLog]), () => {
-  if (props.config.wmWants !== 'show') return
+  if (!visible.value) return
   if (pushTimer) clearTimeout(pushTimer)
   pushTimer = setTimeout(() => {
     pushTimer = null
     pushHostConfig()
+    // the window saves its own changes (the overlay saves when the guide closes)
+    if (props.desktop) saveConfig()
     probe()
   }, 600)
 })
@@ -333,15 +323,18 @@ function close () {
     pushHostConfig()
   }
   pob.value.setupDone = true
-  wm.hide(props.config.wmId)
+  if (props.desktop) {
+    saveConfig()
+    pushHostConfig()
+    desktopSetupShown.value = false
+  } else {
+    wm!.hide(props.config!.wmId)
+  }
 }
 
 // What main found (Client.txt, PoB, builds, player; characters with an account name)
 type Probe = IpcEventPayload<'MAIN->CLIENT::pob-setup-probe'>
 const found = ref<Probe | null>(null)
-const characters = ref<NonNullable<Probe['characters']> | null>(null)
-const charError = ref('')
-const checking = ref(false)
 let nextId = 1
 const pending = new Map<number, (p: Probe) => void>()
 const listener = Host.onEvent('MAIN->CLIENT::pob-setup-probe', (e) => {
@@ -362,22 +355,6 @@ function request (accountName?: string): Promise<Probe> {
 
 function probe () {
   request().then((p) => { found.value = p }).catch(() => {})
-}
-
-async function checkCharacters () {
-  const account = pob.value.accountName?.trim()
-  if (!account || checking.value) return
-  checking.value = true
-  charError.value = ''
-  try {
-    const p = await request(account)
-    found.value = p
-    characters.value = p.characters ?? null
-    charError.value = p.charactersError ?? ''
-    if (p.characters?.length && !pob.value.character) pob.value.character = p.characters[0].name
-  } finally {
-    checking.value = false
-  }
 }
 
 // Builds of an earlier PoB install -> player folder (main picks the source folder itself)

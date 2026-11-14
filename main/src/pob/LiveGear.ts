@@ -9,6 +9,13 @@
 
 import { parseCharacters, type CharacterEntry } from './ActiveCharacter'
 
+// Deathloom fork (2026-11-14, Gerhard): OFF. The character-window endpoints
+// (get-items, get-passive-skills, get-characters) are not in GGG's official API
+// reference, and GGG's third-party rules say not to build a shared app on them.
+// Switch back on only through GGG's official OAuth API once app registration reopens.
+export const LIVE_CHARACTER_DATA = false
+export const LIVE_CHARACTER_OFF = `Comparing with your live character is turned off: GGG's rules don't allow shared apps to read character data from pathofexile.com outside its official API. Panels use your PoB build.`
+
 export const CACHE_TTL = 2 * 60_000 // reuse gear this long before refetching
 export const MIN_INTERVAL = 30_000 // never fetch more often than this
 export const SWITCH_INTERVAL = 5_000 // after a character switch: first fetch this soon (rate-limit headers still apply)
@@ -118,6 +125,7 @@ export class LiveGear {
   // not the rate limits. Throws with a readable message when it can't fetch;
   // stale gear is returned instead of an error when we have it.
   async get (force = false): Promise<LiveGearData> {
+    if (!LIVE_CHARACTER_DATA) throw new Error(LIVE_CHARACTER_OFF)
     if (!this.target) throw new Error('Live gear: account name or character not set')
     const now = this.now()
     // gear without the tree (rate limit skipped it) is refetched when allowed
@@ -156,6 +164,7 @@ export class LiveGear {
   // towards the gear request interval, but obeys the shared rate limits.
   // null = skipped (rate limit). Newest login first.
   async characterList (accountName: string): Promise<CharacterEntry[] | null> {
+    if (!LIVE_CHARACTER_DATA) throw new Error(LIVE_CHARACTER_OFF)
     if (this.now() < this.blockedUntil) return null
     const params = new URLSearchParams({ accountName, realm: 'pc' })
     const url = `https://www.pathofexile.com/character-window/get-characters?${params.toString()}`
