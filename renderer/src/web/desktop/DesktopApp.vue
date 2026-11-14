@@ -16,7 +16,6 @@
       <div class="area-guide min-h-0"><CampaignGuideBody tall /></div>
       <div class="area-trades min-h-0"><TradeCompanionBody fill /></div>
       <div class="area-market min-h-0"><MarketHistoryBody :active="true" fill /></div>
-      <div class="area-stash min-h-0"><StashTrackerBody fill /></div>
     </div>
     <div v-else class="flex-1 min-h-0 p-2">
       <div class="h-full min-h-0" :class="view === 'guide' ? 'single-guide' : ''">
@@ -24,7 +23,6 @@
         <CampaignGuideBody v-else-if="view === 'guide'" tall />
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
         <MarketHistoryBody v-else-if="view === 'market'" :active="true" fill />
-        <StashTrackerBody v-else-if="view === 'stash'" fill />
       </div>
     </div>
   </div>
@@ -37,12 +35,11 @@ import PobGearBody from '../pob/PobGearBody.vue'
 import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
-import StashTrackerBody from '../stash/StashTrackerBody.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 
 document.documentElement.classList.add('desktop')
-// leagues and poe.ninja prices, like the overlay loads them (market history, stash values)
+// leagues and poe.ninja prices, like the overlay loads them (market history)
 usePoeninja()
 useLeagues().load()
 
@@ -51,8 +48,7 @@ const VIEWS = [
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
   { key: 'guide', label: 'Guide', icon: 'fa-route', title: 'Campaign guide' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
-  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
-  { key: 'stash', label: 'Stash', icon: 'fa-box-open', title: 'Stash tracker' }
+  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' }
 ] as const
 type View = typeof VIEWS[number]['key']
 
@@ -94,7 +90,7 @@ html.desktop #app {
   grid-template-rows: 1fr 1fr;
   grid-template-areas:
     "build guide market"
-    "build trades stash";
+    "build trades market";
 }
 @media (max-width: 1250px) {
   .desktop-grid {
@@ -103,7 +99,7 @@ html.desktop #app {
     grid-template-areas:
       "build guide"
       "build trades"
-      "market stash";
+      "build market";
     overflow-y: auto;
   }
 }
@@ -111,7 +107,6 @@ html.desktop #app {
 .area-guide { grid-area: guide; --hud-w: 100%; --hud-h: 100%; }
 .area-trades { grid-area: trades; }
 .area-market { grid-area: market; }
-.area-stash { grid-area: stash; }
 .single-guide { --hud-w: 100%; --hud-h: 100%; }
 .desktop-root .widget-default-style {
   max-height: none;

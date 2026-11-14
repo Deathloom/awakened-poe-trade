@@ -3,6 +3,8 @@
 import { app, clipboard, net } from 'electron'
 import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
+import { promises as fs } from 'node:fs'
+import path from 'node:path'
 import { startServer, eventPipe, server } from './server'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
@@ -17,7 +19,6 @@ import { DesktopWindow } from './windowing/DesktopWindow'
 import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
 import { PobImpact } from './pob/PobImpact'
-import { StashTracker } from './pob/StashTracker'
 import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
 import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
@@ -130,7 +131,11 @@ app.on('ready', async () => {
       }
     })()
   })
-  const stashTracker = new StashTracker(eventPipe, logger)
+  // Deathloom fork (2026-11-14): stash tracker removed (it needed the POESESSID login
+  // cookie, not allowed for shared apps under GGG's rules). Delete what older versions saved.
+  for (const f of ['stash-session.bin', 'stash-snapshot.json']) {
+    fs.rm(path.join(app.getPath('userData'), 'apt-data', f), { force: true }).catch(() => {})
+  }
   // Deathloom fork: Copy buttons (market search text). Only the clipboard; nothing is sent to the game.
   eventPipe.onEventAnyClient('CLIENT->MAIN::write-clipboard', ({ text }) => {
     // Deathloom fork: plain text only, capped (item text and searches are a few KB)
@@ -195,7 +200,6 @@ app.on('ready', async () => {
           pobInstallStarted = true
           setTimeout(() => { void pobInstaller.ensure() }, 3000)
         }
-        stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
         hud.configure(cfg.pob?.hud)
         applyStartWithWindows(cfg.pob?.startWithWindows !== false)
         desktop.configure(cfg.pob?.desktopAtStart === true)

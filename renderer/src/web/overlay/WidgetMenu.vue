@@ -82,7 +82,6 @@ function hintFor (type: string): string | undefined {
     case 'campaign-guide': return 'Campaign guide' + key(pob?.guideKey)
     case 'trade-companion': return 'Trade companion' + key(pob?.tradesKey)
     case 'market-history': return 'Market history (price trends of starred items)'
-    case 'stash-tracker': return 'Stash tracker'
     case 'stash-search': return 'Stash search'
     case 'image-strip': return 'Image strip'
     case 'delve-grid': return 'Delve grid'

@@ -13,7 +13,7 @@ import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGear
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
-import { LiveGear, HttpError, type FetchFn } from './LiveGear'
+import { LIVE_CHARACTER_DATA, LIVE_CHARACTER_OFF, LiveGear, HttpError, type FetchFn } from './LiveGear'
 import { pobDefaults, withDefaults, isLegacyPobSetting, type PobDefaults } from './defaults'
 import { findExistingBuilds, copyBuilds } from './ExistingPob'
 
@@ -232,20 +232,20 @@ export class PobImpact {
   private liveTarget () {
     const cfg = this.cfg
     const character = this.currentCharacter()
-    if (!cfg?.enabled || !cfg.liveGear || !cfg.accountName || !character) return null
+    if (!LIVE_CHARACTER_DATA || !cfg?.enabled || !cfg.liveGear || !cfg.accountName || !character) return null
     return { accountName: cfg.accountName, character, tree: cfg.liveTreeAndGems }
   }
 
   // ---- Follow the character being played --------------------------------
   private autoCharacter () {
     const cfg = this.cfg
-    return Boolean(cfg?.enabled && cfg.liveGear && cfg.accountName && cfg.characterAuto !== false)
+    return Boolean(LIVE_CHARACTER_DATA && cfg?.enabled && cfg.liveGear && cfg.accountName && cfg.characterAuto !== false)
   }
 
   // Character list available (live gear on + account set)
   private listsCharacters () {
     const cfg = this.cfg
-    return Boolean(cfg?.enabled && cfg.liveGear && cfg.accountName)
+    return Boolean(LIVE_CHARACTER_DATA && cfg?.enabled && cfg.liveGear && cfg.accountName)
   }
 
   // Detected or picked in the build panel; else the Character setting
@@ -659,7 +659,7 @@ export class PobImpact {
     } = { pobDir, pobOk, buildsDir: cfg?.buildsDir || d.buildsDir, player: cfg?.player ?? d.player }
     out.existingPob = await this.existingBuilds() ?? undefined
     const account = accountName?.trim()
-    if (account) {
+    if (account && LIVE_CHARACTER_DATA) {
       try {
         const list = await this.liveGear.characterList(account)
         if (list === null) {
@@ -794,7 +794,9 @@ export class PobImpact {
   async tree (refreshGear: boolean): Promise<{ build: PobBuildInfo, tree: PobTreeSummary, live?: PobTreeSummary, character?: string, liveError?: string }> {
     await this.ensureBuild()
     let liveError: string | undefined
-    if (!this.liveTarget()) {
+    if (!LIVE_CHARACTER_DATA) {
+      liveError = LIVE_CHARACTER_OFF
+    } else if (!this.liveTarget()) {
       liveError = 'Turn on "Also compare with my equipped gear" in Settings → Path of Building to compare with your character.'
     } else if (!this.cfg?.liveTreeAndGems) {
       liveError = 'Turn on "Use the character\'s passive tree, level and gems too" to compare trees.'
@@ -818,7 +820,9 @@ export class PobImpact {
   async treeMap (refreshGear: boolean, haveVersion?: string): Promise<Record<string, unknown>> {
     await this.ensureBuild()
     let liveError: string | undefined
-    if (!this.liveTarget()) {
+    if (!LIVE_CHARACTER_DATA) {
+      liveError = LIVE_CHARACTER_OFF
+    } else if (!this.liveTarget()) {
       liveError = 'Turn on "Also compare with my equipped gear" in Settings → Path of Building to compare with your character.'
     } else if (!this.cfg?.liveTreeAndGems) {
       liveError = 'Turn on "Use the character\'s passive tree, level and gems too" to compare trees.'
@@ -849,7 +853,9 @@ export class PobImpact {
   async gems (refreshGear: boolean): Promise<{ build: PobBuildInfo, groups: PobSocketGroup[], live?: PobSocketGroup[], items: PobSocketedItem[], liveItems?: PobSocketedItem[], character?: string, liveError?: string }> {
     await this.ensureBuild()
     let liveError: string | undefined
-    if (!this.liveTarget()) {
+    if (!LIVE_CHARACTER_DATA) {
+      liveError = LIVE_CHARACTER_OFF
+    } else if (!this.liveTarget()) {
       liveError = 'Turn on "Also compare with my equipped gear" in Settings → Path of Building to compare with your character.'
     } else if (!this.cfg?.liveTreeAndGems) {
       liveError = 'Turn on "Use the character\'s passive tree, level and gems too" to compare gems.'

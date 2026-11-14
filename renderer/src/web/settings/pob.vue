@@ -17,7 +17,7 @@
     <div class="mb-4">
       <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Loot Goblin window when it starts</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
-        A normal window with all panels (build, guide, trades, market, stash) for a second screen. Also from the tray:
+        A normal window with all panels (build, guide, trades, market) for a second screen. Also from the tray:
         double-click the icon or "Open Loot Goblin window". It remembers its screen, position and size.
       </div>
     </div>
@@ -92,46 +92,12 @@
         The same Copy button is on the price check window.
       </div>
     </div>
-    <div class="mt-4 mb-2">
-      <ui-toggle v-model="pob.liveGear">Also compare with my equipped gear</ui-toggle>
-      <div class="text-gray-500 text-sm mt-1">
-        Reads your character's gear from your public Characters tab on pathofexile.com
-        (no login; at most once every 2 minutes, or when you press refresh in the panel).
-        Your profile's Characters tab must be public. PoB's config (enemy, buffs, bandit, pantheon)
-        always comes from the build.
-      </div>
+    <div class="mt-4 mb-2 text-gray-500 text-sm">
+      Comparing with your live character (equipped gear, tree, gems, following the character you play) is
+      turned off: GGG's rules don't allow shared apps to read character data from pathofexile.com outside
+      its official API. Everything compares with your PoB build. It can come back once GGG reopens app
+      registration for its official API.
     </div>
-    <template v-if="pob.liveGear || pob.stash.enabled">
-      <div class="mb-2">
-        <div class="flex-1 mb-1">Account name</div>
-        <input v-model.trim="pob.accountName"
-          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. YourName#1234">
-        <div class="text-gray-500 text-sm mt-1">Including the <code>#1234</code> part, as shown on your profile.</div>
-      </div>
-    </template>
-    <template v-if="pob.liveGear">
-      <div class="mb-2">
-        <ui-toggle :modelValue="pob.characterAuto !== false" @update:modelValue="pob.characterAuto = $event">Follow the character I'm playing</ui-toggle>
-        <div class="text-gray-500 text-sm mt-1">
-          When you log into a character, the overlay asks pathofexile.com which character you played last
-          (one request) and compares with that one. The build you pick in the build panel is remembered
-          per character and switched back when you play that character again.
-        </div>
-      </div>
-      <div class="mb-2">
-        <div class="flex-1 mb-1">{{ pob.characterAuto !== false ? 'Character until one is detected' : 'Character' }}</div>
-        <input v-model.trim="pob.character"
-          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. MyWitch">
-      </div>
-      <div class="mb-2">
-        <ui-toggle v-model="pob.liveTreeAndGems">Use the character's passive tree, level and gems too</ui-toggle>
-        <div class="text-gray-500 text-sm mt-1">
-          On: "vs character" is your actual character (one extra request per refresh for the tree).
-          Off: only the items are swapped into the build. The main skill is the build's main skill
-          if the character has it, otherwise PoB's guess.
-        </div>
-      </div>
-    </template>
 
     <div class="mt-6 mb-2">
       <div class="mb-1">Chat buttons (trade companion)</div>
@@ -184,36 +150,6 @@
       </template>
     </div>
 
-    <div class="mt-6 mb-2">
-      <ui-toggle v-model="pob.stash.enabled">Stash tracker (personal, uses your login cookie)</ui-toggle>
-      <div class="text-yellow-500 text-sm mt-1">
-        Grey area: GGG's official stash API needs an approved app and registration is closed, so this reads
-        your tabs the way the website's stash viewer does, with your POESESSID. Read-only, refresh by hand only,
-        a few tabs at a time. Never share your POESESSID: anyone with it is logged in as you.
-      </div>
-    </div>
-    <template v-if="pob.stash.enabled">
-      <div class="mb-2">
-        <div class="flex-1 mb-1">League</div>
-        <input v-model.trim="pob.stash.league"
-          class="rounded bg-gray-900 px-1 block w-full font-sans placeholder:text-gray-600 placeholder:italic" placeholder="e.g. Keepers (exactly as on the trade site)">
-      </div>
-      <div class="mb-2">
-        <div class="flex-1 mb-1">POESESSID</div>
-        <div class="flex gap-1">
-          <input v-model.trim="sessionInput" type="password" autocomplete="off"
-            class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" placeholder="paste to replace the saved one">
-          <button type="button" class="px-2 bg-gray-800 rounded shrink-0" :disabled="!sessionInput" @click="saveSession">Save</button>
-          <button type="button" class="px-2 bg-gray-800 rounded shrink-0" @click="forgetSession">Forget</button>
-        </div>
-        <div class="text-gray-500 text-sm mt-1">
-          From pathofexile.com while logged in: browser dev tools → Application → Cookies → POESESSID.
-          Saved encrypted on this PC (Windows DPAPI), not in the settings file, and only sent to pathofexile.com.
-          It changes when you log out; paste the new one then.
-          <span v-if="sessionNote" class="text-green-500">{{ sessionNote }}</span>
-        </div>
-      </div>
-    </template>
   </div>
 </template>
 
@@ -233,7 +169,6 @@ export default defineComponent({
   setup (props) {
     const pob = computed(() => {
       props.config.pob ??= defaultPobConfig()
-      props.config.pob.stash ??= defaultPobConfig().stash
       props.config.pob.chatButtons ??= 'copy'
       props.config.pob.hud ??= defaultHudConfig()
       props.config.pob.hud.clickThroughPanels ??= defaultHudConfig().clickThroughPanels
@@ -242,12 +177,6 @@ export default defineComponent({
       if (props.config.pob.openPobKey === undefined) props.config.pob.openPobKey = null
       return props.config.pob
     })
-
-    const sessionInput = ref('')
-    const sessionNote = ref('')
-    function sendSession (sessionId: string | null) {
-      Host.sendEvent({ name: 'CLIENT->MAIN::stash-session', payload: { sessionId } })
-    }
 
     let nextId = 1
 
@@ -297,18 +226,6 @@ export default defineComponent({
       resetHudPositions () {
         pob.value.hud.pos = defaultHudConfig().pos
         pob.value.hud.dims = {}
-      },
-      sessionInput,
-      sessionNote,
-      saveSession () {
-        if (!sessionInput.value) return
-        sendSession(sessionInput.value)
-        sessionInput.value = ''
-        sessionNote.value = 'Saved.'
-      },
-      forgetSession () {
-        sendSession(null)
-        sessionNote.value = 'Removed.'
       },
       async browsePobDir () {
         const picked = await pickFolder('Path of Building folder', pob.value.pobDir || defaults.value.pobDir)

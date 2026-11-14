@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Removed (#62): GGG rules
+- **Stash tracker removed.** It needed your POESESSID login cookie, which GGG's rules don't allow in shared apps. The saved (encrypted) session and stash snapshot are deleted on start. Use PoE Overlay (a registered GGG app) for stash tracking.
+- **Live character comparison turned off**: equipped gear, the character's tree/gems/level, following the character you play and the character list. They used pathofexile.com's character-window pages, which aren't part of GGG's official API. Build impact, gems, tree and the tree map compare with your PoB build only. Can return through GGG's official API if app registration reopens.
+
 ### Added (#61)
 - **Tree map in the Loot Goblin window.** Build → **Tree map** tab draws the whole passive tree for the build and loadout picked above: green = you have it, orange = to take, purple = on your character but not in the build (yellow when no character is compared). Drag to pan, wheel to zoom, double-click or ⛶ to fit, hover for the node's stats and mastery effects, search box highlights nodes by name or stat. Only the build's (and your character's) ascendancy is drawn; cluster jewel nodes are counted, not drawn. Needs the PoB fork with the `treeMap` command.
 

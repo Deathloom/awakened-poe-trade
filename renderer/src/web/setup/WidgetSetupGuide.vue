@@ -99,34 +99,12 @@
           <!-- 3. Character -->
           <template v-else-if="step === 2">
             <div class="text-xl mb-2">Your character</div>
-            <p class="mb-2 text-gray-400">Loot Goblin can compare items and gems with what your character is wearing now,
-              not only with the PoB build. It reads your public Characters tab on pathofexile.com (no login).</p>
-            <ui-toggle v-model="pob.liveGear" class="mb-2">Compare with my character's gear</ui-toggle>
-            <template v-if="pob.liveGear">
-              <div class="mb-1">Account name</div>
-              <div class="flex gap-1 mb-1">
-                <input v-model.trim="pob.accountName"
-                  class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic"
-                  placeholder="e.g. YourName#1234" @keydown.enter="checkCharacters">
-                <button class="btn" :disabled="!pob.accountName || checking" @click="checkCharacters">
-                  {{ checking ? 'Checking…' : 'Check' }}</button>
-              </div>
-              <div class="text-gray-500 text-sm mb-2">Including the <code>#1234</code> part, as shown on your profile.</div>
-              <div v-if="charError" class="text-red-400 text-sm mb-2">{{ charError }}</div>
-              <div v-else-if="characters" class="text-green-500 text-sm mb-2">
-                <i class="fas fa-check mr-1" />Found {{ characters.length }} character{{ characters.length === 1 ? '' : 's' }}{{ characters.length ? ': ' + characters.slice(0, 4).map(c => c.name).join(', ') + (characters.length > 4 ? ', …' : '') : '' }}
-              </div>
-              <ui-toggle :modelValue="pob.characterAuto !== false" @update:modelValue="pob.characterAuto = $event" class="mb-1">
-                Follow the character I'm playing</ui-toggle>
-              <div class="text-gray-500 text-sm mb-2">When you log into a character, Loot Goblin switches to it by itself.</div>
-              <template v-if="pob.characterAuto === false && characters?.length">
-                <div class="mb-1">Character</div>
-                <select v-model="pob.character" class="rounded bg-gray-900 px-1 mb-2">
-                  <option v-for="c of characters" :key="c.name" :value="c.name">{{ c.name }} ({{ c.league }}, {{ c.level }})</option>
-                </select>
-              </template>
-              <ui-toggle v-model="pob.liveTreeAndGems">Use the character's passive tree, level and gems too</ui-toggle>
-            </template>
+            <p class="mb-2 text-gray-400">Loot Goblin compares items, gems and the passive tree with your
+              Path of Building build. Comparing with your live character (what it wears now) is turned off:
+              GGG's rules don't allow shared apps to read character data from pathofexile.com outside its
+              official API, and we don't risk anyone's account.</p>
+            <p class="mb-2 text-gray-400">Keep your build in PoB up to date (re-import your character in PoB
+              and save) and the panels follow it.</p>
           </template>
 
           <!-- 4. Panels -->
@@ -198,14 +176,6 @@
               <div class="text-gray-400 text-sm mt-1">When something breaks, Loot Goblin opens an issue in the group's private
                 repo with your GitHub sign-in (version, error, last log lines; no Windows user folder). Only when signed in.
                 Tray icon → Report a problem… for anything else.</div>
-            </div>
-            <div class="mb-3">
-              <ui-toggle v-model="pob.stash.enabled">Stash tracker (personal)</ui-toggle>
-              <div class="text-yellow-500 text-sm mt-1">Values your stash tabs. It needs your POESESSID login cookie,
-                which is a grey area (GGG's official stash access needs an approved app). Read-only, refresh by hand.
-                Never share your POESESSID.</div>
-              <div v-if="pob.stash.enabled" class="text-gray-400 text-sm mt-1">Finish setting it up in Settings
-                <i class="fas fa-cog" /> → Path of Building → Stash tracker (league and POESESSID).</div>
             </div>
           </template>
 
@@ -284,7 +254,6 @@ const step = ref(0)
 const pob = computed(() => {
   const cfg = AppConfig()
   cfg.pob ??= defaultPobConfig()
-  cfg.pob.stash ??= defaultPobConfig().stash
   cfg.pob.hud ??= defaultHudConfig()
   cfg.pob.hud.clickThroughPanels ??= defaultHudConfig().clickThroughPanels
   return cfg.pob
@@ -339,9 +308,6 @@ function close () {
 // What main found (Client.txt, PoB, builds, player; characters with an account name)
 type Probe = IpcEventPayload<'MAIN->CLIENT::pob-setup-probe'>
 const found = ref<Probe | null>(null)
-const characters = ref<NonNullable<Probe['characters']> | null>(null)
-const charError = ref('')
-const checking = ref(false)
 let nextId = 1
 const pending = new Map<number, (p: Probe) => void>()
 const listener = Host.onEvent('MAIN->CLIENT::pob-setup-probe', (e) => {
@@ -362,22 +328,6 @@ function request (accountName?: string): Promise<Probe> {
 
 function probe () {
   request().then((p) => { found.value = p }).catch(() => {})
-}
-
-async function checkCharacters () {
-  const account = pob.value.accountName?.trim()
-  if (!account || checking.value) return
-  checking.value = true
-  charError.value = ''
-  try {
-    const p = await request(account)
-    found.value = p
-    characters.value = p.characters ?? null
-    charError.value = p.charactersError ?? ''
-    if (p.characters?.length && !pob.value.character) pob.value.character = p.characters[0].name
-  } finally {
-    checking.value = false
-  }
 }
 
 // Builds of an earlier PoB install -> player folder (main picks the source folder itself)
