@@ -161,6 +161,32 @@ const levelPlan = computed(() => {
 })
 watch(levelPlan, (lp) => { mapHave.value = lp?.have ?? null }, { immediate: true })
 const hasLive = computed(() => levelPlan.value != null || live.value != null)
+// Deathloom fork: mastery effect picked by the build (levelling plan first, else the build's tree)
+const masteryText = computed(() => {
+  const out = new Map<number, string>()
+  const lay = layout.value
+  if (!lay) return out
+  const fromPlan = new Map<number, string>()
+  for (const n of plan.value?.order ?? []) if (n.effect) fromPlan.set(n.id, n.effect)
+  for (const n of lay.nodes) {
+    if (n[3] !== 3 || !buildSet.value.has(n[0])) continue
+    const text = fromPlan.get(n[0]) ?? alloc.value?.masteries[String(n[0])]
+    if (text) out.set(n[0], text)
+  }
+  return out
+})
+function wrapText (ctx: CanvasRenderingContext2D, text: string, max: number): string[] {
+  const out: string[] = []
+  for (const part of text.split(/\s*\/\s*|\n/)) {
+    let line = ''
+    for (const word of part.split(' ')) {
+      const t = line ? line + ' ' + word : word
+      if (line && ctx.measureText(t).width > max) { out.push(line); line = word } else line = t
+    }
+    if (line) out.push(line)
+  }
+  return out
+}
 const buildSet = computed(() => levelPlan.value?.target ?? new Set(alloc.value?.ids ?? []))
 const liveSet = computed(() => levelPlan.value?.have ?? new Set(live.value?.ids ?? []))
 const nextIndex = computed(() => new Map((levelPlan.value?.next ?? []).map((id, i) => [id, i + 1])))
@@ -479,6 +505,31 @@ function paint () {
       ctx.fillText(n[6], x, y + (KIND_RADIUS[n[3]] ?? 10) * scale + 12)
     }
   }
+  // Deathloom fork: the mastery effect the build picks, written under the mastery
+  // (always for the next 5, else when zoomed in a bit)
+  if (masteryText.value.size) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.font = '11px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    for (const [id, text] of masteryText.value) {
+      const n = nodes.get(id)
+      if (!n || (scale <= 0.1 && !nextIndex.value.has(id))) continue
+      const x = n[1] * scale + offX; const y0 = n[2] * scale + offY + (KIND_RADIUS[n[3]] ?? 10) * scale + 6
+      if (x < -120 || y0 < -60 || x > w + 120 || y0 > h + 20) continue
+      const lines = wrapText(ctx, text, 190).slice(0, 4)
+      const bw = Math.max(...lines.map(l => ctx.measureText(l).width)) + 8
+      const bh = lines.length * 13 + 4
+      ctx.fillStyle = 'rgba(17, 24, 39, 0.85)'
+      ctx.fillRect(x - bw / 2, y0, bw, bh)
+      ctx.strokeStyle = nextIndex.value.has(id) ? '#67e8f9' : '#b7791f'
+      ctx.lineWidth = 1
+      ctx.strokeRect(x - bw / 2, y0, bw, bh)
+      ctx.fillStyle = '#fcd34d'
+      lines.forEach((l, i) => ctx.fillText(l, x, y0 + 2 + i * 13))
+    }
+    ctx.textBaseline = 'alphabetic'
+  }
   // numbers on the next passives
   if (nextIndex.value.size) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -498,7 +549,7 @@ function paint () {
   }
 }
 
-watch([searchHits, buildSet, liveSet, nextIndex], () => draw())
+watch([searchHits, buildSet, liveSet, nextIndex, masteryText], () => draw())
 let ro: ResizeObserver | null = null
 onMounted(() => {
   ro = new ResizeObserver(() => { if (fitted) draw(); else fit() })
