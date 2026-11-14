@@ -56,7 +56,7 @@ function releaseKeyboard () {
 }
 onMounted(() => {
   wantKeyboard()
-  void nextTick(() => { inputRef.value?.focus() })
+  nextTick(() => { inputRef.value?.focus() })
 })
 
 const emit = defineEmits<{
