@@ -55,6 +55,25 @@ if (!IS_HUD && !IS_DESKTOP) {
 @tailwind components;
 @tailwind utilities;
 
+/* Deathloom fork: text fields stand out from the panel they sit on
+   (they used the panel's own grey and were nearly invisible). Only our
+   rounded fields; price check filter inputs keep upstream's look. */
+:is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"] {
+  background-color: #030712 !important;
+  color: #f3f4f6;
+  box-shadow: inset 0 0 0 1px #6b7280;
+}
+:is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"]:hover {
+  box-shadow: inset 0 0 0 1px #9ca3af;
+}
+:is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"]:focus {
+  box-shadow: inset 0 0 0 1px #3b82f6, 0 0 0 1px #3b82f6;
+}
+:is(input, textarea)[class~="rounded"]::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
 .table-stripped tbody tr:nth-child(odd) {
   background: #353f52;
 }

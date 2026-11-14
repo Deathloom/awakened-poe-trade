@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.68] - 2026-11-14
+
+### Fixed (#110)
+- **Text fields are easy to see:** search boxes, inputs and dropdowns (atlas search, market search, board, settings, …) now have a dark background and a light outline that turns blue while you type, instead of the panel's own grey. Price check filters keep their look.
+
 ## [1.0.67] - 2026-11-14
 
 ### Changed (#109)
