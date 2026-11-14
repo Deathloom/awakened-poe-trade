@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.78] - 2026-11-15
+
+### Added (#123)
+- **Atlas: next 5 passives** (Atlas tab): the next passives to take in game are numbered 1–5 and coloured cyan on the atlas, following the path to the build's nearest notable you don't have yet (map sustain notables first when it's a tie). Uses what Loot Goblin saw you take (the ticks button sets it if you already have a tree). **next 5** in the toolbar zooms to them; hover lists them in order.
+
 ## [1.0.77] - 2026-11-15
 
 ### Added (#122)
