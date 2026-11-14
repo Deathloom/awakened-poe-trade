@@ -135,7 +135,7 @@ app.on('ready', async () => {
   eventPipe.onEventAnyClient('CLIENT->MAIN::write-clipboard', ({ text }) => {
     // Deathloom fork: plain text only, capped (item text and searches are a few KB)
     if (typeof text !== 'string' || text.length > 100_000) return
-    clipboard.writeText(text)
+    clipboard.writeText(text).catch(e => logger.write(`error [Clipboard] ${(e as Error).message}`))
   })
 
   setTimeout(

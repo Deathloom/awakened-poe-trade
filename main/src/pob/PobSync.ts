@@ -226,7 +226,7 @@ export class PobSync {
       signIn: { userCode: reply.userCode, verificationUri: reply.verificationUri, expiresAt }
     })
     // like PoB: the code is on the clipboard and GitHub opens in the browser
-    clipboard.writeText(String(reply.userCode))
+    await clipboard.writeText(String(reply.userCode)).catch(() => { /* code is shown in the panel too */ })
     openWebLink(String(reply.verificationUri), 'github.com')
     this.schedulePoll()
   }

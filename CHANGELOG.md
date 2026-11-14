@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#60)
+- **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, stash search, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys. The stash tracker's POESESSID uses the asynchronous safe storage (the synchronous one is removed in Electron 46); sessions saved by older versions still open.
+
 ### Added (#59)
 - **Loot Goblin window for a second screen.** A normal window with every panel in one place: build (gear / gems / tree, build and loadout pickers, sync, import), campaign guide, trades + ledger, market history and stash tracker. Tabs for each panel or **All** at once. Open it from the tray (double-click the icon, or **Open Loot Goblin window**), by starting Loot Goblin again from the Start menu while it runs, or automatically (Settings → Path of Building → **Open the Loot Goblin window when it starts**). Remembers its screen, position, size and tab; if that screen is gone it opens on the main one. Panels follow the game live like the overlay; Trade and price check from the build panel open in the overlay.
 - Guide step, trade ledger and market watchlist stay in step between the overlay, HUD and the desktop window (a trade is logged once).

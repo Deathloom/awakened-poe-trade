@@ -233,12 +233,13 @@ export class StashTracker {
         this.logger.write('info [Stash] POESESSID removed')
         return
       }
-      if (!safeStorage.isEncryptionAvailable()) {
+      // Deathloom fork: async safeStorage (sync API deprecated in Electron 45, removed in 46)
+      if (!(await safeStorage.isAsyncEncryptionAvailable())) {
         this.logger.write('error [Stash] encryption not available, POESESSID not saved')
         return
       }
       await fs.mkdir(path.dirname(this.sessionFile), { recursive: true })
-      await fs.writeFile(this.sessionFile, safeStorage.encryptString(sessionId.trim()))
+      await fs.writeFile(this.sessionFile, await safeStorage.encryptStringAsync(sessionId.trim()))
       this.logger.write('info [Stash] POESESSID saved (encrypted)')
     } catch (e) {
       this.logger.write(`error [Stash] saving POESESSID: ${(e as Error).message}`)
@@ -248,7 +249,12 @@ export class StashTracker {
   private async readSession (): Promise<string | null> {
     try {
       const data = await fs.readFile(this.sessionFile)
-      return safeStorage.decryptString(data)
+      // reads sessions saved by the old sync encryptString too
+      const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(data)
+      if (shouldReEncrypt) {
+        await fs.writeFile(this.sessionFile, await safeStorage.encryptStringAsync(result))
+      }
+      return result
     } catch {
       return null
     }
