@@ -15,6 +15,8 @@ export class AppTray {
   // Deathloom fork: "Restart to update" item once an update is downloaded
   updateReady: string | null = null
   installUpdate: () => void = () => {}
+  // Deathloom fork: desktop window (all panels, for a second screen)
+  openDesktop: () => void = () => {}
 
   constructor (server: ServerEvents) {
     let trayImage = nativeImage.createFromPath(
@@ -33,6 +35,7 @@ export class AppTray {
 
     this.tray = new Tray(trayImage)
     this.tray.setToolTip(`Loot Goblin v${app.getVersion()}`)
+    if (process.platform === 'win32') this.tray.on('double-click', () => { this.openDesktop() })
     this.rebuildMenu()
 
     server.onEventAnyClient('CLIENT->MAIN::user-action', ({ action }) => {
@@ -48,6 +51,10 @@ export class AppTray {
         ? [{ label: `Restart to update to ${this.updateReady}`, click: () => { this.installUpdate() } },
             { type: 'separator' as const }]
         : []),
+      {
+        label: 'Open Loot Goblin window',
+        click: () => { this.openDesktop() }
+      },
       {
         label: 'Settings/League',
         click: () => {

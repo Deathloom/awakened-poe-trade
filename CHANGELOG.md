@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#59)
+- **Loot Goblin window for a second screen.** A normal window with every panel in one place: build (gear / gems / tree, build and loadout pickers, sync, import), campaign guide, trades + ledger, market history and stash tracker. Tabs for each panel or **All** at once. Open it from the tray (double-click the icon, or **Open Loot Goblin window**), by starting Loot Goblin again from the Start menu while it runs, or automatically (Settings → Path of Building → **Open the Loot Goblin window when it starts**). Remembers its screen, position, size and tab; if that screen is gone it opens on the main one. Panels follow the game live like the overlay; Trade and price check from the build panel open in the overlay.
+- Guide step, trade ledger and market watchlist stay in step between the overlay, HUD and the desktop window (a trade is logged once).
+
+## [1.0.21] - 2026-11-14
+
 ### Fixed (#58)
 - **Trade ledger, campaign guide progress and market watchlist now survive a restart.** The installed app's local server used a new random port on every start, and the panels' saved data is tied to the port, so it started empty each time. It now uses a fixed port (47284, this PC only); if that's taken it falls back to a random one for that run. Data from earlier runs can't be recovered.
 

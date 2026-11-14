@@ -41,3 +41,21 @@ export function addPrice (totals: Record<string, number>, price: string) {
   const cur = m[2].trim()
   totals[cur] = (totals[cur] ?? 0) + amount
 }
+
+// Deathloom fork: several windows can show the trade companion (overlay or HUD,
+// and the desktop window), and each sees "Trade accepted." in Client.txt.
+// Append to the newest stored list and skip a trade another window already logged.
+export function appendToLedger (entry: TradeEntry): TradeEntry[] {
+  const list = loadLedger()
+  const dup = list.some(e => e.direction === entry.direction && e.char === entry.char &&
+    e.item === entry.item && e.price === entry.price && Math.abs(e.at - entry.at) < 2 * 60_000)
+  const next = dup ? list : [...list, entry].slice(-2000)
+  if (!dup) saveLedger(next)
+  return next
+}
+
+export function onLedgerChange (cb: (list: TradeEntry[]) => void): () => void {
+  const handler = (e: StorageEvent) => { if (e.key === KEY) cb(loadLedger()) }
+  window.addEventListener('storage', handler)
+  return () => { window.removeEventListener('storage', handler) }
+}

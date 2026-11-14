@@ -32,6 +32,12 @@ function load (): WatchedItem[] {
 
 export const watchlist = ref<WatchedItem[]>(load())
 
+// Deathloom fork: the overlay and the desktop window share this list; another
+// window's change shows up here too
+try {
+  window.addEventListener('storage', (e) => { if (e.key === KEY) watchlist.value = load() })
+} catch {}
+
 function save () {
   try { localStorage.setItem(KEY, JSON.stringify(watchlist.value)) } catch {}
 }
@@ -62,6 +68,8 @@ export function removeWatch (key: string) {
 
 // Add a price point if the last one is older than minGap
 export function record (key: string, chaos: number, minGap = 55 * 60_000) {
+  // newest copy first: another window may have recorded a point already
+  watchlist.value = load()
   const w = watchlist.value.find(x => x.key === key)
   if (!w) return
   const last = w.points[w.points.length - 1]

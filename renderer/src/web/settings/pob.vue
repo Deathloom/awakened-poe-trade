@@ -15,6 +15,13 @@
       </div>
     </div>
     <div class="mb-4">
+      <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Loot Goblin window when it starts</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        A normal window with all panels (build, guide, trades, market, stash) for a second screen. Also from the tray:
+        double-click the icon or "Open Loot Goblin window". It remembers its screen, position and size.
+      </div>
+    </div>
+    <div class="mb-4">
       <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         When Loot Goblin or its Path of Building hits an error, it opens an issue in the group's private

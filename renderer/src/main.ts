@@ -17,7 +17,8 @@ import { Host } from './web/background/IPC'
   })
 
   // Deathloom fork: errors in the overlay pages go into the automatic problem report
-  const where = new URLSearchParams(location.search).get('hud') ? `hud=${new URLSearchParams(location.search).get('hud')}` : 'overlay'
+  const qs = new URLSearchParams(location.search)
+  const where = qs.get('hud') ? `hud=${qs.get('hud')}` : qs.has('desktop') ? 'desktop' : 'overlay'
   const report = (err: unknown, extra?: string) => {
     const e = err instanceof Error ? err : new Error(String(err))
     Host.sendEvent({ name: 'CLIENT->MAIN::report-error', payload: { message: e.message, stack: e.stack, where: extra ? `${where}, ${extra}` : where } })

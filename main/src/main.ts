@@ -13,6 +13,7 @@ import { AppUpdater } from './AppUpdater'
 import { AppTray } from './AppTray'
 import { OverlayVisibility } from './windowing/OverlayVisibility'
 import { HudWindow } from './windowing/HudWindow'
+import { DesktopWindow } from './windowing/DesktopWindow'
 import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
 import { PobImpact } from './pob/PobImpact'
@@ -27,6 +28,15 @@ import { applyStartWithWindows } from './StartWithWindows'
 if (!app.requestSingleInstanceLock()) {
   app.exit()
 }
+
+// Deathloom fork: starting Loot Goblin again (Start menu, desktop shortcut) while
+// it's running opens its desktop window; --desktop opens it at start too
+let openDesktopWindow: (() => void) | null = null
+let desktopRequested = process.argv.includes('--desktop')
+app.on('second-instance', () => {
+  if (openDesktopWindow) openDesktopWindow()
+  else desktopRequested = true
+})
 
 if (process.platform !== 'darwin') {
   app.disableHardwareAcceleration()
@@ -134,6 +144,11 @@ app.on('ready', async () => {
       new OverlayVisibility(eventPipe, overlay, gameConfig)
       // Deathloom fork: panels that stay visible while playing
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
+      // Deathloom fork: all panels in a normal window (second screen)
+      const desktop = new DesktopWindow(logger)
+      tray.openDesktop = () => { desktop.open() }
+      openDesktopWindow = () => { desktop.open() }
+      if (desktopRequested) desktop.open()
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
       shortcuts.hud = hud
       shortcuts.openPob = () => { tray.openPob() }
@@ -183,6 +198,7 @@ app.on('ready', async () => {
         stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
         hud.configure(cfg.pob?.hud)
         applyStartWithWindows(cfg.pob?.startWithWindows !== false)
+        desktop.configure(cfg.pob?.desktopAtStart === true)
       })
       uIOhook.start()
       const port = await startServer(appUpdater, logger)
@@ -190,6 +206,7 @@ app.on('ready', async () => {
       logger.write(`info ${os.type()} ${os.release} / v${app.getVersion()}`)
       overlay.loadAppPage(port)
       hud.setPort(port)
+      desktop.setPort(port)
       tray.serverPort = port
     },
     // fixes(linux): window is black instead of transparent
