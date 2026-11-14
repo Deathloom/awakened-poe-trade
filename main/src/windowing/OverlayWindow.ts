@@ -1,4 +1,4 @@
-import { lockToAppPages } from '../safe-open'
+import { lockToAppPages, hardenWebview } from '../safe-open'
 import path from 'path'
 import { BrowserWindow, dialog, shell, Menu, WebContents } from 'electron'
 import { OverlayController, OVERLAY_WINDOW_OPTS } from 'electron-overlay-window'
@@ -34,6 +34,10 @@ export class OverlayWindow {
       width: 800,
       height: 600,
       webPreferences: {
+        // Deathloom fork: Electron's secure defaults, stated explicitly
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
         allowRunningInsecureContent: false,
         webviewTag: true,
         spellcheck: false
@@ -53,12 +57,10 @@ export class OverlayWindow {
 
     // Deathloom fork: web links only, and the window stays on the overlay's pages
     lockToAppPages(this.window.webContents)
-    // Deathloom fork: <webview> (wiki / trade site browser) gets no preload and no Node
-    this.window.webContents.on('will-attach-webview', (_e, webPreferences) => {
-      delete webPreferences.preload
-      webPreferences.nodeIntegration = false
-      webPreferences.nodeIntegrationInSubFrames = false
-      webPreferences.contextIsolation = true
+    // Deathloom fork: <webview> (wiki / trade site browser) gets no preload, no Node,
+    // runs sandboxed and only loads web links
+    this.window.webContents.on('will-attach-webview', (e, webPreferences, params) => {
+      if (!hardenWebview(webPreferences, params.src)) e.preventDefault()
     })
   }
 

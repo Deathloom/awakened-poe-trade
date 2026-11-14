@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (#117)
+- **Web pages inside Loot Goblin are locked down further:** the overlay's built-in browser (wiki / trade site) now runs sandboxed with web security on and only opens web links, and pages shown inside the app can't ask for camera, microphone, notifications or location. The app's own windows state Electron's secure settings explicitly.
+- **Security baseline** ([SECURITY-BASELINE.md](SECURITY-BASELINE.md)) with automatic checks on every change and weekly: dependency advisories, Electronegativity, OpenSSF Scorecard. The Release workflow no longer pastes the version text into scripts.
+
 ### Security (#116)
 - **Build tools updated:** Vite 5 → 8, @vitejs/plugin-vue 4 → 6, vue-tsc 2 → 3, TypeScript 5.6 → 5.9, electron-builder 26.9 → 26.18. Clears the high-severity Vite dev-server advisory and the vue-tsc/esbuild ones. No change to what the app does. Remaining npm audit items are lint tools (no fix released yet) and a minimatch ReDoS inside the installer builder; none ship in the app.
 

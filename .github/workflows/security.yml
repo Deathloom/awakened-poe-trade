@@ -1,0 +1,53 @@
+# Deathloom fork: security checks (see SECURITY-BASELINE.md).
+# Fails when a shipped dependency has a high/critical advisory, when
+# Electronegativity finds a high/critical Electron misconfiguration, or when
+# the renderer doesn't type-check, lint or build.
+name: Security checks
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '17 3 * * 1'   # Mondays 05:17 SAST: catches new advisories
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      with:
+        node-version: 22
+    - name: Install
+      run: |
+        (cd renderer && npm ci --ignore-scripts)
+        (cd main && npm ci --ignore-scripts)
+    - name: npm audit (shipped dependencies, fail on high)
+      run: |
+        (cd renderer && npm audit --omit=dev --omit=optional --audit-level=high)
+        (cd main && npm audit --omit=dev --audit-level=high)
+    - name: npm audit (build tools, report only)
+      run: |
+        (cd renderer && npm audit --audit-level=high) || echo "::warning::renderer build tools have high advisories"
+        (cd main && npm audit --audit-level=high) || echo "::warning::main build tools have high advisories"
+    - name: Renderer type-check, lint, build
+      working-directory: renderer
+      run: |
+        npm run lint
+        npm run build
+    - name: Main type-check
+      working-directory: main
+      run: npx tsc --noEmit
+    - name: Electronegativity (fail on high)
+      run: |
+        npx --yes @doyensec/electronegativity@1.10.3 -i main/src -r -v false -e "$(node -p "require('./main/node_modules/electron/package.json').version")" -s high -o eneg.csv
+        n=$(grep -cE ',"(HIGH|CRITICAL)",' eneg.csv || true)
+        echo "High/critical findings: $n"
+        [ "$n" -eq 0 ] || { grep -E ',"(HIGH|CRITICAL)",' eneg.csv; exit 1; }

@@ -83,6 +83,10 @@ export class DesktopWindow {
         backgroundColor: '#111827',
         autoHideMenuBar: true,
         webPreferences: {
+          // Deathloom fork: Electron's secure defaults, stated explicitly
+          nodeIntegration: false,
+          contextIsolation: true,
+          sandbox: true,
           allowRunningInsecureContent: false,
           // the Trade site tab (official trade site, its own session)
           webviewTag: true,

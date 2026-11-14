@@ -261,6 +261,10 @@ export class HudWindow {
         focusable: false,
         alwaysOnTop: true,
         webPreferences: {
+          // Deathloom fork: Electron's secure defaults, stated explicitly
+          nodeIntegration: false,
+          contextIsolation: true,
+          sandbox: true,
           allowRunningInsecureContent: false,
           spellcheck: false,
           backgroundThrottling: false
