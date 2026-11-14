@@ -50,6 +50,10 @@ function loadIndex () {
 }
 
 const index = ref(loadIndex())
+// Deathloom fork: overlay, HUD and desktop window each show the guide; keep them on the same step
+const onStorage = (e: StorageEvent) => { if (e.key === KEY) index.value = loadIndex() }
+window.addEventListener('storage', onStorage)
+onUnmounted(() => { window.removeEventListener('storage', onStorage) })
 const showAll = ref(false)
 const lastZone = ref('')
 const matched = ref(true)

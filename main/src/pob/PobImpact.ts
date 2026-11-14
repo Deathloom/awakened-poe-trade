@@ -76,30 +76,32 @@ export class PobImpact {
       (msg) => { this.logger.write(msg) }
     )
     this.server.onEventAnyClient('CLIENT->MAIN::pob-pick-folder', ({ requestId, title, defaultPath }) => {
+      const send = this.server.replyTo()
       void this.pickFolder(title, defaultPath).then((picked) => {
-        this.server.sendEventTo('last-active', {
+        send({
           name: 'MAIN->CLIENT::pob-pick-folder',
           payload: { requestId, path: picked }
         })
       })
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-defaults', ({ requestId }) => {
-      this.server.sendEventTo('last-active', {
+      this.server.replyTo()({
         name: 'MAIN->CLIENT::pob-defaults',
         payload: { requestId, ...this.defaults() }
       })
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear }) => {
+      const send = this.server.replyTo()
       this.queue = this.queue
         .then(async () => await this.impact(itemText, refreshGear === true))
         .then(({ build, result }) => {
-          this.server.sendEventTo('last-active', {
+          send({
             name: 'MAIN->CLIENT::pob-impact',
             payload: { requestId, ok: true, build, result }
           })
         })
         .catch((err: Error) => {
-          this.server.sendEventTo('last-active', {
+          send({
             name: 'MAIN->CLIENT::pob-impact',
             payload: { requestId, ok: false, error: err.message }
           })

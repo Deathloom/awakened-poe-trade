@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: build gear panel body (used by the overlay widget and the HUD window) -->
   <div class="widget-default-style flex flex-col text-gray-200 leading-tight"
-    :style="hud ? { width: 'var(--hud-w, 26rem)', maxHeight: 'var(--hud-h, 40rem)' } : { width: '26rem', maxHeight: '85vh' }">
+    :style="desktop ? { width: '100%', height: '100%' } : hud ? { width: 'var(--hud-w, 26rem)', maxHeight: 'var(--hud-h, 40rem)' } : { width: '26rem', maxHeight: '85vh' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500 shrink-0"><i class="fas fa-hammer mr-1" />Build</span>
       <div class="flex gap-px text-sm shrink-0">
@@ -95,7 +95,8 @@ import { pobText } from './labels'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
 // hud: inside the HUD window (Trade / price check are done by the overlay)
-const props = defineProps<{ active: boolean, hud?: boolean }>()
+// desktop: inside the desktop window (whole panel area; Trade / price check by the overlay too)
+const props = defineProps<{ active: boolean, hud?: boolean, desktop?: boolean }>()
 const { copiedKey, copy } = useCopyFeedback()
 
 const loading = ref(false)
@@ -225,7 +226,7 @@ function itemTitle (item: PobGearItem) {
 
 function openTrade (item: PobGearItem) {
   tradeError.value = { ...tradeError.value, [item.slot]: '' }
-  if (props.hud) {
+  if (props.hud || props.desktop) {
     // the overlay owns the league list; it opens the trade site
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'trade', text: item.text } })
     return
@@ -236,7 +237,7 @@ function openTrade (item: PobGearItem) {
 
 // Open the normal price check window for this item (stat filters, prices, build impact)
 function priceCheck (item: PobGearItem, e: MouseEvent) {
-  if (props.hud) {
+  if (props.hud || props.desktop) {
     // main opens it in the overlay and activates the overlay
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'price-check', text: item.text } })
     return

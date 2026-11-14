@@ -38,6 +38,8 @@ server.emit = ((event: string, ...args: any[]) => {
   }
   return serverEmit(event, ...args)
 }) as typeof server.emit
+// Deathloom fork: see startServer
+const STABLE_PORT = 47284
 const websocketServer = new WebSocketServer({ noServer: true })
 let lastActiveClient: WebSocket
 // Deathloom fork: the HUD window ("show while playing") connects as a second
@@ -181,7 +183,11 @@ export async function startServer (
     }
   })
 
-  let port = (process.env.VITE_DEV_SERVER_URL) ? 8584 : 0
+  // Deathloom fork: a fixed port in the installed app too. Browser storage is
+  // per origin (incl. the port), so with upstream's random port the trade
+  // ledger, guide progress, market watchlist etc. were lost on every restart.
+  // If the port is taken, fall back to a random one (storage for that run only).
+  let port = (process.env.VITE_DEV_SERVER_URL) ? 8584 : STABLE_PORT
   let host = '127.0.0.1'
   // --listen=[host][:port]
   const listenOpt = process.argv.find(arg => arg.startsWith('--listen'))
@@ -191,11 +197,19 @@ export async function startServer (
     if (portArg) port = parseInt(portArg, 10)
   }
 
-  return new Promise((resolve, reject) => {
-    server.listen({ port, host })
+  const listen = (p: number) => new Promise<number>((resolve, reject) => {
+    server.listen({ port: p, host })
       .once('error', reject)
       .once('listening', () => {
         resolve((server.address() as AddressInfo).port)
       })
   })
+  try {
+    return await listen(port)
+  } catch (err) {
+    if (port !== STABLE_PORT || (err as NodeJS.ErrnoException).code !== 'EADDRINUSE') throw err
+    logger.write(`warn [server] port ${STABLE_PORT} is in use; using a random port (panel data saved in the app won't carry over this time)`)
+    server.removeAllListeners('error')
+    return await listen(0)
+  }
 }

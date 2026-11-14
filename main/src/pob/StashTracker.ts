@@ -200,15 +200,17 @@ export class StashTracker {
       void this.saveSession(sessionId)
     })
     this.server.onEventAnyClient('CLIENT->MAIN::stash', ({ requestId, action }) => {
+      // answer the window that asked (overlay or desktop window)
+      const send = this.server.replyTo()
       void this.handle(action).then(
         async (res) => {
-          this.server.sendEventTo('last-active', {
+          send({
             name: 'MAIN->CLIENT::stash',
             payload: { requestId, ok: true, hasSession: await this.hasSession(), ...res }
           })
         },
         async (err: Error) => {
-          this.server.sendEventTo('last-active', {
+          send({
             name: 'MAIN->CLIENT::stash',
             payload: { requestId, ok: false, error: err.message, hasSession: await this.hasSession() }
           })

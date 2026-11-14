@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: trade companion body (used by the overlay widget and the HUD window) -->
   <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm"
-    :style="compact ? { width: 'var(--hud-w, 24rem)', maxHeight: 'var(--hud-h, 32rem)' } : { width: '24rem', maxHeight: '70vh' }">
+    :style="fill ? { width: '100%', height: '100%' } : compact ? { width: 'var(--hud-w, 24rem)', maxHeight: 'var(--hud-h, 32rem)' } : { width: '24rem', maxHeight: '70vh' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500 shrink-0"><i class="fas fa-handshake mr-1" />Trades</span>
       <div class="flex gap-px shrink-0">
@@ -82,9 +82,10 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine, type LogEvent } from './game-log'
 import { runChat, chatMode } from './chat'
-import { addPrice, type TradeEntry, loadLedger, saveLedger } from './ledger'
+import { addPrice, type TradeEntry, loadLedger, saveLedger, appendToLedger, onLedgerChange } from './ledger'
 
-defineProps<{ compact?: boolean }>()
+// fill: take the whole space (desktop window)
+defineProps<{ compact?: boolean, fill?: boolean }>()
 const emit = defineEmits<{ (e: 'incoming' | 'empty'): void }>()
 
 const TABS = [{ key: 'trades', label: 'Whispers' }, { key: 'ledger', label: 'Ledger' }] as const
@@ -151,8 +152,7 @@ function handle (e: LogEvent) {
     const t = (lastActive && !lastActive.done && inArea.value.has(lastActive.char) ? lastActive : null) ?? inAreaTrades[0]
     if (!t) return
     t.done = true
-    ledger.value = [...ledger.value, { ...t, at: Date.now() }].slice(-2000)
-    saveLedger(ledger.value)
+    ledger.value = appendToLedger({ ...t, at: Date.now() })
     trades.value = [...trades.value]
   }
 }
@@ -164,7 +164,8 @@ const logListener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
     if (ev) handle(ev)
   }
 })
-onUnmounted(() => { logListener.abort() })
+const stopLedgerSync = onLedgerChange((list) => { ledger.value = list })
+onUnmounted(() => { logListener.abort(); stopLedgerSync() })
 
 let pressTimer: ReturnType<typeof setTimeout> | undefined
 function press (t: TradeEntry, text: string, key: string) {
@@ -196,7 +197,7 @@ const totals = computed(() => {
 })
 
 function removeLedger (id: string) {
-  ledger.value = ledger.value.filter(e => e.id !== id)
+  ledger.value = loadLedger().filter(e => e.id !== id)
   saveLedger(ledger.value)
 }
 

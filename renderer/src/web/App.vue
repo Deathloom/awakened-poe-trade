@@ -1,6 +1,7 @@
 <template>
   <div id="app" class="text-sm font-poe-sc">
     <HudApp v-if="IS_HUD" />
+    <DesktopApp v-else-if="IS_DESKTOP" />
     <OverlayWindow v-else />
   </div>
 </template>
@@ -8,13 +9,15 @@
 <script setup lang="ts">
 import OverlayWindow from './overlay/OverlayWindow.vue'
 import HudApp from './hud/HudApp.vue'
-import { IS_HUD } from './hud/is-hud'
+import DesktopApp from './desktop/DesktopApp.vue'
+import { IS_HUD, IS_DESKTOP } from './hud/is-hud'
 import { Host } from './background/IPC'
 import { AppConfig, saveConfig, pushHostConfig } from './Config'
 import { openTradeSearch, openPriceCheck } from './pob/gear-actions'
 
 // Deathloom fork: the HUD window was dragged; the overlay owns the settings file
-if (!IS_HUD) {
+// (only the overlay window does these, not the HUD or desktop window)
+if (!IS_HUD && !IS_DESKTOP) {
   Host.onEvent('MAIN->CLIENT::hud-moved', (e) => {
     const hud = AppConfig().pob?.hud
     if (!hud) return
