@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.47] - 2026-11-14
+
+### Added (#86)
+- **Use a friend's builds:** with builds shared with you, the build panel has a **Player** dropdown. Pick a player to use their builds (gear, gems, tree, levelling); pick yourself to go back. Their folder is never changed, and logging into one of your characters switches back to your own builds.
+- Build sync warns when your folder isn't your GitHub name (private builds need that for Push) and sets it back in one click.
+
 ## [1.0.46] - 2026-11-14
 
 ### Changed (#85)
