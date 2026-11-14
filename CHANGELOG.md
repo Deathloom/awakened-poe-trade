@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.84] - 2026-11-15
+
+### Added (#130)
+- **Optional second Loot Goblin window (for a third screen):** Settings → Path of Building → **Second Loot Goblin window**. Off by default; when on, open it from the tray (**Open second Loot Goblin window**) or tick **Open it when the game starts too**. It has its own tabs, its own All-tab layout and split sizes (starting from the main window's), and remembers its own screen, position and size. In that window, Settings → Appearance → **This window has its own look** gives it its own theme, background and panel opacity. Trade pages, panel hotkeys and the guide's Lab button still go to the main window; the setup guide and What's new only show in the main window.
+
 ## [1.0.83] - 2026-11-15
 
 ### Added (#129)

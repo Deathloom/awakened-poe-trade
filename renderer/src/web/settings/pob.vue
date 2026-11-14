@@ -22,6 +22,14 @@
       </div>
     </div>
     <div class="mb-4">
+      <ui-toggle :modelValue="pob.window2?.enabled === true" @update:modelValue="pob.window2 = { ...pob.window2, enabled: $event }">Second Loot Goblin window (for a third screen)</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        Its own tabs, All-tab layout and look (Settings → Appearance in that window), and its own screen and position.
+        Open it from the tray: "Open second Loot Goblin window". Trade pages, panel hotkeys and the Lab button still go to the main window.
+      </div>
+      <ui-toggle v-if="pob.window2?.enabled" class="mt-2" :modelValue="pob.window2.atStart === true" @update:modelValue="pob.window2 = { ...pob.window2, atStart: $event }">Open it when the game starts too</ui-toggle>
+    </div>
+    <div class="mb-4">
       <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         When Loot Goblin or its Path of Building hits an error, it opens an issue in the group's private
