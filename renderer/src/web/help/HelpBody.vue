@@ -36,7 +36,10 @@
               Green = taken, orange = still to take. Loot Goblin ticks atlas passives as you allocate them in game; it can't see what you took
               before, so use <i class="fas fa-check-double" /> → "I have this whole build" (or "I have nothing" after a respec or in a new league).
               <b>Edit</b>: click a passive to take it with the path to it, or refund it with what hangs off it; notables with a choice let you pick the effect.
-              Atlas builds are kept on this PC. Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
+              <i class="fas fa-magic" /> makes a ready-made tree: pick the content you farm (one or more), keep Map sustain on and set the points;
+              Loot Goblin takes that content's notables by the shortest path from the start, using only GGG's own atlas data.
+              Atlas builds are saved in your builds folder (Atlas) and sync with your builds, so friends who can see your builds see your atlas builds too
+              (listed under their name, read-only: <i class="fas fa-copy" /> copies one to yours). Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
             <li><b>Trades</b>: incoming and outgoing trade whispers and your ledger.</li>
             <li><b>Board</b>: the friends' trade board, only for your group (POE-Builds members, GitHub sign-in).
               <b>Give</b>: free items, press <b>Claim</b> and the poster invites you. <b>Sell</b>: priced items for friends first, press <b>Whisper</b>.
@@ -100,7 +103,7 @@
         </section>
         <section>
           <h2>Atlas trees</h2>
-          <p>Guides for your atlas passive tree (endgame maps). An atlas tree panel in Loot Goblin is coming.</p>
+          <p>Guides for your atlas passive tree (endgame maps). Paste a guide's pathofexile.com atlas link in the Atlas tab, or make a ready-made tree there.</p>
           <div class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));">
             <button v-for="s of ATLAS_SITES" :key="s.url" class="site" @click="open(s.url)">
               <div class="text-gray-100"><i class="fas fa-external-link-alt mr-1 text-xs text-gray-500" />{{ s.name }}</div>
