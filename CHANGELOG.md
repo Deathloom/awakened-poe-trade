@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#119)
+- **Weekly data refresh** (GitHub Actions, Wednesdays): regenerates the atlas tree (GGG's official export, newest version), levelling route and quest gems (Exile Leveling, MIT) and opens a PR when anything changed. No more hand updates at league start.
+
 ## [1.0.74] - 2026-11-14
 
 ### Security (#117)
