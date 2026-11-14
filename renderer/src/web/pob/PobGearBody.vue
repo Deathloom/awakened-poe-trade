@@ -17,6 +17,8 @@
           :class="{ 'text-gray-200': showSync }" @click="showSync = !showSync"><i class="fas fa-cloud" /></button>
         <button class="text-gray-500 hover:text-gray-200 text-sm" title="Import a PoB code or build link"
           :class="{ 'text-gray-200': showImport }" @click="showImport = !showImport"><i class="fas fa-file-import" /></button>
+        <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Manage builds: rename, move to a folder, duplicate, delete"
+          :class="{ 'text-gray-200': showManage }" @click="showManage = !showManage"><i class="fas fa-folder-open" /></button>
         <button class="text-gray-500 hover:text-gray-200 text-sm" title="Pick the build and loadout"
           :class="{ 'text-gray-200': showPicker }" @click="showPicker = !showPicker"><i class="fas fa-exchange-alt" /></button>
         <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200" title="Reload from Path of Building"
@@ -28,6 +30,7 @@
     <build-sync v-if="showSync" class="shrink-0 border-b border-gray-700" :hud="hud" @synced="pickerRef?.request()" />
     <build-import v-if="showImport" class="shrink-0 border-b border-gray-700" :hud="hud"
       @imported="pickerRef?.request()" />
+    <build-manager v-if="desktop && showManage" class="shrink-0 border-b border-gray-700" @changed="pickerRef?.request()" />
     <build-picker v-show="showPicker" ref="pickerRef" class="shrink-0" @changed="onBuildChanged" />
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
     <pob-tree v-else-if="tab === 'tree'" ref="treeRef" />
@@ -88,6 +91,7 @@ import { Host } from '@/web/background/IPC'
 import { openTradeSearch, openPriceCheck } from './gear-actions'
 import { useCopyFeedback } from './market'
 import BuildPicker from './BuildPicker.vue'
+import BuildManager from './BuildManager.vue'
 import BuildSync from './BuildSync.vue'
 import BuildImport from './BuildImport.vue'
 import PobGems from './PobGems.vue'
@@ -115,6 +119,7 @@ const TABS: Array<{ key: Tab, label: string }> = [{ key: 'gear', label: 'Gear' }
 const tabs = computed(() => props.desktop ? [...TABS, { key: 'map' as Tab, label: 'Tree map' }] : TABS)
 const tab = ref<Tab>('gear')
 const showPicker = ref(true)
+const showManage = ref(false)
 const showSync = ref(false)
 const showImport = ref(false)
 const pickerRef = ref<InstanceType<typeof BuildPicker> | null>(null)
