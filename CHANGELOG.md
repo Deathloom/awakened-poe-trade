@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.31] - 2026-11-14
+
+### Changed (#70): first run in the Loot Goblin window
+- **A new install opens the Loot Goblin window with the setup guide**, so players can set everything up before starting the game; the overlay and in-game panels use it once they play. If the guide wasn't finished there, the overlay still shows it the first time it opens. Existing installs (guide done) are unchanged.
+- **Settings tab → Run setup guide** opens it again in the window (Shift+Space → wand still works in game).
+
 ## [1.0.30] - 2026-11-14
 
 ### Changed (#69): Loot Goblin window

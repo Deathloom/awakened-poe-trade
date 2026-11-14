@@ -152,6 +152,7 @@ app.on('ready', async () => {
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
       // Deathloom fork: all panels in a normal window (second screen)
       const desktop = new DesktopWindow(logger)
+      let firstRunChecked = false
       tray.openDesktop = () => { desktop.open() }
       openDesktopWindow = () => { desktop.open() }
       if (desktopRequested) desktop.open()
@@ -207,6 +208,12 @@ app.on('ready', async () => {
         hud.configure(cfg.pob?.hud)
         applyStartWithWindows(cfg.pob?.startWithWindows !== false)
         desktop.configure(cfg.pob?.desktopAtStart === true)
+        // first run (setup guide not done yet): open the Loot Goblin window, which
+        // shows the setup guide, so it can be done before playing
+        if (!firstRunChecked) {
+          firstRunChecked = true
+          if (cfg.pob?.setupDone !== true) desktop.open()
+        }
       })
       uIOhook.start()
       const port = await startServer(appUpdater, logger)

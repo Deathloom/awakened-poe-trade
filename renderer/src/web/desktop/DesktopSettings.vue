@@ -16,7 +16,9 @@
         <component :is="selected" v-if="configClone" :config="configClone" />
       </div>
       <div class="border-t bg-gray-900 border-gray-600 p-2 flex items-center justify-end gap-x-2">
-        <span v-if="note" class="mr-auto text-xs" :class="note.warn ? 'text-yellow-500' : 'text-green-500'">{{ note.text }}</span>
+        <button class="px-3 mr-auto rounded bg-gray-800 text-gray-300" title="The first-run setup guide (build sharing, folders, panels, trade buttons)"
+          @click="desktopSetupShown = true"><i class="fas fa-magic mr-1" />Run setup guide</button>
+        <span v-if="note" class="text-xs" :class="note.warn ? 'text-yellow-500' : 'text-green-500'">{{ note.text }}</span>
         <button class="px-3 rounded" :class="dirty ? 'bg-gray-600 text-gray-100' : 'bg-gray-800'" @click="save">{{ t('Save') }}</button>
         <button class="px-3" :title="'Undo changes not saved yet'" @click="reset">{{ t('Cancel') }}</button>
       </div>
@@ -37,6 +39,7 @@ import SettingsItemcheck from '../item-check/settings-item-check.vue'
 import SettingsDebug from '../settings/debug.vue'
 import SettingsMaps from '../map-check/settings-maps.vue'
 import SettingsPob from '../settings/pob.vue'
+import { desktopSetupShown } from '../setup/setup-state'
 
 const { t } = useI18n()
 
