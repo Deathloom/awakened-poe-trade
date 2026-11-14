@@ -88,7 +88,8 @@ onUnmounted(() => { clearInterval(timer) })
 watch(() => props.active, (active) => {
   if (active) { queuePricesFetch(); recordAll() }
 }, { immediate: true })
-watch(items, recordAll)
+// only when a watched item or its price changes (not on every list update)
+watch(() => items.value.map(w => `${w.key}=${w.now?.chaos ?? ''}`).join('|'), recordAll)
 
 function open (url: string) { window.open(url) }
 function fmt (n: number) { return n >= 100 ? Math.round(n) : Math.round(n * 10) / 10 }
