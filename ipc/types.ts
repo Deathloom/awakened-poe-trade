@@ -146,6 +146,8 @@ export interface PobLoadouts {
 }
 
 export interface PobGem {
+  // position in PoB's gem list (for edits; from PoB with the edit command)
+  index?: number
   name: string
   level?: number
   quality?: number
@@ -491,6 +493,8 @@ export type IpcEvent =
   IpcHudState |
   IpcOpenTradeTab |
   IpcPobManageBuild |
+  IpcPobEdit |
+  IpcPobEditResult |
   IpcPobManageBuildResult |
   IpcDesktopView |
   IpcHudPanel |
@@ -944,6 +948,35 @@ type IpcPobBuildsRequest =
     setCharacter?: string
     // Use another player's builds ('' = your own)
     setPlayer?: string
+  }>
+
+// Deathloom fork: edit the active build's loadouts (Loot Goblin window). The
+// headless PoB applies the edits like PoB's own buttons; main writes the file
+// (backup in "Build backups" next to the builds folder). spec / skillSet left
+// out = the loadout picked in Loot Goblin.
+export type PobEditOp =
+  | { op: 'renameSet', kind: 'tree' | 'items' | 'skills', id: number, title: string }
+  | { op: 'copySet', kind: 'tree' | 'items' | 'skills', id: number, title?: string }
+  | { op: 'deleteSet', kind: 'tree' | 'items' | 'skills', id: number }
+  | { op: 'newLoadout', spec?: number, itemSet?: number, skillSet?: number, title: string }
+  | { op: 'gem', skillSet?: number, group: number, gem: number, enabled?: boolean, level?: number, quality?: number }
+  | { op: 'group', skillSet?: number, group: number, enabled: boolean }
+  | { op: 'node', spec?: number, id: number, alloc: boolean }
+
+type IpcPobEdit =
+  Event<'CLIENT->MAIN::pob-edit', {
+    requestId: number
+    ops: PobEditOp[]
+  }>
+
+type IpcPobEditResult =
+  Event<'MAIN->CLIENT::pob-edit', {
+    requestId: number
+    ok: boolean
+    error?: string
+    list?: PobBuildList
+    build?: PobBuildInfo
+    loadouts?: PobLoadouts
   }>
 
 // Deathloom fork: manage builds in your own folder (Loot Goblin window)
