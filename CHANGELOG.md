@@ -8,6 +8,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.36] - 2026-11-14
+
+### Added (#75)
+- **Quests worth skipping are marked.** Hand-ins that only give gems your build doesn't use say **skippable**; item rewards say **item reward**; quest items (keys and the like) are never marked, you need those. (In the in-game guide panel, gem-only hand-ins say **gems** – open the Loot Goblin window to see if your build takes one.)
+- **Vendor recipes** in the Levelling tab: the useful ones for where you are in the campaign (movement speed boots, weapon damage recipes, +1 spell gem weapon, flask upgrades, chromatic / jeweller's / fusing, chaos resistance, full rare set), with what to sell and what you get. Checked against poedb's recipe list.
+- The guide's crafting lines name the bench recipe you pick up there.
+
+### Changed
+- "Usable now" is now "Gems in this step usable at level N: x of y · next: <gem> at <level>", so it's clear why it only changes at certain levels.
+
 ## [1.0.35] - 2026-11-14
 
 ### Added (#74): more from the game log

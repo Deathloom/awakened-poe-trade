@@ -17,6 +17,10 @@ export type RoutePart = string | {
   offer?: string
   passive?: number
   respec?: number
+  // quest hand-in rewards (game data): questItem (keys, books), items, gems, vendor (gems to buy after)
+  rewards?: Array<'questItem' | 'items' | 'gems' | 'vendor'>
+  // crafting: bench recipes found in this zone
+  recipes?: string[]
 }
 export interface RouteTask { parts: RoutePart[], subs?: RoutePart[][] }
 export interface RouteStep {
