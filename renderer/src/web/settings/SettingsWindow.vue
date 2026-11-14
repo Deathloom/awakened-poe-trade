@@ -173,6 +173,9 @@ export default defineComponent({
         pushHostConfig()
 
         wm.hide(props.config.wmId)
+        // Deathloom fork: saveConfig skips while this (exclusive) window is open,
+        // so other windows only got the change when the overlay closed; send it now
+        saveConfig()
       },
       cancel () {
         wm.hide(props.config.wmId)
