@@ -23,18 +23,24 @@
 
     <!-- All: three columns and the right column's rows can be resized (drag the lines) -->
     <div v-if="view === 'overview'" ref="colsEl" class="flex flex-1 min-h-0 p-2">
-      <!-- panels switched off for the window (Settings → Where panels show) are left out -->
+      <!-- left: gear, trades, market | middle: levelling | right: tree map, session.
+           Panels switched off for the window (Settings → Where panels show) are left out. -->
       <template v-for="(c, n) of visCols" :key="c">
         <SplitGutter v-if="n > 0" dir="x" @drag="d => cols.drag(visCols[n - 1], d, colsEl?.clientWidth ?? 0, c, visCols)" @end="cols.save" @reset="cols.reset" />
-        <div v-if="c === 0" class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[0]} 1 0` }"><PobGearBody :active="true" desktop /></div>
+        <div v-if="c === 0" :ref="el => { leftEl = el as HTMLElement }" class="min-w-0 min-h-0 flex flex-col" :style="{ flex: `${cols.sizes.value[0]} 1 0` }">
+          <template v-for="(r, m) of visLeft" :key="r">
+            <SplitGutter v-if="m > 0" dir="y" @drag="d => left.drag(visLeft[m - 1], d, leftEl?.clientHeight ?? 0, r, visLeft)" @end="left.save" @reset="left.reset" />
+            <div v-if="r === 0" class="min-h-0" :style="{ flex: `${left.sizes.value[0]} 1 0` }"><PobGearBody :active="true" desktop /></div>
+            <div v-else-if="r === 1" class="min-h-0" :style="{ flex: `${left.sizes.value[1]} 1 0` }"><TradeCompanionBody fill /></div>
+            <div v-else class="min-h-0" :style="{ flex: `${left.sizes.value[2]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
+          </template>
+        </div>
         <div v-else-if="c === 1" class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[1]} 1 0` }"><LevellingBody /></div>
         <div v-else :ref="el => { rowsEl = el as HTMLElement }" class="min-w-0 min-h-0 flex flex-col" :style="{ flex: `${cols.sizes.value[2]} 1 0` }">
           <template v-for="(r, m) of visRows" :key="r">
             <SplitGutter v-if="m > 0" dir="y" @drag="d => rows.drag(visRows[m - 1], d, rowsEl?.clientHeight ?? 0, r, visRows)" @end="rows.save" @reset="rows.reset" />
             <div v-if="r === 0" class="min-h-0 flex flex-col rounded bg-gray-800" :style="{ flex: `${rows.sizes.value[0]} 1 0` }"><PobTreeMap levelling compact /></div>
-            <div v-else-if="r === 1" class="min-h-0" :style="{ flex: `${rows.sizes.value[1]} 1 0` }"><TradeCompanionBody fill /></div>
-            <div v-else-if="r === 2" class="min-h-0" :style="{ flex: `${rows.sizes.value[2]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
-            <div v-else class="min-h-0" :style="{ flex: `${rows.sizes.value[3]} 1 0` }"><PlaySessionBody /></div>
+            <div v-else class="min-h-0" :style="{ flex: `${rows.sizes.value[1]} 1 0` }"><PlaySessionBody /></div>
           </template>
         </div>
       </template>
@@ -141,13 +147,16 @@ Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
 // All tab layout (fractions, saved)
 const colsEl = ref<HTMLElement>()
 let rowsEl: HTMLElement | undefined
+let leftEl: HTMLElement | undefined
 // All tab: which panels show (Where panels show → Loot Goblin window)
-const visRows = computed(() => [inWindow('tree'), inWindow('trades'), inWindow('market'), inWindow('session')]
-  .flatMap((on, i) => on ? [i] : []))
-const visCols = computed(() => [inWindow('gear'), inWindow('guide'), visRows.value.length > 0]
+const visLeft = computed(() => [inWindow('gear'), inWindow('trades'), inWindow('market')].flatMap((on, i) => on ? [i] : []))
+const visRows = computed(() => [inWindow('tree'), inWindow('session')].flatMap((on, i) => on ? [i] : []))
+const visCols = computed(() => [visLeft.value.length > 0, inWindow('guide'), visRows.value.length > 0]
   .flatMap((on, i) => on ? [i] : []))
 const cols = useSplit('all-cols', [0.34, 0.36, 0.3])
-const rows = useSplit('all-right', [0.36, 0.22, 0.2, 0.22])
+// left column: gear | trades | market (from 1.0.58; before that trades and market were on the right)
+const left = useSplit('all-left', [0.6, 0.2, 0.2])
+const rows = useSplit('all-right-v2', [0.65, 0.35])
 const marketEl = ref<HTMLElement>()
 const market = useSplit('market', [0.5, 0.5])
 
