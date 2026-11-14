@@ -10,3 +10,7 @@ export const currentPlan = shallowRef<PobPlan | null>(null)
 // levelling planner; the tree map follows it so its "next" only moves once
 // you've actually allocated the passive.
 export const currentTaken = shallowRef<Set<number> | null>(null)
+
+// Deathloom fork: passive ids the tree map counts as taken (game log + the path
+// to them), so the Next tab's list agrees with the map
+export const mapHave = shallowRef<Set<number> | null>(null)

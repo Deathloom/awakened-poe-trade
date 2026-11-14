@@ -10,6 +10,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [1.0.80] - 2026-11-15
 
+### Fixed (#126)
+- **Passive tree "taken" holes, properly this time:** the tree map now counts everything on the build's path from your class start to a passive you've taken as taken (1.0.79 only filled holes in the current plan's order, not next to passives kept from the previous levelling tree). The Next tab's list follows the map.
+
 ### Added (#125)
 - **Tick gems as equipped** (Build panel → Gems → For my level): click a gem in **Socket now** to tick it; the header counts how many you have equipped, unticked ones are faded. In **Take out**, gems still ticked stand out in red until you click them once they're out. Ticks are per character and shared with the Next tab's "tick what you have", in every window.
 
