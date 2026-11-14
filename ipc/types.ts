@@ -176,6 +176,46 @@ export interface PobTreeMapLayout {
   links: Array<[number, number]>
   orbitRadii: number[]
 }
+// Deathloom fork: levelling planner ("Next" tab of the Loot Goblin window)
+export interface PobPlanNode {
+  id: number
+  name: string
+  type: 'Normal' | 'Notable' | 'Keystone' | 'Mastery' | 'Socket' | string
+  effect?: string
+  stats?: string
+}
+
+export interface PobPlanGem {
+  name: string
+  reqLevel: number
+  support: boolean
+  colour?: number
+  group?: string
+  slot?: string
+}
+
+export interface PobPlan {
+  level: number
+  questPoints: number
+  // passive points the character should have: level - 1 + quest points
+  available: number
+  phases: Array<{ title: string, level?: number }>
+  // 1-based index into phases
+  phase: number
+  className?: string
+  ascendancyClass?: string
+  // nodes carried over from the previous levelling tree
+  kept: number
+  // nodes of order[] that should be taken by now
+  taken: number
+  order: PobPlanNode[]
+  refund: PobPlanNode[]
+  ascendancy: Array<{ id: number, name: string }>
+  skillSet?: string
+  gems: PobPlanGem[]
+  previousGems?: PobPlanGem[]
+}
+
 export interface PobTreeAlloc {
   ids: number[]
   // mastery node id -> chosen effect
@@ -402,6 +442,8 @@ export type IpcEvent =
   IpcPobTreeRequest |
   IpcPobTreeResult |
   IpcPobTreeMapRequest |
+  IpcPobPlanRequest |
+  IpcPobPlanResult |
   IpcPobTreeMapResult |
   IpcPobSyncRequest |
   IpcPobSyncState |
@@ -894,6 +936,22 @@ type IpcPobGemsResult =
   }>
 
 // Deathloom fork: passive tree tab
+type IpcPobPlanRequest =
+  Event<'CLIENT->MAIN::pob-plan', {
+    requestId: number
+    level: number
+    questPoints: number
+  }>
+
+type IpcPobPlanResult =
+  Event<'MAIN->CLIENT::pob-plan', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    plan?: PobPlan
+  }>
+
 type IpcPobTreeMapRequest =
   Event<'CLIENT->MAIN::pob-tree-map', {
     requestId: number

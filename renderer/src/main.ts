@@ -26,6 +26,13 @@ import { Host } from './web/background/IPC'
   window.addEventListener('error', (ev) => { report(ev.error ?? ev.message) })
   window.addEventListener('unhandledrejection', (ev) => { report(ev.reason) })
 
+  // Deathloom fork: the overlay window runs as long as Loot Goblin does; it
+  // records character levels from Client.txt for the levelling planner
+  if (where === 'overlay') {
+    const { startLevelRecorder } = await import('./web/companion/char-level')
+    startLevelRecorder()
+  }
+
   const app = createApp(App)
   app.config.errorHandler = (err, instance, info) => {
     console.error(err)

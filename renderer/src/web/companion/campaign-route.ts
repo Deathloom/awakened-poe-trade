@@ -219,6 +219,18 @@ export const QUEST_PASSIVES = ROUTE.reduce((n, a) => n + a.steps.reduce((m, s) =
 // Flat list with act numbers, in route order
 export const STEPS = ROUTE.flatMap(a => a.steps.map(s => ({ ...s, act: a.act })))
 
+// Where the guide is (index into STEPS), shared by every window through localStorage
+export const CAMPAIGN_STEP_KEY = 'deathloom.campaign-step.v1'
+export function loadCampaignStep (): number {
+  try { return Math.min(STEPS.length - 1, Math.max(0, Number(localStorage.getItem(CAMPAIGN_STEP_KEY)) || 0)) } catch { return 0 }
+}
+
+// Quest passive points from the steps before this one (optional quests counted
+// as done; /passives in game is exact)
+export function questPassivesBefore (index: number): number {
+  return STEPS.slice(0, index).reduce((n, st) => n + (st.reward?.passive ?? 0), 0)
+}
+
 const norm = (z: string) => z.toLowerCase().replace(/^the /, '').trim()
 
 // Act from the area id in Client.txt ('Generating level 13 area "1_3_7"' -> 3;

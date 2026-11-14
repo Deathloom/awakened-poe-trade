@@ -10,7 +10,7 @@ import * as fs from 'fs/promises'
 import * as path from 'path'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout } from '../../../ipc/types'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -118,6 +118,9 @@ export class PobImpact {
       this.reply('MAIN->CLIENT::pob-tree-map', requestId, async () =>
         await this.treeMap(refreshGear === true, typeof haveVersion === 'string' ? haveVersion.slice(0, 32) : undefined))
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints }) => {
+      this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gems', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
     })
@@ -141,7 +144,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -814,6 +817,37 @@ export class PobImpact {
       character: reply.character,
       liveError: reply.live ? undefined : (liveError ?? this.passivesError)
     }
+  }
+
+  // Levelling planner (desktop window "Next" tab). Level and quest points come
+  // from the window (Client.txt + campaign guide); no character data is fetched.
+  async plan (level: unknown, questPoints: unknown): Promise<Record<string, unknown>> {
+    const num = (v: unknown, min: number, max: number) => {
+      const n = Math.floor(Number(v))
+      return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min
+    }
+    await this.ensureBuild()
+    const reply = await this.call('plan', { level: num(level, 1, 100), questPoints: num(questPoints, 0, 30) })
+    // PoB's JSON encoder writes empty lists as {}
+    const list = (v: unknown) => Array.isArray(v) ? v : []
+    const plan: PobPlan = {
+      level: reply.level,
+      questPoints: reply.questPoints,
+      available: reply.available,
+      phases: list(reply.phases),
+      phase: reply.phase,
+      className: reply.className,
+      ascendancyClass: reply.ascendancyClass,
+      kept: reply.kept,
+      taken: reply.taken,
+      order: list(reply.order),
+      refund: list(reply.refund),
+      ascendancy: list(reply.ascendancy),
+      skillSet: reply.skillSet,
+      gems: list(reply.gems),
+      previousGems: reply.previousGems ? list(reply.previousGems) : undefined
+    }
+    return { build: reply.build as PobBuildInfo, plan }
   }
 
   // Tree map (desktop window): whole tree layout (only when the window lacks this

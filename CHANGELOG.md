@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.28] - 2026-11-14
+
+### Added (#67)
+- **Levelling planner: "Next" tab in the Loot Goblin window.** Shows the next 5 passives to take (or the whole order), the levelling tree you're on, passives to refund when you switch trees, new ascendancy notables, and gems: new in this step, coming up (with the level they need) and usable now. Uses trees named after a level in Path of Building ("Level 12", "Leveling lvl 30", "Lv. 60"; the loadout picked in the Build tab is the end goal). Level comes from Client.txt ("is now level", recorded by the overlay; party members' level-ups too, so pick your character if needed) or can be typed in; quest points come from the campaign guide or can be typed in. Points = level − 1 + quest points. No character data is fetched (GGG rules). Needs Path of Building with the `plan` command (PoB fork PR #25).
+
 ## [1.0.27] - 2026-11-14
 
 ### Added (#66)

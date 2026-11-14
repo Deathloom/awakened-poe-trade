@@ -11,6 +11,7 @@ export type LogEvent =
   | { type: 'zone', name: string }
   | { type: 'area', level: number, code: string }
   | { type: 'tradeResult', accepted: boolean }
+  | { type: 'level', char: string, cls: string, level: number }
 
 // English only (the game client's language must be English for these)
 const JOINED = /^: (?<char>.+) has joined the area\.$/
@@ -18,6 +19,8 @@ const LEFT = /^: (?<char>.+) has left the area\.$/
 const ENTERED = /^: You have entered (?<zone>.+)\.$/
 const TRADE_ACCEPTED = /^: Trade accepted\.$/
 const TRADE_CANCELLED = /^: Trade cancelled\.$/
+// also shown for party members in the same area
+const LEVEL_UP = /^: (?<char>.+) \((?<cls>[^)]+)\) is now level (?<level>\d+)$/
 const GENERATING = /Generating level (?<level>\d+) area "(?<code>[^"]+)"/
 
 export function parseLogLine (line: string, language = 'en'): LogEvent | null {
@@ -31,6 +34,7 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if ((m = text.match(ENTERED))) return { type: 'zone', name: m.groups!.zone }
   if (TRADE_ACCEPTED.test(text)) return { type: 'tradeResult', accepted: true }
   if (TRADE_CANCELLED.test(text)) return { type: 'tradeResult', accepted: false }
+  if ((m = text.match(LEVEL_UP))) return { type: 'level', char: m.groups!.char, cls: m.groups!.cls, level: Number(m.groups!.level) }
   if ((m = text.match(JOINED))) return { type: 'joined', char: m.groups!.char }
   if ((m = text.match(LEFT))) return { type: 'left', char: m.groups!.char }
 
