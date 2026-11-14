@@ -174,7 +174,17 @@ async function fetchListings (queryId: string, ids: string[]): Promise<MarketLis
   adjustRateLimits(RATE_LIMIT_RULES.FETCH, res.headers)
   const data = await res.json() as TradeResponse<{ result: Array<FetchResult | null> }>
   if (data.error) throw new Error(data.error.message)
-  return data.result.filter((r): r is FetchResult => r != null).map(toListing)
+  const out: MarketListing[] = []
+  for (const r of data.result) {
+    if (r == null) continue
+    // one odd listing shouldn't break the whole page
+    try { out.push(toListing(r)) } catch (e) { console.warn('[market-search] listing skipped', r.id, e) }
+  }
+  return out
+}
+
+function str (v: unknown): string {
+  return typeof v === 'string' ? v : ''
 }
 
 export function toListing (r: FetchResult): MarketListing {
@@ -182,27 +192,26 @@ export function toListing (r: FetchResult): MarketListing {
   const instant = r.listing.hideout_token != null || r.listing.fee != null
   return {
     id: r.id,
-    name: r.item.name ?? '',
-    typeLine: r.item.typeLine ?? r.item.baseType ?? '',
+    name: str(r.item.name),
+    typeLine: str(r.item.typeLine) || str(r.item.baseType),
     icon: r.item.icon,
     ilvl: r.item.ilvl,
     corrupted: r.item.corrupted === true,
     priceAmount: r.listing.price?.amount,
     priceCurrency: r.listing.price?.currency,
     indexed: r.listing.indexed,
-    relativeDate: DateTime.fromISO(r.listing.indexed).toRelative({ style: 'short' }) ?? '',
-    ign: acc.lastCharacterName,
-    accountName: acc.name,
-    status: instant ? 'online' : acc.online ? (acc.online.status === 'afk' ? 'afk' : 'online') : 'offline',
+    relativeDate: (typeof r.listing.indexed === 'string' ? DateTime.fromISO(r.listing.indexed).toRelative({ style: 'short' }) : null) ?? '',
+    ign: str(acc?.lastCharacterName),
+    accountName: str(acc?.name),
+    status: instant ? 'online' : acc?.online ? (acc.online.status === 'afk' ? 'afk' : 'online') : 'offline',
     whisper: typeof r.listing.whisper === 'string' && r.listing.whisper.startsWith('@') ? r.listing.whisper : undefined,
     instantBuyout: instant,
     mods: [
-      ...(r.item.enchantMods ?? []),
-      ...(r.item.implicitMods ?? []),
-      ...(r.item.fracturedMods ?? []),
-      ...(r.item.explicitMods ?? []),
-      ...(r.item.craftedMods ?? [])
-    ].map(m => m.replace(/\[([^|\]]+\|)?([^\]]+)\]/g, '$2'))
+      r.item.enchantMods, r.item.implicitMods, r.item.fracturedMods, r.item.explicitMods, r.item.craftedMods
+    ].flatMap(list => Array.isArray(list) ? list : [])
+      // mod lines are text; anything else (newer API objects) is left out
+      .filter((m): m is string => typeof m === 'string')
+      .map(m => m.replace(/\[([^|\]]+\|)?([^\]]+)\]/g, '$2'))
   }
 }
 

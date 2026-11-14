@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.55] - 2026-11-14
+
+### Fixed (#97)
+- **Market search failed with "s.replace is not a function".** Listings with mod data in an unexpected shape are now handled (that part is skipped, the listing still shows), and one odd listing no longer breaks the whole search.
+
 ## [1.0.54] - 2026-11-14
 
 ### Added (#95)

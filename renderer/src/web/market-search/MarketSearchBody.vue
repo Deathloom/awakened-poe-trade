@@ -176,6 +176,7 @@ async function run () {
     moreIds.value = r.rest
   } catch (e) {
     error.value = `Search failed: ${(e as Error).message}`
+    console.error('[market-search]', e)
   } finally {
     busy.value = false
   }
