@@ -21,13 +21,18 @@
         <div class="lg-head text-red-300"><i class="fas fa-minus-circle mr-1" />Take out ({{ drop.length }})</div>
         <div class="text-xs text-gray-500 pb-px">The previous levelling step used these; this one doesn't.</div>
         <div class="flex flex-wrap gap-x-3">
-          <span v-for="g of drop" :key="'d' + g.name" class="text-gray-400 line-through" :title="gemTitle(g)">{{ g.name }}</span>
+          <button v-for="g of drop" :key="'d' + g.name" type="button" class="line-through"
+            :class="hasGem(g.name) ? 'text-red-300' : 'text-gray-600'"
+            :title="gemTitle(g) + (hasGem(g.name) ? '\nTicked as equipped: click once you\'ve taken it out' : '\nTaken out')"
+            @click="toggleGem(g.name)">{{ g.name }}</button>
         </div>
       </div>
 
       <!-- use now, by gear piece and link group -->
       <div class="rounded px-1 py-1 mb-1 bg-gray-900">
-        <div class="lg-head text-green-400"><i class="fas fa-check-circle mr-1" />Socket now ({{ nowCount }})</div>
+        <div class="lg-head text-green-400 flex items-baseline"><i class="fas fa-check-circle mr-1" />Socket now ({{ nowCount }})
+          <span class="ml-auto normal-case tracking-normal text-gray-500">{{ equippedNow }} of {{ nowCount }} equipped</span></div>
+        <div v-if="nowCount && !equippedNow" class="text-xs text-gray-500 pb-px">Click a gem to tick it as equipped.</div>
         <div v-if="!nowCount" class="text-xs text-gray-500">None of this step's gems can be used at level {{ level }} yet.</div>
         <div v-for="s of nowSlots" :key="s.slot" class="pb-1">
           <div class="text-xs text-gray-500">{{ s.slot }}</div>
@@ -35,8 +40,10 @@
             <div class="flex flex-wrap items-baseline gap-x-2">
               <template v-for="(g, i) of grp.gems" :key="g.name">
                 <span v-if="i" class="text-gray-600">+</span>
-                <span :class="[gemClass(g), isNew(g) ? 'underline decoration-green-500 underline-offset-2' : '']"
-                  :title="gemTitle(g) + (isNew(g) ? '\nNew in this step' : '')">{{ g.name }}</span>
+                <button type="button" class="text-left"
+                  :class="[gemClass(g), isNew(g) ? 'underline decoration-green-500 underline-offset-2' : '', hasGem(g.name) ? '' : 'opacity-60']"
+                  :title="gemTitle(g) + (isNew(g) ? '\nNew in this step' : '') + (hasGem(g.name) ? '\nEquipped (click to untick)' : '\nClick when you have it equipped')"
+                  @click="toggleGem(g.name)"><i class="fas mr-0.5 text-xs" :class="hasGem(g.name) ? 'fa-check-square text-green-400' : 'fa-square text-gray-600'" />{{ g.name }}</button>
               </template>
               <span class="text-xs text-gray-600">{{ grp.gems.length }}L</span>
             </div>
@@ -94,6 +101,24 @@ function setLevel (text: string) {
   saveCharLevels(v)
 }
 
+// "equipped" ticks per character, shared with the Next tab's "tick what you have"
+const TICKS_KEY = 'deathloom.gem-ticks.v1'
+function loadTicks (): Record<string, string[]> {
+  try { return JSON.parse(localStorage.getItem(TICKS_KEY) ?? '{}') ?? {} } catch { return {} }
+}
+const ticks = ref<Record<string, string[]>>(loadTicks())
+const onTicks = (e: StorageEvent) => { if (e.key === TICKS_KEY) ticks.value = loadTicks() }
+window.addEventListener('storage', onTicks)
+const tickOwner = computed(() => char.value?.name ?? '')
+function hasGem (name: string) { return (ticks.value[tickOwner.value] ?? []).includes(name) }
+function toggleGem (name: string) {
+  const list = new Set(ticks.value[tickOwner.value] ?? [])
+  if (list.has(name)) list.delete(name)
+  else list.add(name)
+  ticks.value = { ...ticks.value, [tickOwner.value]: [...list] }
+  try { localStorage.setItem(TICKS_KEY, JSON.stringify(ticks.value)) } catch {}
+}
+
 const loading = ref(false)
 const error = ref<string | null>(null)
 const plan = shallowRef<PobPlan | null>(null)
@@ -122,6 +147,7 @@ watch(level, () => { request() }, { immediate: true })
 onUnmounted(() => {
   listener.abort()
   window.removeEventListener('storage', onStorage)
+  window.removeEventListener('storage', onTicks)
 })
 
 // one entry per gem name (the lowest requirement wins)
@@ -169,6 +195,7 @@ const nowSlots = computed(() => {
     }))
   }))
 })
+const equippedNow = computed(() => unique(gems.value).filter(g => g.reqLevel <= level.value && hasGem(g.name)).length)
 const nowCount = computed(() => unique(gems.value).filter(g => g.reqLevel <= level.value).length)
 
 const later = computed(() => unique(gems.value).filter(g => g.reqLevel > level.value).sort((a, b) => a.reqLevel - b.reqLevel || a.name.localeCompare(b.name)))
