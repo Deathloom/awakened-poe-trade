@@ -1,4 +1,4 @@
-Licence of the data in quest-gems.json (generated from Exile Leveling, https://github.com/HeartofPhos/exile-leveling, common/data/json):
+Licence of quest-gems.json and campaign-route.json (generated from Exile Leveling, https://github.com/HeartofPhos/exile-leveling, common/data):
 
 MIT License
 

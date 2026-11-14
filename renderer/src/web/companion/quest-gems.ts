@@ -24,6 +24,8 @@ const START = D.start
 export interface WantedGem { name: string, reqLevel: number, support: boolean }
 
 export interface QuestGemStep {
+  // reward offer id (the guide's hand-in lines carry it)
+  id: string
   quest: string
   act: number
   npc: string
@@ -86,7 +88,7 @@ export function planQuestGems (className: string | undefined, wanted: WantedGem[
     }
     buy.sort((a, b) => a.reqLevel - b.reqLevel || a.name.localeCompare(b.name))
     if (take || buy.length) {
-      steps.push({ quest: q.quest, act: q.act, npc: q.npc, take, alsoOffered: offered.slice(1).map(g => g.name), buy })
+      steps.push({ id: q.id, quest: q.quest, act: q.act, npc: q.npc, take, alsoOffered: offered.slice(1).map(g => g.name), buy })
     }
   }
   const notFromQuests = [...byKey.values()].filter(g => !have.has(key(g.name)))
