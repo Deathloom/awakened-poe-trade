@@ -23,6 +23,23 @@ const SITES: Array<[string, RegExp, (id: string) => string]> = [
   ['poedb', /^https?:\/\/poedb\.tw\/pob\/([^\s?#]+)/i, id => `https://poedb.tw/pob/${id}/raw`]
 ]
 
+// Deathloom fork: size limits for codes and downloads, and the unpacked XML
+// (a small code could otherwise unpack to gigabytes)
+export const MAX_IMPORT_BYTES = 2 * 1024 * 1024
+const MAX_XML_BYTES = 32 * 1024 * 1024
+const IMPORT_HOSTS = new Set(['maxroll.gg', 'api.pob.codes', 'pobb.in', 'poe.ninja', 'pastebin.com', 'rentry.co', 'poedb.tw']
+  .flatMap(h => [h, 'www.' + h]))
+
+// Final URL of a download (after redirects) must be https on one of the build sites
+export function isAllowedImportUrl (url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' && IMPORT_HOSTS.has(u.hostname.toLowerCase())
+  } catch {
+    return false
+  }
+}
+
 export function linkSource (input: string): { site: string, url: string } | null {
   const text = input.trim()
   for (const [site, re, raw] of SITES) {
@@ -34,6 +51,7 @@ export function linkSource (input: string): { site: string, url: string } | null
 
 // PoB code -> build XML (throws with a readable message)
 export function decodeCode (code: string): string {
+  if (code.length > MAX_IMPORT_BYTES) throw new Error('That build code is too large.')
   const clean = code.trim().replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/')
   if (!clean || !/^[A-Za-z0-9+/=]+$/.test(clean)) {
     throw new Error('That is not a Path of Building code or a build link.')
@@ -41,10 +59,11 @@ export function decodeCode (code: string): string {
   const data = Buffer.from(clean, 'base64')
   let xml: string
   try {
-    xml = zlib.inflateSync(data).toString('utf8')
-  } catch {
+    xml = zlib.inflateSync(data, { maxOutputLength: MAX_XML_BYTES }).toString('utf8')
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ERR_BUFFER_TOO_LARGE') throw new Error('That build code unpacks to something far too large to be a build.')
     try {
-      xml = zlib.inflateRawSync(data).toString('utf8')
+      xml = zlib.inflateRawSync(data, { maxOutputLength: MAX_XML_BYTES }).toString('utf8')
     } catch {
       throw new Error('That is not a Path of Building code (it could not be unpacked). Copy the whole code.')
     }

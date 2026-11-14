@@ -8,9 +8,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-11-14
+
 ### Security (#55)
 - Electron 40 → **43.8.10** (clears the high-severity Electron advisories for ≤42.11.15). Electron 44's async clipboard rewrite and 45's safeStorage change are a later step. Dev runs: Electron now downloads its binary on the first `npm run dev` instead of during `npm ci`.
 - Dev runs show version **0.0.0-dev** instead of upstream's 3.29.108 (releases still get their version from the Release workflow).
+
+## [1.0.19] - 2026-11-14
+
+### Added (#49)
+- **Private builds (per player)** in the build sync box (needs the PoB fork's per-player repos): each player's builds live in their own private repo; **Request access** opens the GitHub form to ask a player to share theirs. Off by default until the group has switched.
+
+### Security (#48)
+- **No secrets in problem reports.** GitHub tokens, Authorization headers, POESESSID cookies and token/password values are blanked out of the error text, stack and log lines before a report is sent (home folder was already removed).
+- **Safer build imports.** Links only download from the supported build sites over https, also after redirects; 15 s timeout and 2 MB limit; a PoB code that unpacks to more than 32 MB is refused (protects against "zip bomb" codes).
+- Clipboard writes from the overlay pages are plain text up to 100 KB.
+- Path of Building fork (PoB PRs #21, #22; installed copies update PoB on their own): Pull only writes safe build paths inside the builds folder (a crafted file name in the repo could otherwise write anywhere on the PC), https-only sync with size caps; per-player repo support.
+
+## [1.0.18] - 2026-11-13
 
 ### Added (#47)
 - **Start Loot Goblin with Windows** (Settings → Path of Building, and the setup guide's extras step). On by default: Loot Goblin starts in the tray when you sign in to Windows. Installed app only.
