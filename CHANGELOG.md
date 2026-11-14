@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.57] - 2026-11-14
+
+### Fixed (#99)
+- **Price check and Trade on a build item did nothing in the Loot Goblin window.** Both now open the item's exact search in the window's Trade site tab, cheapest first. (The full price check window with build impact is still in the overlay over the game.)
+
 ## [1.0.56] - 2026-11-14
 
 ### Added (#98)

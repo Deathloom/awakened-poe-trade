@@ -67,7 +67,8 @@
                 <i v-else class="far fa-copy" /></button>
               <button class="bg-gray-700 text-gray-300 px-1.5" title="Exact stat search on the official trade site"
                 @click="openTrade(item)">Trade</button>
-              <button class="bg-gray-700 text-gray-300 rounded-r px-1.5" title="Price check (edit stat filters, build impact)"
+              <button class="bg-gray-700 text-gray-300 rounded-r px-1.5"
+                :title="desktop ? 'Prices for this item: its exact search in the Trade site tab, cheapest first' : 'Price check (edit stat filters, build impact)'"
                 @click="priceCheck(item, $event)"><i class="fas fa-search-dollar" /></button>
             </div>
           </div>
@@ -243,7 +244,7 @@ function itemTitle (item: PobGearItem) {
 
 function openTrade (item: PobGearItem) {
   tradeError.value = { ...tradeError.value, [item.slot]: '' }
-  if (props.hud || props.desktop) {
+  if (props.hud) {
     // the overlay owns the league list; it opens the trade site
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'trade', text: item.text } })
     return
@@ -254,7 +255,15 @@ function openTrade (item: PobGearItem) {
 
 // Open the normal price check window for this item (stat filters, prices, build impact)
 function priceCheck (item: PobGearItem, e: MouseEvent) {
-  if (props.hud || props.desktop) {
+  // Loot Goblin window: the price check window lives in the overlay over the game,
+  // so here it's the item's exact search in the Trade site tab (cheapest first)
+  if (props.desktop) {
+    tradeError.value = { ...tradeError.value, [item.slot]: '' }
+    const err = openTradeSearch(item.text)
+    if (err) tradeError.value = { ...tradeError.value, [item.slot]: err }
+    return
+  }
+  if (props.hud) {
     // main opens it in the overlay and activates the overlay
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'price-check', text: item.text } })
     return
