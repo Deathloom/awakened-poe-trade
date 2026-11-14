@@ -58,10 +58,17 @@
     </div>
     <div v-if="genOpen" class="px-2 pb-1 text-xs shrink-0">
       <div class="text-gray-400 pb-1">Pick what you farm. Loot Goblin takes that content's notables{{ genSustain ? ' and general map sustain' : '' }} by the shortest path from the start, within the points. Only GGG's own atlas data is used.</div>
+      <div class="flex flex-wrap items-center gap-2 pb-1 text-gray-400">
+        <label class="flex items-center gap-1" title="Order by what the content's drops sell for now (poe.ninja economy prices)"><input v-model="genByValue" type="checkbox"> Order by what pays</label>
+        <span v-if="ninja.isLoading.value && !hasValues" class="text-gray-500">loading prices…</span>
+        <span v-else-if="!hasValues" class="text-gray-500">No prices for this league yet (poe.ninja prices trade leagues only).</span>
+        <span v-else class="text-gray-500">Price = average of the content's 5 dearest drops now, not profit per map.</span>
+        <a :href="NINJA_ATLAS_URL" target="_blank" class="text-gray-400 hover:text-gray-100 underline" title="See which atlas passives players take, on poe.ninja">poe.ninja atlas trees</a>
+      </div>
       <div class="flex flex-wrap gap-1 pb-1">
-        <button v-for="c of CONTENTS" :key="c.id" class="px-2 rounded"
+        <button v-for="c of genContents" :key="c.id" class="px-2 rounded"
           :class="genPick.includes(c.id) ? 'bg-yellow-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200'"
-          :title="`${CONTENT_NOTABLES[c.id]} notables`" @click="togglePick(c.id)">{{ c.label }}</button>
+          :title="contentTitle(c.id)" @click="togglePick(c.id)">{{ c.label }}<span v-if="values[c.id]" class="pl-1 text-yellow-200/80">{{ price(values[c.id].chaos) }}</span></button>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <label class="flex items-center gap-1"><input v-model="genSustain" type="checkbox"> Map sustain</label>
@@ -131,6 +138,8 @@ import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, po
 import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, setTakenFrom, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
 import { sumStats, cleanStat } from './atlas-stats'
 import { CONTENTS, CONTENT_NOTABLES, SUSTAIN, generateAtlas, type GenResult } from './atlas-generator'
+import { contentValues, NINJA_ATLAS_URL } from './atlas-value'
+import { usePoeninja } from '@/web/background/Prices'
 
 const props = defineProps<{ compact?: boolean }>()
 
@@ -192,6 +201,28 @@ const genPick = ref<string[]>([])
 const genSustain = ref(true)
 const genBudget = ref<number>(ATLAS.points ?? 150)
 const genResult = ref<GenResult | null>(null)
+// what pays (poe.ninja economy prices the app already downloads for price checks)
+const ninja = usePoeninja()
+const VALUE_KEY = 'deathloom.atlas-gen-by-value.v1'
+const genByValue = ref((() => { try { return localStorage.getItem(VALUE_KEY) === '1' } catch { return false } })())
+watch(genByValue, v => { try { localStorage.setItem(VALUE_KEY, v ? '1' : '0') } catch {} })
+watch(genOpen, open => { if (open) ninja.queuePricesFetch() })
+const values = computed(() => (ninja.dbVersion.value >= 0 ? contentValues(ninja.allItems()) : {}))
+const hasValues = computed(() => Object.keys(values.value).length > 0)
+const genContents = computed(() => genByValue.value
+  ? [...CONTENTS].sort((a, b) => (values.value[b.id]?.chaos ?? -1) - (values.value[a.id]?.chaos ?? -1))
+  : CONTENTS)
+function price (chaos: number) {
+  const v = ninja.autoCurrency(chaos)
+  const n = v.min >= 100 ? Math.round(v.min) : Math.round(v.min * 10) / 10
+  return `${n} ${v.currency === 'div' ? 'div' : 'c'}`
+}
+function contentTitle (id: string) {
+  const v = values.value[id]
+  const head = `${CONTENT_NOTABLES[id]} notables`
+  if (!v) return `${head}\nNo poe.ninja prices for this content's drops.`
+  return `${head}\nDearest drops now (poe.ninja):\n` + v.top.map(it => `${it.name}${it.variant ? ` (${it.variant})` : ''}: ${price(it.chaos)}`).join('\n')
+}
 function togglePick (id: string) {
   genPick.value = genPick.value.includes(id) ? genPick.value.filter(x => x !== id) : [...genPick.value, id]
 }
