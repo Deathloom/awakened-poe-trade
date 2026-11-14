@@ -14,6 +14,7 @@
     <div v-if="view === 'overview'" class="desktop-grid flex-1 min-h-0 p-2">
       <div class="area-build min-h-0"><PobGearBody :active="true" desktop /></div>
       <div class="area-guide min-h-0"><CampaignGuideBody tall /></div>
+      <div class="area-next min-h-0"><PobNext /></div>
       <div class="area-trades min-h-0"><TradeCompanionBody fill /></div>
       <div class="area-market min-h-0"><MarketHistoryBody :active="true" fill /></div>
     </div>
@@ -24,6 +25,7 @@
         <CampaignGuideBody v-else-if="view === 'guide'" tall />
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
         <MarketHistoryBody v-else-if="view === 'market'" :active="true" fill />
+        <DesktopSettings v-else-if="view === 'settings'" />
       </div>
     </div>
   </div>
@@ -37,6 +39,7 @@ import PobNext from '../pob/PobNext.vue'
 import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
+import DesktopSettings from './DesktopSettings.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 
@@ -51,7 +54,8 @@ const VIEWS = [
   { key: 'next', label: 'Next', icon: 'fa-shoe-prints', title: 'Levelling planner: next passives and gems for your level' },
   { key: 'guide', label: 'Guide', icon: 'fa-route', title: 'Campaign guide' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
-  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' }
+  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
+  { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Loot Goblin settings (same as Shift+Space → Settings)' }
 ] as const
 type View = typeof VIEWS[number]['key']
 
@@ -92,15 +96,16 @@ html.desktop #app {
   grid-template-columns: minmax(26rem, 1.3fr) minmax(20rem, 1fr) minmax(22rem, 1fr);
   grid-template-rows: 1fr 1fr;
   grid-template-areas:
-    "build guide market"
+    "build guide next"
     "build trades market";
 }
 @media (max-width: 1250px) {
   .desktop-grid {
     grid-template-columns: minmax(24rem, 1.2fr) minmax(20rem, 1fr);
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr;
     grid-template-areas:
       "build guide"
+      "build next"
       "build trades"
       "build market";
     overflow-y: auto;
@@ -110,6 +115,7 @@ html.desktop #app {
 .area-guide { grid-area: guide; --hud-w: 100%; --hud-h: 100%; }
 .area-trades { grid-area: trades; }
 .area-market { grid-area: market; }
+.area-next { grid-area: next; }
 .single-guide { --hud-w: 100%; --hud-h: 100%; }
 .desktop-root .widget-default-style {
   max-height: none;
