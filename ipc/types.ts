@@ -165,6 +165,30 @@ export interface PobTreeSummary {
   nodes: PobTreeNode[]
 }
 
+// Deathloom fork: tree map (desktop window). Layout per tree version:
+// node = [id, x, y, kind, group, orbit, name, ascendancy | false, stats]
+// kind: 0 normal, 1 notable, 2 keystone, 3 mastery, 4 jewel socket, 5 class start, 6 ascendancy start
+export type PobTreeMapNode = [number, number, number, number, number, number, string, string | false, string[]]
+export interface PobTreeMapLayout {
+  nodes: PobTreeMapNode[]
+  groups: Record<string, [number, number]>
+  links: Array<[number, number]>
+  orbitRadii: number[]
+}
+export interface PobTreeAlloc {
+  ids: number[]
+  // mastery node id -> chosen effect
+  masteries: Record<string, string>
+  // allocated nodes on cluster jewels (not on the map)
+  clusterNodes: number
+  points: number
+  ascendancyPoints: number
+  className?: string
+  ascendancy?: string
+  treeVersion?: string
+  level?: number
+}
+
 // Character of the account (build panel dropdown)
 export interface PobCharacterEntry {
   name: string
@@ -376,6 +400,8 @@ export type IpcEvent =
   IpcPobGemsResult |
   IpcPobTreeRequest |
   IpcPobTreeResult |
+  IpcPobTreeMapRequest |
+  IpcPobTreeMapResult |
   IpcPobSyncRequest |
   IpcPobSyncState |
   IpcPobImportRequest |
@@ -867,6 +893,28 @@ type IpcPobGemsResult =
   }>
 
 // Deathloom fork: passive tree tab
+type IpcPobTreeMapRequest =
+  Event<'CLIENT->MAIN::pob-tree-map', {
+    requestId: number
+    refreshGear?: boolean
+    // tree version the window already has the layout for
+    haveVersion?: string
+  }>
+
+type IpcPobTreeMapResult =
+  Event<'MAIN->CLIENT::pob-tree-map', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    version?: string
+    layout?: PobTreeMapLayout
+    alloc?: PobTreeAlloc
+    live?: PobTreeAlloc
+    character?: string
+    liveError?: string
+  }>
+
 type IpcPobTreeRequest =
   Event<'CLIENT->MAIN::pob-tree', {
     requestId: number
