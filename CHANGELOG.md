@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#64): GGG rules
+- "Not affiliated with Grinding Gear Games" now also shows in the app (Settings → About, the setup guide's last step, the Loot Goblin window), not only in the README.
+- Requests the app makes to pathofexile.com, poe.ninja and poeprices now say who they come from: the User-Agent ends in `LootGoblin/<version> (+github link)`.
+
 ### Changed (#63)
 - **Open the Loot Goblin window when the game starts** (was: when Loot Goblin starts). Opens without taking focus, once per game launch; if you close it while playing it stays closed until the next launch. Turning it on while the game runs opens it right away. Same setting, so it stays ticked.
 

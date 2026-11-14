@@ -5,6 +5,8 @@
       <p class="text-base">Loot Goblin</p>
       <p class="text-gray-500">based on <a class="border-b" href="https://github.com/SnosMe/awakened-poe-trade" target="_blank">Awakened PoE Trade</a> by SnosMe (MIT)</p>
       <p class="">{{ t('app.version', [version]) }}</p>
+      <p class="text-gray-500 text-sm text-center max-w-md mt-1">Not affiliated with or endorsed by Grinding Gear Games.
+        Path of Exile is a trademark of Grinding Gear Games. Free, for friends; nothing is sold.</p>
       <div class="flex gap-2">
         <a class="border-b" href="https://github.com/Deathloom/awakened-poe-trade/releases" target="_blank">{{ t('app.release_notes') }}</a>
         <a class="border-b" href="https://github.com/Deathloom/awakened-poe-trade/issues" target="_blank">{{ t('app.report_bug') }}</a>

@@ -8,6 +8,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
+import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
 import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
@@ -72,7 +73,7 @@ export class PobImpact {
   ) {
     this.liveGear = new LiveGear(
       net.fetch as unknown as FetchFn,
-      app.userAgentFallback,
+      lootGoblinUserAgent(),
       (msg) => { this.logger.write(msg) }
     )
     this.server.onEventAnyClient('CLIENT->MAIN::pob-pick-folder', ({ requestId, title, defaultPath }) => {

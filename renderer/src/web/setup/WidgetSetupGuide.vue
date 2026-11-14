@@ -192,6 +192,10 @@
               <li><i class="fas fa-question-circle" /> on the top bar is a short how-to, <i class="fas fa-magic" /> runs this guide again.</li>
               <li>Something wrong? Tray icon → Report a problem…</li>
             </ul>
+            <div class="text-gray-500 text-sm mt-3">
+              Loot Goblin is not affiliated with or endorsed by Grinding Gear Games. It reads the game's log file and your clipboard,
+              never game memory, never buys anything by itself, and only sends a chat command when you click a button.
+            </div>
           </template>
         </div>
         <div class="border-t bg-gray-900 border-gray-600 p-2 flex items-center gap-x-2">
