@@ -490,6 +490,8 @@ export type IpcEvent =
   IpcHudMoved |
   IpcHudState |
   IpcOpenTradeTab |
+  IpcPobManageBuild |
+  IpcPobManageBuildResult |
   IpcDesktopView |
   IpcHudPanel |
   IpcHudGearAction |
@@ -942,6 +944,26 @@ type IpcPobBuildsRequest =
     setCharacter?: string
     // Use another player's builds ('' = your own)
     setPlayer?: string
+  }>
+
+// Deathloom fork: manage builds in your own folder (Loot Goblin window)
+type IpcPobManageBuild =
+  Event<'CLIENT->MAIN::pob-manage-build', {
+    requestId: number
+    op: 'rename' | 'move' | 'duplicate' | 'delete'
+    path: string
+    name?: string
+    folder?: string
+  }>
+
+type IpcPobManageBuildResult =
+  Event<'MAIN->CLIENT::pob-manage-build', {
+    requestId: number
+    ok: boolean
+    error?: string
+    // the build's path after the change (null after delete)
+    path?: string | null
+    list?: PobBuildList
   }>
 
 type IpcPobBuildsResult =

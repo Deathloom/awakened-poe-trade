@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added
+- **Manage builds in the Loot Goblin window** (Build tab → folder button): rename, move to a folder (new or existing, e.g. `3.30/Witch`), duplicate and delete your builds. The loadout you picked for a build moves with it, and so does the active build.
+- **Deleting a build now syncs.** A deleted build is deleted on GitHub too and kept in **Deleted builds** next to your builds folder, so you can get it back. When a friend deletes one of theirs, your copy moves to Deleted builds as well (only if you hadn't changed it). Renames and moves sync the same way. If a lot of builds go missing at once (a moved or emptied folder), nothing is deleted and you get a warning instead.
+
 ## [1.0.53] - 2026-11-14
 
 ### Changed (#94)
