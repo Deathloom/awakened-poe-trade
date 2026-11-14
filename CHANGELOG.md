@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.65] - 2026-11-14
+
+### Fixed (#107)
+- **Campaign guide, act 1:** The Way Forward now shows when you get it (The Ledge, from Tarkleigh) and at Prisoner's Gate, instead of only at its act 2 hand-in.
+- After killing Brutus the guide tells you to walk on into Prisoner's Gate and take its waypoint before logging out, so the "Waypoint → Prisoner's Gate" step works.
+
 ## [1.0.64] - 2026-11-14
 
 ### Fixed (#106)

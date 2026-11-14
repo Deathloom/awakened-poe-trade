@@ -93,7 +93,32 @@ function clarifyVendorLines (steps: RouteStep[]): RouteStep[] {
       t.subs = t.subs.map(sub => CLEAR[text(sub)] ?? sub)
     }
   }
+  addActOneNotes(steps)
   return steps
+}
+
+// Deathloom fork (Gerhard, 14 Nov 2026): the route only showed The Way Forward
+// at its act 2 hand-in, and logged out after Brutus without the Prisoner's
+// Gate waypoint. Notes added to existing steps (no new steps, so saved guide
+// positions stay valid). Checked against poewiki / poedb.
+function addActOneNotes (steps: RouteStep[]) {
+  const first = (area: string) => steps.find(s => s.areaId === area)
+  const q = (v: string): RoutePart => ({ k: 'quest_text', v })
+  first('1_1_5')?.tasks.push({
+    parts: ['Quest received: ', q('The Way Forward')],
+    subs: [['From Tarkleigh. It stays open until act 2 (open the seal in the Western Forest); then Bestel in Lioneye\'s Watch gives a passive point']]
+  })
+  const upper = first('1_1_7_2')
+  const brutus = upper?.tasks.findIndex(t => t.parts.some(p => typeof p !== 'string' && p.k === 'kill' && String(p.v).startsWith('Brutus')))
+  if (upper && brutus != null && brutus >= 0) {
+    upper.tasks.splice(brutus + 1, 0, {
+      parts: ['Walk on into ', { k: 'area', v: "Prisoner's Gate" }, ' and get its ', { k: 'waypoint_get' }],
+      subs: [['The waypoint is right at the start. Then log out to Lioneye\'s Watch']]
+    })
+  }
+  first('1_1_8')?.tasks.push({
+    parts: ['The road north is sealed: ', q('The Way Forward'), ' continues in act 2']
+  })
 }
 
 function stepPassives (st: RouteStep, bandit: BanditFlag): number {
