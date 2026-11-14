@@ -2,6 +2,12 @@ import type { Server } from 'http'
 import { app, net, session } from 'electron'
 import type { Logger } from './RemoteLogger'
 
+// Deathloom fork: identify the tool on every request it forwards (GGG asks third-party
+// tools to say who they are). Keeps Electron's browser string so nothing breaks.
+export function lootGoblinUserAgent () {
+  return `${app.userAgentFallback} LootGoblin/${app.getVersion()} (+https://github.com/Deathloom/awakened-poe-trade)`
+}
+
 const PROXY_HOSTS = [
   { host: 'www.pathofexile.com', official: true },
   { host: 'ru.pathofexile.com', official: true },
@@ -34,7 +40,7 @@ export class HttpProxy {
         method: req.method,
         headers: {
           ...req.headers,
-          'user-agent': app.userAgentFallback
+          'user-agent': lootGoblinUserAgent()
         },
         useSessionCookies: true,
         referrerPolicy: 'no-referrer-when-downgrade'

@@ -73,7 +73,7 @@ watch(view, (v) => {
 const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
 const status = computed(() => playing.value == null ? '' : playing.value ? 'In game' : 'Not playing')
-const playingHelp = 'Panels update live from the game (Client.txt and your public character). Clicking here takes focus away from the game.'
+const playingHelp = 'Panels update live from the game (Client.txt). Clicking here takes focus away from the game. Not affiliated with or endorsed by Grinding Gear Games.'
 </script>
 
 <style>
