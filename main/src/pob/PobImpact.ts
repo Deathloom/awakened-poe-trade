@@ -9,6 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import { readFileSync } from 'fs'
 import * as path from 'path'
+import { applyBuildOp, type BuildFileOp } from './BuildFiles'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
 import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan } from '../../../ipc/types'
@@ -115,6 +116,9 @@ export class PobImpact {
         return await this.builds(setActive, setLoadout, setCharacter)
       })
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-manage-build', (req) => {
+      this.reply('MAIN->CLIENT::pob-manage-build', req.requestId, async () => await this.manageBuild(req))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-tree', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-tree', requestId, async () => await this.tree(refreshGear === true))
     })
@@ -148,7 +152,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -837,6 +841,24 @@ export class PobImpact {
     } catch {}
     const players = await this.players()
     return { builds, active, players, player: this.viewingOwn() ? (this.cfg?.player ?? '') : this.viewPlayer, own: this.cfg?.player ?? '' }
+  }
+
+  // Deathloom fork: rename / move / duplicate / delete one of your builds
+  async manageBuild (req: BuildFileOp): Promise<{ path: string | null, list: PobBuildList }> {
+    if (!this.viewingOwn()) throw new Error("You can only change builds in your own folder (switch Player back to yourself)")
+    const root = this.ownDir()
+    const before = await this.listBuilds()
+    const wasActive = before.active != null && before.active.toLowerCase() === path.normalize(req.path).toLowerCase()
+    const deletedRoot = path.join(path.dirname(path.resolve(this.cfg!.buildsDir)), 'Deleted builds', this.cfg?.player || '')
+    const result = await applyBuildOp(root, deletedRoot, req)
+    this.logger.write(`info [PoB] build ${req.op}: ${req.path}${result ? ` -> ${result}` : ''}`)
+    if (wasActive && result && req.op !== 'duplicate') {
+      await this.writeActive(root, result)
+    }
+    // auto sync pushes the change (a delete is deleted on GitHub too)
+    this.onPlayerFilesChanged()
+    const list = await this.listBuilds()
+    return { path: result, list }
   }
 
   // Write active.txt: keeps comment lines, replaces the build line
