@@ -23,19 +23,22 @@
 
     <!-- All: three columns and the right column's rows can be resized (drag the lines) -->
     <div v-if="view === 'overview'" ref="colsEl" class="flex flex-1 min-h-0 p-2">
-      <div class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[0]} 1 0` }"><PobGearBody :active="true" desktop /></div>
-      <SplitGutter dir="x" @drag="d => cols.drag(0, d, colsEl?.clientWidth ?? 0)" @end="cols.save" @reset="cols.reset" />
-      <div class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[1]} 1 0` }"><LevellingBody /></div>
-      <SplitGutter dir="x" @drag="d => cols.drag(1, d, colsEl?.clientWidth ?? 0)" @end="cols.save" @reset="cols.reset" />
-      <div ref="rowsEl" class="min-w-0 min-h-0 flex flex-col" :style="{ flex: `${cols.sizes.value[2]} 1 0` }">
-        <div class="min-h-0 flex flex-col rounded bg-gray-800" :style="{ flex: `${rows.sizes.value[0]} 1 0` }"><PobTreeMap levelling compact /></div>
-        <SplitGutter dir="y" @drag="d => rows.drag(0, d, rowsEl?.clientHeight ?? 0)" @end="rows.save" @reset="rows.reset" />
-        <div class="min-h-0" :style="{ flex: `${rows.sizes.value[1]} 1 0` }"><TradeCompanionBody fill /></div>
-        <SplitGutter dir="y" @drag="d => rows.drag(1, d, rowsEl?.clientHeight ?? 0)" @end="rows.save" @reset="rows.reset" />
-        <div class="min-h-0" :style="{ flex: `${rows.sizes.value[2]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
-        <SplitGutter dir="y" @drag="d => rows.drag(2, d, rowsEl?.clientHeight ?? 0)" @end="rows.save" @reset="rows.reset" />
-        <div class="min-h-0" :style="{ flex: `${rows.sizes.value[3]} 1 0` }"><PlaySessionBody /></div>
-      </div>
+      <!-- panels switched off for the window (Settings → Where panels show) are left out -->
+      <template v-for="(c, n) of visCols" :key="c">
+        <SplitGutter v-if="n > 0" dir="x" @drag="d => cols.drag(visCols[n - 1], d, colsEl?.clientWidth ?? 0, c, visCols)" @end="cols.save" @reset="cols.reset" />
+        <div v-if="c === 0" class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[0]} 1 0` }"><PobGearBody :active="true" desktop /></div>
+        <div v-else-if="c === 1" class="min-w-0 min-h-0" :style="{ flex: `${cols.sizes.value[1]} 1 0` }"><LevellingBody /></div>
+        <div v-else :ref="el => { rowsEl = el as HTMLElement }" class="min-w-0 min-h-0 flex flex-col" :style="{ flex: `${cols.sizes.value[2]} 1 0` }">
+          <template v-for="(r, m) of visRows" :key="r">
+            <SplitGutter v-if="m > 0" dir="y" @drag="d => rows.drag(visRows[m - 1], d, rowsEl?.clientHeight ?? 0, r, visRows)" @end="rows.save" @reset="rows.reset" />
+            <div v-if="r === 0" class="min-h-0 flex flex-col rounded bg-gray-800" :style="{ flex: `${rows.sizes.value[0]} 1 0` }"><PobTreeMap levelling compact /></div>
+            <div v-else-if="r === 1" class="min-h-0" :style="{ flex: `${rows.sizes.value[1]} 1 0` }"><TradeCompanionBody fill /></div>
+            <div v-else-if="r === 2" class="min-h-0" :style="{ flex: `${rows.sizes.value[2]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
+            <div v-else class="min-h-0" :style="{ flex: `${rows.sizes.value[3]} 1 0` }"><PlaySessionBody /></div>
+          </template>
+        </div>
+      </template>
+      <div v-if="!visCols.length" class="m-auto text-gray-500">Every panel is switched off for this window (Settings → Path of Building → Where panels show).</div>
     </div>
     <div v-else-if="view !== 'trade'" class="flex-1 min-h-0 p-2">
       <div class="h-full min-h-0">
@@ -78,6 +81,7 @@ import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
 import TradeSiteBody from './TradeSiteBody.vue'
 import { tradeTabRequest } from './trade-tab'
+import { inWindow } from './panels'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 import { desktopSetupShown } from '../setup/setup-state'
@@ -109,6 +113,13 @@ function loadView (): View {
   } catch { return 'overview' }
 }
 const view = ref<View>(loadView())
+// a panel's hotkey asked for its tab (panel not shown in the overlay)
+function viewFromHotkey (v: string) {
+  if (VIEWS.some(x => x.key === v)) setView(v as View)
+}
+const askedView = new URLSearchParams(window.location.search).get('view')
+if (askedView) viewFromHotkey(askedView)
+Host.onEvent('MAIN->CLIENT::desktop-view', (e) => { viewFromHotkey(e.view) })
 function setView (v: View) {
   view.value = v
   try { localStorage.setItem(VIEW_KEY, v) } catch {}
@@ -129,7 +140,12 @@ const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
 // All tab layout (fractions, saved)
 const colsEl = ref<HTMLElement>()
-const rowsEl = ref<HTMLElement>()
+let rowsEl: HTMLElement | undefined
+// All tab: which panels show (Where panels show → Loot Goblin window)
+const visRows = computed(() => [inWindow('tree'), inWindow('trades'), inWindow('market'), inWindow('session')]
+  .flatMap((on, i) => on ? [i] : []))
+const visCols = computed(() => [inWindow('gear'), inWindow('guide'), visRows.value.length > 0]
+  .flatMap((on, i) => on ? [i] : []))
 const cols = useSplit('all-cols', [0.34, 0.36, 0.3])
 const rows = useSplit('all-right', [0.36, 0.22, 0.2, 0.22])
 const marketEl = ref<HTMLElement>()

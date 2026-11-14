@@ -101,6 +101,10 @@ export class Shortcuts {
     })
   }
 
+  // Deathloom fork: set by main.ts (panel placement settings + the Loot Goblin window)
+  panelOverlayOff?: (panel: string) => boolean
+  openWindowView?: (view: string) => void
+
   updateActions (
     actions: ShortcutAction[],
     stashScroll: boolean,
@@ -178,6 +182,13 @@ export class Shortcuts {
               : entry.action.target === 'pob-gear' ? 'gear' : null
           if (hudPanel && this.hud?.isPinned(hudPanel)) {
             this.hud.togglePanel(hudPanel)
+            return
+          }
+          // Deathloom fork: panel set to not show in the overlay: the hotkey opens
+          // the Loot Goblin window on its tab instead (the game keeps focus)
+          const placeKey = hudPanel ?? (entry.action.target === 'market-search' ? 'search' : null)
+          if (placeKey && this.panelOverlayOff?.(placeKey)) {
+            this.openWindowView?.(placeKey === 'gear' ? 'build' : placeKey === 'guide' ? 'levelling' : placeKey === 'search' ? 'trade' : placeKey)
             return
           }
           // Deathloom fork: the build gear panel has buttons, so it needs the overlay focused;

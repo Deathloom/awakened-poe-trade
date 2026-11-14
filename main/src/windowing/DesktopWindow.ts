@@ -115,9 +115,12 @@ export class DesktopWindow {
 
     const base = process.env.VITE_DEV_SERVER_URL || `http://localhost:${this.port}/index.html`
     const trade = this.pendingTrade
+    const view = this.pendingView
     this.pendingTrade = undefined
+    this.pendingView = undefined
     void win.loadURL(`${base}${base.includes('?') ? '&' : '?'}desktop=1` +
-      (trade ? `&trade=${encodeURIComponent(trade)}` : ''))
+      (trade ? `&trade=${encodeURIComponent(trade)}` : '') +
+      (view ? `&view=${encodeURIComponent(view)}` : ''))
   }
 
   // Opens a trade site page in the window's Trade site tab (from the overlay's
@@ -134,6 +137,19 @@ export class DesktopWindow {
       this.open({ focus: false })
     }
     return true
+  }
+
+  // A panel set to show only in this window: its hotkey opens the window on that tab
+  private pendingView?: string
+  openView (view: string, broadcast: (view: string) => void) {
+    if (!/^[a-z]+$/.test(view)) return
+    if (this.win && !this.win.isDestroyed()) {
+      this.open({ focus: false })
+      broadcast(view)
+    } else {
+      this.pendingView = view
+      this.open({ focus: false })
+    }
   }
 
   private loadBounds (): SavedBounds | null {

@@ -33,8 +33,10 @@ export default {
 </script>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { inject as injectWm, nextTick, ref, watch } from 'vue'
 import Widget from '../overlay/Widget.vue'
+import type { WidgetManager } from '../overlay/interfaces'
+import { useInOverlay } from '../desktop/panels'
 import MarketSearchBody from './MarketSearchBody.vue'
 
 const props = defineProps<{ config: MarketSearchWidget }>()
@@ -42,4 +44,11 @@ const body = ref<InstanceType<typeof MarketSearchBody>>()
 watch(() => props.config.wmWants, (w) => {
   if (w === 'show') nextTick(() => body.value?.focus()).catch(() => {})
 })
+// Where panels show: not in the overlay → hidden and out of the widget menu
+const wmPlace = injectWm<WidgetManager>('wm')!
+const shown = useInOverlay('search')
+watch(shown, (on) => {
+  wmPlace.setFlag(props.config.wmId, 'menu::skip', !on)
+  if (!on && props.config.wmWants === 'show') wmPlace.hide(props.config.wmId)
+}, { immediate: true })
 </script>

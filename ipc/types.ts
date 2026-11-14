@@ -15,6 +15,13 @@ export interface HostConfig {
 // Deathloom fork: panels pinned over the game while it has focus
 export type HudPanel = 'guide' | 'trades' | 'gear'
 
+export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree'
+
+export interface PanelPlacement {
+  overlay?: boolean
+  window?: boolean
+}
+
 export interface PobHudConfig {
   guide: boolean
   trades: boolean
@@ -85,6 +92,11 @@ export interface PobConfig {
   // site in the Loot Goblin window's Trade site tab instead of the browser
   // (undefined = on)
   tradeLinksInWindow?: boolean
+  // Where each panel shows (undefined = everywhere it can):
+  // overlay = in the Shift+Space overlay and its widget menu;
+  // window = on the Loot Goblin window's All tab.
+  // In game (HUD) stays in hud.guide / hud.trades / hud.gear.
+  panels?: Partial<Record<PanelKey, PanelPlacement>>
   // "Show while playing" HUD: a small separate window that stays on top of the
   // game without taking focus (the full-screen overlay hides while you play)
   hud: PobHudConfig
@@ -478,6 +490,7 @@ export type IpcEvent =
   IpcHudMoved |
   IpcHudState |
   IpcOpenTradeTab |
+  IpcDesktopView |
   IpcHudPanel |
   IpcHudGearAction |
   IpcHudGearActionRelay |
@@ -683,6 +696,11 @@ type IpcUserAction =
   }>
 
 // Deathloom fork: main → Loot Goblin window: show this trade site page
+type IpcDesktopView =
+  Event<'MAIN->CLIENT::desktop-view', {
+    view: string
+  }>
+
 type IpcOpenTradeTab =
   Event<'MAIN->CLIENT::open-trade-tab', {
     url: string

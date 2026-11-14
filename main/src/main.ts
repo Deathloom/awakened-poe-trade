@@ -167,6 +167,11 @@ app.on('ready', async () => {
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
       shortcuts.hud = hud
       shortcuts.openPob = () => { tray.openPob() }
+      shortcuts.openWindowView = (view) => {
+        desktop.openView(view, (v) => {
+          eventPipe.sendEventTo('broadcast', { name: 'MAIN->CLIENT::desktop-view', payload: { view: v } })
+        })
+      }
       gameLogWatcher.onLines = (lines, isHistory) => {
         hud.handleLogLines(lines)
         pobImpact.handleLogLines(lines, isHistory)
@@ -220,6 +225,7 @@ app.on('ready', async () => {
           setTimeout(() => { void pobInstaller.ensure() }, 3000)
         }
         hud.configure(cfg.pob?.hud)
+        shortcuts.panelOverlayOff = (panel) => (cfg.pob?.panels as Record<string, { overlay?: boolean } | undefined> | undefined)?.[panel]?.overlay === false
         applyStartWithWindows(cfg.pob?.startWithWindows !== false)
         desktop.configure(cfg.pob?.desktopAtStart === true)
         // first run (setup guide not done yet): open the Loot Goblin window, which
