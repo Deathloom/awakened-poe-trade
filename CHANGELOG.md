@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.37] - 2026-11-14
+
+### Added (#76)
+- **The guide follows your build's bandit choice** (Path of Building → Configuration → Bandit quest): kill all three, or help Alira, Kraityn or Oak. Act 2 shows "Bandits: …" at the top and the route for that choice; quest points count 23 instead of 24 when you help a bandit.
+
 ## [1.0.36] - 2026-11-14
 
 ### Added (#75)

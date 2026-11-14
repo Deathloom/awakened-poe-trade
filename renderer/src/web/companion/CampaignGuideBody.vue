@@ -5,6 +5,8 @@
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t">
       <span class="text-gray-500"><i class="fas fa-route mr-1" />Act {{ step.act }}</span>
       <span v-if="areaLevel" class="text-gray-500 text-xs">area level {{ areaLevel }}</span>
+      <span v-if="step.act === 2" class="text-xs px-1 rounded bg-gray-800 text-yellow-300"
+        :title="'Bandit choice from your Path of Building build (Configuration tab). Kill all three if the build says Kill all.'">Bandits: {{ BANDIT_LABEL[bandit] }}</span>
       <div class="ml-auto flex gap-x-2 text-gray-500">
         <button class="hover:text-gray-200" title="Previous step" @click="move(-1)"><i class="fas fa-chevron-left" /></button>
         <button class="hover:text-gray-200" title="Next step" @click="move(1)"><i class="fas fa-chevron-right" /></button>
@@ -28,7 +30,7 @@
             <span v-if="s.tasks.length && !showTasks(s.i)" class="text-xs text-gray-600"> · {{ s.tasks.length }} to do</span>
           </div>
           <template v-if="showTasks(s.i)">
-            <div v-for="(t, ti) of s.tasks" :key="ti" class="text-xs pl-1" :class="s.i === index ? 'text-gray-300' : 'text-gray-500'">
+            <div v-for="(t, ti) of s.tasks.filter(t => onlyActive(t.only, bandit))" :key="ti" class="text-xs pl-1" :class="s.i === index ? 'text-gray-300' : 'text-gray-500'">
               <template v-for="(p, pi) of t.parts" :key="pi">
                 <template v-if="typeof p === 'string'">{{ p }}</template>
                 <template v-else-if="p.k === 'quest'">
@@ -76,9 +78,9 @@
           </template>
         </div>
       </div>
-      <div class="px-1 pt-1 text-xs text-gray-600" :title="'Quest passive points on the route: ' + QUEST_PASSIVES + ' (one of them for killing all three bandits). In game, /passives lists the ones you have.'">
+      <div class="px-1 pt-1 text-xs text-gray-600" :title="'Quest passive points on the route: ' + passivesTotal + (bandit === 'BANDIT_KILL' ? ' (one of them for killing all three bandits)' : '') + '. In game, /passives lists the ones you have.'">
         <span class="px-1 rounded bg-yellow-900 text-yellow-300">+1 passive</span> quest skill point:
-        {{ passivesSoFar }} so far, {{ QUEST_PASSIVES - passivesSoFar }} to go
+        {{ passivesSoFar }} so far, {{ passivesTotal - passivesSoFar }} to go
       </div>
       <div v-if="!lastZone" class="px-1 pt-1 text-xs text-gray-600">
         Follows you on each zone change (from Client.txt). If it doesn't move after you change zones,
@@ -96,7 +98,7 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { type RoutePart, STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
+import { type RoutePart, type BanditFlag, BANDIT_KEY, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
 import { planQuestGems, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
@@ -126,7 +128,12 @@ const listEl = ref<HTMLElement>()
 
 // quest passive points from the steps already passed (the guide doesn't know
 // which side quests you actually did; it's a reminder, /passives in game is exact)
-const passivesSoFar = computed(() => questPassivesBefore(index.value))
+const bandit = ref<BanditFlag>(loadBandit())
+const onBandit = (e: StorageEvent) => { if (e.key === BANDIT_KEY) bandit.value = loadBandit() }
+window.addEventListener('storage', onBandit)
+onUnmounted(() => { window.removeEventListener('storage', onBandit) })
+const passivesSoFar = computed(() => questPassivesBefore(index.value, bandit.value))
+const passivesTotal = computed(() => questPassivesTotal(bandit.value))
 
 // quests whose reward arrived and bosses met (game log, recorded by the overlay)
 const levels = ref(loadCharLevels())
@@ -166,7 +173,7 @@ function gemFor (offer: string | undefined) {
 }
 
 const visible = computed(() => {
-  const all = STEPS.map((s, i) => ({ ...s, i }))
+  const all = STEPS.map((s, i) => ({ ...s, i })).filter(s => onlyActive(s.only, bandit.value))
   if (showAll.value || props.tall) return all.filter(s => s.act === step.value.act)
   return all.slice(Math.max(0, index.value - 1), index.value + 5)
 })
@@ -178,7 +185,12 @@ watch([index, () => props.tall], () => {
   }).catch(() => {})
 }, { immediate: true })
 
-function move (d: number) { setIndex(index.value + d) }
+function move (d: number) {
+  // skip the other bandit choices' steps
+  let i = index.value + d
+  while (i > 0 && i < STEPS.length - 1 && !onlyActive(STEPS[i].only, bandit.value)) i += d
+  setIndex(i)
+}
 function reset () { setIndex(0); lastZone.value = ''; matched.value = true }
 
 const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {

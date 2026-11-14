@@ -848,7 +848,8 @@ export class PobImpact {
       gems: list(reply.gems),
       previousGems: reply.previousGems ? list(reply.previousGems) : undefined,
       nextGems: reply.nextGems ? list(reply.nextGems) : undefined,
-      nextSkillSet: reply.nextSkillSet
+      nextSkillSet: reply.nextSkillSet,
+      bandit: typeof reply.bandit === 'string' ? reply.bandit : undefined
     }
     return { build: reply.build as PobBuildInfo, plan }
   }

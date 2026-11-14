@@ -22,7 +22,8 @@ export type RoutePart = string | {
   // crafting: bench recipes found in this zone
   recipes?: string[]
 }
-export interface RouteTask { parts: RoutePart[], subs?: RoutePart[][] }
+// only: shown for one bandit choice ("BANDIT_ALIRA") or all but one ("!BANDIT_KILL")
+export interface RouteTask { parts: RoutePart[], subs?: RoutePart[][], only?: string }
 export interface RouteStep {
   zone: string
   areaId: string
@@ -30,19 +31,54 @@ export interface RouteStep {
   town: boolean
   via: 'start' | 'enter' | 'waypoint' | 'logout'
   tasks: RouteTask[]
+  only?: string
+}
+
+// Bandit choice: from the PoB build's Configuration tab (the levelling planner
+// saves it here so every window's guide follows it). Default: kill all.
+export type BanditFlag = 'BANDIT_KILL' | 'BANDIT_ALIRA' | 'BANDIT_KRAITYN' | 'BANDIT_OAK'
+export const BANDIT_KEY = 'deathloom.bandit.v1'
+export const BANDIT_LABEL: Record<BanditFlag, string> = {
+  BANDIT_KILL: 'Kill all three (+1 passive)',
+  BANDIT_ALIRA: 'Help Alira',
+  BANDIT_KRAITYN: 'Help Kraityn',
+  BANDIT_OAK: 'Help Oak'
+}
+export function banditFromPob (v: string | undefined): BanditFlag {
+  return v === 'Alira' ? 'BANDIT_ALIRA' : v === 'Kraityn' ? 'BANDIT_KRAITYN' : v === 'Oak' ? 'BANDIT_OAK' : 'BANDIT_KILL'
+}
+export function loadBandit (): BanditFlag {
+  try {
+    const v = localStorage.getItem(BANDIT_KEY)
+    return v && v in BANDIT_LABEL ? v as BanditFlag : 'BANDIT_KILL'
+  } catch { return 'BANDIT_KILL' }
+}
+export function saveBandit (v: BanditFlag) {
+  try { if (localStorage.getItem(BANDIT_KEY) !== v) localStorage.setItem(BANDIT_KEY, v) } catch {}
+}
+export function onlyActive (only: string | undefined, bandit: BanditFlag = loadBandit()): boolean {
+  if (!only) return true
+  return only.startsWith('!') ? only.slice(1) !== bandit : only === bandit
 }
 
 // In route order
 export const STEPS = (ROUTE_JSON as unknown as { steps: RouteStep[] }).steps
 
-function stepPassives (st: RouteStep): number {
+function stepPassives (st: RouteStep, bandit: BanditFlag): number {
+  if (!onlyActive(st.only, bandit)) return 0
   let n = 0
-  for (const t of st.tasks) for (const p of t.parts) if (typeof p !== 'string' && p.passive) n += p.passive
+  for (const t of st.tasks) {
+    if (!onlyActive(t.only, bandit)) continue
+    for (const p of t.parts) if (typeof p !== 'string' && p.passive) n += p.passive
+  }
   return n
 }
 
-// Passive points from quests on the route: 24 (23, plus 1 for killing all three bandits)
-export const QUEST_PASSIVES = STEPS.reduce((n, st) => n + stepPassives(st), 0)
+// Passive points from quests on the route: 24 when killing all three bandits, else 23
+export function questPassivesTotal (bandit: BanditFlag = loadBandit()): number {
+  return STEPS.reduce((n, st) => n + stepPassives(st, bandit), 0)
+}
+export const QUEST_PASSIVES = questPassivesTotal('BANDIT_KILL')
 
 // Where the guide is (index into STEPS), shared by every window through localStorage
 // (v2: the route from 1.0.33; v1 indexes were for the old hand-written route)
@@ -53,8 +89,8 @@ export function loadCampaignStep (): number {
 
 // Quest passive points from the steps before this one (optional quests counted
 // as done; /passives in game is exact)
-export function questPassivesBefore (index: number): number {
-  return STEPS.slice(0, index).reduce((n, st) => n + stepPassives(st), 0)
+export function questPassivesBefore (index: number, bandit: BanditFlag = loadBandit()): number {
+  return STEPS.slice(0, index).reduce((n, st) => n + stepPassives(st, bandit), 0)
 }
 
 const norm = (z: string) => z.toLowerCase().replace(/^the /, '').trim()
@@ -72,12 +108,13 @@ export function actFromAreaCode (code: string | undefined): number | null {
 // known (from the area id) only that act's steps count, so act 1's "The Coast"
 // never jumps to act 6's. Without it, only the current and the next act.
 // Returns -1 when there's no forward match.
-export function findStep (zone: string, current: number, act: number | null = null): number {
+export function findStep (zone: string, current: number, act: number | null = null, bandit: BanditFlag = loadBandit()): number {
   const target = norm(zone)
   const curAct = STEPS[Math.max(0, Math.min(current, STEPS.length - 1))].act
   for (let i = Math.max(0, current + 1); i < STEPS.length; i++) {
     const s = STEPS[i]
     if (act != null ? s.act !== act : s.act > curAct + 1) continue
+    if (!onlyActive(s.only, bandit)) continue
     if (norm(s.zone) !== target) continue
     // towns come up again and again: a town visit only moves the guide when the
     // route goes there next (a trip to sell doesn't skip zones)
