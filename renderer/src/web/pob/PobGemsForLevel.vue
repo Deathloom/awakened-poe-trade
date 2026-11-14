@@ -36,7 +36,8 @@
         <div v-if="!nowCount" class="text-xs text-gray-500">None of this step's gems can be used at level {{ level }} yet.</div>
         <div v-for="s of nowSlots" :key="s.slot" class="pb-1">
           <div class="text-xs text-gray-500">{{ s.slot }}</div>
-          <div v-for="grp of s.groups" :key="grp.name" class="pl-1 border-l-2 border-gray-700 mb-px">
+          <div v-for="grp of s.groups" :key="grp.name" class="pl-1 border-l-2 border-gray-700 mb-1">
+            <div v-if="grp.gems.length > 1" class="text-xs text-gray-500">{{ grp.label }} <span class="text-gray-600">· link these {{ grp.gems.length }}</span></div>
             <div class="flex flex-wrap items-baseline gap-x-2">
               <template v-for="(g, i) of grp.gems" :key="g.name">
                 <span v-if="i" class="text-gray-600">+</span>
@@ -45,7 +46,6 @@
                   :title="gemTitle(g) + (isNew(g) ? '\nNew in this step' : '') + (hasGem(g.name) ? '\nEquipped (click to untick)' : '\nClick when you have it equipped')"
                   @click="toggleGem(g.name)"><i class="fas mr-0.5 text-xs" :class="hasGem(g.name) ? 'fa-check-square text-green-400' : 'fa-square text-gray-600'" />{{ g.name }}</button>
               </template>
-              <span class="text-xs text-gray-600">{{ grp.gems.length }}L</span>
             </div>
           </div>
         </div>
@@ -180,7 +180,7 @@ const nowSlots = computed(() => {
   for (const g of gems.value) {
     if (g.reqLevel > level.value) continue
     const slot = g.slot ?? 'No gear piece set in PoB'
-    const group = g.group ?? g.name
+    const group = g.groupId != null ? `#${g.groupId}` : (g.group ?? g.name)
     if (!bySlot.has(slot)) bySlot.set(slot, new Map())
     const groups = bySlot.get(slot)!
     if (!groups.has(group)) groups.set(group, [])
@@ -189,10 +189,13 @@ const nowSlots = computed(() => {
   }
   return [...bySlot.entries()].map(([slot, groups]) => ({
     slot,
-    groups: [...groups.entries()].map(([name, list]) => ({
-      name,
-      gems: list.sort((a, b) => Number(a.support) - Number(b.support) || a.name.localeCompare(b.name))
-    }))
+    groups: [...groups.entries()].map(([key, list]) => {
+      const sorted = list.sort((a, b) => Number(a.support) - Number(b.support) || a.name.localeCompare(b.name))
+      const skills = sorted.filter(g => !g.support).map(g => g.name)
+      // PoB label when set, else the group's skill gems
+      const label = sorted[0]?.group ?? (skills.length ? skills.join(' + ') : 'Supports')
+      return { name: key, label, gems: sorted }
+    })
   }))
 })
 const equippedNow = computed(() => unique(gems.value).filter(g => g.reqLevel <= level.value && hasGem(g.name)).length)

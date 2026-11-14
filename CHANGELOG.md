@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.81] - 2026-11-15
+
+### Fixed (#127)
+- **Gems → For my level groups gems by link group again:** each group shows its skill (or PoB label) with "link these N", the skill first then its supports, under the gear piece it goes in. Before, gems without a PoB group label each showed on their own. Needs the Path of Building update that installs with it.
+
 ## [1.0.80] - 2026-11-15
 
 ### Fixed (#126)

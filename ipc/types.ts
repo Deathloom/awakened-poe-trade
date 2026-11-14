@@ -234,6 +234,8 @@ export interface PobPlanGem {
   support: boolean
   colour?: number
   group?: string
+  // socket group index in the skill set (PoB fork; older PoB: missing)
+  groupId?: number
   slot?: string
 }
 
