@@ -27,7 +27,7 @@
 
     <!-- All: customisable (Edit layout in the top bar) -->
     <AllLayout v-if="view === 'overview'" :editing="editLayout" @done="editLayout = false" />
-    <div v-else-if="view !== 'trade'" class="flex-1 min-h-0 p-2">
+    <div v-else-if="view !== 'trade' && view !== 'lab'" class="flex-1 min-h-0 p-2">
       <div class="h-full min-h-0">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
         <LevellingBody v-else-if="view === 'levelling'" />
@@ -47,6 +47,10 @@
     <!-- Trade site: kept alive once opened (stays signed in and keeps its page) -->
     <div v-if="tradeOpened" v-show="view === 'trade'" class="flex-1 min-h-0 p-2">
       <TradeSiteBody />
+    </div>
+    <!-- Lab: poelab.com, kept alive once opened like the Trade site -->
+    <div v-if="labOpened" v-show="view === 'lab'" class="flex-1 min-h-0 p-2">
+      <LabSiteBody />
     </div>
     <!-- first-run setup (opens by itself on a new install) -->
     <WidgetSetupGuide desktop />
@@ -69,6 +73,7 @@ import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
 import TradeSiteBody from './TradeSiteBody.vue'
+import LabSiteBody from './LabSiteBody.vue'
 import HelpBody from '../help/HelpBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import AllLayout from './AllLayout.vue'
@@ -93,6 +98,7 @@ const VIEWS = [
   { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
   { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Loot Goblin never sees your login)" },
+  { key: 'lab', label: 'Lab', icon: 'fa-dungeon', title: "Today's labyrinth layouts on poelab.com (community site, shown as-is)" },
   { key: 'help', label: 'Help', icon: 'fa-question-circle', title: 'How to use it, where to get a build, FAQ' },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Loot Goblin settings (same as Shift+Space → Settings)' }
 ] as const
@@ -128,6 +134,9 @@ const tradeOpened = ref(view.value === 'trade' || tradeTabRequest.value > 0)
 if (tradeTabRequest.value > 0) view.value = 'trade'
 watch(view, (v) => { if (v === 'trade') tradeOpened.value = true })
 watch(tradeTabRequest, () => { setView('trade') })
+// Lab tab: same, mounted the first time it's shown
+const labOpened = ref(view.value === 'lab')
+watch(view, (v) => { if (v === 'lab') labOpened.value = true })
 
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)

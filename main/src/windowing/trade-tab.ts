@@ -10,6 +10,10 @@ import { session, type WebContents, type WebPreferences } from 'electron'
 import { openWebLink } from '../safe-open'
 
 export const TRADE_PARTITION = 'persist:loot-goblin-trade-site'
+// Lab tab: poelab.com (today's labyrinth layouts), shown as-is, ads included.
+// Nothing is read from or copied off the page.
+export const LAB_PARTITION = 'persist:loot-goblin-poelab'
+const LAB_HOSTS = ['poelab.com']
 
 // Where the tab may go: GGG's site plus the sign-in pages its "Sign in with"
 // buttons lead to (Steam, Epic, Xbox/Microsoft, PlayStation). Anything else
@@ -24,15 +28,26 @@ const ALLOWED_HOSTS = [
   'hcaptcha.com', 'recaptcha.net', 'google.com', 'gstatic.com'
 ]
 
-export function isTradeTabHost (url: string): boolean {
+function hostIn (url: string, hosts: string[]): boolean {
   try {
     const u = new URL(url)
     if (u.protocol !== 'https:') return false
-    return ALLOWED_HOSTS.some(h => u.hostname === h || u.hostname.endsWith('.' + h))
+    return hosts.some(h => u.hostname === h || u.hostname.endsWith('.' + h))
   } catch {
     return false
   }
 }
+
+export function isTradeTabHost (url: string): boolean {
+  return hostIn(url, ALLOWED_HOSTS)
+}
+
+// Each in-app site tab: its own session and the only hosts it may navigate to
+interface SiteTab { partition: string, hosts: string[], ready: boolean }
+const SITE_TABS: SiteTab[] = [
+  { partition: TRADE_PARTITION, hosts: ALLOWED_HOSTS, ready: false },
+  { partition: LAB_PARTITION, hosts: LAB_HOSTS, ready: false }
+]
 
 // A trade page the app itself may open in the tab (search results, a search query)
 export function isTradePage (url: string): boolean {
@@ -46,11 +61,10 @@ export function isTradePage (url: string): boolean {
   }
 }
 
-let sessionReady = false
-function hardenSession () {
-  if (sessionReady) return
-  sessionReady = true
-  const ses = session.fromPartition(TRADE_PARTITION)
+function hardenSession (tab: SiteTab) {
+  if (tab.ready) return
+  tab.ready = true
+  const ses = session.fromPartition(tab.partition)
   // no notifications, camera, location, clipboard reads … for the site
   ses.setPermissionRequestHandler((_wc, _perm, cb) => { cb(false) })
   ses.setPermissionCheckHandler(() => false)
@@ -67,25 +81,42 @@ export function prepareTradeWebview (webPreferences: WebPreferences, params: Rec
   webPreferences.sandbox = true
   webPreferences.webSecurity = true
   webPreferences.allowRunningInsecureContent = false
-  if (params.partition !== TRADE_PARTITION) return false
-  if (params.src && params.src !== 'about:blank' && !isTradeTabHost(params.src)) return false
-  hardenSession()
+  const tab = SITE_TABS.find(t => t.partition === params.partition)
+  if (!tab) return false
+  if (params.src && params.src !== 'about:blank' && !hostIn(params.src, tab.hosts)) return false
+  hardenSession(tab)
   return true
 }
 
 // call from the window's 'did-attach-webview'
 export function guardTradeWebview (contents: WebContents) {
+  // which tab this is (by its session); unknown → allowed nowhere
+  const tab = SITE_TABS.find(t => contents.session === session.fromPartition(t.partition))
+  const hosts = tab?.hosts ?? []
+  const isLab = tab?.partition === LAB_PARTITION
+  let lastExternal = 0
   // pop-ups: sign-in pages stay in the tab, everything else opens in the browser
   contents.setWindowOpenHandler((details) => {
-    if (isTradeTabHost(details.url)) {
+    if (hostIn(details.url, hosts)) {
       void contents.loadURL(details.url)
+    } else if (isLab) {
+      // poelab has ads: only links (new tab), at most one a second, so a
+      // pop-up ad can't flood your browser
+      const now = Date.now()
+      const isLink = details.disposition === 'foreground-tab' || details.disposition === 'background-tab'
+      if (isLink && now - lastExternal > 1000) {
+        lastExternal = now
+        openWebLink(details.url)
+      }
     } else {
       openWebLink(details.url)
     }
     return { action: 'deny' }
   })
-  const guard = (e: Electron.Event, url: string) => {
-    if (!isTradeTabHost(url)) {
+  const guard = (e: Electron.Event<{ isMainFrame?: boolean }>, url: string) => {
+    // ads / captchas in frames inside the page may redirect; only the page itself is held to the hosts
+    if (e.isMainFrame === false) return
+    if (!hostIn(url, hosts)) {
       e.preventDefault()
       openWebLink(url)
     }
