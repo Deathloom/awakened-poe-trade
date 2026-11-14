@@ -1,0 +1,67 @@
+# Deathloom fork: weekly data refresh. Regenerates the data Loot Goblin ships
+# from its public sources and opens a PR when anything changed:
+#   - Atlas tree: GGG's official export (github.com/grindinggear/atlastree-export),
+#     newest version tag. Published by GGG for tool makers.
+#   - Campaign route + quest gems: Exile Leveling (github.com/HeartofPhos/exile-leveling),
+#     MIT, attribution kept in the generated files.
+# Sources are read as JSON data only; nothing from them is run.
+# The passive tree comes with the PoB fork (its own upstream sync).
+name: Data refresh
+
+on:
+  schedule:
+    - cron: '23 2 * * 3'   # Wednesdays 04:23 SAST (after Tuesday patches)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+    - name: Fetch sources
+      run: |
+        mkdir -p "$RUNNER_TEMP/src"
+        cd "$RUNNER_TEMP/src"
+        ATLAS_TAG=$(git ls-remote --tags --refs https://github.com/grindinggear/atlastree-export \
+          | awk -F/ '{print $3}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+        [ -n "$ATLAS_TAG" ] || { echo "No atlas tree tag found"; exit 1; }
+        git clone -q --depth 1 --branch "$ATLAS_TAG" https://github.com/grindinggear/atlastree-export
+        git clone -q --depth 1 https://github.com/HeartofPhos/exile-leveling
+        EL_SHA=$(git -C exile-leveling rev-parse --short HEAD)
+        echo "ATLAS_TAG=$ATLAS_TAG" >> "$GITHUB_ENV"
+        echo "EL_SHA=$EL_SHA" >> "$GITHUB_ENV"
+    - name: Regenerate
+      run: |
+        python3 -I tools/gen-atlas-tree.py "$RUNNER_TEMP/src/atlastree-export/data.json" "$ATLAS_TAG"
+        python3 -I tools/gen-campaign-route.py "$RUNNER_TEMP/src/exile-leveling"
+        python3 -I tools/gen-quest-gems.py "$RUNNER_TEMP/src/exile-leveling"
+    - name: Open a PR if anything changed
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if git diff --quiet; then
+          echo "Data is current (atlas $ATLAS_TAG, Exile Leveling $EL_SHA)."
+          exit 0
+        fi
+        git diff --stat
+        BRANCH="data-refresh/$(date -u +%Y-%m-%d)"
+        git config user.name "github-actions[bot]"
+        git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+        git checkout -b "$BRANCH"
+        git commit -am "Data refresh: atlas tree $ATLAS_TAG, Exile Leveling $EL_SHA"
+        git push -f origin "$BRANCH"
+        if gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; then
+          echo "PR already open for $BRANCH (updated)."
+        else
+          gh pr create --base master --head "$BRANCH" \
+            --title "Data refresh: atlas tree $ATLAS_TAG, Exile Leveling $EL_SHA" \
+            --body "Weekly data refresh found changes. Check the diff (zone names, quest rewards, atlas nodes), test the levelling guide and Atlas tab, then merge and release."
+        fi
