@@ -30,8 +30,8 @@
         <span><i class="fas fa-circle text-orange-400" /> to take ({{ counts.todo }})</span>
       </template>
       <span class="flex-1" />
-      <input v-if="!compact" v-model="search" class="px-1 rounded bg-gray-800 text-gray-200 w-36" placeholder="Search atlas" spellcheck="false">
-      <button v-if="activeBuild && !compact" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
+      <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200" :class="compact ? 'w-28' : 'w-36'" placeholder="Search atlas" spellcheck="false">
+      <button v-if="activeBuild" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
         @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
       <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: what Loot Goblin saw you allocate in game. Set it here when you already have a tree."
