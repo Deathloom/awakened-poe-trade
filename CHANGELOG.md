@@ -8,10 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
-### Changed
+## [1.0.53] - 2026-11-14
+
+### Changed (#94)
 - **Hold gem levels folds away** (Levelling → Next). Collapsed by default with a count ("27 gems, 9 usable now"); click the header to open it. Open, it's a compact list (name + level to stop at); gems you can't use yet are faded, and hovering shows the details. Your choice is remembered.
 
-### Added
+### Added (#94)
 - **Choose where each panel shows** (Settings → Path of Building → Where panels show): for build, campaign guide, trade companion, market history, market search, tree map and This session, tick **In game**, **Overlay** (Shift+Space) and/or **Loot Goblin window** (All tab). A panel that's in neither In game nor the overlay opens the Loot Goblin window on its tab when you press its hotkey, and the game keeps focus.
 - **Trade site tab in the Loot Goblin window.** GGG's official trade site in its own tab, signed in separately from your browser. You sign in on GGG's own page; Loot Goblin never sees your login. Use GGG's own Whisper and Travel to Hideout buttons there. Back / forward / home / bulk exchange buttons on top; it keeps its page while you switch tabs.
 - **Trade buttons open in that tab** (price check, build gear panel, market search). Prefer your browser? Settings → Path of Building → turn off "Open Trade buttons in the Loot Goblin window".
