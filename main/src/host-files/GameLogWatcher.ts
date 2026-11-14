@@ -79,6 +79,16 @@ export class GameLogWatcher {
     await this.open(logFile)
   }
 
+  // Deathloom fork: the whole Client.txt, only the lines Loot Goblin reads
+  // (levels, quest rewards, zones, passives, deaths, dialogue): the levelling
+  // planner rebuilds every character's progress from them
+  async readHistory (): Promise<string[]> {
+    if (!this._state) throw new Error('Client.txt not found yet (start the game, or set the path in Settings → General)')
+    const KEEP = /\] : |Successfully (un)?allocated|Generating level|LOADING SCREEN|Abnormal disconnect|\] [A-Z][^:#$%&@<>]{1,40}: /
+    const text = await fs.readFile(this._state.path, 'utf8')
+    return text.split(/\r?\n/).filter(l => KEEP.test(l))
+  }
+
   private async open (logFile: string) {
     try {
       const file = await fs.open(logFile, 'r')

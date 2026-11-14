@@ -7,7 +7,7 @@
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { STEPS, loadCampaignStep } from './campaign-route'
+import { STEPS, loadCampaignStep, actFromAreaCode, findStep } from './campaign-route'
 
 export interface CharLevel { name: string, cls: string, level: number, at: number }
 // Campaign progress from Client.txt, per character: quest rewards received and
@@ -22,6 +22,38 @@ export interface CharProgress {
   quests: string[]
   // boss names (route kill lines) whose dialogue was seen
   bosses: string[]
+  // /passives listed these quests (exact; replaces the ticks from received points)
+  questsExact?: boolean
+  // passives taken, by name (count; refunds subtract). Followed from level 2 = complete
+  alloc?: Record<string, number>
+  atlasPoints?: number
+  deaths?: number
+  deathsByAct?: Record<string, number>
+  // time per act (ms between zone changes, gaps over 20 min not counted)
+  actMs?: Record<string, number>
+  kitava?: Array<'cruel' | 'merciless'>
+  // where the character was and since when (for the act timer)
+  lastAct?: number
+  lastAt?: number
+}
+
+// Not per character (nothing in the log says whose it is)
+export interface SessionInfo {
+  afk: boolean
+  disconnects: number
+  loadingSeconds: number
+  loadingCount: number
+}
+export const SESSION_KEY = 'deathloom.session.v1'
+export function loadSession (): SessionInfo {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null')
+    if (raw && typeof raw === 'object') return { afk: !!raw.afk, disconnects: raw.disconnects || 0, loadingSeconds: raw.loadingSeconds || 0, loadingCount: raw.loadingCount || 0 }
+  } catch {}
+  return { afk: false, disconnects: 0, loadingSeconds: 0, loadingCount: 0 }
+}
+function saveSession (v: SessionInfo) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(v)) } catch {}
 }
 export interface CharLevels {
   chars: CharLevel[]
@@ -126,21 +158,108 @@ function tickBoss (p: CharProgress, speaker: string, guideIndex: number) {
   }
 }
 
+const ACT_GAP_MS = 20 * 60 * 1000
+// /passives list being read (its lines can arrive in more than one batch)
+let passivesList: string[] | null = null
+
+// "2026/11/14 10:18:03 …" (local time of the PC)
+function lineTime (line: string): number | null {
+  const m = line.match(/^(\d{4})\/(\d\d)\/(\d\d) (\d\d):(\d\d):(\d\d)/)
+  if (!m) return null
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime()
+}
+
+// Rebuild every character's progress from the whole Client.txt (button in the
+// levelling planner): replays the lines with a guide position per character,
+// so counts and ticks are complete for characters made since the log started.
+export function rebuildFromLog (current: CharLevels, lines: string[], lang: string): CharLevels {
+  let v: CharLevels = { ...current, chars: [], progress: {} }
+  const guide = new Map<string, number>()
+  let act: number | null = null
+  for (const line of lines) {
+    const ev = parseLogLine(line, lang)
+    if (ev?.type === 'level' && ev.level <= 2) guide.set(ev.char, 0)
+    const name = currentChar(v)?.name ?? ''
+    if (ev?.type === 'area') act = actFromAreaCode(ev.code)
+    if (ev?.type === 'zone') {
+      const j = findStep(ev.name, guide.get(name) ?? 0, act)
+      if (j >= 0) guide.set(name, j)
+    }
+    v = applyLogLines(v, [line], lang, guide.get(name) ?? 0) ?? v
+  }
+  // keep the player's own choices
+  return { ...v, selected: current.selected, manual: current.manual, questPoints: current.questPoints }
+}
+
 // Client.txt lines -> updated store (null: nothing changed)
-export function applyLogLines (start: CharLevels, lines: string[], lang: string, guideIndex = loadCampaignStep()): CharLevels | null {
+export function applyLogLines (start: CharLevels, lines: string[], lang: string, guideIndex = loadCampaignStep(), session?: SessionInfo, now = Date.now()): CharLevels | null {
   let v: CharLevels | null = null
+  const prog = () => {
+    v ??= { ...start, progress: { ...start.progress } }
+    const name = currentChar(v)?.name ?? ''
+    const p = v.progress[name] = { ...(v.progress[name] ?? emptyProgress(name ? 99 : 1)) }
+    return p
+  }
   for (const line of lines) {
     const ev = parseLogLine(line, lang)
     if (!ev) continue
+    const ts = lineTime(line) ?? now
+    // /passives: the quest lines follow the header; anything else ends the list
+    if (passivesList && ev.type !== 'passiveFrom') {
+      const p = prog()
+      p.quests = passivesList
+      p.questsExact = true
+      passivesList = null
+    }
     if (ev.type === 'level') {
       v = recordLevel(v ?? start, ev.char, ev.cls, ev.level)
+    } else if (ev.type === 'passivesList') {
+      passivesList = []
+      prog().passives = ev.total
+    } else if (ev.type === 'passiveFrom') {
+      if (passivesList) passivesList.push(ev.quest)
+    } else if (ev.type === 'passiveAlloc') {
+      const p = prog()
+      if (ev.atlas) continue
+      const alloc = { ...(p.alloc ?? {}) }
+      alloc[ev.name] = Math.max(0, (alloc[ev.name] ?? 0) + (ev.on ? 1 : -1))
+      p.alloc = alloc
+    } else if (ev.type === 'death') {
+      // only our character's deaths (party members die too)
+      const cur = currentChar(v ?? start)?.name
+      if (cur && ev.char !== cur) continue
+      const p = prog()
+      p.deaths = (p.deaths ?? 0) + 1
+      if (p.lastAct) p.deathsByAct = { ...p.deathsByAct, [p.lastAct]: (p.deathsByAct?.[p.lastAct] ?? 0) + 1 }
+    } else if (ev.type === 'kitava') {
+      const p = prog()
+      if (!p.kitava?.includes(ev.which)) p.kitava = [...(p.kitava ?? []), ev.which]
+    } else if (ev.type === 'atlasPoint') {
+      const p = prog()
+      p.atlasPoints = (p.atlasPoints ?? 0) + ev.count
+    } else if (ev.type === 'area') {
+      // act timer: time between zone changes goes to the act you were in
+      const act = actFromAreaCode(ev.code)
+      const p = prog()
+      if (p.lastAct && p.lastAt && ts - p.lastAt < ACT_GAP_MS && ts > p.lastAt) {
+        p.actMs = { ...p.actMs, [p.lastAct]: (p.actMs?.[p.lastAct] ?? 0) + (ts - p.lastAt) }
+      }
+      p.lastAct = act ?? undefined
+      p.lastAt = ts
+    } else if (session && ev.type === 'afk') {
+      session.afk = ev.on
+    } else if (session && ev.type === 'disconnect') {
+      session.disconnects++
+    } else if (session && ev.type === 'loading') {
+      session.loadingSeconds += ev.seconds
+      session.loadingCount++
     } else if (ev.type === 'questPoint' || ev.type === 'speech') {
-      v ??= { ...start, progress: { ...start.progress } }
-      const name = currentChar(v)?.name ?? ''
-      const p = v.progress[name] ??= emptyProgress(name ? 99 : 1)
+      const p = prog()
       if (ev.type === 'questPoint') {
         if (ev.kind === 'passive') p.passives += ev.count
         else p.respec += ev.count
+        // single respec points come from elsewhere; quests give 2
+        if (ev.kind === 'respec' && ev.count < 2) continue
         // one quest can give 2 points (An End to Hunger; respec quests give 2)
         let left = ev.count
         while (left > 0) {
@@ -153,13 +272,22 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
       }
     }
   }
+  // the list may continue in the next batch of lines: store what we have so far
+  if (passivesList) {
+    const p = prog()
+    p.quests = [...passivesList]
+    p.questsExact = true
+  }
   return v
 }
 
 // Called once in the overlay window
 export function startLevelRecorder () {
   Host.onEvent('MAIN->CLIENT::game-log', (e) => {
-    const v = applyLogLines(loadCharLevels(), e.lines, AppConfig().language)
+    const session = loadSession()
+    const before = JSON.stringify(session)
+    const v = applyLogLines(loadCharLevels(), e.lines, AppConfig().language, loadCampaignStep(), session)
     if (v) saveCharLevels(v)
+    if (JSON.stringify(session) !== before) saveSession(session)
   })
 }
