@@ -8,6 +8,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.56] - 2026-11-14
+
+### Added (#98)
+- **Edit loadouts in the Loot Goblin window** (Build tab → pen button):
+  - **New loadout** from the one you picked (copies its tree, item set and skill set under one name, e.g. "Level 30"; Path of Building shows them as one loadout).
+  - Rename, copy and delete passive trees, item sets and skill sets.
+  - Gems of the picked skill set: switch gems and skill groups on or off, change gem level and quality.
+  - **Tree map → Edit:** click a passive to take it (with the path to it) or refund it (with what hangs off it). Masteries are still picked in Path of Building.
+  - Path of Building makes the changes (the same way as its own buttons) and the build file is saved and synced. The old file is kept in **Build backups** next to your builds folder. Close the build in Path of Building first, or saving there would overwrite these changes.
+
 ## [1.0.55] - 2026-11-14
 
 ### Fixed (#97)

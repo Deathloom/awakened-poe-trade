@@ -12,7 +12,7 @@ import * as path from 'path'
 import { applyBuildOp, type BuildFileOp } from './BuildFiles'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan } from '../../../ipc/types'
+import type { PobEditOp, PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -116,6 +116,9 @@ export class PobImpact {
         return await this.builds(setActive, setLoadout, setCharacter)
       })
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-edit', ({ requestId, ops }) => {
+      this.reply('MAIN->CLIENT::pob-edit', requestId, async () => await this.editLoadouts(ops))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-manage-build', (req) => {
       this.reply('MAIN->CLIENT::pob-manage-build', req.requestId, async () => await this.manageBuild(req))
     })
@@ -152,7 +155,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-edit' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -841,6 +844,39 @@ export class PobImpact {
     } catch {}
     const players = await this.players()
     return { builds, active, players, player: this.viewingOwn() ? (this.cfg?.player ?? '') : this.viewPlayer, own: this.cfg?.player ?? '' }
+  }
+
+  // Deathloom fork: edit the active build's loadouts (sets, gems, passives)
+  async editLoadouts (ops: PobEditOp[]) {
+    if (!Array.isArray(ops) || !ops.length || ops.length > 200) throw new Error('Nothing to change')
+    if (!this.viewingOwn()) throw new Error("You can only edit your own builds (switch Player back to yourself)")
+    await this.ensureBuild()
+    const buildPath = await this.resolveActiveBuild()
+    // missing spec / skill set = the loadout picked in Loot Goblin
+    const current = (await this.call('loadouts')).loadouts as PobLoadouts
+    const active = (current as unknown as { active?: { spec?: number, itemSet?: number, skillSet?: number } }).active ?? {}
+    const filled = ops.map(op => {
+      if (op.op === 'node') return { ...op, spec: op.spec ?? active.spec }
+      if (op.op === 'gem' || op.op === 'group') return { ...op, skillSet: op.skillSet ?? active.skillSet }
+      if (op.op === 'newLoadout') return { ...op, spec: op.spec ?? active.spec, itemSet: op.itemSet ?? active.itemSet, skillSet: op.skillSet ?? active.skillSet }
+      return op
+    })
+    const reply = await this.call('edit', { path: buildPath, ops: filled })
+    const xml = reply.xml
+    if (typeof xml !== 'string' || !xml.includes('<PathOfBuilding')) throw new Error("Path of Building didn't return the build")
+    // backup of the file as it was (one per build, replaced on each edit)
+    const rel = path.relative(this.ownDir(), buildPath)
+    const backup = path.join(path.dirname(path.resolve(this.cfg!.buildsDir)), 'Build backups', this.cfg?.player || '', rel)
+    await fs.mkdir(path.dirname(backup), { recursive: true })
+    await fs.copyFile(buildPath, backup)
+    // same line endings PoB writes on Windows
+    const tmp = buildPath + '.lg-edit'
+    await fs.writeFile(tmp, xml.replace(/\r?\n/g, '\r\n'), 'utf8')
+    await fs.rename(tmp, buildPath)
+    this.logger.write(`info [PoB] edited ${rel}: ${ops.map(o => o.op).join(', ')}`)
+    this.loadedKey = null
+    this.onPlayerFilesChanged()
+    return await this.builds()
   }
 
   // Deathloom fork: rename / move / duplicate / delete one of your builds
