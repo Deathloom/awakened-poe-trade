@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.69] - 2026-11-14
+
+### Added (#111)
+- **Hotkeys for Market search and the friends' trade board** (Settings → Path of Building; none by default, so they can't clash with the game's keys). Press to open it in the overlay ready to type, press again to close. If the panel is switched off for the overlay (Where panels show), the hotkey opens its tab in the Loot Goblin window.
+
 ## [1.0.68] - 2026-11-14
 
 ### Fixed (#110)
