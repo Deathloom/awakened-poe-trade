@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed
+- **Hold gem levels folds away** (Levelling → Next). Collapsed by default with a count ("27 gems, 9 usable now"); click the header to open it. Open, it's a compact list (name + level to stop at); gems you can't use yet are faded, and hovering shows the details. Your choice is remembered.
+
 ### Added
 - **Trade site tab in the Loot Goblin window.** GGG's official trade site in its own tab, signed in separately from your browser. You sign in on GGG's own page; Loot Goblin never sees your login. Use GGG's own Whisper and Travel to Hideout buttons there. Back / forward / home / bulk exchange buttons on top; it keeps its page while you switch tabs.
 - **Trade buttons open in that tab** (price check, build gear panel, market search). Prefer your browser? Settings → Path of Building → turn off "Open Trade buttons in the Loot Goblin window".
