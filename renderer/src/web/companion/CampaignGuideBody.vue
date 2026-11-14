@@ -24,17 +24,17 @@
           <i v-else-if="s.via === 'logout'" class="fas fa-sign-out-alt text-gray-500 text-xs" title="Log out (back to town)" />
         </span>
         <div class="min-w-0 flex-1">
-          <div :class="s.i === index ? 'text-gray-100' : 'text-gray-400'">
+          <div :class="s.i === index ? 'text-gray-50 font-bold' : 'text-gray-400'">
             <span v-if="s.via === 'waypoint'" class="text-xs text-blue-400">Waypoint → </span>
             <span v-else-if="s.via === 'logout'" class="text-xs text-gray-500">Log out → </span>{{ s.zone }}
             <span v-if="s.tasks.length && !showTasks(s.i)" class="text-xs text-gray-600"> · {{ s.tasks.length }} to do</span>
           </div>
           <template v-if="showTasks(s.i)">
-            <div v-for="(t, ti) of s.tasks.filter(t => onlyActive(t.only, bandit))" :key="ti" class="text-xs pl-1" :class="s.i === index ? 'text-gray-300' : 'text-gray-500'">
+            <div v-for="(t, ti) of s.tasks.filter(t => onlyActive(t.only, bandit))" :key="ti" class="guide-task text-xs" :class="s.i === index ? 'text-gray-300' : 'text-gray-500'">
               <template v-for="(p, pi) of t.parts" :key="pi">
                 <template v-if="typeof p === 'string'">{{ p }}</template>
                 <template v-else-if="p.k === 'quest'">
-                  <span class="text-yellow-200" :class="{ 'line-through opacity-60': doneQuests.has(String(p.v)) }">{{ p.v }}</span>
+                  <span class="g-quest" :class="{ 'line-through opacity-60': doneQuests.has(String(p.v)) }"><i class="fas fa-scroll" />{{ p.v }}</span>
                   <i v-if="doneQuests.has(String(p.v))" class="fas fa-check text-green-500 ml-1" title="Reward received (game log)" />
                   <span v-if="p.passive" class="ml-1 px-1 rounded bg-yellow-900 text-yellow-300"
                     :title="`${p.v}: ${p.passive} passive skill point${p.passive > 1 ? 's' : ''}${p.respec ? ` + ${p.respec} respec points` : ''}`">+{{ p.passive }} passive</span>
@@ -53,10 +53,10 @@
                       :title="`Then buy from ${gemFor(p.offer)!.buy[0].vendor}`"><i class="fas fa-coins mr-1" />buy {{ gemFor(p.offer)!.buy.map(g => g.name).join(', ') }}</span>
                   </template>
                 </template>
-                <span v-else-if="p.k === 'kill'" class="text-red-300" :class="{ 'line-through opacity-60': doneBosses.has(String(p.v)) }">{{ p.v }}<i
+                <span v-else-if="p.k === 'kill'" class="g-kill" :class="{ 'line-through opacity-60': doneBosses.has(String(p.v)) }"><i class="fas fa-skull" />{{ p.v }}<i
                   v-if="doneBosses.has(String(p.v))" class="fas fa-check text-green-500 ml-1" title="Boss met (game log)" /></span>
-                <span v-else-if="p.k === 'arena'" class="text-red-200">{{ p.v }}</span>
-                <span v-else-if="p.k === 'area'" class="text-blue-200">{{ p.v }}</span>
+                <span v-else-if="p.k === 'arena'" class="g-area"><i class="fas fa-dungeon" />{{ p.v }}</span>
+                <span v-else-if="p.k === 'area'" class="g-area"><i class="fas fa-map-marker-alt" />{{ p.v }}</span>
                 <span v-else-if="p.k === 'waypoint'" class="text-blue-300"><i class="fas fa-dungeon" /> {{ p.v ?? 'waypoint' }}</span>
                 <span v-else-if="p.k === 'waypoint_get'" class="text-blue-300">waypoint</span>
                 <span v-else-if="p.k === 'trial'" class="text-yellow-500"><i class="fas fa-dungeon" /> the Labyrinth trial</span>
@@ -65,7 +65,8 @@
                 <span v-else-if="p.k === 'portal'" class="text-purple-300">{{ p.v === 'set' ? 'a portal' : 'the portal' }}</span>
                 <span v-else-if="p.k === 'ascend'" class="text-yellow-400">Ascend ({{ p.v }} Labyrinth)</span>
                 <span v-else-if="p.k === 'crafting'" class="text-gray-400" :title="p.recipes?.length ? 'Bench recipe found here' : ''">crafting recipe<template v-if="p.recipes?.length">: <span class="text-gray-200">{{ p.recipes.join(', ') }}</span></template></span>
-                <span v-else class="text-gray-100">{{ p.v }}</span>
+                <span v-else-if="p.k === 'quest_text'" class="g-item"><i class="fas fa-box" />{{ p.v }}</span>
+                <span v-else class="g-item">{{ p.v }}</span>
               </template>
               <div v-for="(sub, si) of (s.i === index ? t.subs ?? [] : [])" :key="si" class="pl-3 text-gray-500">
                 <template v-for="(p, pi) of sub" :key="pi">
@@ -77,6 +78,13 @@
             </div>
           </template>
         </div>
+      </div>
+      <div class="px-1 pt-1 text-xs text-gray-500 flex flex-wrap gap-x-3">
+        <span class="g-quest"><i class="fas fa-scroll" />quest</span>
+        <span class="g-kill"><i class="fas fa-skull" />boss</span>
+        <span class="g-item"><i class="fas fa-box" />item / object</span>
+        <span class="g-area"><i class="fas fa-map-marker-alt" />place</span>
+        <span>plain text = what to do</span>
       </div>
       <div class="px-1 pt-1 text-xs text-gray-600" :title="'Quest passive points on the route: ' + passivesTotal + (bandit === 'BANDIT_KILL' ? ' (one of them for killing all three bandits)' : '') + '. In game, /passives lists the ones you have.'">
         <span class="px-1 rounded bg-yellow-900 text-yellow-300">+1 passive</span> quest skill point:
@@ -213,3 +221,14 @@ const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
 })
 onUnmounted(() => { listener.abort() })
 </script>
+
+<style>
+/* Deathloom fork: what's what in the guide (quest / boss / item / place; plain text = the action) */
+.guide-task { position: relative; padding-left: 0.75rem; }
+.guide-task::before { content: '•'; position: absolute; left: 0.2rem; color: #6b7280; }
+.g-quest { color: #fde68a; font-weight: 600; }
+.g-kill { color: #fca5a5; font-weight: 600; }
+.g-item { color: #86efac; }
+.g-area { color: #93c5fd; }
+.g-quest > i, .g-kill > i, .g-item > i, .g-area > i { font-size: 0.65rem; margin-right: 0.2rem; opacity: 0.8; }
+</style>
