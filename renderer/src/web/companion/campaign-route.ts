@@ -118,7 +118,9 @@ export function findStep (zone: string, current: number, act: number | null = nu
     if (norm(s.zone) !== target) continue
     // towns come up again and again: a town visit only moves the guide when the
     // route goes there next (a trip to sell doesn't skip zones)
-    if (s.town && s.act === curAct && i > current + 2) return -1
+    // Same for another act's town (back to Lioneye's Watch to hand in a quest):
+    // the guide stays put instead of jumping to a later visit there
+    if (s.town && i > current + 2) return -1
     return i
   }
   return -1
