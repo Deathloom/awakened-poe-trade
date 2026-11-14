@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.41] - 2026-11-14
+
+### Added (#80)
+- **Update banner in the Loot Goblin window:** when a new version is downloaded, a green bar says so with **Install now** (Loot Goblin restarts; the game keeps running) and **Later** (it still installs by itself when the game isn't running).
+
 ## [1.0.40] - 2026-11-14
 
 ### Fixed (#79)
