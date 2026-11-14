@@ -13,6 +13,11 @@ export interface RouteStep {
   optional?: boolean
   // Labyrinth trial in this zone
   trial?: boolean
+  // Quest reward picked up in this zone: passive skill points (Book of Skill)
+  // and/or passive respec points. Respec-only quests are marked skippable.
+  // Checked 2026-11-14 against poedb's passive skill list, mobalytics'
+  // "All 24 Passive Point Quests" and the quest pages (poedb / poewiki).
+  reward?: { quest: string, passive?: number, respec?: number, turnIn?: string }
 }
 
 export interface RouteAct {
@@ -29,13 +34,13 @@ export const ROUTE: RouteAct[] = [
       { zone: 'The Coast', note: 'Waypoint; head to Mud Flats (Tidal Island: Medicine Chest for the flask quest)' },
       { zone: 'The Mud Flats', note: 'Collect the 3 glyphs, open the Submerged Passage' },
       { zone: 'The Submerged Passage', note: 'Waypoint; Flooded Depths optional (Dweller of the Deep: passive point)' },
-      { zone: 'The Flooded Depths', note: 'Kill the Deep Dweller (passive point)', optional: true },
+      { zone: 'The Flooded Depths', note: 'Kill the Deep Dweller', optional: true, reward: { quest: 'The Dweller of the Deep', passive: 1, turnIn: 'Tarkleigh' } },
       { zone: 'The Ledge', note: 'Run through' },
       { zone: 'The Climb', note: 'Run through to the Lower Prison' },
       { zone: 'The Lower Prison', note: 'Labyrinth trial', trial: true },
       { zone: 'The Upper Prison', note: 'Kill Brutus' },
       { zone: "Prisoner's Gate", note: 'To the Ship Graveyard' },
-      { zone: 'The Ship Graveyard', note: 'Allflame in the Cave, then Fairgraves (passive point)' },
+      { zone: 'The Ship Graveyard', note: 'Allflame in the Cave, then kill Fairgraves', reward: { quest: 'The Marooned Mariner', passive: 1, turnIn: 'Bestel' } },
       { zone: 'The Ship Graveyard Cave', note: 'Get the Allflame', optional: true },
       { zone: 'The Cavern of Wrath', note: 'Run through' },
       { zone: 'The Cavern of Anger', note: 'Kill Merveil, go to act 2' }
@@ -53,11 +58,11 @@ export const ROUTE: RouteAct[] = [
       { zone: 'The Broken Bridge', note: 'Bandit Kraityn' },
       { zone: 'The Fellshrine Ruins', note: 'To the Crypt' },
       { zone: 'The Crypt Level 1', note: 'Trial; Golden Hand on level 2 (passive point)', trial: true },
-      { zone: 'The Crypt Level 2', note: 'Golden Hand (passive point)', optional: true },
+      { zone: 'The Crypt Level 2', note: 'Golden Hand', optional: true, reward: { quest: 'Through Sacred Ground', passive: 1, respec: 2, turnIn: 'Yeena' } },
       { zone: 'The Riverways', note: 'To the Western Forest, then the Wetlands' },
-      { zone: 'The Western Forest', note: 'Bandit Alira; Captain Arteri (Thaumetic Emblem, passive point)' },
+      { zone: 'The Western Forest', note: 'Bandit Alira; kill Captain Arteri, take the Thaumetic Emblem', reward: { quest: 'The Way Forward', passive: 1, turnIn: 'Bestel (act 1)' } },
       { zone: "The Weaver's Chambers", note: "Kill the Weaver, take Maligaro's Spike" },
-      { zone: 'The Wetlands', note: 'Bandit Oak; open the Vaal Ruins' },
+      { zone: 'The Wetlands', note: 'Bandit Oak; open the Vaal Ruins. Kill all three bandits for a passive point (or help one)', reward: { quest: 'Deal with the Bandits', passive: 1, turnIn: 'Eramir' } },
       { zone: 'The Vaal Ruins', note: 'Run through' },
       { zone: 'The Northern Forest', note: 'To the Caverns' },
       { zone: 'The Caverns', note: 'Run through' },
@@ -71,7 +76,7 @@ export const ROUTE: RouteAct[] = [
       { zone: 'The Sarn Encampment', note: 'Hand in' },
       { zone: 'The Slums', note: 'To the Crematorium' },
       { zone: 'The Crematorium', note: "Trial; kill Piety, Tolman's bracelet", trial: true },
-      { zone: 'The Sewers', note: 'Collect the busts (Victario: passive point)' },
+      { zone: 'The Sewers', note: 'Collect the three busts', reward: { quest: "Victario's Secrets", passive: 1, respec: 2, turnIn: 'Hargan' } },
       { zone: 'The Marketplace', note: 'Catacombs trial is here' },
       { zone: 'The Catacombs', note: 'Labyrinth trial', trial: true },
       { zone: 'The Battlefront', note: 'Ribbon spool; to the Docks' },
@@ -80,7 +85,7 @@ export const ROUTE: RouteAct[] = [
       { zone: 'The Solaris Temple Level 2', note: 'Infernal Talc (Lady Dialla)' },
       { zone: 'The Ebony Barracks', note: 'Kill General Gravicius' },
       { zone: 'The Lunaris Temple Level 1', note: 'Run through' },
-      { zone: 'The Lunaris Temple Level 2', note: "Kill Piety (Piety's Pets: passive point)" },
+      { zone: 'The Lunaris Temple Level 2', note: 'Kill Piety', reward: { quest: "Piety's Pets", passive: 1, turnIn: 'Grigor' } },
       { zone: 'The Imperial Gardens', note: 'Trial; Library (Siosa) optional', trial: true },
       { zone: 'The Library', note: 'Siosa: extra gems', optional: true },
       { zone: 'The Sceptre of God', note: 'Run to the top' },
@@ -94,7 +99,7 @@ export const ROUTE: RouteAct[] = [
       { zone: 'Highgate', note: 'Hand in' },
       { zone: 'The Dried Lake', note: 'Kill Voll' },
       { zone: 'The Mines Level 1', note: 'Run through' },
-      { zone: 'The Mines Level 2', note: "Free Deshret's spirit (passive point)" },
+      { zone: 'The Mines Level 2', note: "Free Deshret's spirit", reward: { quest: 'An Indomitable Spirit', passive: 1, respec: 2, turnIn: 'Tasuni' } },
       { zone: 'The Crystal Veins', note: 'Hub for both dreams' },
       { zone: "Kaom's Dream", note: 'Run through' },
       { zone: "Kaom's Stronghold", note: 'Kill King Kaom (Eye of Fury)' },
@@ -111,13 +116,13 @@ export const ROUTE: RouteAct[] = [
     steps: [
       { zone: 'The Slave Pens', note: 'Kill the Overseer' },
       { zone: "Overseer's Tower", note: 'Hand in' },
-      { zone: 'The Control Blocks', note: 'Miasmeter (passive point); kill Justicar Casticus' },
+      { zone: 'The Control Blocks', note: 'Miasmeter; kill Justicar Casticus', reward: { quest: 'In Service to Science', passive: 1, turnIn: 'Vilenta' } },
       { zone: 'Oriath Square', note: 'To the Templar Courts' },
       { zone: 'The Templar Courts', note: 'Run through' },
       { zone: 'The Chamber of Innocence', note: 'Kill High Templar Avarius' },
       { zone: 'The Torched Courts', note: 'Run through' },
       { zone: 'The Ruined Square', note: 'Hub: Reliquary and Ossuary' },
-      { zone: 'The Reliquary', note: "Kitava's Torments (passive point)", optional: true },
+      { zone: 'The Reliquary', note: "Kitava's three torments", optional: true, reward: { quest: "Kitava's Torments", passive: 1, respec: 2, turnIn: 'Lani' } },
       { zone: 'The Ossuary', note: 'Sign of Purity' },
       { zone: 'The Cathedral Rooftop', note: 'Kill Kitava, go to act 6' }
     ]
@@ -125,17 +130,17 @@ export const ROUTE: RouteAct[] = [
   {
     act: 6,
     steps: [
-      { zone: 'The Twilight Strand', note: 'Clear the strand for Lilly (passive point)' },
+      { zone: 'The Twilight Strand', note: 'Clear the strand for Lilly (respec points only)', reward: { quest: 'Fallen from Grace', respec: 2, turnIn: 'Lilly' } },
       { zone: 'The Coast', note: 'To the Mud Flats' },
       { zone: 'The Mud Flats', note: 'To the Karui Fortress' },
-      { zone: 'The Karui Fortress', note: 'Kill Tukohama' },
+      { zone: 'The Karui Fortress', note: 'Kill Tukohama', reward: { quest: 'The Father of War', passive: 1, turnIn: 'Tarkleigh' } },
       { zone: 'The Ridge', note: 'Run through' },
       { zone: 'The Lower Prison', note: 'To the Upper Prison' },
       { zone: "Shavronne's Tower", note: 'Kill Shavronne and Brutus' },
-      { zone: "Prisoner's Gate", note: 'Kill Abberath' },
+      { zone: "Prisoner's Gate", note: 'Kill Abberath', reward: { quest: 'The Cloven One', passive: 1, turnIn: 'Bestel' } },
       { zone: 'The Western Forest', note: 'Run through' },
       { zone: 'The Riverways', note: 'To the Wetlands' },
-      { zone: 'The Wetlands', note: 'Kill Ryslatha' },
+      { zone: 'The Wetlands', note: 'Kill Ryslatha', reward: { quest: 'The Puppet Mistress', passive: 1, turnIn: 'Tarkleigh' } },
       { zone: 'The Southern Forest', note: 'Run through' },
       { zone: 'The Cavern of Anger', note: 'Run through' },
       { zone: 'The Beacon', note: 'Light the beacon' },
@@ -152,10 +157,10 @@ export const ROUTE: RouteAct[] = [
       { zone: 'The Chamber of Sins Level 1', note: 'Run through' },
       { zone: 'The Chamber of Sins Level 2', note: "Maligaro's Sanctum (kill Maligaro)" },
       { zone: 'The Den', note: 'Run through' },
-      { zone: 'The Ashen Fields', note: 'Kill Greust' },
+      { zone: 'The Ashen Fields', note: 'Kill Greust (Ralakesh) in the old Forest Encampment', reward: { quest: 'The Master of a Million Faces', passive: 1, turnIn: 'Eramir' } },
       { zone: 'The Northern Forest', note: 'Run through' },
-      { zone: 'The Dread Thicket', note: 'Fireflies for Silk', optional: true },
-      { zone: 'The Causeway', note: 'Run through' },
+      { zone: 'The Dread Thicket', note: 'Fireflies for Yeena; Den of Despair: kill Gruthkul', optional: true, reward: { quest: 'Queen of Despair', passive: 1, turnIn: 'Eramir' } },
+      { zone: 'The Causeway', note: "Kishara's Star in the lockbox near the exit", reward: { quest: "Kishara's Star", passive: 1, respec: 2, turnIn: 'Weylam' } },
       { zone: 'The Vaal City', note: 'To the Temple of Decay' },
       { zone: 'The Temple of Decay Level 1', note: 'Run through' },
       { zone: 'The Temple of Decay Level 2', note: 'Kill Arakaali, go to act 8' }
@@ -169,10 +174,10 @@ export const ROUTE: RouteAct[] = [
       { zone: "Doedre's Cesspool", note: 'Kill Doedre' },
       { zone: 'The Grand Promenade', note: 'To the Bath House / Lunaris side' },
       { zone: 'The Bath House', note: 'Run through' },
-      { zone: 'The High Gardens', note: 'Kill Yugul' },
+      { zone: 'The High Gardens', note: 'Kill Yugul', reward: { quest: 'Reflection of Terror', passive: 1, turnIn: 'Sin' } },
       { zone: 'The Lunaris Concourse', note: 'Moon orb' },
-      { zone: 'The Quay', note: 'Run through' },
-      { zone: 'The Grain Gate', note: 'Kill the Gemling Legionnaires' },
+      { zone: 'The Quay', note: 'Ankh of Eternity; kill Tolman at the Resurrection Site', reward: { quest: 'Love is Dead', passive: 1, respec: 2, turnIn: 'Clarissa' } },
+      { zone: 'The Grain Gate', note: 'Kill the Gemling Legionnaires', reward: { quest: 'The Gemling Legion', passive: 1, turnIn: 'Maramoa' } },
       { zone: 'The Imperial Fields', note: 'Run through' },
       { zone: 'The Solaris Concourse', note: 'Sun orb' },
       { zone: 'The Harbour Bridge', note: 'Kill Solaris and Lunaris, go to act 9' }
@@ -184,11 +189,11 @@ export const ROUTE: RouteAct[] = [
       { zone: 'The Blood Aqueduct', note: 'Run to Highgate' },
       { zone: 'The Descent', note: 'Run through' },
       { zone: 'The Vastiri Desert', note: 'Storm blade quest' },
-      { zone: 'The Oasis', note: 'Kill Shakari' },
+      { zone: 'The Oasis', note: 'Kill Shakari', reward: { quest: 'Queen of the Sands', passive: 1, turnIn: 'Irasha' } },
       { zone: 'The Foothills', note: 'Hub' },
       { zone: 'The Boiling Lake', note: 'Kill the Basilisk' },
       { zone: 'The Tunnel', note: 'Run through' },
-      { zone: 'The Quarry', note: 'To the Refinery' },
+      { zone: 'The Quarry', note: 'Kill Garukhan, take the Sekhema Feather; on to the Refinery', reward: { quest: 'The Ruler of Highgate', passive: 1, turnIn: 'Tasuni or Irasha' } },
       { zone: 'The Refinery', note: 'Kill General Adus' },
       { zone: 'The Belly of the Beast', note: 'Run through' },
       { zone: 'The Rotting Core', note: 'Kill the Depraved Trinity, go to act 10' }
@@ -199,13 +204,17 @@ export const ROUTE: RouteAct[] = [
     steps: [
       { zone: 'The Cathedral Rooftop', note: 'Run through' },
       { zone: 'The Ravaged Square', note: 'Hub' },
+      { zone: 'The Control Blocks', note: 'Kill Vilenta', optional: true, reward: { quest: "Vilenta's Vengeance", passive: 1, turnIn: 'Lani' } },
       { zone: 'The Torched Courts', note: 'Run through' },
       { zone: 'The Desecrated Chambers', note: 'Kill Avarius' },
       { zone: 'The Canals', note: 'Run through' },
-      { zone: 'The Feeding Trough', note: 'Kill Kitava. Campaign done: on to maps' }
+      { zone: 'The Feeding Trough', note: 'Kill Kitava. Campaign done: on to maps', reward: { quest: 'An End to Hunger', passive: 2, turnIn: 'Lani' } }
     ]
   }
 ]
+
+// Passive points from quests on the route: 24 (23, plus 1 for killing all three bandits)
+export const QUEST_PASSIVES = ROUTE.reduce((n, a) => n + a.steps.reduce((m, s) => m + (s.reward?.passive ?? 0), 0), 0)
 
 // Flat list with act numbers, in route order
 export const STEPS = ROUTE.flatMap(a => a.steps.map(s => ({ ...s, act: a.act })))
