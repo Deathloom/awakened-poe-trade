@@ -51,12 +51,7 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, type RouteStep } from './campaign-route'
-
-const KEY = 'deathloom.campaign-step.v1'
-function loadIndex () {
-  try { return Math.min(STEPS.length - 1, Math.max(0, Number(localStorage.getItem(KEY)) || 0)) } catch { return 0 }
-}
+import { STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore, type RouteStep } from './campaign-route'
 
 const index = ref(loadIndex())
 // Deathloom fork: overlay, HUD and desktop window each show the guide; keep them on the same step
@@ -83,7 +78,7 @@ const listEl = ref<HTMLElement>()
 
 // quest passive points from the steps already passed (the guide doesn't know
 // which side quests you actually did; it's a reminder, /passives in game is exact)
-const passivesSoFar = computed(() => STEPS.slice(0, index.value).reduce((n, st) => n + (st.reward?.passive ?? 0), 0))
+const passivesSoFar = computed(() => questPassivesBefore(index.value))
 function rewardTitle (r: NonNullable<RouteStep['reward']>) {
   const parts = [r.passive ? `${r.passive} passive skill point${r.passive > 1 ? 's' : ''}` : '', r.respec ? `${r.respec} respec points` : ''].filter(Boolean)
   return `${r.quest}: ${parts.join(' + ')}${r.turnIn ? ` (hand in to ${r.turnIn})` : ''}.`

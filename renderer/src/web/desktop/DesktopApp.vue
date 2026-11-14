@@ -20,6 +20,7 @@
     <div v-else class="flex-1 min-h-0 p-2">
       <div class="h-full min-h-0" :class="view === 'guide' ? 'single-guide' : ''">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
+        <PobNext v-else-if="view === 'next'" />
         <CampaignGuideBody v-else-if="view === 'guide'" tall />
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
         <MarketHistoryBody v-else-if="view === 'market'" :active="true" fill />
@@ -32,6 +33,7 @@
 import { computed, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import PobGearBody from '../pob/PobGearBody.vue'
+import PobNext from '../pob/PobNext.vue'
 import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
@@ -46,6 +48,7 @@ useLeagues().load()
 const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
+  { key: 'next', label: 'Next', icon: 'fa-shoe-prints', title: 'Levelling planner: next passives and gems for your level' },
   { key: 'guide', label: 'Guide', icon: 'fa-route', title: 'Campaign guide' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' }
