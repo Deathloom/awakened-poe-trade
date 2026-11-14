@@ -114,6 +114,11 @@ export interface PobBuildList {
   // Paths relative to the player folder, e.g. "3.29\\Witch\\Build.xml"
   builds: string[]
   active: string | null
+  // Deathloom fork: players with builds in the builds folder (yours first),
+  // whose builds are shown (player) and your own folder (own)
+  players?: string[]
+  player?: string
+  own?: string
 }
 
 export interface PobLoadouts {
@@ -901,6 +906,8 @@ type IpcPobBuildsRequest =
     setLoadout?: PobLoadoutChoice
     // Character picked in the build panel dropdown
     setCharacter?: string
+    // Use another player's builds ('' = your own)
+    setPlayer?: string
   }>
 
 type IpcPobBuildsResult =

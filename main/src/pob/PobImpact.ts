@@ -7,6 +7,7 @@
 
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
+import { readFileSync } from 'fs'
 import * as path from 'path'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
@@ -108,8 +109,11 @@ export class PobImpact {
           })
         })
     })
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-builds', ({ requestId, setActive, setLoadout, setCharacter }) => {
-      this.reply('MAIN->CLIENT::pob-builds', requestId, async () => await this.builds(setActive, setLoadout, setCharacter))
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-builds', ({ requestId, setActive, setLoadout, setCharacter, setPlayer }) => {
+      this.reply('MAIN->CLIENT::pob-builds', requestId, async () => {
+        if (typeof setPlayer === 'string') await this.setViewPlayer(setPlayer)
+        return await this.builds(setActive, setLoadout, setCharacter)
+      })
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-tree', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-tree', requestId, async () => await this.tree(refreshGear === true))
@@ -345,6 +349,8 @@ export class PobImpact {
     let build: string | undefined
     try {
       build = await this.characterBuilds.get(name)
+      // your character's remembered build is in your own folder
+      if (build && !this.viewingOwn()) await this.setViewPlayer('')
       if (build) {
         const list = await this.listBuilds()
         if (list.active !== build && list.builds.includes(build)) {
@@ -487,7 +493,7 @@ export class PobImpact {
 
   private async resolveActiveBuild (): Promise<string> {
     const playerDir = this.playerDir()
-    const activeFile = path.join(playerDir, 'active.txt')
+    const activeFile = this.activeFile(playerDir)
     let line: string | undefined
     try {
       line = (await fs.readFile(activeFile, 'utf8')).split(/\r?\n/)
@@ -743,11 +749,82 @@ export class PobImpact {
     if (this.rawCfg) this.configure(this.rawCfg)
   }
 
+  // Folder whose builds Loot Goblin uses: your own, or another player's
+  // (their builds come in with Pull; picked in the build panel)
   playerDir (): string {
     const cfg = this.cfg
     if (!cfg?.buildsDir) throw new Error('Missing in settings: Builds folder')
     // no player folder (PoB without build sharing): the builds folder itself
+    return path.join(cfg.buildsDir, this.viewingOwn() ? (cfg.player || '') : this.viewPlayer)
+  }
+
+  // Your own folder (the one Push uploads)
+  ownDir (): string {
+    const cfg = this.cfg
+    if (!cfg?.buildsDir) throw new Error('Missing in settings: Builds folder')
     return path.join(cfg.buildsDir, cfg.player || '')
+  }
+
+  private viewPlayer = ''
+  private viewPlayerLoaded = false
+  private viewFile () { return path.join(app.getPath('userData'), 'pob-view-player.txt') }
+
+  viewingOwn (): boolean {
+    this.loadViewPlayer()
+    return !this.viewPlayer || !this.cfg?.player || this.viewPlayer.toLowerCase() === this.cfg.player.toLowerCase()
+  }
+
+  private loadViewPlayer () {
+    if (this.viewPlayerLoaded) return
+    this.viewPlayerLoaded = true
+    try {
+      const name = readFileSync(this.viewFile(), 'utf8').trim()
+      if (/^[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)) this.viewPlayer = name
+    } catch {}
+  }
+
+  // '' or your own name: your builds
+  async setViewPlayer (name: string) {
+    this.loadViewPlayer()
+    name = name.trim()
+    if (name && !/^[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)) throw new Error(`Not a player folder: ${name}`)
+    if (name && this.cfg?.player && name.toLowerCase() === this.cfg.player.toLowerCase()) name = ''
+    if (name) {
+      const builds = await this.findBuilds(path.join(this.cfg?.buildsDir ?? '', name))
+      if (!builds.length) throw new Error(`No builds in ${name}'s folder (Pull first)`)
+    }
+    if (name === this.viewPlayer) return
+    this.viewPlayer = name
+    await fs.writeFile(this.viewFile(), name, 'utf8').catch(() => {})
+    this.loadedKey = null
+    this.logger.write(`info [PoB] using builds of ${name || 'your own folder'}`)
+  }
+
+  // Players with builds in the builds folder (folders with .xml files), yours first
+  private async players (): Promise<string[]> {
+    const cfg = this.cfg
+    if (!cfg?.buildsDir || !cfg.player) return []
+    let entries
+    try {
+      entries = await fs.readdir(cfg.buildsDir, { withFileTypes: true })
+    } catch {
+      return []
+    }
+    const out: string[] = []
+    for (const e of entries) {
+      if (!e.isDirectory() || e.name.startsWith('.') || !/^[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(e.name)) continue
+      if (e.name.toLowerCase() === cfg.player.toLowerCase()) continue
+      if ((await this.findBuilds(path.join(cfg.buildsDir, e.name))).length) out.push(e.name)
+    }
+    out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    return [cfg.player, ...out]
+  }
+
+  // active.txt: your own is in your folder (synced); for another player's
+  // builds it's kept locally so their folder isn't changed
+  private activeFile (root: string): string {
+    if (this.viewingOwn()) return path.join(root, 'active.txt')
+    return path.join(app.getPath('userData'), 'pob-view-active', `${this.viewPlayer}.txt`)
   }
 
   // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them
@@ -758,12 +835,14 @@ export class PobImpact {
     try {
       active = path.relative(root, await this.resolveActiveBuild())
     } catch {}
-    return { builds, active }
+    const players = await this.players()
+    return { builds, active, players, player: this.viewingOwn() ? (this.cfg?.player ?? '') : this.viewPlayer, own: this.cfg?.player ?? '' }
   }
 
   // Write active.txt: keeps comment lines, replaces the build line
   private async writeActive (root: string, rel: string) {
-    const activeFile = path.join(root, 'active.txt')
+    const activeFile = this.activeFile(root)
+    await fs.mkdir(path.dirname(activeFile), { recursive: true })
     let lines: string[] = []
     try {
       lines = (await fs.readFile(activeFile, 'utf8')).split(/\r?\n/)
@@ -784,6 +863,7 @@ export class PobImpact {
     const list = await this.listBuilds()
     if (!list.builds.includes(rel)) throw new Error(`Build not found in your folder: ${rel}`)
     await this.writeActive(root, rel)
+    if (!this.viewingOwn()) return
     this.onPlayerFilesChanged()
     if (remember && this.listsCharacters() && this.activeCharacter) {
       // picked by hand while playing this character: use it again next time
