@@ -5,7 +5,7 @@
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500 shrink-0"><i class="fas fa-hammer mr-1" />Build</span>
       <div class="flex gap-px text-sm shrink-0">
-        <button v-for="t of TABS" :key="t.key" class="px-2 rounded"
+        <button v-for="t of tabs" :key="t.key" class="px-2 rounded"
           :class="tab === t.key ? 'bg-gray-700 text-gray-100' : 'text-gray-500 hover:text-gray-200'"
           @click="setTab(t.key)">{{ t.label }}</button>
       </div>
@@ -31,6 +31,7 @@
     <build-picker v-show="showPicker" ref="pickerRef" class="shrink-0" @changed="onBuildChanged" />
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
     <pob-tree v-else-if="tab === 'tree'" ref="treeRef" />
+    <pob-tree-map v-else-if="tab === 'map'" ref="mapRef" class="flex-1" />
     <template v-else>
     <div v-if="error" class="p-2 text-gray-400 text-sm">{{ error }}</div>
     <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm">Loading from Path of Building…</div>
@@ -91,6 +92,7 @@ import BuildSync from './BuildSync.vue'
 import BuildImport from './BuildImport.vue'
 import PobGems from './PobGems.vue'
 import PobTree from './PobTree.vue'
+import PobTreeMap from './PobTreeMap.vue'
 import { pobText } from './labels'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
@@ -107,17 +109,21 @@ const itemSet = ref('')
 const allMods = ref(false)
 const opened = ref<Record<string, boolean>>({})
 const tradeError = ref<Record<string, string>>({})
-const TABS = [{ key: 'gear', label: 'Gear' }, { key: 'gems', label: 'Gems' }, { key: 'tree', label: 'Tree' }] as const
-const tab = ref<'gear' | 'gems' | 'tree'>('gear')
+type Tab = 'gear' | 'gems' | 'tree' | 'map'
+const TABS: Array<{ key: Tab, label: string }> = [{ key: 'gear', label: 'Gear' }, { key: 'gems', label: 'Gems' }, { key: 'tree', label: 'Tree' }]
+// the whole tree drawn: only in the desktop window (room for it)
+const tabs = computed(() => props.desktop ? [...TABS, { key: 'map' as Tab, label: 'Tree map' }] : TABS)
+const tab = ref<Tab>('gear')
 const showPicker = ref(true)
 const showSync = ref(false)
 const showImport = ref(false)
 const pickerRef = ref<InstanceType<typeof BuildPicker> | null>(null)
 const gemsRef = ref<InstanceType<typeof PobGems> | null>(null)
 const treeRef = ref<InstanceType<typeof PobTree> | null>(null)
+const mapRef = ref<InstanceType<typeof PobTreeMap> | null>(null)
 const visible = computed(() => props.active)
 
-function setTab (key: 'gear' | 'gems' | 'tree') {
+function setTab (key: Tab) {
   if (tab.value === key) return
   tab.value = key
   if (key === 'gear') request()
@@ -128,6 +134,7 @@ function onBuildChanged (b: PobBuildInfo | null) {
   if (b) build.value = b
   if (tab.value === 'gear') request()
   else if (tab.value === 'gems') gemsRef.value?.request()
+  else if (tab.value === 'map') mapRef.value?.request()
   else treeRef.value?.request()
 }
 

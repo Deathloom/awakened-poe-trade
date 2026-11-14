@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary } from '../../../ipc/types'
+import type { PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -113,6 +113,10 @@ export class PobImpact {
     this.server.onEventAnyClient('CLIENT->MAIN::pob-tree', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-tree', requestId, async () => await this.tree(refreshGear === true))
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-tree-map', ({ requestId, refreshGear, haveVersion }) => {
+      this.reply('MAIN->CLIENT::pob-tree-map', requestId, async () =>
+        await this.treeMap(refreshGear === true, typeof haveVersion === 'string' ? haveVersion.slice(0, 32) : undefined))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gems', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
     })
@@ -136,7 +140,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -804,6 +808,39 @@ export class PobImpact {
       build: reply.build as PobBuildInfo,
       tree: fix(reply.tree),
       live: reply.live ? fix(reply.live) : undefined,
+      character: reply.character,
+      liveError: reply.live ? undefined : (liveError ?? this.passivesError)
+    }
+  }
+
+  // Tree map (desktop window): whole tree layout (only when the window lacks this
+  // version) + allocated node ids of the build's loadout and the character
+  async treeMap (refreshGear: boolean, haveVersion?: string): Promise<Record<string, unknown>> {
+    await this.ensureBuild()
+    let liveError: string | undefined
+    if (!this.liveTarget()) {
+      liveError = 'Turn on "Also compare with my equipped gear" in Settings → Path of Building to compare with your character.'
+    } else if (!this.cfg?.liveTreeAndGems) {
+      liveError = 'Turn on "Use the character\'s passive tree, level and gems too" to compare trees.'
+    }
+    const live = await this.syncLiveGear(refreshGear)
+    if (live.error) liveError = live.error
+    const reply = await this.call('treeMap', haveVersion ? { haveVersion } : {})
+    // PoB's JSON encoder writes empty lists/maps as {}
+    const list = (v: unknown) => Array.isArray(v) ? v : []
+    const fixAlloc = (a: any): PobTreeAlloc | undefined => a ? { ...a, ids: list(a.ids), masteries: (a.masteries && !Array.isArray(a.masteries)) ? a.masteries : {} } : undefined
+    const layout = reply.layout ? {
+      nodes: list(reply.layout.nodes).map((n: any[]) => { const c = [...n]; c[8] = list(n[8]); return c }),
+      groups: Array.isArray(reply.layout.groups) ? {} : reply.layout.groups,
+      links: list(reply.layout.links),
+      orbitRadii: list(reply.layout.orbitRadii)
+    } as PobTreeMapLayout : undefined
+    return {
+      build: reply.build as PobBuildInfo,
+      version: reply.version,
+      layout,
+      alloc: fixAlloc(reply.alloc),
+      live: fixAlloc(reply.live),
       character: reply.character,
       liveError: reply.live ? undefined : (liveError ?? this.passivesError)
     }

@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#61)
+- **Tree map in the Loot Goblin window.** Build → **Tree map** tab draws the whole passive tree for the build and loadout picked above: green = you have it, orange = to take, purple = on your character but not in the build (yellow when no character is compared). Drag to pan, wheel to zoom, double-click or ⛶ to fit, hover for the node's stats and mastery effects, search box highlights nodes by name or stat. Only the build's (and your character's) ascendancy is drawn; cluster jewel nodes are counted, not drawn. Needs the PoB fork with the `treeMap` command.
+
 ### Added (#59)
 - **Loot Goblin window for a second screen.** A normal window with every panel in one place: build (gear / gems / tree, build and loadout pickers, sync, import), campaign guide, trades + ledger, market history and stash tracker. Tabs for each panel or **All** at once. Open it from the tray (double-click the icon, or **Open Loot Goblin window**), by starting Loot Goblin again from the Start menu while it runs, or automatically (Settings → Path of Building → **Open the Loot Goblin window when it starts**). Remembers its screen, position, size and tab; if that screen is gone it opens on the main one. Panels follow the game live like the overlay; Trade and price check from the build panel open in the overlay.
 - Guide step, trade ledger and market watchlist stay in step between the overlay, HUD and the desktop window (a trade is logged once).
