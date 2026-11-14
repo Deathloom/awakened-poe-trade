@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.67] - 2026-11-14
+
+### Changed (#109)
+- **New default All tab layout**: Build, Trade companion and Market history | Levelling | Tree map and Atlas tree (This session moves off; Edit layout → Add panel brings it back). Only new installs and **Reset layout** get it; a layout you arranged yourself stays as it is.
+
 ## [1.0.66] - 2026-11-14
 
 ### Added (#108)
