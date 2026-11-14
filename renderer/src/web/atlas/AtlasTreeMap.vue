@@ -66,7 +66,9 @@
       </div>
       <div v-if="genResult" class="pt-1 text-gray-400">
         Made "{{ genResult.name }}": {{ genResult.points }} points, {{ genResult.notables.length }} notables. It's a normal atlas build: Edit it, copy the link to use it in game.
-        <span v-if="genResult.missed.length" class="text-orange-300">Didn't fit: {{ genResult.missed.join(', ') }} (more points or fewer contents).</span>
+        <span v-if="genResult.missed.length" class="text-orange-300">Content notables that didn't fit: {{ genResult.missed.join(', ') }}.</span>
+        <span v-if="genResult.missedSustain.length" class="text-orange-300">Map sustain that didn't fit: {{ genResult.missedSustain.join(', ') }}.</span>
+        <span v-if="genResult.missed.length || genResult.missedSustain.length" class="text-gray-500">More points or fewer contents fits more.</span>
       </div>
     </div>
     <div v-if="lastError" class="px-2 pb-1 text-xs text-red-400 shrink-0">{{ lastError }}</div>

@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.72] - 2026-11-14
+
+### Fixed (#114)
+- **Ready-made atlas trees keep map sustain:** with Map sustain ticked, the sustain notables (Shaping the Mountains/Skies/World, Remnants of the Past, Conquered Conquerors, Emerging Realities) go in first, then the content you picked, so several contents no longer push sustain out. "Didn't fit" now lists content and map sustain separately, each name once.
+
 ## [1.0.71] - 2026-11-14
 
 ### Added (#113)

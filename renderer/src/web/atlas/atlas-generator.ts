@@ -59,6 +59,7 @@ export interface GenResult {
   notables: string[]
   // wanted notables that didn't fit in the budget
   missed: string[]
+  missedSustain: string[]
 }
 
 const clean = (s: string) => s.replace(/\[(?:[^\]|]*\|)?([^\]]*)\]/g, '$1')
@@ -103,7 +104,8 @@ export function generateAtlas (opts: GenOptions): GenResult {
   const contentRe = picked.length ? new RegExp(picked.map(c => c.re.source).join('|'), 'i') : null
   const budget = Math.max(1, Math.min(opts.budget || ATLAS.points || 150, ATLAS.points || 150))
 
-  // what we want, in order: content notables, sustain notables, content smalls, sustain smalls
+  // what we want, in order: sustain notables (ticked = the base of any atlas tree,
+  // so content can't starve it), content notables, content smalls, sustain smalls
   const choices: Record<string, number> = {}
   const tiers: number[][] = [[], [], [], []]
   for (const n of ATLAS.nodes) {
@@ -125,7 +127,8 @@ export function generateAtlas (opts: GenOptions): GenResult {
   const tree = new Set<number>(ATLAS_START)
   let points = 0
   const missed: number[] = []
-  for (const [ti, wanted] of tiers.entries()) {
+  const passes = [tiers[1], tiers[0], tiers[2], tiers[3]]
+  for (const [ti, wanted] of passes.entries()) {
     let left = wanted.filter(id => !tree.has(id))
     while (left.length) {
       const prev = pathsFrom(tree)
@@ -145,6 +148,9 @@ export function generateAtlas (opts: GenOptions): GenResult {
     }
   }
 
+  const sustainSet = new Set(tiers[1])
+  // same-named notables (e.g. two Shaping the Mountains) once each
+  const names = (ids: number[]) => [...new Set(ids.map(id => ATLAS_BY_ID.get(id)?.[6].trim() ?? String(id)))]
   const nodes = [...tree].filter(id => !ATLAS_START.has(id))
   const kept = Object.fromEntries(Object.entries(choices).filter(([k]) => tree.has(Number(k))))
   const notables = nodes.filter(id => ATLAS_BY_ID.get(id)?.[3] === 1).map(id => ATLAS_BY_ID.get(id)![6].trim())
@@ -154,7 +160,8 @@ export function generateAtlas (opts: GenOptions): GenResult {
     name: `${label}${opts.sustain && picked.length ? ' + sustain' : ''}${budget < (ATLAS.points ?? 150) ? ` (${budget} pts)` : ''}`,
     points,
     notables,
-    missed: missed.map(id => ATLAS_BY_ID.get(id)?.[6].trim() ?? String(id))
+    missed: names(missed.filter(id => !sustainSet.has(id))),
+    missedSustain: names(missed.filter(id => sustainSet.has(id)))
   }
 }
 
