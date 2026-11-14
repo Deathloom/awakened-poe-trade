@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.52] - 2026-11-14
+
+### Fixed (#93)
+- **Gems tab showed no gems for many levelling builds.** Link groups with no gear piece set in PoB were tucked away under "only for PoB's calculations". They now show in full in a **No slot set in PoB** card at the end (with levels and colours); only groups switched off in PoB stay folded away.
+
 ## [1.0.51] - 2026-11-14
 
 ### Fixed (#92)
