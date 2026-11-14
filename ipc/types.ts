@@ -86,7 +86,8 @@ export interface PobConfig {
   hud: PobHudConfig
   // Stash tracker (personal, opt-in): reads stash tabs with your POESESSID
   stash: PobStashConfig
-  // Open the desktop window (all panels, for a second screen) when Loot Goblin starts
+  // Open the desktop window (all panels, for a second screen) when the game starts
+  // (key name kept from 1.0.22, when it opened with Loot Goblin)
   desktopAtStart?: boolean
   // First-run setup guide was shown (absent = show it the next time the overlay opens)
   setupDone?: boolean
@@ -163,6 +164,76 @@ export interface PobTreeSummary {
   ascendancy?: string
   level?: number
   nodes: PobTreeNode[]
+}
+
+// Deathloom fork: tree map (desktop window). Layout per tree version:
+// node = [id, x, y, kind, group, orbit, name, ascendancy | false, stats]
+// kind: 0 normal, 1 notable, 2 keystone, 3 mastery, 4 jewel socket, 5 class start, 6 ascendancy start
+export type PobTreeMapNode = [number, number, number, number, number, number, string, string | false, string[]]
+export interface PobTreeMapLayout {
+  nodes: PobTreeMapNode[]
+  groups: Record<string, [number, number]>
+  links: Array<[number, number]>
+  orbitRadii: number[]
+}
+// Deathloom fork: levelling planner ("Next" tab of the Loot Goblin window)
+export interface PobPlanNode {
+  id: number
+  name: string
+  type: 'Normal' | 'Notable' | 'Keystone' | 'Mastery' | 'Socket' | string
+  effect?: string
+  stats?: string
+}
+
+export interface PobPlanGem {
+  name: string
+  reqLevel: number
+  support: boolean
+  colour?: number
+  group?: string
+  slot?: string
+}
+
+export interface PobPlan {
+  level: number
+  questPoints: number
+  // passive points the character should have: level - 1 + quest points
+  available: number
+  phases: Array<{ title: string, level?: number }>
+  // 1-based index into phases
+  phase: number
+  className?: string
+  ascendancyClass?: string
+  // nodes carried over from the previous levelling tree
+  kept: number
+  keptIds: number[]
+  // nodes of order[] that should be taken by now
+  taken: number
+  order: PobPlanNode[]
+  refund: PobPlanNode[]
+  ascendancy: Array<{ id: number, name: string }>
+  skillSet?: string
+  gems: PobPlanGem[]
+  previousGems?: PobPlanGem[]
+  // the next levelling step's skill set (swap gems when passing this step's level)
+  nextGems?: PobPlanGem[]
+  nextSkillSet?: string
+  // Configuration tab bandit: None (kill all), Oak, Kraityn, Alira
+  bandit?: string
+}
+
+export interface PobTreeAlloc {
+  ids: number[]
+  // mastery node id -> chosen effect
+  masteries: Record<string, string>
+  // allocated nodes on cluster jewels (not on the map)
+  clusterNodes: number
+  points: number
+  ascendancyPoints: number
+  className?: string
+  ascendancy?: string
+  treeVersion?: string
+  level?: number
 }
 
 // Character of the account (build panel dropdown)
@@ -376,6 +447,12 @@ export type IpcEvent =
   IpcPobGemsResult |
   IpcPobTreeRequest |
   IpcPobTreeResult |
+  IpcPobTreeMapRequest |
+  IpcPobPlanRequest |
+  IpcReadGameLogRequest |
+  IpcReadGameLogResult |
+  IpcPobPlanResult |
+  IpcPobTreeMapResult |
   IpcPobSyncRequest |
   IpcPobSyncState |
   IpcPobImportRequest |
@@ -713,6 +790,8 @@ type IpcPobInstallState =
 type IpcPobCopyBuildsRequest =
   Event<'CLIENT->MAIN::pob-copy-builds', {
     requestId: number
+    // folder picked by the player (default: the earlier PoB install found in Documents)
+    source?: string
   }>
 
 type IpcPobCopyBuildsResult =
@@ -867,6 +946,55 @@ type IpcPobGemsResult =
   }>
 
 // Deathloom fork: passive tree tab
+type IpcReadGameLogRequest =
+  Event<'CLIENT->MAIN::read-game-log', { requestId: number }>
+
+type IpcReadGameLogResult =
+  Event<'MAIN->CLIENT::read-game-log', {
+    requestId: number
+    ok: boolean
+    error?: string
+    lines?: string[]
+  }>
+
+type IpcPobPlanRequest =
+  Event<'CLIENT->MAIN::pob-plan', {
+    requestId: number
+    level: number
+    questPoints: number
+  }>
+
+type IpcPobPlanResult =
+  Event<'MAIN->CLIENT::pob-plan', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    plan?: PobPlan
+  }>
+
+type IpcPobTreeMapRequest =
+  Event<'CLIENT->MAIN::pob-tree-map', {
+    requestId: number
+    refreshGear?: boolean
+    // tree version the window already has the layout for
+    haveVersion?: string
+  }>
+
+type IpcPobTreeMapResult =
+  Event<'MAIN->CLIENT::pob-tree-map', {
+    requestId: number
+    ok: boolean
+    error?: string
+    build?: PobBuildInfo
+    version?: string
+    layout?: PobTreeMapLayout
+    alloc?: PobTreeAlloc
+    live?: PobTreeAlloc
+    character?: string
+    liveError?: string
+  }>
+
 type IpcPobTreeRequest =
   Event<'CLIENT->MAIN::pob-tree', {
     requestId: number

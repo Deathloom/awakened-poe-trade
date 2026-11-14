@@ -3,6 +3,8 @@
 import { app, clipboard, net } from 'electron'
 import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
+import { promises as fs } from 'node:fs'
+import path from 'node:path'
 import { startServer, eventPipe, server } from './server'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
@@ -14,10 +16,10 @@ import { AppTray } from './AppTray'
 import { OverlayVisibility } from './windowing/OverlayVisibility'
 import { HudWindow } from './windowing/HudWindow'
 import { DesktopWindow } from './windowing/DesktopWindow'
+import { OverlayController } from 'electron-overlay-window'
 import { GameLogWatcher } from './host-files/GameLogWatcher'
 import { HttpProxy } from './proxy'
 import { PobImpact } from './pob/PobImpact'
-import { StashTracker } from './pob/StashTracker'
 import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
 import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
@@ -130,7 +132,11 @@ app.on('ready', async () => {
       }
     })()
   })
-  const stashTracker = new StashTracker(eventPipe, logger)
+  // Deathloom fork (2026-11-14): stash tracker removed (it needed the POESESSID login
+  // cookie, not allowed for shared apps under GGG's rules). Delete what older versions saved.
+  for (const f of ['stash-session.bin', 'stash-snapshot.json']) {
+    fs.rm(path.join(app.getPath('userData'), 'apt-data', f), { force: true }).catch(() => {})
+  }
   // Deathloom fork: Copy buttons (market search text). Only the clipboard; nothing is sent to the game.
   eventPipe.onEventAnyClient('CLIENT->MAIN::write-clipboard', ({ text }) => {
     // Deathloom fork: plain text only, capped (item text and searches are a few KB)
@@ -146,6 +152,7 @@ app.on('ready', async () => {
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
       // Deathloom fork: all panels in a normal window (second screen)
       const desktop = new DesktopWindow(logger)
+      let firstRunChecked = false
       tray.openDesktop = () => { desktop.open() }
       openDesktopWindow = () => { desktop.open() }
       if (desktopRequested) desktop.open()
@@ -158,6 +165,9 @@ app.on('ready', async () => {
       }
       // Deathloom fork: find Client.txt next to the game once its window shows up
       poeWindow.onAttach(() => { void gameLogWatcher.findFromGameProcess() })
+      // Deathloom fork: "Open the Loot Goblin window when the game starts"
+      OverlayController.events.on('attach', () => { desktop.gameStarted() })
+      OverlayController.events.on('detach', () => { desktop.gameClosed() })
       // Deathloom fork: first-run setup guide asks what was found
       eventPipe.onEventAnyClient('CLIENT->MAIN::pob-setup-probe', ({ requestId, accountName }) => {
         const send = eventPipe.replyTo()
@@ -170,9 +180,15 @@ app.on('ready', async () => {
           })
         })()
       })
-      eventPipe.onEventAnyClient('CLIENT->MAIN::pob-copy-builds', ({ requestId }) => {
+      eventPipe.onEventAnyClient('CLIENT->MAIN::read-game-log', ({ requestId }) => {
         const send = eventPipe.replyTo()
-        void pobImpact.copyExistingBuilds()
+        gameLogWatcher.readHistory()
+          .then((lines) => { send({ name: 'MAIN->CLIENT::read-game-log', payload: { requestId, ok: true, lines } }) })
+          .catch((err: Error) => { send({ name: 'MAIN->CLIENT::read-game-log', payload: { requestId, ok: false, error: err.message } }) })
+      })
+      eventPipe.onEventAnyClient('CLIENT->MAIN::pob-copy-builds', ({ requestId, source }) => {
+        const send = eventPipe.replyTo()
+        void pobImpact.copyExistingBuilds(typeof source === 'string' && source ? source : undefined)
           .then((res) => {
             if (res.copied) pobSync.schedulePush()
             send({ name: 'MAIN->CLIENT::pob-copy-builds', payload: { requestId, ok: true, ...res } })
@@ -195,10 +211,15 @@ app.on('ready', async () => {
           pobInstallStarted = true
           setTimeout(() => { void pobInstaller.ensure() }, 3000)
         }
-        stashTracker.configure(cfg.pob?.stash, cfg.pob?.accountName ?? '')
         hud.configure(cfg.pob?.hud)
         applyStartWithWindows(cfg.pob?.startWithWindows !== false)
         desktop.configure(cfg.pob?.desktopAtStart === true)
+        // first run (setup guide not done yet): open the Loot Goblin window, which
+        // shows the setup guide, so it can be done before playing
+        if (!firstRunChecked) {
+          firstRunChecked = true
+          if (cfg.pob?.setupDone !== true) desktop.open()
+        }
       })
       uIOhook.start()
       const port = await startServer(appUpdater, logger)

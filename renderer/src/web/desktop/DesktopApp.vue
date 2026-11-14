@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: desktop window (index.html?desktop). All panels in one
        normal window for a second screen; live with the game like the overlay. -->
-  <div class="desktop-root flex flex-col h-full text-gray-200 bg-gray-900">
+  <div class="desktop-root relative flex flex-col h-full text-gray-200 bg-gray-900">
     <div class="flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0">
       <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Loot Goblin</span>
       <button v-for="v of VIEWS" :key="v.key" class="px-3 py-0.5 rounded"
@@ -13,53 +13,63 @@
 
     <div v-if="view === 'overview'" class="desktop-grid flex-1 min-h-0 p-2">
       <div class="area-build min-h-0"><PobGearBody :active="true" desktop /></div>
-      <div class="area-guide min-h-0"><CampaignGuideBody tall /></div>
+      <div class="area-level min-h-0"><LevellingBody /></div>
+      <div class="area-tree min-h-0 flex flex-col rounded bg-gray-800"><PobTreeMap levelling compact /></div>
       <div class="area-trades min-h-0"><TradeCompanionBody fill /></div>
       <div class="area-market min-h-0"><MarketHistoryBody :active="true" fill /></div>
-      <div class="area-stash min-h-0"><StashTrackerBody fill /></div>
     </div>
     <div v-else class="flex-1 min-h-0 p-2">
-      <div class="h-full min-h-0" :class="view === 'guide' ? 'single-guide' : ''">
+      <div class="h-full min-h-0">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
-        <CampaignGuideBody v-else-if="view === 'guide'" tall />
+        <LevellingBody v-else-if="view === 'levelling'" />
         <TradeCompanionBody v-else-if="view === 'trades'" fill />
         <MarketHistoryBody v-else-if="view === 'market'" :active="true" fill />
-        <StashTrackerBody v-else-if="view === 'stash'" fill />
+        <DesktopSettings v-else-if="view === 'settings'" />
       </div>
     </div>
+    <!-- first-run setup (opens by itself on a new install) -->
+    <WidgetSetupGuide desktop />
+    <!-- after an update (not while the setup guide is open) -->
+    <WhatsNew :active="!desktopSetupShown" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { loadSession, SESSION_KEY } from '../companion/char-level'
 import { Host } from '@/web/background/IPC'
 import PobGearBody from '../pob/PobGearBody.vue'
-import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
+import PobTreeMap from '../pob/PobTreeMap.vue'
+import LevellingBody from './LevellingBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
-import StashTrackerBody from '../stash/StashTrackerBody.vue'
+import DesktopSettings from './DesktopSettings.vue'
+import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
+import WhatsNew from '../whats-new/WhatsNew.vue'
+import { desktopSetupShown } from '../setup/setup-state'
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 
 document.documentElement.classList.add('desktop')
-// leagues and poe.ninja prices, like the overlay loads them (market history, stash values)
+// leagues and poe.ninja prices, like the overlay loads them (market history)
 usePoeninja()
 useLeagues().load()
 
 const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
-  { key: 'guide', label: 'Guide', icon: 'fa-route', title: 'Campaign guide' },
+  { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
-  { key: 'stash', label: 'Stash', icon: 'fa-box-open', title: 'Stash tracker' }
+  { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Loot Goblin settings (same as Shift+Space → Settings)' }
 ] as const
 type View = typeof VIEWS[number]['key']
 
 const VIEW_KEY = 'deathloom.desktop-view.v1'
 function loadView (): View {
   try {
-    const v = localStorage.getItem(VIEW_KEY)
+    let v = localStorage.getItem(VIEW_KEY)
+    if (v === 'guide' || v === 'next') v = 'levelling' // before 1.0.30
     return VIEWS.some(x => x.key === v) ? v as View : 'overview'
   } catch { return 'overview' }
 }
@@ -76,8 +86,13 @@ watch(view, (v) => {
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
-const status = computed(() => playing.value == null ? '' : playing.value ? 'In game' : 'Not playing')
-const playingHelp = 'Panels update live from the game (Client.txt and your public character). Clicking here takes focus away from the game.'
+// AFK from the game log (": AFK mode is now ON")
+const session = ref(loadSession())
+const onSession = (e: StorageEvent) => { if (e.key === SESSION_KEY) session.value = loadSession() }
+window.addEventListener('storage', onSession)
+onUnmounted(() => { window.removeEventListener('storage', onSession) })
+const status = computed(() => playing.value == null ? '' : playing.value ? (session.value.afk ? 'In game · AFK' : 'In game') : 'Not playing')
+const playingHelp = 'Panels update live from the game (Client.txt). Clicking here takes focus away from the game. Not affiliated with or endorsed by Grinding Gear Games.'
 </script>
 
 <style>
@@ -90,29 +105,30 @@ html.desktop #app {
 .desktop-grid {
   display: grid;
   gap: 0.5rem;
-  grid-template-columns: minmax(26rem, 1.3fr) minmax(20rem, 1fr) minmax(22rem, 1fr);
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: minmax(26rem, 1.2fr) minmax(24rem, 1fr) minmax(22rem, 1fr);
+  grid-template-rows: 1.4fr 1fr 1fr;
   grid-template-areas:
-    "build guide market"
-    "build trades stash";
+    "build level tree"
+    "build level trades"
+    "build level market";
 }
 @media (max-width: 1250px) {
   .desktop-grid {
     grid-template-columns: minmax(24rem, 1.2fr) minmax(20rem, 1fr);
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-rows: 2fr 1fr 1fr 1fr;
     grid-template-areas:
-      "build guide"
-      "build trades"
-      "market stash";
+      "build level"
+      "tree level"
+      "trades market"
+      "trades market";
     overflow-y: auto;
   }
 }
 .area-build { grid-area: build; }
-.area-guide { grid-area: guide; --hud-w: 100%; --hud-h: 100%; }
+.area-level { grid-area: level; }
+.area-tree { grid-area: tree; }
 .area-trades { grid-area: trades; }
 .area-market { grid-area: market; }
-.area-stash { grid-area: stash; }
-.single-guide { --hud-w: 100%; --hud-h: 100%; }
 .desktop-root .widget-default-style {
   max-height: none;
 }

@@ -4,7 +4,7 @@ A Path of Exile 1 overlay for a small group of friends. It does price checks and
 
 Loot Goblin is a fork of [Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade) by SnosMe. It works together with our [Path of Building fork](https://github.com/Deathloom/PathOfBuilding), and builds are shared through the private [POE-Builds/poe-builds](https://github.com/POE-Builds/poe-builds) repo.
 
-> Not affiliated with or endorsed by Grinding Gear Games. Loot Goblin only reads the game's log file, your clipboard and GGG's public web APIs. It never reads game memory, never buys anything automatically, and only sends a chat command when you click a button.
+> Not affiliated with or endorsed by Grinding Gear Games. Loot Goblin only reads the game's log file and your clipboard, uses the trade site's search like Awakened PoE Trade, and gets prices from poe.ninja. It doesn't read character or stash data from pathofexile.com. It never reads game memory, never buys anything automatically, and only sends a chat command when you click a button.
 
 ## Download
 
@@ -22,17 +22,15 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 
 | Feature | What you get |
 |---|---|
-| **Build impact** | Price-checking an item shows what it does to your active PoB build: DPS, eHP, life, ES, resistances and attributes. It compares against the build's gear and against the character you're playing (items, passive tree, gems and level from the public Characters tab). |
+| **Build impact** | Price-checking an item shows what it does to your active PoB build: DPS, eHP, life, ES, resistances and attributes. It compares against the build's gear. |
 | **Build panel** (Ctrl+G) | Gear, Gems and Tree tabs for the active build. Every item has Copy / Trade / Price check buttons. Gems are shown per gear piece, with socket colours and links. Pick the build, loadout and character from the panel. |
 | **Build sharing** | Cloud button in the build panel: sign in with GitHub, Pull / Push / Sync now. Builds sync automatically when Loot Goblin starts and after you change them. Same sign-in as the PoB window. |
 | **Import builds** | Import button in the build panel: paste a PoB code or a pobb.in / poe.ninja / pastebin / maxroll link and save it to your folder, without opening PoB. |
 | **Open PoB** (Ctrl+P) | Opens Loot Goblin's own Path of Building. |
-| **Follows your character** | Switches to the character you just logged into and remembers which build goes with each character. |
 | **Campaign guide** (Ctrl+H) | Route for acts 1–10. It moves forward as you enter zones. |
 | **Trade companion** (Ctrl+T) | Opens on an incoming trade whisper, with Invite / Trade / Thanks / Kick buttons. They copy the command to the clipboard, or send it if you turn that on. |
 | **Ledger** | What you sold and bought per currency, per league. |
 | **Market history** | 7-day poe.ninja trend, plus prices recorded while the app runs. |
-| **Stash tracker** | Optional and personal. Rough stash value and what's new since the last refresh. |
 | **Show while playing** | The guide, trade companion and build panel can be pinned over the game as small windows you can drag and resize. You choose per panel whether clicks go through to the game. |
 
 Shift+Space opens the full overlay. Hover the menu icons to see their names and hotkeys, or press **?** for a quick how-to.
@@ -42,7 +40,7 @@ Shift+Space opens the full overlay. Hover the menu icons to see their names and 
 1. Install Loot Goblin. On first run it downloads our [PoB fork](https://github.com/Deathloom/PathOfBuilding) (once, then it keeps itself up to date). Your GitHub account must be a member of POE-Builds.
 2. Press Ctrl+G, click the cloud button and **Sign in with GitHub**. Your player folder becomes your GitHub name and everyone's builds are pulled.
    Leave the folder fields in **Settings → Path of Building** empty to use the defaults (Loot Goblin's PoB, `Documents\Loot Goblin\Builds`); **Browse…** sets your own.
-3. Optional, in the same settings page: turn on **Also compare with my equipped gear** (your profile's Characters tab must be public), choose which panels show while playing, and set the chat buttons to copy or send.
+3. Optional, in the same settings page: choose which panels show while playing, and set the chat buttons to copy or send.
 
 ## Changes
 

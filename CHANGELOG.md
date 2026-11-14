@@ -9,10 +9,120 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ## [Unreleased]
 
 ### Changed (#60)
-- **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, stash search, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys. The stash tracker's POESESSID uses the asynchronous safe storage (the synchronous one is removed in Electron 46); sessions saved by older versions still open.
+- **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, stash search, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys.
+
+## [1.0.38] - 2026-11-14
+
+### Changed (#77): easier to read
+- **The guide shows what's what:** quests in yellow with a scroll icon, bosses in red with a skull, items and objects in green with a box, places in blue with a pin; plain text is what you do. Each task is a bullet, the current zone is bold, and a small legend sits under the list.
+- **Levelling tab sections have proper headers** (small caps with an icon and a line under them): Next passives, Refund, Ascendancy, At level N, Quest gems, Gems, Vendor recipes, From the game log.
+
+## [1.0.37] - 2026-11-14
+
+### Added (#76)
+- **The guide follows your build's bandit choice** (Path of Building → Configuration → Bandit quest): kill all three, or help Alira, Kraityn or Oak. Act 2 shows "Bandits: …" at the top and the route for that choice; quest points count 23 instead of 24 when you help a bandit.
+
+## [1.0.36] - 2026-11-14
+
+### Added (#75)
+- **Quests worth skipping are marked.** Hand-ins that only give gems your build doesn't use say **skippable**; item rewards say **item reward**; quest items (keys and the like) are never marked, you need those. (In the in-game guide panel, gem-only hand-ins say **gems** – open the Loot Goblin window to see if your build takes one.)
+- **Vendor recipes** in the Levelling tab: the useful ones for where you are in the campaign (movement speed boots, weapon damage recipes, +1 spell gem weapon, flask upgrades, chromatic / jeweller's / fusing, chaos resistance, full rare set), with what to sell and what you get. Checked against poedb's recipe list.
+- The guide's crafting lines name the bench recipe you pick up there.
+
+### Changed
+- "Usable now" is now "Gems in this step usable at level N: x of y · next: <gem> at <level>", so it's clear why it only changes at certain levels.
+
+## [1.0.35] - 2026-11-14
+
+### Added (#74): more from the game log
+- **/passives syncs your quests.** Type /passives in game once: the guide ticks exactly the quests listed there and the planner uses that number of quest points.
+- **Passives you take are ticked in Next passives** (✓), and the next 5 skip what you already took. Shows unspent points too. Small passives with the same name ("Intelligence") are matched in order, so they can be slightly off.
+- **Character stats** in the Levelling tab: deaths (and in this act), campaign time (hover for each act), Kitava's resistance penalty after acts 5 and 10, atlas points.
+- **Rebuild from game log** button: reads your whole Client.txt and fills all of the above for every character made since the log started.
+- The Loot Goblin window's top bar shows **AFK** when you're AFK in game.
+- Fixed: single respec points (not from quests) no longer tick a quest.
+- All of it only reads the game's own log file (Client.txt); nothing is sent to the game.
+
+## [1.0.34] - 2026-11-14
+
+### Added (#73)
+- **The guide ticks things off from the game log.** When the game says "You have received a Passive Skill Point" (or respec points), the matching quest on the guide gets a ✓. When a boss starts talking (Brutus, Fairgraves, Merveil, …), its kill line gets a ✓. Quest hand-ins themselves aren't in the game log, so quests without a passive or respec reward aren't ticked.
+- **Exact quest points in the levelling planner**: for characters followed from level 2, quest points come from those game-log lines instead of the guide's estimate.
+- **Settings → Path of Building: Copy builds from another Path of Building**, right under the Path of Building status. Copies the builds of your normal PoB install (found in Documents) or of a folder you pick; originals stay, same-named builds are skipped.
+
+## [1.0.33] - 2026-11-14
+
+### Changed (#72): campaign guide
+- **Every quest is in the guide now.** The guide follows a full route for acts 1–10 (from Exile Leveling): each zone lists what to do there — quests to hand in, bosses to kill, quest items to pick up, trials, waypoints, and which way to go (arrows). Waypoint and log-out trips are their own steps.
+- **Passive points are shown on the quest**, not the zone: "Hand in The Marooned Mariner **+1 passive**". Respec-only quests say "respec · skippable".
+- **In the Loot Goblin window, hand-in lines show your build's gems**: "take Clarity", "buy Flame Dash" (from your Path of Building build and class).
+- Going back to town to sell no longer skips ahead in the guide.
+- The guide starts from the beginning once after this update; it catches up by itself the next time you enter a zone.
+
+## [1.0.32] - 2026-11-14
+
+### Added (#71)
+- **What's new after each update.** The first time you open the Loot Goblin window or the overlay (Shift+Space) after an update, a popup lists what changed since the version you had (this changelog). Shown once per update, in whichever window opens first. **Settings tab → What's new** shows it again. New installs skip it (the setup guide welcomes them).
+
+## [1.0.31] - 2026-11-14
+
+### Changed (#70): first run in the Loot Goblin window
+- **A new install opens the Loot Goblin window with the setup guide**, so players can set everything up before starting the game; the overlay and in-game panels use it once they play. If the guide wasn't finished there, the overlay still shows it the first time it opens. Existing installs (guide done) are unchanged.
+- **Settings tab → Run setup guide** opens it again in the window (Shift+Space → wand still works in game).
+
+## [1.0.30] - 2026-11-14
+
+### Changed (#69): Loot Goblin window
+- **Guide and Next are one Levelling tab.** Campaign guide on top; under it the levelling planner with two new blocks: **Quest gems for this build** (per quest in this act and the next: which reward to *take* for your class and what to *buy* from the vendor afterwards; "All acts" shows the whole campaign) and **At level N** (gems to add and drop when you pass the current levelling tree's level, from the next tree's skill set). Quest/vendor data: Exile Leveling's game-data export (MIT, HeartofPhos), regenerated each league with `tools/gen-quest-gems.py`.
+- **All tab:** build | levelling | tree map, trades, market. The tree map there shows the levelling plan: green = taken by now, cyan with numbers = next 5, orange = later in this tree, and zooms in on the next passives (crosshair button zooms back).
+- **Tree map is brighter**: lighter background, unallocated nodes and links easier to see.
+- Needs Path of Building with PoB fork PR #26 (`keptIds`, next step's gems).
+
+## [1.0.29] - 2026-11-14
+
+### Added (#68)
+- **Settings in the Loot Goblin window.** New **Settings** tab with the same pages as Shift+Space → Settings (Path of Building first). Save applies to every window straight away; Cancel undoes unsaved changes. If settings change in another window while you're editing, you get a note.
+- **Next on the All tab.** The levelling planner now also sits in the All grid (top right, next to the guide).
+
+## [1.0.28] - 2026-11-14
+
+### Added (#67)
+- **Levelling planner: "Next" tab in the Loot Goblin window.** Shows the next 5 passives to take (or the whole order), the levelling tree you're on, passives to refund when you switch trees, new ascendancy notables, and gems: new in this step, coming up (with the level they need) and usable now. Uses trees named after a level in Path of Building ("Level 12", "Leveling lvl 30", "Lv. 60"; the loadout picked in the Build tab is the end goal). Level comes from Client.txt ("is now level", recorded by the overlay; party members' level-ups too, so pick your character if needed) or can be typed in; quest points come from the campaign guide or can be typed in. Points = level − 1 + quest points. No character data is fetched (GGG rules). Needs Path of Building with the `plan` command (PoB fork PR #25).
+
+## [1.0.27] - 2026-11-14
+
+### Added (#66)
+- **Campaign guide shows quest passive points.** Zones where a quest gives passive skill points get a yellow **+1 passive** tag (hover: quest name, respec points, who to hand it in to); respec-only quests are marked **respec · skippable**. A line under the list counts quest points passed so far (24 on the route, one of them for killing all three bandits). Added act 10's Control Blocks (Vilenta). Fixed: act 6's Twilight Strand (Lilly) gives respec points only, not a passive point. Checked against poedb, poewiki and mobalytics quest lists.
+
+## [1.0.26] - 2026-11-14
+
+### Changed (#65)
+- **Trade whispers are shared between windows.** Sold or ✕ in the Loot Goblin window closes the trade in the HUD too (and the other way round), and a window opened later still shows the open trades. Open trades older than 3 hours drop off.
+
+### Changed (#64): GGG rules
+- "Not affiliated with Grinding Gear Games" now also shows in the app (Settings → About, the setup guide's last step, the Loot Goblin window), not only in the README.
+- Requests the app makes to pathofexile.com, poe.ninja and poeprices now say who they come from: the User-Agent ends in `LootGoblin/<version> (+github link)`.
+
+## [1.0.25] - 2026-11-14
+
+### Changed (#63)
+- **Open the Loot Goblin window when the game starts** (was: when Loot Goblin starts). Opens without taking focus, once per game launch; if you close it while playing it stays closed until the next launch. Turning it on while the game runs opens it right away. Same setting, so it stays ticked.
+
+## [1.0.24] - 2026-11-14
+
+### Removed (#62): GGG rules
+- **Stash tracker removed.** It needed your POESESSID login cookie, which GGG's rules don't allow in shared apps. The saved (encrypted) session and stash snapshot are deleted on start. Use PoE Overlay (a registered GGG app) for stash tracking.
+- **Live character comparison turned off**: equipped gear, the character's tree/gems/level, following the character you play and the character list. They used pathofexile.com's character-window pages, which aren't part of GGG's official API. Build impact, gems, tree and the tree map compare with your PoB build only. Can return through GGG's official API if app registration reopens.
+
+## [1.0.23] - 2026-11-14
+
+### Added (#61)
+- **Tree map in the Loot Goblin window.** Build → **Tree map** tab draws the whole passive tree for the build and loadout picked above: green = you have it, orange = to take, purple = on your character but not in the build (yellow when no character is compared). Drag to pan, wheel to zoom, double-click or ⛶ to fit, hover for the node's stats and mastery effects, search box highlights nodes by name or stat. Only the build's (and your character's) ascendancy is drawn; cluster jewel nodes are counted, not drawn. Needs the PoB fork with the `treeMap` command.
+
+## [1.0.22] - 2026-11-14
 
 ### Added (#59)
-- **Loot Goblin window for a second screen.** A normal window with every panel in one place: build (gear / gems / tree, build and loadout pickers, sync, import), campaign guide, trades + ledger, market history and stash tracker. Tabs for each panel or **All** at once. Open it from the tray (double-click the icon, or **Open Loot Goblin window**), by starting Loot Goblin again from the Start menu while it runs, or automatically (Settings → Path of Building → **Open the Loot Goblin window when it starts**). Remembers its screen, position, size and tab; if that screen is gone it opens on the main one. Panels follow the game live like the overlay; Trade and price check from the build panel open in the overlay.
+- **Loot Goblin window for a second screen.** A normal window with every panel in one place: build (gear / gems / tree, build and loadout pickers, sync, import), campaign guide, trades + ledger, market history and stash tracker. Tabs for each panel or **All** at once. Open it from the tray (double-click the icon, or **Open Loot Goblin window**), by starting Loot Goblin again from the Start menu while it runs, or automatically (Settings → Path of Building → **Open the Loot Goblin window when it starts**; from 1.0.25: when the game starts). Remembers its screen, position, size and tab; if that screen is gone it opens on the main one. Panels follow the game live like the overlay; Trade and price check from the build panel open in the overlay.
 - Guide step, trade ledger and market watchlist stay in step between the overlay, HUD and the desktop window (a trade is logged once).
 
 ## [1.0.21] - 2026-11-14
