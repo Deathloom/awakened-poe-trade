@@ -8,6 +8,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.44] - 2026-11-14
+
+### Added (#83)
+- **This session panel** (All tab, bottom right; read from the game's log, nothing is sent anywhere):
+  - Maps run, time per map (town/hideout trips not counted), average and maps per hour, a live timer for the map you're in, and your last maps.
+  - League mechanics met, from the league NPC's voice lines: Bestiary, Incursion, Delve, Betrayal, Blight, Harvest, Delirium, Expedition, Ultimatum, the Envoy, the Maven, Sirus and the Conquerors.
+  - Deaths (also per map), trades done, levelling pace (time per level), loading-screen times and disconnects.
+  - Hints for slow loading screens, repeated disconnects or dying in many maps.
+  - A new session starts by itself after 2 hours without playing, or with **New session**.
+
 ## [1.0.43] - 2026-11-14
 
 ### Fixed (#82)

@@ -9,7 +9,7 @@ export type LogEvent =
   | { type: 'trade', direction: 'from' | 'to', char: string, item: string, price: string, league: string, tab?: { name: string, left: number, top: number }, message?: string, bulk: boolean }
   | { type: 'joined' | 'left', char: string }
   | { type: 'zone', name: string }
-  | { type: 'area', level: number, code: string }
+  | { type: 'area', level: number, code: string, seed?: string }
   | { type: 'tradeResult', accepted: boolean }
   | { type: 'level', char: string, cls: string, level: number }
   // quest rewards ("You have received a Passive Skill Point." / "2 Passive Respec Points.")
@@ -28,7 +28,7 @@ export type LogEvent =
   | { type: 'afk', on: boolean }
   // "[LOADING SCREEN] (The Coast) Duration = 4.1 seconds"
   | { type: 'loading', zone: string, seconds: number }
-  | { type: 'disconnect' }
+  | { type: 'disconnect', reason: string }
 
 // English only (the game client's language must be English for these)
 const JOINED = /^: (?<char>.+) has joined the area\.$/
@@ -50,11 +50,11 @@ const KITAVA = /^: You have been permanently weakened by Kitava's (?<which>cruel
 const ATLAS_POINT = /^: You have received (?:an|(?<n>\d+)) Atlas Skill Points?\.$/
 const AFK = /^: AFK mode is now (?<on>ON|OFF)/
 const LOADING = /^\[LOADING SCREEN\] \((?<zone>.+)\) Duration = (?<s>[\d.]+) seconds/
-const GENERATING = /Generating level (?<level>\d+) area "(?<code>[^"]+)"/
+const GENERATING = /Generating level (?<level>\d+) area "(?<code>[^"]+)"(?: with seed (?<seed>\d+))?/
 
 export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   const gen = line.match(GENERATING)
-  if (gen) return { type: 'area', level: Number(gen.groups!.level), code: gen.groups!.code }
+  if (gen) return { type: 'area', level: Number(gen.groups!.level), code: gen.groups!.code, seed: gen.groups!.seed }
 
   const text = line.split('] ').slice(1).join('] ')
   if (!text) return null
@@ -74,7 +74,7 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if ((m = text.match(ATLAS_POINT))) return { type: 'atlasPoint', count: Number(m.groups!.n ?? 1) }
   if ((m = text.match(AFK))) return { type: 'afk', on: m.groups!.on === 'ON' }
   if ((m = text.match(LOADING))) return { type: 'loading', zone: m.groups!.zone, seconds: Number(m.groups!.s) }
-  if (text.startsWith('Abnormal disconnect')) return { type: 'disconnect' }
+  if (text.startsWith('Abnormal disconnect')) return { type: 'disconnect', reason: text.replace(/^Abnormal disconnect:?\s*/, '').trim() }
   if ((m = text.match(JOINED))) return { type: 'joined', char: m.groups!.char }
   if ((m = text.match(LEFT))) return { type: 'left', char: m.groups!.char }
 

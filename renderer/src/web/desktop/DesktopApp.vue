@@ -33,6 +33,8 @@
         <div class="min-h-0" :style="{ flex: `${rows.sizes.value[1]} 1 0` }"><TradeCompanionBody fill /></div>
         <SplitGutter dir="y" @drag="d => rows.drag(1, d, rowsEl?.clientHeight ?? 0)" @end="rows.save" @reset="rows.reset" />
         <div class="min-h-0" :style="{ flex: `${rows.sizes.value[2]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
+        <SplitGutter dir="y" @drag="d => rows.drag(2, d, rowsEl?.clientHeight ?? 0)" @end="rows.save" @reset="rows.reset" />
+        <div class="min-h-0" :style="{ flex: `${rows.sizes.value[3]} 1 0` }"><PlaySessionBody /></div>
       </div>
     </div>
     <div v-else class="flex-1 min-h-0 p-2">
@@ -58,6 +60,7 @@ import { Host } from '@/web/background/IPC'
 import PobGearBody from '../pob/PobGearBody.vue'
 import PobTreeMap from '../pob/PobTreeMap.vue'
 import LevellingBody from './LevellingBody.vue'
+import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
@@ -109,7 +112,7 @@ Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
 const colsEl = ref<HTMLElement>()
 const rowsEl = ref<HTMLElement>()
 const cols = useSplit('all-cols', [0.34, 0.36, 0.3])
-const rows = useSplit('all-right', [0.45, 0.3, 0.25])
+const rows = useSplit('all-right', [0.36, 0.22, 0.2, 0.22])
 
 // downloaded update ready to install (main broadcasts the updater state)
 const readyVersion = computed(() => Host.updateInfo.value.state === 'update-downloaded' ? Host.updateInfo.value.version : null)

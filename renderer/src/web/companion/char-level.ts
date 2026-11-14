@@ -7,6 +7,7 @@
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
+import { applySessionLines, loadPlaySession, savePlaySession } from './play-session'
 import { STEPS, loadCampaignStep, actFromAreaCode, findStep, onlyActive } from './campaign-route'
 
 export interface CharLevel { name: string, cls: string, level: number, at: number }
@@ -291,5 +292,8 @@ export function startLevelRecorder () {
     const v = applyLogLines(loadCharLevels(), e.lines, AppConfig().language, loadCampaignStep(), session)
     if (v) saveCharLevels(v)
     if (JSON.stringify(session) !== before) saveSession(session)
+    const levels = v ?? loadCharLevels()
+    const play = applySessionLines(loadPlaySession(), e.lines, AppConfig().language, currentChar(levels)?.name ?? '')
+    if (play) savePlaySession(play)
   })
 }
