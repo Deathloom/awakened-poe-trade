@@ -114,6 +114,11 @@ export interface PobBuildList {
   // Paths relative to the player folder, e.g. "3.29\\Witch\\Build.xml"
   builds: string[]
   active: string | null
+  // Deathloom fork: players with builds in the builds folder (yours first),
+  // whose builds are shown (player) and your own folder (own)
+  players?: string[]
+  player?: string
+  own?: string
 }
 
 export interface PobLoadouts {
@@ -188,6 +193,10 @@ export interface PobPlanNode {
 export interface PobPlanGem {
   name: string
   reqLevel: number
+  // the build's gem level, the gem's normal max and the character level that gem level needs
+  level?: number
+  maxLevel?: number
+  levelReq?: number
   support: boolean
   colour?: number
   group?: string
@@ -897,6 +906,8 @@ type IpcPobBuildsRequest =
     setLoadout?: PobLoadoutChoice
     // Character picked in the build panel dropdown
     setCharacter?: string
+    // Use another player's builds ('' = your own)
+    setPlayer?: string
   }>
 
 type IpcPobBuildsResult =

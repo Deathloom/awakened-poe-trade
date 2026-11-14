@@ -2,6 +2,14 @@
   <!-- Deathloom fork: pick the active build (writes active.txt) and the loadout to compare against -->
   <div class="px-2 py-1 bg-gray-800 text-sm flex flex-col gap-y-1">
     <div v-if="error" class="text-red-400">{{ error }}</div>
+    <div v-if="(list?.players?.length ?? 0) > 1" class="flex items-center gap-x-2"
+      title="Whose builds to use. Other players' builds come in with Pull (shared with you); using them never changes their folder.">
+      <span class="text-gray-500 w-14 shrink-0">Player</span>
+      <select class="flex-1 min-w-0 bg-gray-900 rounded px-1" :disabled="busy"
+        :value="list?.player ?? ''" @change="request({ setPlayer: ($event.target as HTMLSelectElement).value })">
+        <option v-for="p of list!.players" :key="p" :value="p">{{ p }}{{ p === list?.own ? ' (you)' : '' }}</option>
+      </select>
+    </div>
     <div class="flex items-center gap-x-2">
       <span class="text-gray-500 w-14 shrink-0">Build</span>
       <select class="flex-1 min-w-0 bg-gray-900 rounded px-1" :disabled="busy || !list"
@@ -99,7 +107,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => {
 const characterListener = Host.onEvent('MAIN->CLIENT::pob-character', () => { request() })
 onUnmounted(() => { listener.abort(); characterListener.abort() })
 
-function request (opts: { setActive?: string, setLoadout?: PobLoadoutChoice, setCharacter?: string } = {}) {
+function request (opts: { setActive?: string, setLoadout?: PobLoadoutChoice, setCharacter?: string, setPlayer?: string } = {}) {
   busy.value = true
   lastRequestId += 1
   Host.sendEvent({

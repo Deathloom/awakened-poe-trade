@@ -71,6 +71,7 @@ export class PobSync {
     void this.enqueue(async () => {
       await this.refreshStatus()
       const st = this.state.status
+      if (st) await this.privateByDefault(st)
       if (!this.startupDone && st) {
         this.startupDone = true
         if (st.signedIn && st.prefs.autoSync) {
@@ -140,6 +141,27 @@ export class PobSync {
       case 'push':
       case 'syncNow':
         await this.enqueue(async () => { await this.runSync(req.op as 'pull' | 'push' | 'syncNow', false) })
+    }
+  }
+
+  // Once per install: switch existing installs to private per-player repos
+  // (the group switched on 14 Nov 2026; new installs get it from PoB's default).
+  // Afterwards it's the player's choice again (Private builds tick box).
+  private async privateByDefault (st: PobSyncStatus) {
+    const marker = path.join(app.getPath('userData'), 'private-builds-default.v1')
+    if (fs.existsSync(marker)) return
+    // older PoB without per-player repos: try again after it updates
+    if (typeof st.settings?.repoPrefix !== 'string') return
+    try {
+      if (st.settings.repoPrefix === '' && (st.settings.owner ?? 'POE-Builds') === 'POE-Builds') {
+        const [reply] = await this.run([{ cmd: 'configure', repoPrefix: 'builds-' }])
+        this.setStatus(reply)
+        this.impact.refreshDefaults()
+        this.logger.write('info [PoB sync] switched to private builds (per player)')
+      }
+      fs.writeFileSync(marker, new Date().toISOString())
+    } catch (err) {
+      this.logger.write(`warn [PoB sync] couldn't switch to private builds: ${(err as Error).message}`)
     }
   }
 
@@ -226,7 +248,7 @@ export class PobSync {
       signIn: { userCode: reply.userCode, verificationUri: reply.verificationUri, expiresAt }
     })
     // like PoB: the code is on the clipboard and GitHub opens in the browser
-    clipboard.writeText(String(reply.userCode))
+    await clipboard.writeText(String(reply.userCode)).catch(() => { /* code is shown in the panel too */ })
     openWebLink(String(reply.verificationUri), 'github.com')
     this.schedulePoll()
   }

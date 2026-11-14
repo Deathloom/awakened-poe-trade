@@ -8,8 +8,62 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
-### Security (#57)
-- Vue 3.2.37 → **3.5.45** and vue-i18n 10 → **11.4** (clears the high-severity advisories for vue and @intlify), plus non-breaking audit fixes in the renderer's build tools.
+## [1.0.47] - 2026-11-14
+
+### Added (#86)
+- **Use a friend's builds:** with builds shared with you, the build panel has a **Player** dropdown. Pick a player to use their builds (gear, gems, tree, levelling); pick yourself to go back. Their folder is never changed, and logging into one of your characters switches back to your own builds.
+- Build sync warns when your folder isn't your GitHub name (private builds need that for Push) and sets it back in one click.
+
+## [1.0.46] - 2026-11-14
+
+### Changed (#85)
+- **Private builds are now the default.** Your builds sync to your own private repo (builds-<your GitHub name>), and you get a friend's builds once they approve your **Request access**. Existing installs switch over once with this update; you can still untick **Private builds** in build sync.
+
+## [1.0.45] - 2026-11-14
+
+### Fixed (#84)
+- **Guide no longer jumps when you visit another act's town** (e.g. back to Lioneye's Watch from act 2 to hand in a quest). It stays on your step; a town only moves the guide when the route goes there next.
+- The session panel's map timer only runs while the Loot Goblin window is shown and you're in a map.
+
+## [1.0.44] - 2026-11-14
+
+### Added (#83)
+- **This session panel** (All tab, bottom right; read from the game's log, nothing is sent anywhere):
+  - Maps run, time per map (town/hideout trips not counted), average and maps per hour, a live timer for the map you're in, and your last maps.
+  - League mechanics met, from the league NPC's voice lines: Bestiary, Incursion, Delve, Betrayal, Blight, Harvest, Delirium, Expedition, Ultimatum, the Envoy, the Maven, Sirus and the Conquerors.
+  - Deaths (also per map), trades done, levelling pace (time per level), loading-screen times and disconnects.
+  - Hints for slow loading screens, repeated disconnects or dying in many maps.
+  - A new session starts by itself after 2 hours without playing, or with **New session**.
+
+## [1.0.43] - 2026-11-14
+
+### Fixed (#82)
+- **New players no longer see "No active build: can't read …active.txt".** With no build picked yet, Loot Goblin uses the newest build in your folder (and remembers it). With no builds at all it says how to add one: save a build in Path of Building, or Settings → Path of Building → Copy builds. A renamed or deleted active build is handled the same way.
+
+## [1.0.42] - 2026-11-14
+
+### Added (#81)
+- **Resize the panels in the Loot Goblin window:** drag the lines between panels. On the All tab: the three columns, and tree map / trades / market on the right. In the Levelling pane: guide vs. next steps (the guide now starts smaller). Sizes are remembered; double-click a line to reset.
+
+### Changed (#60)
+- **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys.
+
+## [1.0.41] - 2026-11-14
+
+### Added (#80)
+- **Update banner in the Loot Goblin window:** when a new version is downloaded, a green bar says so with **Install now** (Loot Goblin restarts; the game keeps running) and **Later** (it still installs by itself when the game isn't running).
+
+## [1.0.40] - 2026-11-14
+
+### Fixed (#79)
+- The setup guide had two top-level elements, which made Vue warn ("Runtime directive used on component with non-element root node") every time the overlay redrew. No visible change.
+
+## [1.0.39] - 2026-11-14
+
+### Added (#78)
+- **Hold gem levels:** the Levelling tab lists gems your build keeps below max level (e.g. Clarity at 5 to reserve less) with "stop at level N", from the gem levels in your Path of Building build.
+- **Tick the gems you have:** under Gems, "tick what you have" (per character, saved on this PC). Gems you can use at your level but haven't ticked show as **Missing**. The game log has no gem info, so this is manual.
+- **Labyrinth panel:** when you enter the lab, the guide shows the lab (Normal / Cruel / Merciless / Eternal) and a **Today's layout on poelab.com** button that opens poelab in your browser. It says "Labyrinth done" after Izaro and closes when you leave.
 
 ## [1.0.38] - 2026-11-14
 

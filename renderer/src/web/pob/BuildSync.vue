@@ -43,13 +43,18 @@
           @keydown.enter="savePlayer" @blur="savePlayer">
         <span v-else class="truncate">{{ status.settings.player || '(not set)' }}</span>
       </div>
+      <div v-if="folderMismatch" class="text-yellow-300">
+        <i class="fas fa-exclamation-triangle mr-1" />With private builds your folder must be your GitHub name ({{ status.login }}), or Push fails.
+        To use a friend's builds, pick them under <b>Player</b> in the build panel instead.
+        <button class="btn-mini ml-1" @click="player = status.login ?? ''; savePlayer()">Set to {{ status.login }}</button>
+      </div>
       <label class="flex items-center gap-x-2 text-gray-400 cursor-pointer"
         title="Pull when Loot Goblin (or PoB) starts, push a few seconds after a build changes. Same setting as PoB's Sync...">
         <input type="checkbox" :checked="status.prefs.autoSync" @change="setAuto(($event.target as HTMLInputElement).checked)">
         Sync automatically
       </label>
       <label v-if="!hud" class="flex items-center gap-x-2 text-gray-400 cursor-pointer"
-        title="Each player keeps builds in their own private repo (builds-<name>). You only get the builds of players who approved your request. Turn on once the group has switched.">
+        title="Each player keeps builds in their own private repo (builds-<GitHub name>). You only get the builds of players who approved your request. On by default; untick to use the old shared repo.">
         <input type="checkbox" :checked="perPlayer" @change="setPerPlayer(($event.target as HTMLInputElement).checked)">
         Private builds (per player)
       </label>
@@ -125,6 +130,8 @@ function savePlayer () {
 }
 
 const perPlayer = computed(() => Boolean(status.value?.settings.repoPrefix))
+const folderMismatch = computed(() => Boolean(perPlayer.value && status.value?.signedIn && status.value.login &&
+  status.value.settings.player && status.value.settings.player.toLowerCase() !== status.value.login.toLowerCase()))
 
 function setPerPlayer (on: boolean) {
   send({ op: 'configure', repoPrefix: on ? 'builds-' : '' })
