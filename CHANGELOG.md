@@ -8,6 +8,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.33] - 2026-11-14
+
+### Changed (#72): campaign guide
+- **Every quest is in the guide now.** The guide follows a full route for acts 1–10 (from Exile Leveling): each zone lists what to do there — quests to hand in, bosses to kill, quest items to pick up, trials, waypoints, and which way to go (arrows). Waypoint and log-out trips are their own steps.
+- **Passive points are shown on the quest**, not the zone: "Hand in The Marooned Mariner **+1 passive**". Respec-only quests say "respec · skippable".
+- **In the Loot Goblin window, hand-in lines show your build's gems**: "take Clarity", "buy Flame Dash" (from your Path of Building build and class).
+- Going back to town to sell no longer skips ahead in the guide.
+- The guide starts from the beginning once after this update; it catches up by itself the next time you enter a zone.
+
 ## [1.0.32] - 2026-11-14
 
 ### Added (#71)

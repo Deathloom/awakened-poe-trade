@@ -17,18 +17,55 @@
       <div v-for="s of visible" :key="s.i" class="flex gap-x-2 px-1 rounded" :data-current="s.i === index ? '1' : undefined"
         :class="s.i === index ? 'bg-gray-800' : (s.i < index ? 'opacity-50' : '')">
         <span class="w-4 shrink-0 text-center">
-          <i v-if="s.trial" class="fas fa-dungeon text-yellow-500" title="Labyrinth trial" />
-          <i v-else-if="s.optional" class="fas fa-star text-blue-300" title="Optional" />
-          <i v-else-if="s.i === index" class="fas fa-map-marker-alt text-green-400" />
+          <i v-if="s.i === index" class="fas fa-map-marker-alt text-green-400" />
+          <i v-else-if="s.via === 'waypoint'" class="fas fa-dungeon text-blue-400 text-xs" title="Waypoint" />
+          <i v-else-if="s.via === 'logout'" class="fas fa-sign-out-alt text-gray-500 text-xs" title="Log out (back to town)" />
         </span>
-        <div class="min-w-0">
-          <div :class="s.i === index ? 'text-gray-100' : 'text-gray-400'">{{ s.zone }}
-            <span v-if="s.reward?.passive" class="ml-1 px-1 rounded text-xs bg-yellow-900 text-yellow-300"
-              :title="rewardTitle(s.reward)">+{{ s.reward.passive }} passive</span>
-            <span v-else-if="s.reward?.respec" class="ml-1 px-1 rounded text-xs bg-gray-700 text-gray-400"
-              :title="rewardTitle(s.reward) + ' Respec points only: skippable (Orbs of Regret do the same).'">respec · skippable</span>
+        <div class="min-w-0 flex-1">
+          <div :class="s.i === index ? 'text-gray-100' : 'text-gray-400'">
+            <span v-if="s.via === 'waypoint'" class="text-xs text-blue-400">Waypoint → </span>
+            <span v-else-if="s.via === 'logout'" class="text-xs text-gray-500">Log out → </span>{{ s.zone }}
+            <span v-if="s.tasks.length && !showTasks(s.i)" class="text-xs text-gray-600"> · {{ s.tasks.length }} to do</span>
           </div>
-          <div v-if="s.note && (s.i === index || showAll || s.i === index + 1)" class="text-xs text-gray-500">{{ s.note }}</div>
+          <template v-if="showTasks(s.i)">
+            <div v-for="(t, ti) of s.tasks" :key="ti" class="text-xs pl-1" :class="s.i === index ? 'text-gray-300' : 'text-gray-500'">
+              <template v-for="(p, pi) of t.parts" :key="pi">
+                <template v-if="typeof p === 'string'">{{ p }}</template>
+                <template v-else-if="p.k === 'quest'">
+                  <span class="text-yellow-200">{{ p.v }}</span>
+                  <span v-if="p.passive" class="ml-1 px-1 rounded bg-yellow-900 text-yellow-300"
+                    :title="`${p.v}: ${p.passive} passive skill point${p.passive > 1 ? 's' : ''}${p.respec ? ` + ${p.respec} respec points` : ''}`">+{{ p.passive }} passive</span>
+                  <span v-else-if="p.respec" class="ml-1 px-1 rounded bg-gray-700 text-gray-400"
+                    :title="`${p.v}: ${p.respec} respec points only. Skippable (Orbs of Regret do the same).`">respec · skippable</span>
+                  <template v-if="gemFor(p.offer)">
+                    <span v-if="gemFor(p.offer)!.take" class="ml-1 px-1 rounded bg-gray-700 text-green-300"
+                      :title="`Quest reward for your build: pick ${gemFor(p.offer)!.take!.name}`"><i class="fas fa-gem mr-1" />take {{ gemFor(p.offer)!.take!.name }}</span>
+                    <span v-if="gemFor(p.offer)!.buy.length" class="ml-1 px-1 rounded bg-gray-700 text-gray-300"
+                      :title="`Then buy from ${gemFor(p.offer)!.buy[0].vendor}`"><i class="fas fa-coins mr-1" />buy {{ gemFor(p.offer)!.buy.map(g => g.name).join(', ') }}</span>
+                  </template>
+                </template>
+                <span v-else-if="p.k === 'kill'" class="text-red-300">{{ p.v }}</span>
+                <span v-else-if="p.k === 'arena'" class="text-red-200">{{ p.v }}</span>
+                <span v-else-if="p.k === 'area'" class="text-blue-200">{{ p.v }}</span>
+                <span v-else-if="p.k === 'waypoint'" class="text-blue-300"><i class="fas fa-dungeon" /> {{ p.v ?? 'waypoint' }}</span>
+                <span v-else-if="p.k === 'waypoint_get'" class="text-blue-300">waypoint</span>
+                <span v-else-if="p.k === 'trial'" class="text-yellow-500"><i class="fas fa-dungeon" /> the Labyrinth trial</span>
+                <span v-else-if="p.k === 'logout'" class="text-gray-400">log out</span>
+                <i v-else-if="p.k === 'dir'" class="fas fa-arrow-up text-gray-300 mx-px" :style="{ transform: `rotate(${Number(p.v)}deg)` }" :title="`direction ${p.v}°`" />
+                <span v-else-if="p.k === 'portal'" class="text-purple-300">{{ p.v === 'set' ? 'a portal' : 'the portal' }}</span>
+                <span v-else-if="p.k === 'ascend'" class="text-yellow-400">Ascend ({{ p.v }} Labyrinth)</span>
+                <span v-else-if="p.k === 'crafting'" class="text-gray-400">crafting recipe</span>
+                <span v-else class="text-gray-100">{{ p.v }}</span>
+              </template>
+              <div v-for="(sub, si) of (s.i === index ? t.subs ?? [] : [])" :key="si" class="pl-3 text-gray-500">
+                <template v-for="(p, pi) of sub" :key="pi">
+                  <template v-if="typeof p === 'string'">{{ p }}</template>
+                  <i v-else-if="p.k === 'dir'" class="fas fa-arrow-up mx-px" :style="{ transform: `rotate(${Number(p.v)}deg)` }" />
+                  <span v-else class="text-gray-300">{{ p.v ?? p.k }}</span>
+                </template>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
       <div class="px-1 pt-1 text-xs text-gray-600" :title="'Quest passive points on the route: ' + QUEST_PASSIVES + ' (one of them for killing all three bandits). In game, /passives lists the ones you have.'">
@@ -51,7 +88,9 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore, type RouteStep } from './campaign-route'
+import { STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
+import { planQuestGems, type QuestGemStep } from './quest-gems'
+import { currentPlan } from '../pob/plan-store'
 
 const index = ref(loadIndex())
 // Deathloom fork: overlay, HUD and desktop window each show the guide; keep them on the same step
@@ -79,15 +118,28 @@ const listEl = ref<HTMLElement>()
 // quest passive points from the steps already passed (the guide doesn't know
 // which side quests you actually did; it's a reminder, /passives in game is exact)
 const passivesSoFar = computed(() => questPassivesBefore(index.value))
-function rewardTitle (r: NonNullable<RouteStep['reward']>) {
-  const parts = [r.passive ? `${r.passive} passive skill point${r.passive > 1 ? 's' : ''}` : '', r.respec ? `${r.respec} respec points` : ''].filter(Boolean)
-  return `${r.quest}: ${parts.join(' + ')}${r.turnIn ? ` (hand in to ${r.turnIn})` : ''}.`
+
+// tasks of the current and the next two steps (all with "show the whole act")
+function showTasks (i: number) {
+  return showAll.value || (i >= index.value && i <= index.value + 2)
+}
+
+// which quest reward / vendor gems the build wants (Loot Goblin window, where the
+// levelling planner has the build's gems)
+const questGems = computed(() => {
+  const p = currentPlan.value
+  if (!p) return new Map<string, QuestGemStep>()
+  const plan = planQuestGems(p.className, [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])])
+  return new Map((plan?.steps ?? []).map(st => [st.id, st]))
+})
+function gemFor (offer: string | undefined) {
+  return offer ? questGems.value.get(offer) : undefined
 }
 
 const visible = computed(() => {
   const all = STEPS.map((s, i) => ({ ...s, i }))
   if (showAll.value || props.tall) return all.filter(s => s.act === step.value.act)
-  return all.slice(Math.max(0, index.value - 1), index.value + 4)
+  return all.slice(Math.max(0, index.value - 1), index.value + 5)
 })
 
 watch([index, () => props.tall], () => {
