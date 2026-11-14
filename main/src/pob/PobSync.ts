@@ -233,6 +233,15 @@ export class PobSync {
     return out
   }
 
+  // Friends' trade board (TradeBoard.ts): one SyncServer 'board' job, queued with the sync jobs
+  async board (req: Record<string, unknown>): Promise<any> {
+    // errors go to the board, not to the sync state
+    const job = this.queue.then(async () => await this.run([{ cmd: 'board', ...req }]))
+    this.queue = job.catch(() => {})
+    const [reply] = await job
+    return reply
+  }
+
   // Lua errors from SyncServer (code bugs, not "not signed in" messages)
   onCodeError: (message: string) => void = () => {}
 
@@ -353,7 +362,7 @@ export class PobSync {
           return
         }
         c = commands[next++]
-        const long = ['pull', 'push', 'syncNow'].includes(String(c.cmd))
+        const long = ['pull', 'push', 'syncNow', 'board'].includes(String(c.cmd))
         arm(long ? LONG_TIMEOUT : SHORT_TIMEOUT, String(c.cmd))
         proc.stdin.write(JSON.stringify({ id: next, ...c }) + '\n')
       }

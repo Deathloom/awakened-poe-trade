@@ -88,6 +88,7 @@ function hintFor (type: string): string | undefined {
     case 'trade-companion': return 'Trade companion' + key(pob?.tradesKey)
     case 'market-history': return 'Market history (price trends of starred items)' + key(pob?.panelKeys?.market)
     case 'market-search': return 'Market search (find an item and whisper the seller)'
+    case 'trade-board': return "Friends' trade board (give, sell, wanted)" + key(pob?.boardPostKey)
     case 'tree-map': return 'Tree map' + key(pob?.panelKeys?.tree)
     case 'atlas-tree': return 'Atlas tree' + key(pob?.panelKeys?.atlas)
     case 'play-session': return 'This session' + key(pob?.panelKeys?.session)

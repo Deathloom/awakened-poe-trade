@@ -38,6 +38,11 @@
               <b>Edit</b>: click a passive to take it with the path to it, or refund it with what hangs off it; notables with a choice let you pick the effect.
               Atlas builds are kept on this PC. Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
             <li><b>Trades</b>: incoming and outgoing trade whispers and your ledger.</li>
+            <li><b>Board</b>: the friends' trade board, only for your group (POE-Builds members, GitHub sign-in).
+              <b>Give</b>: free items, press <b>Claim</b> and the poster invites you. <b>Sell</b>: priced items for friends first, press <b>Whisper</b>.
+              <b>Wanted</b>: what someone needs, press <b>I have one</b> and whisper them. <b>Post</b> adds your own: paste the item text (Ctrl+C on the item in game)
+              or type a name. Mark yours <b>Sold</b> / <b>Given</b> / <b>Got it</b> when done. Also in the overlay menu (<i class="fas fa-people-carry" />)
+              and on the All tab (Edit layout → Add panel).</li>
             <li><b>Market</b>: your watchlist and a poe.ninja market overview.</li>
             <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Loot Goblin never sees your login.</li>
             <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide and What's new.</li>
@@ -53,7 +58,8 @@
               Instant buyout listings open in the Trade site tab, where you click GGG's "Travel to Hideout".</li>
             <li><b>Panels over the game</b>: pin the build, guide or trade companion (Settings → Path of Building → Where panels show).
               Drag them by the top bar, resize from the bottom-right corner.</li>
-            <li><b>Chat buttons</b> (trade companion, market search) copy the command, or send one chat message per click (setting). Nothing is ever sent by itself.</li>
+            <li><b>Post to the friends' board</b>: set a hotkey in Settings → Path of Building, hover an item and press it. The board opens in the overlay with the item filled in.</li>
+            <li><b>Chat buttons</b> (trade companion, market search, friends' board) copy the command, or send one chat message per click (setting). Nothing is ever sent by itself.</li>
           </ul>
         </section>
 
@@ -167,6 +173,7 @@ const FAQ = [
   { q: 'The price check shows no build impact.', a: 'Check Settings → Path of Building: build impact on, and a build picked in the Build panel. The first check after starting can take a few seconds while Path of Building loads.' },
   { q: 'The Whisper / Hideout button did nothing in game.', a: 'With Chat buttons set to "copy", the command is on your clipboard: press Enter in game, Ctrl+V, Enter. Set it to "send" to have one chat message sent per click.' },
   { q: 'Why does Hideout not take me to the seller?', a: '/hideout name only works when the seller lets visitors in. Most sellers invite you to their party after your whisper. Instant buyout listings use GGG\'s own Travel to Hideout button on the trade site (Trade site tab).' },
+  { q: 'Who sees what I post on the friends\' board?', a: 'Only members of the POE-Builds GitHub organisation (your group). Each listing is a GitHub issue in the group\'s private repo, posted with your own GitHub sign-in, so it always shows who posted it. Only you can mark your listing done or remove it.' },
   { q: 'Do I have to sign in to the trade site?', a: 'Only for things that need your account on GGG\'s site, like Travel to Hideout for instant buyout. You sign in on GGG\'s own page inside the Trade site tab; it stays signed in and Loot Goblin never sees the login.' },
   { q: 'The game crashes with panels over it.', a: 'Set the game\'s Display mode to Windowed Fullscreen, and try Solid background (Settings → Path of Building → Show while playing). A crash on PoE 3.30 with Vulkan was fixed by switching the game\'s renderer to DirectX 12.' },
   { q: 'How do updates work?', a: 'Loot Goblin downloads updates by itself and installs them when the game isn\'t running (or click Install now in the window). Path of Building updates itself at the next start. After an update, What\'s new shows what changed.' },

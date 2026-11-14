@@ -193,6 +193,12 @@
                 history panel then shows its 7-day trend plus prices Loot Goblin records while it runs. Nothing to set up.</div>
             </div>
             <div class="mb-3">
+              <div class="mb-1"><i class="fas fa-people-carry mr-1" />Friends' trade board</div>
+              <div class="text-gray-400 text-sm">Give away, sell to and ask your group (Board tab in the window, overlay menu).
+                Uses your GitHub sign-in from the Build step. Optional hotkey to post the hovered item:</div>
+              <hotkey-input :modelValue="pob.boardPostKey ?? null" class="w-48 mt-1" @update:modelValue="v => { pob.boardPostKey = v }" />
+            </div>
+            <div class="mb-3">
               <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Loot Goblin with Windows</ui-toggle>
               <div class="text-gray-400 text-sm mt-1">Starts in the tray when you sign in to Windows, so it's ready
                 before you launch the game.</div>
