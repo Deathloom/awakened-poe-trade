@@ -8,9 +8,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
-### Added
+## [1.0.54] - 2026-11-14
+
+### Added (#95)
 - **Manage builds in the Loot Goblin window** (Build tab → folder button): rename, move to a folder (new or existing, e.g. `3.30/Witch`), duplicate and delete your builds. The loadout you picked for a build moves with it, and so does the active build.
 - **Deleting a build now syncs.** A deleted build is deleted on GitHub too and kept in **Deleted builds** next to your builds folder, so you can get it back. When a friend deletes one of theirs, your copy moves to Deleted builds as well (only if you hadn't changed it). Renames and moves sync the same way. If a lot of builds go missing at once (a moved or emptied folder), nothing is deleted and you get a warning instead.
+
+### Fixed (#96)
+- **Campaign guide showed only one reward for quests that give two.** Mercy Mission now shows the flask (item reward) and Nessa's support gem pick, and Breaking Some Eggs shows both gem picks. Picks come before what to buy, so a gem you can take for free is no longer listed as "buy".
+
+### Added (#96)
+- **Optional quests in the campaign guide**, marked "optional": A Fixture of Fate (the Library: Golden Pages, then Siosa's gem pick and shop), A Dirty Job (Fetid Pool, 2 respec points), The King's Feast (Utula), Bestel's Epic (Riptide), In Memory of Greust and The Wings of Vastiri, each with its hand-in and reward. The ➕ button at the top of the guide hides or shows them.
 
 ## [1.0.53] - 2026-11-14
 

@@ -15,6 +15,8 @@ export type RoutePart = string | {
   // quest: quest id, reward offer id (quest-gems.json), passive / respec points
   id?: string
   offer?: string
+  // more reward offers on the same hand-in (Mercy Mission: flask + Nessa's support gem)
+  more?: string[]
   passive?: number
   respec?: number
   // quest hand-in rewards (game data): questItem (keys, books), items, gems, vendor (gems to buy after)
@@ -56,8 +58,15 @@ export function loadBandit (): BanditFlag {
 export function saveBandit (v: BanditFlag) {
   try { if (localStorage.getItem(BANDIT_KEY) !== v) localStorage.setItem(BANDIT_KEY, v) } catch {}
 }
-export function onlyActive (only: string | undefined, bandit: BanditFlag = loadBandit()): boolean {
+// Optional quests (A Fixture of Fate, A Dirty Job, Bestel's Epic …): shown unless switched off
+export const OPTIONAL_KEY = 'deathloom.guide.optional.v1'
+export function showOptional (): boolean {
+  try { return localStorage.getItem(OPTIONAL_KEY) !== '0' } catch { return true }
+}
+
+export function onlyActive (only: string | undefined, bandit: BanditFlag = loadBandit(), optional: boolean = showOptional()): boolean {
   if (!only) return true
+  if (only === 'OPTIONAL') return optional
   return only.startsWith('!') ? only.slice(1) !== bandit : only === bandit
 }
 

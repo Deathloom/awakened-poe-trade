@@ -12,6 +12,9 @@
         <button class="hover:text-gray-200" title="Next step" @click="move(1)"><i class="fas fa-chevron-right" /></button>
         <button class="hover:text-gray-200" :title="showAll ? 'Show fewer steps' : 'Show the whole act'" @click="showAll = !showAll">
           <i class="fas" :class="showAll ? 'fa-compress-alt' : 'fa-list'" /></button>
+        <button class="hover:text-gray-200" :class="{ 'text-indigo-300': optional }"
+          :title="optional ? 'Optional quests shown (A Fixture of Fate, A Dirty Job, Bestel\'s Epic …). Click to hide them.' : 'Optional quests hidden. Click to show them.'"
+          @click="toggleOptional"><i class="fas fa-plus-square" /></button>
         <button class="hover:text-gray-200" title="Start over (new character)" @click="reset"><i class="fas fa-undo" /></button>
       </div>
     </div>
@@ -39,7 +42,9 @@
             <span v-if="s.tasks.length && !showTasks(s.i)" class="text-xs text-gray-600"> · {{ s.tasks.length }} to do</span>
           </div>
           <template v-if="showTasks(s.i)">
-            <div v-for="(t, ti) of s.tasks.filter(t => onlyActive(t.only, bandit))" :key="ti" class="guide-task text-xs" :class="s.i === index ? 'text-gray-300' : 'text-gray-500'">
+            <div v-for="(t, ti) of s.tasks.filter(t => onlyActive(t.only, bandit, optional))" :key="ti" class="guide-task text-xs" :class="s.i === index ? 'text-gray-300' : 'text-gray-500'">
+              <span v-if="t.only === 'OPTIONAL' || s.only === 'OPTIONAL'" class="mr-1 px-1 rounded bg-indigo-900 text-indigo-200"
+                title="Optional quest: not needed to go on. Switch optional quests off with the button at the top.">optional</span>
               <template v-for="(p, pi) of t.parts" :key="pi">
                 <template v-if="typeof p === 'string'">{{ p }}</template>
                 <template v-else-if="p.k === 'quest'">
@@ -55,11 +60,11 @@
                     title="The reward is an item (pick one). Worth it if it fills a slot or gives resistances.">item reward</span>
                   <span v-else-if="questTag(p) === 'gems'" class="ml-1 px-1 rounded bg-gray-800 text-gray-500"
                     title="Gem reward. Open the Loot Goblin window to see which gem your build takes.">gems</span>
-                  <template v-if="gemFor(p.offer)">
-                    <span v-if="gemFor(p.offer)!.take" class="ml-1 px-1 rounded bg-gray-700 text-green-300"
-                      :title="`Quest reward for your build: pick ${gemFor(p.offer)!.take!.name}`"><i class="fas fa-gem mr-1" />take {{ gemFor(p.offer)!.take!.name }}</span>
-                    <span v-if="gemFor(p.offer)!.buy.length" class="ml-1 px-1 rounded bg-gray-700 text-gray-300"
-                      :title="`Then buy from ${gemFor(p.offer)!.buy[0].vendor}`"><i class="fas fa-coins mr-1" />buy {{ gemFor(p.offer)!.buy.map(g => g.name).join(', ') }}</span>
+                  <template v-for="g of gemsFor(p)" :key="g.id">
+                    <span v-if="g.take" class="ml-1 px-1 rounded bg-gray-700 text-green-300"
+                      :title="`Quest reward for your build: pick ${g.take.name}${g.npc ? ` (from ${g.npc})` : ''}`"><i class="fas fa-gem mr-1" />take {{ g.take.name }}</span>
+                    <span v-if="g.buy.length" class="ml-1 px-1 rounded bg-gray-700 text-gray-300"
+                      :title="`Then buy from ${g.buy[0].vendor}`"><i class="fas fa-coins mr-1" />buy {{ g.buy.map(b => b.name).join(', ') }}</span>
                   </template>
                 </template>
                 <span v-else-if="p.k === 'kill'" class="g-kill" :class="{ 'line-through opacity-60': doneBosses.has(String(p.v)) }"><i class="fas fa-skull" />{{ p.v }}<i
@@ -115,7 +120,7 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { type RoutePart, type BanditFlag, BANDIT_KEY, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
+import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
 import { planQuestGems, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
@@ -182,15 +187,28 @@ function questTag (p: Exclude<RoutePart, string>): 'skip' | 'items' | 'gems' | n
   if (r.includes('items')) return 'items'
   if (!r.length) return null
   if (!currentPlan.value) return 'gems'
-  const g = gemFor(p.offer)
-  return g && (g.take || g.buy.length) ? null : 'skip'
+  return gemsFor(p).some(g => g.take || g.buy.length) ? null : 'skip'
 }
+// optional quests on/off (remembered; shared with the other windows)
+const optional = ref(showOptional())
+function toggleOptional () {
+  optional.value = !optional.value
+  try { localStorage.setItem(OPTIONAL_KEY, optional.value ? '1' : '0') } catch {}
+}
+const onOptional = (e: StorageEvent) => { if (e.key === OPTIONAL_KEY) optional.value = showOptional() }
+window.addEventListener('storage', onOptional)
+onUnmounted(() => { window.removeEventListener('storage', onOptional) })
+
 function gemFor (offer: string | undefined) {
   return offer ? questGems.value.get(offer) : undefined
 }
+// every reward offer of a hand-in (some quests give two picks)
+function gemsFor (p: Exclude<RoutePart, string>) {
+  return [p.offer, ...(p.more ?? [])].map(o => gemFor(o)).filter((g): g is NonNullable<typeof g> => g != null)
+}
 
 const visible = computed(() => {
-  const all = STEPS.map((s, i) => ({ ...s, i })).filter(s => onlyActive(s.only, bandit.value))
+  const all = STEPS.map((s, i) => ({ ...s, i })).filter(s => onlyActive(s.only, bandit.value, optional.value))
   if (showAll.value || props.tall) return all.filter(s => s.act === step.value.act)
   return all.slice(Math.max(0, index.value - 1), index.value + 5)
 })
@@ -214,7 +232,7 @@ function openPoelab () {
 function move (d: number) {
   // skip the other bandit choices' steps
   let i = index.value + d
-  while (i > 0 && i < STEPS.length - 1 && !onlyActive(STEPS[i].only, bandit.value)) i += d
+  while (i > 0 && i < STEPS.length - 1 && !onlyActive(STEPS[i].only, bandit.value, optional.value)) i += d
   setIndex(i)
 }
 function reset () { setIndex(0); lastZone.value = ''; matched.value = true }
