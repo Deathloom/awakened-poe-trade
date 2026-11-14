@@ -22,9 +22,18 @@
           <i v-else-if="s.i === index" class="fas fa-map-marker-alt text-green-400" />
         </span>
         <div class="min-w-0">
-          <div :class="s.i === index ? 'text-gray-100' : 'text-gray-400'">{{ s.zone }}</div>
+          <div :class="s.i === index ? 'text-gray-100' : 'text-gray-400'">{{ s.zone }}
+            <span v-if="s.reward?.passive" class="ml-1 px-1 rounded text-xs bg-yellow-900 text-yellow-300"
+              :title="rewardTitle(s.reward)">+{{ s.reward.passive }} passive</span>
+            <span v-else-if="s.reward?.respec" class="ml-1 px-1 rounded text-xs bg-gray-700 text-gray-400"
+              :title="rewardTitle(s.reward) + ' Respec points only: skippable (Orbs of Regret do the same).'">respec · skippable</span>
+          </div>
           <div v-if="s.note && (s.i === index || showAll || s.i === index + 1)" class="text-xs text-gray-500">{{ s.note }}</div>
         </div>
+      </div>
+      <div class="px-1 pt-1 text-xs text-gray-600" :title="'Quest passive points on the route: ' + QUEST_PASSIVES + ' (one of them for killing all three bandits). In game, /passives lists the ones you have.'">
+        <span class="px-1 rounded bg-yellow-900 text-yellow-300">+1 passive</span> quest skill point:
+        {{ passivesSoFar }} so far, {{ QUEST_PASSIVES - passivesSoFar }} to go
       </div>
       <div v-if="!lastZone" class="px-1 pt-1 text-xs text-gray-600">
         Follows you on each zone change (from Client.txt). If it doesn't move after you change zones,
@@ -42,7 +51,7 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { STEPS, findStep, isOnRoute, actFromAreaCode } from './campaign-route'
+import { STEPS, findStep, isOnRoute, actFromAreaCode, QUEST_PASSIVES, type RouteStep } from './campaign-route'
 
 const KEY = 'deathloom.campaign-step.v1'
 function loadIndex () {
@@ -71,6 +80,14 @@ const step = computed(() => STEPS[index.value])
 // tall: resized in the HUD; shows the whole act and scrolls to the current step
 const props = defineProps<{ tall?: boolean }>()
 const listEl = ref<HTMLElement>()
+
+// quest passive points from the steps already passed (the guide doesn't know
+// which side quests you actually did; it's a reminder, /passives in game is exact)
+const passivesSoFar = computed(() => STEPS.slice(0, index.value).reduce((n, st) => n + (st.reward?.passive ?? 0), 0))
+function rewardTitle (r: NonNullable<RouteStep['reward']>) {
+  const parts = [r.passive ? `${r.passive} passive skill point${r.passive > 1 ? 's' : ''}` : '', r.respec ? `${r.respec} respec points` : ''].filter(Boolean)
+  return `${r.quest}: ${parts.join(' + ')}${r.turnIn ? ` (hand in to ${r.turnIn})` : ''}.`
+}
 
 const visible = computed(() => {
   const all = STEPS.map((s, i) => ({ ...s, i }))

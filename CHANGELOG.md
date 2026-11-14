@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.27] - 2026-11-14
+
+### Added (#66)
+- **Campaign guide shows quest passive points.** Zones where a quest gives passive skill points get a yellow **+1 passive** tag (hover: quest name, respec points, who to hand it in to); respec-only quests are marked **respec · skippable**. A line under the list counts quest points passed so far (24 on the route, one of them for killing all three bandits). Added act 10's Control Blocks (Vilenta). Fixed: act 6's Twilight Strand (Lilly) gives respec points only, not a passive point. Checked against poedb, poewiki and mobalytics quest lists.
+
 ## [1.0.26] - 2026-11-14
 
 ### Changed (#65)
