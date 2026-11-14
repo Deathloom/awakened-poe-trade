@@ -55,27 +55,46 @@ if (!IS_HUD && !IS_DESKTOP) {
 @tailwind components;
 @tailwind utilities;
 
+/* Deathloom fork: theme variables (Settings → Appearance; src/web/appearance.ts).
+   Defaults = Classic, so nothing changes until a theme is picked. */
+:root {
+  --g-100: 247 250 252; --g-200: 237 242 247; --g-300: 226 232 240;
+  --g-400: 203 213 224; --g-500: 160 174 192; --g-600: 113 128 150;
+  --g-700: 74 85 104; --g-800: 45 55 72; --g-900: 26 32 44;
+  --b-100: 235 248 255; --b-200: 190 227 248; --b-300: 144 205 244;
+  --b-400: 99 179 237; --b-500: 66 153 225; --b-600: 49 130 206;
+  --b-700: 43 108 176; --b-800: 44 82 130; --b-900: 42 67 101;
+  --accent: 66 153 225;
+  --round: 1;
+  --panel-alpha: 1;
+  --ui-font: FontinSmallCaps, FrizQuadrataC;
+  --field-bg: #030712;
+}
+#app.font-poe-sc {
+  font-family: var(--ui-font);
+}
+
 /* Deathloom fork: text fields stand out from the panel they sit on
    (they used the panel's own grey and were nearly invisible). Only our
    rounded fields; price check filter inputs keep upstream's look. */
 :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"] {
-  background-color: #030712 !important;
-  color: #f3f4f6;
-  box-shadow: inset 0 0 0 1px #6b7280;
+  background-color: var(--field-bg) !important;
+  color: rgb(var(--g-100));
+  box-shadow: inset 0 0 0 1px rgb(var(--g-600));
 }
 :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"]:hover {
-  box-shadow: inset 0 0 0 1px #9ca3af;
+  box-shadow: inset 0 0 0 1px rgb(var(--g-500));
 }
 :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"]:focus {
-  box-shadow: inset 0 0 0 1px #3b82f6, 0 0 0 1px #3b82f6;
+  box-shadow: inset 0 0 0 1px rgb(var(--accent)), 0 0 0 1px rgb(var(--accent));
 }
 :is(input, textarea)[class~="rounded"]::placeholder {
-  color: #9ca3af;
+  color: rgb(var(--g-500));
   opacity: 1;
 }
 
 .table-stripped tbody tr:nth-child(odd) {
-  background: #353f52;
+  background: rgb(var(--g-800) / var(--panel-alpha));
 }
 
 #app {

@@ -8,6 +8,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.75] - 2026-11-14
+
+### Added (#120)
+- **Themes and look settings** (Settings → **Appearance**), shown straight away while you change them:
+  - **Theme:** Classic (as before), Midnight (modern dark), Wraeclast (warm, PoE style), Abyss (deep purple), High contrast.
+  - **Accent colour:** the theme's own, or any colour you pick (highlighted buttons, focused fields, links).
+  - **Font** (Fontin Small Caps, Fontin, or System/Segoe UI), **font size** and **corners** (square, normal, round).
+  - **Overlay panel opacity:** lower lets the game show through the overlay's panels.
+  - **Loot Goblin window background:** the theme's, a colour, or your own picture (with a darken slider), plus **window panel opacity** so the background shows through.
+- Applies to the overlay, the in-game panels and the Loot Goblin window. A few drawn things (atlas tree, charts) keep their own colours. Path of Building's own window isn't themed.
+
 ### Changed (#119)
 - **Weekly data refresh** (GitHub Actions, Wednesdays): regenerates the atlas tree (GGG's official export, newest version), levelling route and quest gems (Exile Leveling, MIT) and opens a PR when anything changed. No more hand updates at league start.
 
