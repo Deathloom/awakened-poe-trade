@@ -1,6 +1,15 @@
 <template>
   <!-- Deathloom fork: gems the build wants per socket group, compared with the character -->
   <div class="overflow-y-auto min-h-0 p-1 text-sm">
+    <!-- Deathloom fork: for my level (levelling plan) or the whole loadout -->
+    <div class="flex gap-px px-1 pb-1 text-xs">
+      <button class="px-2 rounded" :class="mode === 'level' ? 'bg-gray-700 text-gray-100' : 'text-gray-500 hover:text-gray-200'"
+        title="What to socket and take out at your level (from the build's levelling skill sets)" @click="setMode('level')">For my level</button>
+      <button class="px-2 rounded" :class="mode === 'build' ? 'bg-gray-700 text-gray-100' : 'text-gray-500 hover:text-gray-200'"
+        title="Every gem of the loadout picked in the Build tab, with sockets" @click="setMode('build')">Whole build</button>
+    </div>
+    <pob-gems-for-level v-if="mode === 'level'" ref="levelRef" />
+    <template v-else>
     <div v-if="error" class="p-1 text-gray-400">{{ error }}</div>
     <div v-else-if="!groups && loading" class="p-1 text-gray-500">Loading from Path of Building…</div>
     <template v-else-if="comparison">
@@ -109,6 +118,7 @@
         Sockets: build = the item in PoB, yours = your character's. Level/quality as set in PoB.
       </div>
     </template>
+    </template>
   </div>
 </template>
 
@@ -117,6 +127,7 @@ import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import type { PobGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
 import { pobText } from './labels'
 import { Host } from '@/web/background/IPC'
+import PobGemsForLevel from './PobGemsForLevel.vue'
 import { NO_SLOT, compareGems, bySlot, parseSockets, needsText, checkText, coloursText, bonusText, type GemRow, type GemStatus, type GroupRow } from './gems'
 
 const loading = ref(false)
@@ -148,7 +159,19 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
 const characterListener = Host.onEvent('MAIN->CLIENT::pob-character', () => { request() })
 onUnmounted(() => { listener.abort(); characterListener.abort() })
 
+const MODE_KEY = 'deathloom.gems-mode.v1'
+const mode = ref<'level' | 'build'>((() => { try { return localStorage.getItem(MODE_KEY) === 'build' ? 'build' : 'level' } catch { return 'level' } })())
+const levelRef = ref<InstanceType<typeof PobGemsForLevel> | null>(null)
+function setMode (m: 'level' | 'build') {
+  mode.value = m
+  try { localStorage.setItem(MODE_KEY, m) } catch {}
+  if (m === 'build') request()
+}
 function request (refreshGear = false) {
+  if (mode.value === 'level') {
+    levelRef.value?.request()
+    return
+  }
   loading.value = true
   lastRequestId += 1
   Host.sendEvent({
@@ -157,7 +180,7 @@ function request (refreshGear = false) {
   })
 }
 defineExpose({ request })
-request()
+if (mode.value === 'build') request()
 
 const comparison = computed(() => groups.value ? compareGems(groups.value, live.value) : null)
 const view = computed(() => {

@@ -8,6 +8,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.77] - 2026-11-15
+
+### Added (#122)
+- **Gems for your level** (Build panel → Gems → **For my level**, the new default; **Whole build** shows the full loadout as before). From your level (game log, or type it in) and the build's levelling skill sets in PoB ("Level 12", "Level 30", …):
+  - **Take out:** gems the previous levelling step used that this step doesn't.
+  - **Socket now:** gems you can use at your level, by gear piece and link group (new ones in this step underlined).
+  - **Coming up:** the next gems by level and what to add / take out at the next step's level.
+- Works in the overlay, the in-game Build panel and the Loot Goblin window. Builds with a single skill set show the endgame gems you can already use.
+
 ## [1.0.76] - 2026-11-14
 
 ### Fixed (#121)
