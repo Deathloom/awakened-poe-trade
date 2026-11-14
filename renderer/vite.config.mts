@@ -29,6 +29,8 @@ export default defineConfig({
     }
   },
   server: {
+    // Deathloom fork: the What's new popup reads ../CHANGELOG.md
+    fs: { allow: ['..'] },
     proxy: {
       '^/(config|uploads|proxy)': { target: 'http://127.0.0.1:8584' },
       '/events': { ws: true, target: 'http://127.0.0.1:8584' }
