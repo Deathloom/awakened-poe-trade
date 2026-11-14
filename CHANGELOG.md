@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.79] - 2026-11-15
+
+### Fixed (#124)
+- **Taken passives no longer break when you take or refund an unrelated passive with the same name** (e.g. refunding an off-build +Intelligence node made an Intelligence node in the build's path show as not taken, and "next" pointed back at it). The game log only names passives, so: on the passive tree, a small passive before one you've taken in the plan counts as taken; on the atlas, everything on the build's path from the start to a taken passive counts as taken.
+
 ## [1.0.78] - 2026-11-15
 
 ### Added (#123)

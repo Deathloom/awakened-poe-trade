@@ -317,6 +317,14 @@ const takenByLog = computed(() => {
   p.order.forEach((node, i) => {
     if ((left[node.name] ?? 0) > 0) { taken.add(i); left[node.name]-- }
   })
+  // The log only names passives. Taking or refunding a same-named small passive
+  // off the plan (e.g. "Intelligence") moves the count and leaves a hole in the
+  // path; a small passive before a taken one is on the way to it, so count it.
+  let last = -1
+  for (const i of taken) last = Math.max(last, i)
+  for (let i = 0; i < last; i++) {
+    if (!taken.has(i) && p.order[i].type === 'Normal') taken.add(i)
+  }
   return taken
 })
 watch(takenByLog, (t) => { currentTaken.value = t }, { immediate: true })
