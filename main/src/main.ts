@@ -156,6 +156,14 @@ app.on('ready', async () => {
       tray.openDesktop = () => { desktop.open() }
       openDesktopWindow = () => { desktop.open() }
       if (desktopRequested) desktop.open()
+      // Trade site tab: open GGG trade pages from the overlay in the window
+      eventPipe.onEventAnyClient('CLIENT->MAIN::user-action', (e) => {
+        if (e.action !== 'open-trade-tab') return
+        const ok = desktop.openTrade(e.url, (url) => {
+          eventPipe.sendEventTo('broadcast', { name: 'MAIN->CLIENT::open-trade-tab', payload: { url } })
+        })
+        if (!ok) logger.write('warn [desktop] open-trade-tab ignored: not a trade site page')
+      })
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
       shortcuts.hud = hud
       shortcuts.openPob = () => { tray.openPob() }

@@ -128,6 +128,15 @@
     </div>
 
     <div class="mt-6 mb-2">
+      <ui-toggle :modelValue="pob.tradeLinksInWindow !== false" @update:modelValue="v => pob.tradeLinksInWindow = v">
+        Open Trade buttons in the Loot Goblin window (Trade site tab)</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        The official trade site in its own tab, signed in separately from your browser (sign in on GGG's own page;
+        Loot Goblin never sees your login). Off: Trade buttons open your browser as before.
+      </div>
+    </div>
+
+    <div class="mt-6 mb-2">
       <div class="mb-1">Show while playing</div>
       <div class="text-gray-500 text-sm mb-2">
         Pinned panels stay on screen while the game has focus, in a small window of their own that never

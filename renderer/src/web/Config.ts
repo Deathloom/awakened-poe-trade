@@ -475,7 +475,7 @@ function upgradeConfig (_config: Config): Config {
   if (config.pob.stash) config.pob.stash.enabled = false
   // live character data off (character-window endpoints are outside GGG's official API)
   config.pob.liveGear = false
-  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'setup-guide']) {
+  for (const type of ['pob-gear', 'trade-companion', 'campaign-guide', 'market-history', 'setup-guide', 'market-search']) {
     if (!config.widgets.some(w => w.wmType === type)) {
       config.widgets.push({
         ...defaultConfig().widgets.find(w => w.wmType === type)!,

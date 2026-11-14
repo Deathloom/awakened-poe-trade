@@ -3,6 +3,7 @@
 // list and the price check window.
 
 import { Host } from '@/web/background/IPC'
+import { openTradeLink } from '@/web/desktop/trade-tab'
 import { AppConfig } from '@/web/Config'
 import { useLeagues } from '@/web/background/Leagues'
 import { parseClipboard } from '@/parser'
@@ -33,7 +34,7 @@ export function openTradeSearch (text: string): string | null {
   })
   const preset = presets.presets.find(p => p.id === presets.active)!
   const query = createTradeRequest(preset.filters, preset.stats)
-  window.open(`https://${getTradeEndpoint()}/trade/search/${league}?q=${JSON.stringify(query)}`)
+  openTradeLink(`https://${getTradeEndpoint()}/trade/search/${league}?q=${JSON.stringify(query)}`)
   return null
 }
 

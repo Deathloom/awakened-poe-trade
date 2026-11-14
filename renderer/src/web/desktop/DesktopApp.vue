@@ -37,7 +37,7 @@
         <div class="min-h-0" :style="{ flex: `${rows.sizes.value[3]} 1 0` }"><PlaySessionBody /></div>
       </div>
     </div>
-    <div v-else class="flex-1 min-h-0 p-2">
+    <div v-else-if="view !== 'trade'" class="flex-1 min-h-0 p-2">
       <div class="h-full min-h-0">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
         <LevellingBody v-else-if="view === 'levelling'" />
@@ -50,6 +50,10 @@
         </div>
         <DesktopSettings v-else-if="view === 'settings'" />
       </div>
+    </div>
+    <!-- Trade site: kept alive once opened (stays signed in and keeps its page) -->
+    <div v-if="tradeOpened" v-show="view === 'trade'" class="flex-1 min-h-0 p-2">
+      <TradeSiteBody />
     </div>
     <!-- first-run setup (opens by itself on a new install) -->
     <WidgetSetupGuide desktop />
@@ -72,6 +76,8 @@ import { useSplit } from './split'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
+import TradeSiteBody from './TradeSiteBody.vue'
+import { tradeTabRequest } from './trade-tab'
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 import { desktopSetupShown } from '../setup/setup-state'
@@ -89,6 +95,7 @@ const VIEWS = [
   { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
+  { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Loot Goblin never sees your login)" },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Loot Goblin settings (same as Shift+Space → Settings)' }
 ] as const
 type View = typeof VIEWS[number]['key']
@@ -110,6 +117,12 @@ watch(view, (v) => {
   const label = VIEWS.find(x => x.key === v)?.label
   document.title = v === 'overview' ? 'Loot Goblin' : `Loot Goblin · ${label}`
 }, { immediate: true })
+
+// Trade site tab: mounted the first time it's shown, then kept
+const tradeOpened = ref(view.value === 'trade' || tradeTabRequest.value > 0)
+if (tradeTabRequest.value > 0) view.value = 'trade'
+watch(view, (v) => { if (v === 'trade') tradeOpened.value = true })
+watch(tradeTabRequest, () => { setView('trade') })
 
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)

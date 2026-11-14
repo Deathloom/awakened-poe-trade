@@ -11,6 +11,7 @@ import path from 'path'
 import fs from 'fs'
 import { app, BrowserWindow, screen, type Rectangle } from 'electron'
 import { lockToAppPages } from '../safe-open'
+import { guardTradeWebview, isTradePage, prepareTradeWebview } from './trade-tab'
 import type { Logger } from '../RemoteLogger'
 
 const DEFAULT_SIZE = { width: 1280, height: 860 }
@@ -83,6 +84,8 @@ export class DesktopWindow {
         autoHideMenuBar: true,
         webPreferences: {
           allowRunningInsecureContent: false,
+          // the Trade site tab (official trade site, its own session)
+          webviewTag: true,
           spellcheck: false
         }
       })
@@ -93,6 +96,11 @@ export class DesktopWindow {
     this.win = win
     win.setMenu(null)
     lockToAppPages(win.webContents)
+    // Trade site tab: only GGG's trade site, in its own session, no Node, no preload
+    win.webContents.on('will-attach-webview', (e, webPreferences, params) => {
+      if (!prepareTradeWebview(webPreferences, params)) e.preventDefault()
+    })
+    win.webContents.on('did-attach-webview', (_e, contents) => { guardTradeWebview(contents) })
     // the page sets its own title per panel; keep "Loot Goblin" in it
     win.on('page-title-updated', (e, title) => {
       if (!title.startsWith('Loot Goblin')) e.preventDefault()
@@ -106,7 +114,26 @@ export class DesktopWindow {
     win.on('closed', () => { if (this.win === win) this.win = undefined })
 
     const base = process.env.VITE_DEV_SERVER_URL || `http://localhost:${this.port}/index.html`
-    void win.loadURL(`${base}${base.includes('?') ? '&' : '?'}desktop=1`)
+    const trade = this.pendingTrade
+    this.pendingTrade = undefined
+    void win.loadURL(`${base}${base.includes('?') ? '&' : '?'}desktop=1` +
+      (trade ? `&trade=${encodeURIComponent(trade)}` : ''))
+  }
+
+  // Opens a trade site page in the window's Trade site tab (from the overlay's
+  // market search or a price check). Returns false for anything that isn't a
+  // page on GGG's trade site.
+  private pendingTrade?: string
+  openTrade (url: string, broadcast: (url: string) => void): boolean {
+    if (!isTradePage(url)) return false
+    if (this.win && !this.win.isDestroyed()) {
+      this.open({ focus: false })
+      broadcast(url)
+    } else {
+      this.pendingTrade = url
+      this.open({ focus: false })
+    }
+    return true
   }
 
   private loadBounds (): SavedBounds | null {

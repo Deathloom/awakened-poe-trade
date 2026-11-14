@@ -8,6 +8,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added
+- **Trade site tab in the Loot Goblin window.** GGG's official trade site in its own tab, signed in separately from your browser. You sign in on GGG's own page; Loot Goblin never sees your login. Use GGG's own Whisper and Travel to Hideout buttons there. Back / forward / home / bulk exchange buttons on top; it keeps its page while you switch tabs.
+- **Trade buttons open in that tab** (price check, build gear panel, market search). Prefer your browser? Settings → Path of Building → turn off "Open Trade buttons in the Loot Goblin window".
+- **Market search** (overlay widget menu, magnifier-and-coin icon): type an item name (unique, base type, gem, card…), pick it, and see who's selling, cheapest first. Filters: online sellers or instant buyout, and a max price. Each listing has:
+  - **Whisper:** GGG's own buy message for that listing.
+  - **Hideout:** `/hideout name`. Works when the seller lets visitors in; most sellers invite you to their party first.
+  - **Instant buyout listings:** opens the search in the Trade site tab, where you click GGG's "Travel to Hideout" yourself (needs your trade site sign-in).
+  - Whisper and Hideout follow your Chat buttons setting (copy, or send one chat message per click). Nothing is ever sent by itself.
+
 ## [1.0.52] - 2026-11-14
 
 ### Fixed (#93)
