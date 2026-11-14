@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.73] - 2026-11-14
+
+### Added (#115)
+- **Atlas stats panel** (right of the atlas; list button in the atlas toolbar): every stat of the build's passives added up (e.g. 44 small passives → "88% increased Maps found in your Maps"), sorted by what they're about, with a filter. **Build** = the whole atlas build, **Taken** = the part you've taken in game. Click a line to highlight its passives on the atlas. Open by default in the Loot Goblin window, closed in the overlay.
+- **Levelling guide, act 2 optional quests** the route skipped: **Einhar's Hunt** (Riverways: capture the beasts, unlocks the Menagerie) and **Safe and Sound** (Dread Thicket off the Northern Forest: claim your hideout, use the Crafting Bench). Hidden when Optional is off; no passive points.
+
 ## [1.0.72] - 2026-11-14
 
 ### Fixed (#114)

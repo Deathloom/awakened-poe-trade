@@ -94,6 +94,7 @@ function clarifyVendorLines (steps: RouteStep[]): RouteStep[] {
     }
   }
   addActOneNotes(steps)
+  addActTwoOptional(steps)
   return steps
 }
 
@@ -118,6 +119,24 @@ function addActOneNotes (steps: RouteStep[]) {
   }
   first('1_1_8')?.tasks.push({
     parts: ['The road north is sealed: ', q('The Way Forward'), ' continues in act 2']
+  })
+}
+
+// Deathloom fork (Gerhard, 14 Nov 2026): two act 2 quests in the game's quest log
+// that the route skips. Optional (no passive point), so the Optional switch hides
+// them. Checked against poewiki / poedb.
+function addActTwoOptional (steps: RouteStep[]) {
+  const first = (area: string) => steps.find(s => s.areaId === area)
+  const q = (v: string): RoutePart => ({ k: 'quest_text', v })
+  first('1_2_7')?.tasks.push({
+    only: 'OPTIONAL',
+    parts: ['Optional: ', q("Einhar's Hunt"), ': talk to Einhar here and capture the beasts along the road'],
+    subs: [['Unlocks the Menagerie (Bestiary). No passive point']]
+  })
+  first('1_2_8')?.tasks.push({
+    only: 'OPTIONAL',
+    parts: ['Optional: ', q('Safe and Sound'), ': side area ', { k: 'area', v: 'The Dread Thicket' }, ' (off this zone, no waypoint)'],
+    subs: [['Clear it, talk to Helena to claim your hideout, then use the Crafting Bench there once. No passive point']]
   })
 }
 

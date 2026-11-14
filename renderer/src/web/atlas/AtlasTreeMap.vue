@@ -44,6 +44,8 @@
       <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: what Loot Goblin saw you allocate in game. Set it here when you already have a tree."
         @click="trackOpen = !trackOpen"><i class="fas fa-check-double" /></button>
       <button class="text-gray-500 hover:text-gray-200" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
+      <button class="hover:text-gray-200" :class="statsOpen ? 'text-yellow-300' : 'text-gray-500'" title="Stats: everything the passives in this build add up to"
+        @click="toggleStats"><i class="fas fa-list-ul" /></button>
     </div>
 
     <div v-if="importOpen" class="flex flex-wrap items-center gap-1 px-2 pb-1 text-xs shrink-0">
@@ -82,7 +84,8 @@
       No atlas build yet: press <i class="fas fa-file-import" /> and paste an atlas tree link. Atlas guides (Help tab) link their trees; or start empty with a link to your own tree from pathofexile.com.
     </div>
 
-    <div ref="boxRef" class="relative flex-1 min-h-0 rounded overflow-hidden" :style="{ background: '#1a2232', minHeight: compact ? '12rem' : '20rem' }"
+    <div class="flex flex-1 min-h-0 gap-1">
+    <div ref="boxRef" class="relative flex-1 min-w-0 min-h-0 rounded overflow-hidden" :style="{ background: '#1a2232', minHeight: compact ? '12rem' : '20rem' }"
       @wheel.prevent="onWheel" @mousedown="onDown" @mousemove="onMove" @mouseleave="hover = null" @dblclick="fit">
       <canvas ref="canvasRef" class="absolute inset-0" :style="{ cursor: dragging ? 'grabbing' : editMode ? 'pointer' : 'grab' }" />
       <div v-if="hover" class="absolute pointer-events-none z-10 max-w-xs px-2 py-1 rounded bg-gray-800 border border-gray-600 text-xs shadow" :style="tipStyle">
@@ -99,6 +102,24 @@
         <button class="block w-full text-left px-1 py-0.5 rounded hover:bg-gray-600 text-red-400" @click="refund(choiceFor.id); choiceFor = null">Refund</button>
       </div>
     </div>
+    <!-- cumulative stats of the build's passives (or of what you took in game) -->
+    <div v-if="statsOpen" class="flex flex-col shrink-0 min-h-0 rounded bg-gray-900 text-xs" :class="compact ? 'w-52' : 'w-72'">
+      <div class="flex items-center gap-2 px-2 py-1 border-b border-gray-700">
+        <button :class="statsOf2 === 'build' ? 'text-gray-100 font-bold' : 'text-gray-500 hover:text-gray-200'" title="Every passive in this atlas build" @click="statsOf2 = 'build'">Build</button>
+        <button :class="statsOf2 === 'taken' ? 'text-gray-100 font-bold' : 'text-gray-500 hover:text-gray-200'" title="Only the passives of this build you have taken in game" @click="statsOf2 = 'taken'">Taken</button>
+        <span class="flex-1" />
+        <span class="text-gray-500">{{ statPoints }} pts</span>
+      </div>
+      <input v-model="statFilter" class="mx-2 my-1 px-1 rounded bg-gray-800 text-gray-200" placeholder="Filter stats" spellcheck="false">
+      <div class="flex-1 min-h-0 overflow-y-auto px-2 pb-1">
+        <div v-if="!statLines.length" class="text-gray-500 py-1">{{ statsOf2 === 'taken' ? 'Nothing taken yet (see the ticks button).' : activeBuild ? 'No passives in this build yet.' : 'Pick an atlas build.' }}</div>
+        <div v-for="l of statLines" :key="l.text" class="py-px text-blue-300 cursor-pointer hover:text-blue-100"
+          :title="l.count > 1 ? `From ${l.count} passives. Click to show them on the atlas` : 'Click to show it on the atlas'" @click="showStat(l.text)">
+          {{ l.text }}<span v-if="l.count > 1 && !l.numeric" class="text-gray-500"> ×{{ l.count }}</span>
+        </div>
+      </div>
+    </div>
+    </div>
   </div>
 </template>
 
@@ -106,9 +127,10 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, pointsOf, statsOf, type AtlasNode } from './atlas-tree'
 import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, setTakenFrom, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
+import { sumStats, cleanStat } from './atlas-stats'
 import { CONTENTS, CONTENT_NOTABLES, generateAtlas, type GenResult } from './atlas-generator'
 
-defineProps<{ compact?: boolean }>()
+const props = defineProps<{ compact?: boolean }>()
 
 // ---- builds ----
 const importOpen = ref(false)
@@ -136,6 +158,32 @@ const groups = computed(() => {
   for (const [owner, builds] of by) out.push({ label: owner, builds })
   return out
 })
+// ---- stats panel: open by default in the window, closed in the overlay ----
+const STATS_KEY = 'deathloom.atlas-stats-open.v1'
+function loadStatsOpen (compact: boolean) {
+  try { const v = localStorage.getItem(STATS_KEY + (compact ? '.compact' : '')); return v == null ? !compact : v === '1' } catch { return !compact }
+}
+const statsOpen = ref(loadStatsOpen(!!props.compact))
+function toggleStats () {
+  statsOpen.value = !statsOpen.value
+  try { localStorage.setItem(STATS_KEY + (props.compact ? '.compact' : ''), statsOpen.value ? '1' : '0') } catch {}
+}
+const statsOf2 = ref<'build' | 'taken'>('build')
+const statFilter = ref('')
+const statIds = computed<number[]>(() => statsOf2.value === 'taken'
+  ? [...haveSet.value].filter(id => !ATLAS_START.has(id))
+  : (spec.value?.nodes ?? []))
+const statPoints = computed(() => pointsOf(statIds.value))
+const statLines = computed(() => {
+  const all = sumStats(statIds.value, spec.value?.choices ?? {})
+  const q = statFilter.value.trim().toLowerCase()
+  return q ? all.filter(l => l.text.toLowerCase().includes(q)) : all
+})
+// highlight the passives behind a line: search for its words without the numbers
+function showStat (text: string) {
+  // longest stretch without numbers, so it matches every passive with that wording
+  search.value = text.split(/[+-]?\d+(?:\.\d+)?%?/).map(t => t.trim()).sort((a, b) => b.length - a.length)[0] ?? ''
+}
 // ---- ready-made trees ----
 const genOpen = ref(false)
 const genPick = ref<string[]>([])
@@ -207,7 +255,7 @@ const searchHits = computed(() => {
   const hits = new Set<number>()
   for (const n of ATLAS.nodes) {
     if (n[3] === 3) continue
-    if (n[6].toLowerCase().includes(q) || statsOf(n, {}).some(l => l.toLowerCase().includes(q))) hits.add(n[0])
+    if (n[6].toLowerCase().includes(q) || statsOf(n, {}).some(l => cleanStat(l).toLowerCase().includes(q))) hits.add(n[0])
   }
   return hits
 })
