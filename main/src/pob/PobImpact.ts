@@ -486,24 +486,63 @@ export class PobImpact {
   }
 
   private async resolveActiveBuild (): Promise<string> {
-    const cfg = this.cfg!
-    const playerDir = path.join(cfg.buildsDir, cfg.player)
+    const playerDir = this.playerDir()
     const activeFile = path.join(playerDir, 'active.txt')
-    let text: string
+    let line: string | undefined
     try {
-      text = await fs.readFile(activeFile, 'utf8')
-    } catch {
-      throw new Error(`No active build: can't read ${activeFile}`)
+      line = (await fs.readFile(activeFile, 'utf8')).split(/\r?\n/)
+        .map(l => l.trim())
+        .find(l => l && !l.startsWith('#'))
+    } catch {}
+    if (line) {
+      let name = line.replace(/^(active|build)\s*[:=]\s*/i, '')
+      if (!name.toLowerCase().endsWith('.xml')) name += '.xml'
+      const full = path.isAbsolute(name) ? name : path.join(playerDir, name)
+      try {
+        await fs.access(full)
+        return full
+      } catch {}
     }
-    const line = text.split(/\r?\n/)
-      .map(l => l.trim())
-      .find(l => l && !l.startsWith('#'))
-    if (!line) {
-      throw new Error(`No active build: ${activeFile} is empty`)
+    // New player, or the active build was renamed/deleted: use the newest build
+    // in the folder and remember it (active.txt)
+    const builds = await this.findBuilds(playerDir)
+    if (!builds.length) {
+      throw new Error('No build yet. Open Path of Building from Loot Goblin, create or import a build and save it (it saves into your folder). ' +
+        'Builds in another PoB? Settings → Path of Building → Copy builds.')
     }
-    let name = line.replace(/^(active|build)\s*[:=]\s*/i, '')
-    if (!name.toLowerCase().endsWith('.xml')) name += '.xml'
-    return path.isAbsolute(name) ? name : path.join(playerDir, name)
+    let newest = builds[0]
+    let newestAt = -1
+    for (const rel of builds) {
+      const at = await fs.stat(path.join(playerDir, rel)).then(st => st.mtimeMs, () => -1)
+      if (at > newestAt) { newest = rel; newestAt = at }
+    }
+    await this.writeActive(playerDir, newest).catch(() => {})
+    return path.join(playerDir, newest)
+  }
+
+  // .xml builds under a folder (relative paths, PoB's sort order)
+  private async findBuilds (root: string): Promise<string[]> {
+    const builds: string[] = []
+    const walk = async (dir: string, depth: number) => {
+      let entries
+      try {
+        entries = await fs.readdir(dir, { withFileTypes: true })
+      } catch {
+        return
+      }
+      for (const entry of entries) {
+        if (entry.name.startsWith('.')) continue
+        const full = path.join(dir, entry.name)
+        if (entry.isDirectory() && depth < 6) {
+          await walk(full, depth + 1)
+        } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.xml')) {
+          builds.push(path.relative(root, full))
+        }
+      }
+    }
+    await walk(root, 0)
+    builds.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+    return builds
   }
 
   // Make sure PoB holds the character's current gear. Returns an error message
@@ -714,26 +753,7 @@ export class PobImpact {
   // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them
   async listBuilds (): Promise<PobBuildList> {
     const root = this.playerDir()
-    const builds: string[] = []
-    const walk = async (dir: string, depth: number) => {
-      let entries
-      try {
-        entries = await fs.readdir(dir, { withFileTypes: true })
-      } catch {
-        return
-      }
-      for (const entry of entries) {
-        if (entry.name.startsWith('.')) continue
-        const full = path.join(dir, entry.name)
-        if (entry.isDirectory() && depth < 6) {
-          await walk(full, depth + 1)
-        } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.xml')) {
-          builds.push(path.relative(root, full))
-        }
-      }
-    }
-    await walk(root, 0)
-    builds.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+    const builds = await this.findBuilds(root)
     let active: string | null = null
     try {
       active = path.relative(root, await this.resolveActiveBuild())
@@ -742,10 +762,7 @@ export class PobImpact {
   }
 
   // Write active.txt: keeps comment lines, replaces the build line
-  async setActiveBuild (rel: string, remember = true) {
-    const root = this.playerDir()
-    const list = await this.listBuilds()
-    if (!list.builds.includes(rel)) throw new Error(`Build not found in your folder: ${rel}`)
+  private async writeActive (root: string, rel: string) {
     const activeFile = path.join(root, 'active.txt')
     let lines: string[] = []
     try {
@@ -760,6 +777,13 @@ export class PobImpact {
     // Same line endings as PoB's files on Windows; Push/Pull compares bytes
     await fs.writeFile(activeFile, lines.join('\r\n').replace(/(\r\n)*$/, '') + '\r\n', 'utf8')
     this.logger.write(`info [PoB] active build set to ${rel}`)
+  }
+
+  async setActiveBuild (rel: string, remember = true) {
+    const root = this.playerDir()
+    const list = await this.listBuilds()
+    if (!list.builds.includes(rel)) throw new Error(`Build not found in your folder: ${rel}`)
+    await this.writeActive(root, rel)
     this.onPlayerFilesChanged()
     if (remember && this.listsCharacters() && this.activeCharacter) {
       // picked by hand while playing this character: use it again next time

@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.43] - 2026-11-14
+
+### Fixed (#82)
+- **New players no longer see "No active build: can't read …active.txt".** With no build picked yet, Loot Goblin uses the newest build in your folder (and remembers it). With no builds at all it says how to add one: save a build in Path of Building, or Settings → Path of Building → Copy builds. A renamed or deleted active build is handled the same way.
+
 ## [1.0.42] - 2026-11-14
 
 ### Added (#81)
