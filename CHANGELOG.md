@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.40] - 2026-11-14
+
+### Fixed (#79)
+- The setup guide had two top-level elements, which made Vue warn ("Runtime directive used on component with non-element root node") every time the overlay redrew. No visible change.
+
 ## [1.0.39] - 2026-11-14
 
 ### Added (#78)
