@@ -4,7 +4,7 @@ import { ref, computed } from 'vue'
 import type { AtlasFileBuild } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, loadCharLevels, saveCharLevels } from '../companion/char-level'
-import { ATLAS_BY_ID, ATLAS_START, decodeAtlas, encodeAtlas, type AtlasSpec } from './atlas-tree'
+import { ATLAS_BY_ID, ATLAS_ADJ, ATLAS_START, decodeAtlas, encodeAtlas, type AtlasSpec } from './atlas-tree'
 
 // own: yours (editable); owner: the friend whose synced folder it's in (read-only)
 export interface AtlasBuild { id: string, name: string, code: string, at: number, own: boolean, owner?: string }
@@ -228,6 +228,22 @@ export function takenNodes (buildNodes: number[], order: Map<number, number>): S
     if (ATLAS_START.has(id)) { out.add(id); continue }
     const name = ATLAS_BY_ID.get(id)?.[6]
     if (name && (left[name] ?? 0) > 0) { out.add(id); left[name]-- }
+  }
+  // Deathloom fork: names only, so taking/refunding a same-named small passive off
+  // the build leaves holes. Everything on the build's path from the start to a
+  // taken passive must be taken too (you can't reach it otherwise)
+  const build = new Set(buildNodes)
+  const parent = new Map<number, number>()
+  const q = [...ATLAS_START].filter(id => build.has(id))
+  const seen = new Set(q)
+  for (let i = 0; i < q.length; i++) {
+    for (const nb of ATLAS_ADJ.get(q[i]) ?? []) {
+      if (!build.has(nb) || seen.has(nb)) continue
+      seen.add(nb); parent.set(nb, q[i]); q.push(nb)
+    }
+  }
+  for (const id of [...out]) {
+    for (let c = parent.get(id); c != null && !out.has(c); c = parent.get(c)) out.add(c)
   }
   return out
 }
