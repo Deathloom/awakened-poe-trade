@@ -35,6 +35,8 @@
       <template v-if="spec">
         <span><i class="fas fa-circle text-green-500" /> taken ({{ counts.have }})</span>
         <span><i class="fas fa-circle text-orange-400" /> to take ({{ counts.todo }})</span>
+        <button v-if="nextIds.length" class="text-cyan-300 hover:text-cyan-100" :title="nextTitle" @click="focusNext">
+          <i class="fas fa-crosshairs" /> next {{ nextIds.length }}</button>
       </template>
       <span class="flex-1" />
       <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200" :class="compact ? 'w-28' : 'w-36'" placeholder="Search atlas" spellcheck="false">
@@ -128,7 +130,7 @@ import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, pointsOf, statsOf, type AtlasNode } from './atlas-tree'
 import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, setTakenFrom, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
 import { sumStats, cleanStat } from './atlas-stats'
-import { CONTENTS, CONTENT_NOTABLES, generateAtlas, type GenResult } from './atlas-generator'
+import { CONTENTS, CONTENT_NOTABLES, SUSTAIN, generateAtlas, type GenResult } from './atlas-generator'
 
 const props = defineProps<{ compact?: boolean }>()
 
@@ -247,6 +249,48 @@ const counts = computed(() => {
   }
   return c
 })
+// Deathloom fork: next passives to take in game (up to 5): the path to the
+// nearest notable of the build (map sustain wins a tie), then the next one
+const nextIds = computed<number[]>(() => {
+  if (!spec.value) return []
+  const have = new Set(haveSet.value)
+  const todo = new Set([...buildSet.value].filter(id => !have.has(id) && ATLAS_BY_ID.get(id)?.[3] !== 3))
+  const out: number[] = []
+  while (out.length < 5 && todo.size) {
+    // BFS from what's taken, through the build's untaken passives
+    const prev = new Map<number, number>()
+    const dist = new Map<number, number>()
+    const q = [...have]
+    for (const id of q) dist.set(id, 0)
+    let best: number | null = null; let bestScore = Infinity; let nearestAny: number | null = null
+    for (let i = 0; i < q.length; i++) {
+      const cur = q[i]
+      for (const nb of ATLAS_ADJ.get(cur) ?? []) {
+        if (dist.has(nb) || !todo.has(nb)) continue
+        dist.set(nb, dist.get(cur)! + 1); prev.set(nb, cur); q.push(nb)
+        nearestAny ??= nb
+        const n = ATLAS_BY_ID.get(nb)!
+        if (n[3] === 1 || n[3] === 2) {
+          const score = dist.get(nb)! - (SUSTAIN.test(n[8].join(' ')) ? 0.5 : 0)
+          if (score < bestScore) { bestScore = score; best = nb }
+        }
+      }
+    }
+    const target = best ?? nearestAny
+    if (target == null) break
+    const path: number[] = []
+    for (let c: number | undefined = target; c != null && !have.has(c); c = prev.get(c)) path.unshift(c)
+    for (const id of path) {
+      if (out.length >= 5) break
+      out.push(id); have.add(id); todo.delete(id)
+    }
+  }
+  return out
+})
+const nextIndex = computed(() => new Map(nextIds.value.map((id, i) => [id, i + 1])))
+const nextTitle = computed(() => 'Next passives to take in game (numbered on the atlas): the path to the nearest notable, map sustain first. Click to zoom.\n' +
+  nextIds.value.map((id, i) => `${i + 1}. ${ATLAS_BY_ID.get(id)?.[6] ?? id}`).join('\n'))
+function focusNext () { if (nextIds.value.length) zoomTo(nextIds.value, 1600, 0.3) }
 const COLORS: Record<State, string> = { have: '#22c55e', todo: '#fb923c', none: '#5b6b84' }
 const search = ref('')
 const searchHits = computed(() => {
@@ -418,7 +462,9 @@ function onMove (e: MouseEvent) {
   const st = stateOf(n[0])
   const [status, statusClass] = ATLAS_START.has(n[0])
     ? ['Atlas start', 'text-gray-400']
-    : st === 'have' ? ['You have it', 'text-green-400'] : st === 'todo' ? ['To take', 'text-orange-400'] : ['', '']
+    : st === 'have' ? ['You have it', 'text-green-400']
+      : nextIndex.value.has(n[0]) ? [`Next: ${nextIndex.value.get(n[0])} of ${nextIds.value.length}`, 'text-cyan-300']
+        : st === 'todo' ? ['To take', 'text-orange-400'] : ['', '']
   hover.value = { name: n[6] || 'Atlas passive', stats: statsOf(n, spec.value?.choices ?? {}), status, statusClass, x: mx, y: my }
 }
 
@@ -489,7 +535,7 @@ function paint () {
     }
     const st = stateOf(n[0])
     ctx.beginPath(); ctx.arc(n[1], n[2], r, 0, Math.PI * 2)
-    ctx.fillStyle = st === 'none' ? (kind === 0 ? '#46536a' : '#56647d') : COLORS[st]
+    ctx.fillStyle = nextIndex.value.has(n[0]) ? '#67e8f9' : st === 'none' ? (kind === 0 ? '#46536a' : '#56647d') : COLORS[st]
     ctx.fill()
     if (kind === 1 || kind === 2) {
       ctx.lineWidth = kind === 2 ? 5 : 3
@@ -513,9 +559,24 @@ function paint () {
     ctx.fillStyle = n[3] === 3 ? '#7b8aa3' : stateOf(n[0]) === 'none' ? '#a3b1c6' : '#f3f4f6'
     ctx.fillText(n[6], x, y + (n[3] === 3 ? 0 : (KIND_RADIUS[n[3]] ?? 10) * scale + 12))
   }
+  // next passives: numbers above them
+  if (nextIndex.value.size) {
+    ctx.font = 'bold 12px sans-serif'
+    ctx.textBaseline = 'middle'
+    for (const [id, i] of nextIndex.value) {
+      const n = ATLAS_BY_ID.get(id)
+      if (!n) continue
+      const x = n[1] * scale + offX; const y = n[2] * scale + offY - (KIND_RADIUS[n[3]] ?? 10) * scale - 12
+      ctx.fillStyle = '#0e7490'
+      ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#ecfeff'
+      ctx.fillText(String(i), x, y + 0.5)
+    }
+    ctx.textBaseline = 'alphabetic'
+  }
 }
 
-watch([searchHits, buildSet, haveSet], () => draw())
+watch([searchHits, buildSet, haveSet, nextIds], () => draw())
 watch(() => store.value.active, () => { if (spec.value?.nodes.length) zoomTo(spec.value.nodes, 1200, 0.3); else fit() })
 watch(taken, () => draw())
 let ro: ResizeObserver | null = null
