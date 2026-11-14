@@ -217,7 +217,7 @@ import { AppConfig } from '@/web/Config'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
 import { planQuestGems } from '../companion/quest-gems'
-import { currentPlan } from './plan-store'
+import { currentPlan, currentTaken } from './plan-store'
 
 const levels = ref<CharLevels>(loadCharLevels())
 const guideStep = ref(loadCampaignStep())
@@ -312,6 +312,7 @@ const takenByLog = computed(() => {
   })
   return taken
 })
+watch(takenByLog, (t) => { currentTaken.value = t }, { immediate: true })
 function isTaken (i: number) {
   return takenByLog.value ? takenByLog.value.has(i) : i < (plan.value?.taken ?? 0)
 }

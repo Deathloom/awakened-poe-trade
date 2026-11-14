@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.51] - 2026-11-14
+
+### Fixed (#92)
+- **Tree map no longer moves on by itself when you level up.** Its "next" passives now follow what you actually allocated (from the game log), like the Next passives list. For a character not followed from level 2, use **Rebuild from game log** in the levelling pane; until then it still guesses from your level.
+
 ## [1.0.50] - 2026-11-14
 
 ### Added (#90)
