@@ -3,6 +3,7 @@ import { execFile } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import type { ServerEvents } from './server'
 import type { UpdateInfo } from '../../ipc/types'
+import type { Logger } from './RemoteLogger'
 
 export class AppUpdater {
   private _checkedAtStartup = false
@@ -64,8 +65,17 @@ export class AppUpdater {
   }
 
   constructor (
-    private server: ServerEvents
+    private server: ServerEvents,
+    private logger?: Logger
   ) {
+    // Deathloom fork: updater messages go to the app log (problem reports include it)
+    if (logger) {
+      autoUpdater.logger = {
+        info: (m?: unknown) => { logger.write(`info [updater] ${String(m)}`) },
+        warn: (m?: unknown) => { logger.write(`warn [updater] ${String(m)}`) },
+        error: (m?: unknown) => { logger.write(`error [updater] ${String(m)}`) }
+      }
+    }
     // Deathloom fork: upstream checked every 16 h, so a release made while the PC sat
     // idle wasn't found until the app restarted. Check every 30 min and when the
     // PC wakes up or is unlocked (one request to GitHub Releases each time).
@@ -106,6 +116,9 @@ export class AppUpdater {
     })
 
     autoUpdater.on('checking-for-update', () => {
+      // Deathloom fork: keep "ready to install" / "downloading" on screen while
+      // checking again (the check ends in the same state or a newer version)
+      if (this._info.state === 'update-downloaded' || this._info.state === 'update-available') return
       this.info = { state: 'checking-for-update' }
     })
     autoUpdater.on('update-available', (info: { version: string }) => {
@@ -149,12 +162,27 @@ export class AppUpdater {
     }, 20 * 1000)
   }
 
+  // Deathloom fork: a check whose request never answers kept "Checking for
+  // updates" on screen for good (and every later check waited on the same
+  // request). After 90 s it counts as failed and the next check starts afresh.
+  private _checkTimer: NodeJS.Timeout | undefined
   private check = async () => {
     this._lastCheck = Date.now()
+    clearTimeout(this._checkTimer)
+    this._checkTimer = setTimeout(() => {
+      if (this._info.state !== 'checking-for-update') return
+      this.logger?.write('warn [updater] Update check got no answer in 90 s; giving up on it')
+      ;(autoUpdater as unknown as { checkForUpdatesPromise: unknown }).checkForUpdatesPromise = null
+      this.info = { state: 'error', checkedAt: Date.now() }
+    }, 90 * 1000)
     try {
-      await autoUpdater.checkForUpdates()
+      const res = await autoUpdater.checkForUpdates()
+      // not packaged (dev): no events at all
+      if (res == null && this._info.state === 'checking-for-update') this.info = { state: 'update-not-available', checkedAt: Date.now() }
     } catch {
       // handled by event
+    } finally {
+      clearTimeout(this._checkTimer)
     }
   }
 }

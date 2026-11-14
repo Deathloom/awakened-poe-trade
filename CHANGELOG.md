@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.62] - 2026-11-14
+
+### Fixed (#104)
+- **Settings → About stuck on "Checking for updates":** a check that never got an answer kept that message on screen for good, and every later check waited on it. A check now gives up after 90 seconds and shows **Check again**.
+- While an update is downloading or ready to install, checking again keeps showing that (and the **Install now** button) instead of "Checking for updates".
+- The error button opened the original app's download page; it now checks again (Release notes links to Loot Goblin's releases).
+- Updater messages now go to the app log, so problem reports show why a check failed.
+
 ## [1.0.61] - 2026-11-14
 
 ### Added (#103)
