@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#60)
+- **Electron 43 → 45.** Clipboard calls are now asynchronous (Electron 44+): item capture (Ctrl+C / price check), chat buttons, Copy buttons and the GitHub sign-in code wait for the clipboard before pressing keys.
+
 ## [1.0.41] - 2026-11-14
 
 ### Added (#80)
