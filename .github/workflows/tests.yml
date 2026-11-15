@@ -1,0 +1,36 @@
+# Deathloom fork: unit tests for the pure logic (tests/run.mjs) plus the type
+# checks and builds, on every PR and on pushes to dev and master, so a broken
+# change is caught before a test build reaches anyone.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [master, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      with:
+        node-version: 22
+    - run: npm ci
+      working-directory: ./main
+    - run: npm ci
+      working-directory: ./renderer
+    - name: Unit tests
+      run: node tests/run.mjs
+    - name: Type check (main)
+      run: npx tsc --noEmit -p .
+      working-directory: ./main
+    - name: Lint and type check (renderer)
+      run: npm run lint && npx vue-tsc --noEmit -p .
+      working-directory: ./renderer
+    - name: Build (renderer)
+      run: npx vite build
+      working-directory: ./renderer

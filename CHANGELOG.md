@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#180)
+- **Automatic tests before releases:** every change is now tested (map profit, money tools, backups, search strings, the phone key) and type-checked and built before it can reach a test build.
+
 ### Added (#179)
 - **Settings → Tools** (overlay settings and the Orbhoarder window's Settings):
   - **Health check:** one button checks the game log and game settings files, Path of Building, your GitHub sign-in, whether poe.ninja and GitHub can be reached, the app's port, updates, and hotkeys used twice, with what to do for each problem.
