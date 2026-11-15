@@ -79,6 +79,13 @@ import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
 import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
+
+// Deathloom fork: moving backgrounds pause while you play (the window is drawn without
+// the GPU, so a constantly moving background under glass panels costs CPU the game wants)
+const gameListener = Host.onEvent('MAIN->CLIENT::hud-state', (e) => {
+  document.documentElement.classList.toggle('lg-game-active', e.playing)
+})
+onUnmounted(() => { gameListener.abort() })
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 import { desktopSetupShown } from '../setup/setup-state'

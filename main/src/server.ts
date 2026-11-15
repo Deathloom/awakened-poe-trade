@@ -22,7 +22,7 @@ const serverEmit = server.emit.bind(server)
 server.emit = ((event: string, ...args: any[]) => {
   if (event === 'request' || event === 'upgrade') {
     const req = args[0]
-    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin }, { listenHost })) {
+    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined }, { listenHost })) {
       if (rejectedCount++ < 20) {
         console.warn(`[server] refused ${event} ${String(req.url).slice(0, 80)} from origin=${String(req.headers.origin)} host=${String(req.headers.host)}`)
       }

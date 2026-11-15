@@ -50,7 +50,8 @@
         </div>
       </div>
     </div>
-    <webview v-if="isBrowserShown" ref="iframeEl"
+    <!-- Deathloom fork: its own session, apart from the app's (see OverlayWindow.ts) -->
+    <webview v-if="isBrowserShown" ref="iframeEl" partition="persist:overlay-browser"
       class="pointer-events-auto flex-1"
       width="100%" height="100%" />
     <div v-else class="layout-column flex-1 min-w-0">

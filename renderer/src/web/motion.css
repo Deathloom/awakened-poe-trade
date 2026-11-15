@@ -80,6 +80,9 @@ html.desktop.lg-drift body::before {
   animation: lg-drift var(--decor-seconds, 60s) linear infinite;
 }
 html.desktop.lg-drift #app { position: relative; z-index: 1; }
+/* paused while the game has focus (DesktopApp.vue) */
+html.lg-game-active.lg-drift body::before,
+html.lg-game-active .lg-loading { animation-play-state: paused; }
 
 @media (prefers-reduced-motion: reduce) {
   html *:not(.fa-spin), html *::before, html *::after { animation: none !important; transition: none !important; }

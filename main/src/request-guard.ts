@@ -27,7 +27,7 @@ export interface GuardOptions {
 }
 
 export function isAllowedRequest (
-  headers: { host?: string, origin?: string },
+  headers: { host?: string, origin?: string, secFetchSite?: string },
   opts: GuardOptions = {}
 ): boolean {
   const host = (headers.host ?? '').toLowerCase()
@@ -36,6 +36,9 @@ export function isAllowedRequest (
   const listen = opts.listenHost?.toLowerCase()
   const listensWide = listen === '0.0.0.0' || listen === '::'
   if (!LOOPBACK.has(name) && !(listen && (listensWide || name === listen))) return false
+  // Deathloom fork: a page on another site (image tag, link, form) is never let in,
+  // even when the browser sends no Origin (Sec-Fetch-Site still says cross-site)
+  if (headers.secFetchSite?.toLowerCase() === 'cross-site') return false
   const origin = headers.origin
   // No Origin: not a cross-site browser request (Electron windows loading the
   // page, the overlay's own GETs, local tools)

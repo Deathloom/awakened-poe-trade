@@ -12,7 +12,9 @@ class HostTransport {
 
   async init () {
     this.onEvent('MAIN->CLIENT::log-entry', (entry) => {
-      this.logs.value += entry.message
+      // Deathloom fork: keep the debug log from growing for as long as the app runs
+      const all = this.logs.value + entry.message
+      this.logs.value = all.length > 200_000 ? all.slice(all.indexOf('\n', all.length - 150_000) + 1) : all
     })
     this.onEvent('MAIN->CLIENT::updater-state', (info) => {
       this.updateInfo.value = info
