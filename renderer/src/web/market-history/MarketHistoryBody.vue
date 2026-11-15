@@ -2,10 +2,16 @@
   <!-- Deathloom fork (body, used by the overlay widget and the desktop window): price trends for watched items (poe.ninja 7 days + points recorded by the overlay) -->
   <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm" :style="fill ? { width: '100%', height: '100%' } : { width: '26rem', maxHeight: '80vh' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
-      <span class="text-gray-500"><i class="fas fa-chart-line mr-1" />Market history</span>
-      <span class="text-xs text-gray-500">{{ league ?? 'no league' }}</span>
+      <span class="text-gray-500"><i class="fas fa-chart-line mr-1" />Market</span>
+      <!-- Deathloom fork: Market overview is a tab here (was its own panel) -->
+      <template v-if="tabs !== false">
+        <button class="px-2 rounded text-xs" :class="tab === 'watched' ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab('watched')">Watched</button>
+        <button class="px-2 rounded text-xs" :class="tab === 'all' ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab('all')">All prices</button>
+      </template>
+      <span class="text-xs text-gray-500 ml-auto">{{ league ?? 'no league' }}</span>
     </div>
-    <div class="overflow-y-auto min-h-0 p-1">
+    <div v-if="tabs !== false && tab === 'all'" class="flex-1 min-h-0" :style="fill ? {} : { height: '26rem' }"><MarketOverview /></div>
+    <div v-else class="overflow-y-auto min-h-0 p-1">
       <div v-if="!items.length" class="p-1 text-gray-500">
         Nothing watched yet. Press the <i class="far fa-star" /> next to an item in the market list, or next to its poe.ninja price in a price check.
       </div>
@@ -48,14 +54,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, watch } from 'vue'
+import MarketOverview from './MarketOverview.vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import VueApexcharts from 'vue3-apexcharts'
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
 import { watchlist, removeWatch, record, setAlert, checkAlert, ALERT_STEPS, type WatchedItem } from './watchlist'
 
 // active: the panel is on screen; fill: take the whole space (desktop window)
-const props = defineProps<{ active?: boolean, fill?: boolean }>()
+const props = defineProps<{ active?: boolean, fill?: boolean, tabs?: boolean }>()
+const TAB_KEY = 'deathloom.market.tab.v1'
+const tab = ref<'watched' | 'all'>((() => { try { return localStorage.getItem(TAB_KEY) === 'all' ? 'all' : 'watched' } catch { return 'watched' } })())
+function setTab (t: 'watched' | 'all') {
+  tab.value = t
+  try { localStorage.setItem(TAB_KEY, t) } catch {}
+}
 const { findPriceByQuery, queuePricesFetch } = usePoeninja()
 const leagues = useLeagues()
 const league = computed(() => leagues.selectedId.value)

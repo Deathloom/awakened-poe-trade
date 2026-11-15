@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#193)
+- **One Market panel:** Market overview (all poe.ninja prices) is now the **All prices** tab of the Market panel, next to **Watched** (your watched items and alerts). If you had Market overview pinned or on a hotkey, Market gets the pin and the hotkey. The Orbhoarder window's Market tab still shows both side by side.
+- **Map mods:** Settings → Maps (every build, this PC) and Build panel → Notes (this build, shared) now say which is which; the map check uses both, as before.
+- **Shorter ? help** on the overlay bar: the hotkeys, then a button to the full help.
+- This session's Trades count points to the Trade companion's Ledger for the details.
+
 ### Added (#192)
 - **Make your own vendor search:** Build panel → Notes → Search strings → **Make your own**: pick linked sockets and colours, movement speed, life, resistances, +1 gems, added physical damage or your own text, choose any / all, and Orbhoarder writes the search (checks the game's 50-character limit). Save it with a name and give it a hotkey that types it into the stash or vendor search.
 

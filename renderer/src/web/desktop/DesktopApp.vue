@@ -39,7 +39,7 @@
         <TradeBoardBody v-else-if="view === 'board'" fill />
         <!-- Market: watchlist | poe.ninja overview (drag the line to resize) -->
         <div v-else-if="view === 'market'" ref="marketEl" class="flex h-full min-h-0">
-          <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[0]} 1 0` }"><MarketHistoryBody :active="true" fill /></div>
+          <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[0]} 1 0` }"><MarketHistoryBody :active="true" fill :tabs="false" /></div>
           <SplitGutter dir="x" @drag="d => market.drag(0, d, marketEl?.clientWidth ?? 0)" @end="market.save" @reset="market.reset" />
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[1]} 1 0` }"><MarketOverview /></div>
         </div>
