@@ -133,6 +133,8 @@ export interface TranslationDict {
   RARITY_QUEST: string
   MAP_TIER: RegExp
   MAP_ITEM_QUANTITY: string
+  // Deathloom fork: 3.30 renamed map Item Quantity to Atlas Drops (English only for now)
+  MAP_ATLAS_DROPS?: string
   MAP_ITEM_RARITY: string
   MAP_MONSTER_PACK_SIZE: string
   MAP_MORE_MAPS: string

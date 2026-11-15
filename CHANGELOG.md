@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#185)
+- **Map price check in 3.30:** maps now show **Atlas Drops** instead of Item Quantity; the price check reads it again and uses it as the quantity filter (same values, GGG renamed it).
+
 ### Changed (#184)
 - **Lighter pinned panels:** a pinned panel's window is now only made when you first open the panel, and is closed again 2 minutes after you close the panel with its hotkey (less memory and CPU when many panels are pinned). Trade companion, Market history (price alerts) and This session stay loaded so they keep working in the background.
 
