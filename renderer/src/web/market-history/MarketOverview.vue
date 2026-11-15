@@ -26,15 +26,18 @@
       It's a projection from poe.ninja's last 7 days, not a promise: patches, streamers and big sellers change prices fast.
     </div>
     <div class="overflow-y-auto min-h-0 flex-1 px-1">
+      <div v-if="shortHistory && mode !== 'prices'" class="px-1 pb-1 text-xs text-orange-300">
+        New league: poe.ninja has only {{ historyDays }} day{{ historyDays === 1 ? '' : 's' }} of prices so far, so changes are since the league started{{ mode === 'outlook' ? ` and the outlook needs ${OUTLOOK_MIN_DAYS} days` : '' }}. It fills in day by day.
+      </div>
       <div v-if="!rows.length" class="p-2 text-gray-500">
-        {{ ninja.isLoading.value || !all.length ? 'Loading prices from poe.ninja…' : 'Nothing matches.' }}
+        {{ ninja.isLoading.value || !all.length ? 'Loading prices from poe.ninja…' : (mode === 'outlook' && shortHistory ? 'No outlook yet (not enough days of prices).' : 'Nothing matches.') }}
       </div>
       <table v-else class="w-full text-xs">
         <thead class="text-gray-500 sticky top-0 bg-gray-800">
           <tr>
             <th class="text-left font-normal py-0.5">Item</th>
             <th class="text-right font-normal">Price</th>
-            <th class="text-right font-normal" title="Change over 7 days">7 days</th>
+            <th class="text-right font-normal" :title="shortHistory ? `Change over the ${historyDays} days poe.ninja has` : 'Change over 7 days'">{{ shortHistory ? `${historyDays} days` : '7 days' }}</th>
             <th v-if="mode === 'outlook'" class="text-right font-normal" title="Projected change in 3 days if the trend holds">3-day outlook</th>
             <th class="font-normal">Week</th>
             <th />
@@ -75,7 +78,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { usePoeninja, type NinjaListing } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
 import { isWatched, toggleWatch, watchKey } from './watchlist'
-import { MARKET_GROUPS, trendOf, type Trend } from './market-trends'
+import { MARKET_GROUPS, OUTLOOK_MIN_DAYS, trendOf, type Trend } from './market-trends'
 
 type Mode = 'prices' | 'rising' | 'falling' | 'outlook'
 const MODES: Array<{ id: Mode, label: string, tip: string }> = [
@@ -147,6 +150,9 @@ const filtered = computed(() => {
   return list
 })
 const rows = computed(() => filtered.value.slice(0, limit.value))
+// most days of history any item has (a new league starts with 1-2)
+const historyDays = computed(() => all.value.reduce((m, r) => Math.max(m, r.trend?.days ?? 0), 0))
+const shortHistory = computed(() => all.value.length > 0 && historyDays.value < 7)
 
 function watchRow (r: Row) {
   toggleWatch({ ns: r.item.ns, name: r.item.name, variant: r.item.variant, label: r.label, league: leagueId.value ?? '' }, r.item.chaos)

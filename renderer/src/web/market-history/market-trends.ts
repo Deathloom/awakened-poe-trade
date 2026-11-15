@@ -15,16 +15,21 @@ export interface Trend {
   // linear fit over the week: % of today's price per day, and how well it fits (0..1)
   slope: number
   fit: number
-  // projected change in the next 3 days, %, if the trend holds
+  // projected change in the next 3 days, %, if the trend holds (NaN under 4 days)
   outlook: number
+  // days of history poe.ninja has for it (a new league starts with 1-2)
+  days: number
 }
+
+// fewer days than this: change only, no outlook
+export const OUTLOOK_MIN_DAYS = 4
 
 export function trendOf (item: NinjaListing): Trend | null {
   const g = item.graph
-  if (!g || g.length < 4) return null
+  if (!g || g.length < 2) return null
   const pts: Array<[number, number]> = []
   g.forEach((v, i) => { if (v != null && Number.isFinite(v)) pts.push([i, v]) })
-  if (pts.length < 4) return null
+  if (pts.length < 2) return null
   const lastPct = pts[pts.length - 1][1]
   // graph value v -> price: today's price * (1 + v/100) / (1 + last/100)
   const base = item.chaos / (1 + lastPct / 100)
@@ -50,8 +55,10 @@ export function trendOf (item: NinjaListing): Trend | null {
   // the week's trend, weighted by how steady it is, nudged by the last 2 days;
   // capped so one spike doesn't promise the moon
   const daily = b * fit * 0.7 + Math.log(1 + recent / 100) / 2 * 0.3
-  const outlook = Math.max(-60, Math.min(60, (Math.exp(daily * 3) - 1) * 100))
-  return { series, change: lastPct, recent, slope, fit, outlook }
+  const outlook = pts.length < OUTLOOK_MIN_DAYS
+    ? NaN
+    : Math.max(-60, Math.min(60, (Math.exp(daily * 3) - 1) * 100))
+  return { series, change: lastPct, recent, slope, fit: pts.length < OUTLOOK_MIN_DAYS ? 0 : fit, outlook, days: pts.length }
 }
 
 export type MarketGroup = { id: string, label: string, match: (category: string) => boolean }
