@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#183)
+- **Compare builds** (Orbhoarder window → Build gear → scales button): pick two builds from your folder or a friend's and see what's different: stats (DPS, life, EHP, resistances…), gear mods per slot, gems added, removed or levelled, and passives only in one of them. Reads the build files; nothing is changed.
+
 ### Added (#182)
 - **Covens (3.30) cheat sheet** with a switch for **Levelling**, **Mapping profit** and **Bosses**: rituals and Fates, the Wickerman and Viscera, Grim Fates and the road to the Coven Queen, and what to do in each case. The choice is remembered.
 
