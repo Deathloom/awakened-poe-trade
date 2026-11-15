@@ -26,6 +26,7 @@ import { PobImport } from './pob/PobImport'
 import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
 import { ErrorReporter } from './ErrorReporter'
 import { AtlasFiles } from './pob/AtlasFiles'
+import { BuildNotes } from './pob/BuildNotes'
 import { TradeBoard } from './pob/TradeBoard'
 import { isAllowedImportUrl, MAX_IMPORT_BYTES } from './pob/PobImport'
 import { applyStartWithWindows } from './StartWithWindows'
@@ -87,6 +88,9 @@ app.on('ready', async () => {
     const c = pobImpact.resolved()
     return c?.buildsDir ? { buildsDir: c.buildsDir, player: c.player ?? '' } : null
   }, () => { pobSync.schedulePush() })
+  // Deathloom fork: notes per build (in the player folder, synced like builds)
+  // eslint-disable-next-line no-new
+  new BuildNotes(eventPipe, logger, async () => await pobImpact.activeBuild(), () => { pobSync.schedulePush() })
   errorReporter.enabled = () => pobImpact.resolved()?.errorReports !== false
   pobImpact.onCodeError = (message, detail) => { errorReporter.capture('pob', message, detail, 'ImpactServer') }
   pobSync.onCodeError = (message) => { errorReporter.capture('pob', message, undefined, 'SyncServer') }

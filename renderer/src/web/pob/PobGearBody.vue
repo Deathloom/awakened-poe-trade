@@ -35,9 +35,15 @@
     <loadout-editor v-if="desktop && showEdit" class="shrink-0 border-b border-gray-700" @changed="pickerRef?.request()" />
     <build-manager v-if="desktop && showManage" class="shrink-0 border-b border-gray-700" @changed="pickerRef?.request()" />
     <build-picker v-show="showPicker" ref="pickerRef" class="shrink-0" @changed="onBuildChanged" />
+    <div v-if="filterReminder" class="shrink-0 px-2 py-1 text-xs text-gray-400 bg-gray-900 border-b border-gray-700">
+      <i class="fas fa-filter mr-1" />Loot filter for {{ filterReminder.build }}: <span class="text-gray-200">{{ filterReminder.name }}</span>
+      <button class="ml-1 text-blue-400 hover:underline" @click="setTab('notes')">Notes</button>
+      <button class="ml-1 text-gray-500 hover:text-gray-200" title="Hide until the build changes" @click="hiddenFilterFor = notesState?.build ?? ''"><i class="fas fa-times" /></button>
+    </div>
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
     <pob-tree v-else-if="tab === 'tree'" ref="treeRef" />
     <pob-tree-map v-else-if="tab === 'map'" ref="mapRef" class="flex-1" />
+    <pob-notes v-else-if="tab === 'notes'" ref="notesRef" :hud="hud" />
     <template v-else>
     <div v-if="error" class="p-2 text-gray-400 text-sm">{{ error }}</div>
     <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm">Loading from Path of Building…</div>
@@ -102,6 +108,8 @@ import BuildImport from './BuildImport.vue'
 import PobGems from './PobGems.vue'
 import PobTree from './PobTree.vue'
 import PobTreeMap from './PobTreeMap.vue'
+import PobNotes from './PobNotes.vue'
+import { notesState, loadNotes, buildLabel } from './build-notes'
 import { pobText } from './labels'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
@@ -118,10 +126,11 @@ const itemSet = ref('')
 const allMods = ref(false)
 const opened = ref<Record<string, boolean>>({})
 const tradeError = ref<Record<string, string>>({})
-type Tab = 'gear' | 'gems' | 'tree' | 'map'
+type Tab = 'gear' | 'gems' | 'tree' | 'map' | 'notes'
+const NOTES_TAB = { key: 'notes' as Tab, label: 'Notes' }
 const TABS: Array<{ key: Tab, label: string }> = [{ key: 'gear', label: 'Gear' }, { key: 'gems', label: 'Gems' }, { key: 'tree', label: 'Tree' }]
 // the whole tree drawn: only in the desktop window (room for it)
-const tabs = computed(() => props.desktop ? [...TABS, { key: 'map' as Tab, label: 'Tree map' }] : TABS)
+const tabs = computed(() => props.desktop ? [...TABS, { key: 'map' as Tab, label: 'Tree map' }, NOTES_TAB] : [...TABS, NOTES_TAB])
 const tab = ref<Tab>('gear')
 const showPicker = ref(true)
 const showManage = ref(false)
@@ -132,7 +141,18 @@ const pickerRef = ref<InstanceType<typeof BuildPicker> | null>(null)
 const gemsRef = ref<InstanceType<typeof PobGems> | null>(null)
 const treeRef = ref<InstanceType<typeof PobTree> | null>(null)
 const mapRef = ref<InstanceType<typeof PobTreeMap> | null>(null)
+const notesRef = ref<InstanceType<typeof PobNotes> | null>(null)
 const visible = computed(() => props.active)
+
+// idea 15: when a build has a loot filter, remind which one to use
+const hiddenFilterFor = ref('')
+const filterReminder = computed(() => {
+  const s = notesState.value
+  if (!s?.data.filter || tab.value === 'notes' || hiddenFilterFor.value === s.build) return null
+  let name = s.data.filter
+  try { const u = new URL(name); name = u.hostname + (u.pathname.length > 1 ? '…' : '') } catch {}
+  return { build: buildLabel(s.build), name }
+})
 
 function setTab (key: Tab) {
   if (tab.value === key) return
@@ -146,7 +166,10 @@ function onBuildChanged (b: PobBuildInfo | null) {
   if (tab.value === 'gear') request()
   else if (tab.value === 'gems') gemsRef.value?.request()
   else if (tab.value === 'map') mapRef.value?.request()
+  else if (tab.value === 'notes') notesRef.value?.request()
   else treeRef.value?.request()
+  // loot filter reminder for the new build (any tab)
+  if (tab.value !== 'notes') loadNotes()
 }
 
 let lastRequestId = 0
