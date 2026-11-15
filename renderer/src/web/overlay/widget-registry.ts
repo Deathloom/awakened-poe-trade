@@ -23,7 +23,8 @@ import { panelWidgetSpecs } from './panel-widgets'
 // registered (upstream merges stay simple) but can't be added any more, and
 // existing ones are removed from the settings (Config.ts).
 //   timer: This session has a stopwatch
-export const REMOVED_WIDGETS: ReadonlySet<string> = new Set(['timer'])
+//   stash-search: saved search strings in Build panel → Notes
+export const REMOVED_WIDGETS: ReadonlySet<string> = new Set(['timer', 'stash-search'])
 
 type WidgetComponent = Component & { widget: WidgetSpec }
 

@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#192)
+- **Make your own vendor search:** Build panel → Notes → Search strings → **Make your own**: pick linked sockets and colours, movement speed, life, resistances, +1 gems, added physical damage or your own text, choose any / all, and Orbhoarder writes the search (checks the game's 50-character limit). Save it with a name and give it a hotkey that types it into the stash or vendor search.
+
+### Changed (#192)
+- **Stash search widget merged into Search strings:** your Stash search entries (and their hotkeys) moved to Build panel → Notes → **My search strings**; the separate Stash search widget is gone. Its example entries were left out.
+
 ### Changed (#191)
 - **Item search folded into Market search:** the Item search icon is gone from the overlay menu; Market search now shows the poe.ninja price next to each suggestion as you type, and still finds who sells it.
 

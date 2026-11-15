@@ -7,6 +7,7 @@ import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from './hud/is-hud'
 import { applyAppearance, defaultAppearance, type AppearanceConfig } from './appearance'
 import type * as widget from './overlay/widgets'
 import type { StashSearchWidget } from './stash-search/widget'
+import type { SavedSearchString } from '@ipc/types'
 import type { ItemCheckWidget } from './item-check/widget'
 import type { ItemSearchWidget } from './item-search/widget'
 import { registry as widgetRegistry } from './overlay/widget-registry.js'
@@ -498,6 +499,24 @@ function upgradeConfig (_config: Config): Config {
   // Deathloom fork (2026-11-14): stash tracker removed (GGG rules: no login cookie in shared apps)
   config.widgets = config.widgets.filter(w => w.wmType !== 'stash-tracker')
   // Deathloom fork (2026-11-16): Stopwatch widget removed (This session has a stopwatch)
+  // Deathloom fork (2026-11-16): Stash search widget replaced by the saved search
+  // strings in Build panel → Notes. Its entries move there once (the upstream
+  // example entries are left out unless they had a hotkey).
+  if (!config.pob.searchStrings) {
+    const examples = new Set(['"Pack Size: +3"', 'Reflect', '"Cannot Leech Life"', '"Cannot Leech Mana"',
+      'Currency', '"Divination Card"', 'Fossil', '"Map Tier"', '"Map Device" "Rarity: Normal"', 'Tane Laboratory'])
+    const moved: SavedSearchString[] = []
+    for (const w of config.widgets) {
+      if (w.wmType !== 'stash-search') continue
+      const ss = w as StashSearchWidget
+      for (const e of ss.entries ?? []) {
+        if (!e.text || (examples.has(e.text) && !e.hotkey)) continue
+        moved.push({ id: moved.length + 1, name: e.name || (w.wmTitle ? `${w.wmTitle}: ${e.text}` : e.text), text: e.text, hotkey: ss.enableHotkeys ? e.hotkey : null })
+      }
+    }
+    config.pob.searchStrings = moved
+  }
+  config.widgets = config.widgets.filter(w => w.wmType !== 'stash-search')
   config.widgets = config.widgets.filter(w => w.wmType !== 'timer')
   // Deathloom fork (2026-11-16): Item search hidden from the menu (Market search shows
   // the same poe.ninja prices and who sells it). Kept in the settings for upstream merges.
@@ -651,6 +670,12 @@ function getConfigForHost (): HostConfig {
         action: { type: 'trigger-event', target: `panel:${panel}` },
         keepModKeys: true
       })
+    }
+  }
+  // Deathloom fork: saved search strings with a hotkey (type it into the stash / vendor search)
+  for (const ss of config.pob?.searchStrings ?? []) {
+    if (ss.hotkey && ss.text) {
+      actions.push({ shortcut: ss.hotkey, action: { type: 'stash-search', text: ss.text } })
     }
   }
   for (const command of config.commands) {

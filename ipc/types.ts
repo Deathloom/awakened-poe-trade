@@ -63,6 +63,13 @@ export interface PobHudConfig {
   y?: number
 }
 
+export interface SavedSearchString {
+  id: number
+  name: string
+  text: string
+  hotkey: string | null
+}
+
 // Deathloom fork: Path of Building build impact
 export interface PobConfig {
   enabled: boolean
@@ -98,6 +105,10 @@ export interface PobConfig {
   openPobKey?: string | null
   // Hotkey that copies the hovered item and opens the friends' trade board post form (none by default)
   boardPostKey?: string | null
+  // Deathloom fork: your saved stash / vendor searches (Build panel → Notes →
+  // Search strings), with an optional hotkey that types it into the game's search.
+  // Took over the upstream Stash search widget's entries (16 Nov 2026).
+  searchStrings?: SavedSearchString[]
   // Hotkeys that open market search / the friends' trade board in the overlay (none by default)
   marketSearchKey?: string | null
   boardKey?: string | null
