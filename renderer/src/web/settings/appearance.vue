@@ -51,6 +51,11 @@
       <div class="text-gray-500 text-sm">{{ a.themeMode === 'seasonal' ? 'Picking a theme here switches to Pick one.' : '' }}
         Some fun themes bring their own font and corners unless you changed those below.</div>
       <ui-toggle v-model="a.decorations" class="mt-1">Theme background decorations in the Orbhoarder window</ui-toggle>
+      <div v-if="a.decorations" class="mt-1">
+        <div>Decoration strength <span class="text-gray-500">{{ a.decorStrength }}%</span></div>
+        <input type="range" min="50" max="300" step="10" v-model.number="a.decorStrength" class="w-full" />
+      </div>
+      <ui-toggle v-model="a.glass" class="mt-1">Glass panels in the Orbhoarder window (see-through and blurred, so the theme shows)</ui-toggle>
     </div>
 
     <div class="mb-4">
