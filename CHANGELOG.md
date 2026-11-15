@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#156)
+- **Hold gem levels faded gems you already use:** a gem is now faded only until you can use it at all (its level-1 requirement), not until you can reach the level to hold it at. Hover still shows both.
+
 ### Fixed (#155)
 - **The Loot Goblin window comes back after an update:** windows that were open when an update installed open again when Loot Goblin restarts.
 
