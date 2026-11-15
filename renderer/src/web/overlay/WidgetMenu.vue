@@ -93,6 +93,7 @@ function hintFor (type: string): string | undefined {
     case 'atlas-tree': return 'Atlas tree' + key(pob?.panelKeys?.atlas)
     case 'play-session': return 'This session' + key(pob?.panelKeys?.session)
     case 'cheat-sheets': return 'Cheat sheets (Betrayal, Heist, Delve, Sanctum, vendor recipes)' + key(pob?.panelKeys?.cheats)
+    case 'money-tools': return 'Money tools (gem levelling profit, currency counter)' + key(pob?.panelKeys?.money)
     case 'market-overview': return 'Market overview (poe.ninja)' + key(pob?.panelKeys?.overview)
     case 'stash-search': return 'Stash search'
     case 'image-strip': return 'Image strip'

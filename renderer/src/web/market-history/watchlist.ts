@@ -16,6 +16,8 @@ export interface WatchedItem {
   addedAt: number
   // [time ms, chaos]
   points: Array<[number, number]>
+  // price alert: tell when the price moved this many % from base (then base = new price)
+  alert?: { pct: number, base: number }
 }
 
 const KEY = 'deathloom.market-history.v1'
@@ -82,4 +84,31 @@ export function record (key: string, chaos: number, minGap = 55 * 60_000) {
   if (w.points.length > MAX_POINTS) w.points.splice(0, w.points.length - MAX_POINTS)
   watchlist.value = fresh
   save()
+}
+
+// Deathloom fork (idea 4): price alerts on watched items
+export const ALERT_STEPS = [0, 10, 20, 50]
+
+export function setAlert (key: string, pct: number, chaos: number | undefined) {
+  const fresh = load()
+  const w = fresh.find(x => x.key === key)
+  if (!w) return
+  if (pct > 0 && chaos != null) w.alert = { pct, base: chaos }
+  else delete w.alert
+  watchlist.value = fresh
+  save()
+}
+
+// the % move when it crossed the alert (and moves the base on), else null.
+// Reads the newest copy, so only the first window that sees the move reports it.
+export function checkAlert (key: string, chaos: number): number | null {
+  const fresh = load()
+  const w = fresh.find(x => x.key === key)
+  if (!w?.alert || !(w.alert.base > 0)) return null
+  const change = (chaos - w.alert.base) / w.alert.base * 100
+  if (Math.abs(change) < w.alert.pct) return null
+  w.alert = { ...w.alert, base: chaos }
+  watchlist.value = fresh
+  save()
+  return change
 }

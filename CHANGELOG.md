@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#177)
+- **Money tools** panel (overlay, in game, Orbhoarder window and the All tab; its own hotkey in Settings → Hotkeys):
+  - **Gem levelling:** what a gem costs at level 1 and sells for at level 20 on poe.ninja, best profit first (tick **20% quality** for 1/20 → 20/20). Corrupted gems are left out.
+  - **Currency counter:** type how many of each currency you have and see the total in chaos and divine at today's prices. Add other items (scarabs, fossils, essences…) by name.
+- **Price alerts** in Market history: the **Alert** button on a starred item tells you (a Windows notification) when its price moves 10%, 20% or 50%.
+
 ### Added (#176)
 - **Map profit:** the **This session** panel has **Loot** buttons (+5c, +20c, +50c, +1 div, or type an amount) for the map you're in (or the last one), and a **Cost/map** box. It shows profit per hour of map time, and each map's loot in **Last maps**.
 - **Last session summary:** when a new session starts (after 2 hours without playing, or **New session**), the old one is kept as a short summary in the panel: time played, maps, deaths, trades, profit, levels gained, where the time went and league mechanics.

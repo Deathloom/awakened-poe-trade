@@ -17,6 +17,9 @@
           <span v-else class="text-gray-600 shrink-0 text-xs">no price</span>
           <span v-if="w.change != null" class="text-xs shrink-0 w-12 text-right" :class="w.change >= 0 ? 'text-green-500' : 'text-red-400'">
             {{ w.change >= 0 ? '+' : '' }}{{ Math.round(w.change) }}%</span>
+          <button class="btn-mini shrink-0" :class="w.alert ? 'text-yellow-300' : ''" :disabled="!w.now"
+            :title="w.alert ? `Alert when the price moves ${w.alert.pct}% from ${fmt(w.alert.base)} c (click to change)` : 'Price alert: tell me when the price moves (click: 10%, 20%, 50%, off)'"
+            @click="cycleAlert(w)"><i class="fas fa-bell mr-1" />{{ w.alert ? w.alert.pct + '%' : 'Alert' }}</button>
           <button class="btn-mini shrink-0" title="Open this item on poe.ninja (full history)" :disabled="!w.now" @click="w.now && open(w.now.url)">
             <i class="fas fa-external-link-alt mr-1" />Open on poe.ninja</button>
           <button class="btn-mini shrink-0 hover:text-red-300" title="Stop watching this item" @click="removeWatch(w.key)">
@@ -49,7 +52,7 @@ import { computed, onUnmounted, watch } from 'vue'
 import VueApexcharts from 'vue3-apexcharts'
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
-import { watchlist, removeWatch, record } from './watchlist'
+import { watchlist, removeWatch, record, setAlert, checkAlert, ALERT_STEPS, type WatchedItem } from './watchlist'
 
 // active: the panel is on screen; fill: take the whole space (desktop window)
 const props = defineProps<{ active?: boolean, fill?: boolean }>()
@@ -74,8 +77,26 @@ const items = computed(() => watchlist.value
 
 function recordAll () {
   for (const w of items.value) {
-    if (w.now) record(w.key, w.now.chaos)
+    if (!w.now) continue
+    record(w.key, w.now.chaos)
+    if (w.alert) {
+      const change = checkAlert(w.key, w.now.chaos)
+      if (change != null) notify(w.label, change, w.now.chaos)
+    }
   }
+}
+
+// Deathloom fork (idea 4): price alerts
+function cycleAlert (w: WatchedItem & { now: { chaos: number } | null }) {
+  const i = ALERT_STEPS.indexOf(w.alert?.pct ?? 0)
+  setAlert(w.key, ALERT_STEPS[(i + 1) % ALERT_STEPS.length], w.now?.chaos)
+}
+function notify (label: string, change: number, chaos: number) {
+  const text = `${label}: ${change >= 0 ? 'up' : 'down'} ${Math.abs(Math.round(change))}% to ${fmt(chaos)} c`
+  try {
+    // eslint-disable-next-line no-new
+    new Notification('Orbhoarder price alert', { body: text, silent: false })
+  } catch {}
 }
 
 // Keep prices fresh and record a point now and then while something is watched
