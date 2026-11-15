@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#187)
+- **Game switch hidden for now:** the PoE2 switch from #186 is not shown in Settings until PoE2 mode does more (the code stays). If PoE2 was already picked, the switch still shows so you can go back to PoE1.
+
 ### Added (#186)
 - **Game switch (PoE2 mode, part 1):** Settings → General → Game: Path of Exile 1 or 2. In PoE2 mode Orbhoarder looks for the PoE2 window, Client.txt (from the running game too) and `poe2_production_Config.ini`, and lists PoE2 trade leagues; each game remembers its own league, and the default window title follows the switch. Price check, Path of Building and poe.ninja prices stay PoE1 only for now (the price check says so in PoE2 mode). PoE1 is unchanged.
 
