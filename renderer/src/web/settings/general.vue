@@ -54,6 +54,50 @@
       <div class="flex-1 mb-1">{{ t(':window_title') }} <span class="bg-gray-200 text-gray-900 rounded px-1">{{ t('Restart required') }}</span></div>
       <input v-model="windowTitle" class="rounded bg-gray-900 px-1 block w-full mb-1 font-poe" />
     </div>
+    <hr class="mb-4 mx-8 border-gray-700">
+    <!-- Deathloom fork: startup, windows, updates and problem reports -->
+    <div class="mb-4">
+      <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Orbhoarder with Windows</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        Starts in the tray when you sign in to Windows, so hotkeys, the HUD and updates are ready before the game.
+      </div>
+    </div>
+    <div class="mb-4">
+      <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Orbhoarder window when the game starts</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        A normal window with all panels (build, guide, trades, market) for a second screen. Also from the tray:
+        double-click the icon or "Open Orbhoarder window". It remembers its screen, position and size.
+      </div>
+    </div>
+    <div class="mb-4">
+      <ui-toggle :modelValue="pob.window2?.enabled === true" @update:modelValue="pob.window2 = { ...pob.window2, enabled: $event }">Second Orbhoarder window (for a third screen)</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        Its own tabs, All-tab layout and look (Settings → Appearance in that window), and its own screen and position.
+        Open it from the tray: "Open second Orbhoarder window". Trade pages, panel hotkeys and the Lab button still go to the main window.
+      </div>
+      <ui-toggle v-if="pob.window2?.enabled" class="mt-2" :modelValue="pob.window2.atStart === true" @update:modelValue="pob.window2 = { ...pob.window2, atStart: $event }">Open it when the game starts too</ui-toggle>
+    </div>
+    <div class="mb-4">
+      <div class="mb-1">Updates</div>
+      <select :value="pob.updateChannel ?? (/-beta\.\d+$/.test(appVersion) ? 'testing' : 'stable')" class="rounded bg-gray-900 px-1"
+        @change="pob.updateChannel = (($event.target as HTMLSelectElement).value as 'stable' | 'testing')">
+        <option value="stable">Stable releases (everyone)</option>
+        <option value="testing">Testing: also test releases (to try changes before friends get them)</option>
+      </select>
+      <div class="text-gray-500 text-sm mt-1">
+        Testing installs test versions (like 1.0.89-beta.1) as soon as they're out, and the stable release when it comes.
+        Switching back to Stable keeps the version you have until a newer stable release.
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        When Orbhoarder or its Path of Building hits an error, it opens an issue in the group's private
+        POE-Builds/poe-builds repo with your GitHub sign-in (build sharing): version, error and the last log lines,
+        without your Windows user folder. Not sent when you're not signed in. Tray → Report a problem… for anything else.
+      </div>
+    </div>
   </div>
 </template>
 
@@ -62,18 +106,23 @@ import { defineComponent, computed } from 'vue'
 import { useI18nNs } from '@/web/i18n'
 import UiRadio from '@/web/ui/UiRadio.vue'
 import UiCheckbox from '@/web/ui/UiCheckbox.vue'
+import UiToggle from '@/web/ui/UiToggle.vue'
+import { Host } from '@/web/background/IPC'
+import { usePobConfig } from './pob-config'
 import { configModelValue, configProp } from './utils'
 import { AppConfig } from '@/web/Config'
 
 export default defineComponent({
   name: 'settings.general',
-  components: { UiRadio, UiCheckbox },
+  components: { UiRadio, UiCheckbox, UiToggle },
   props: configProp(),
   setup (props) {
     const { t } = useI18nNs('settings')
 
     return {
       t,
+      pob: usePobConfig(() => props.config),
+      appVersion: Host.version,
       fontSize: configModelValue(() => props.config, 'fontSize'),
       overlayBackgroundClose: configModelValue(() => props.config, 'overlayBackgroundClose'),
       overlayBackground: configModelValue(() => props.config, 'overlayBackground'),

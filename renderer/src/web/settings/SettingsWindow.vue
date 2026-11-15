@@ -69,6 +69,7 @@ import SettingsStopwatch from '../stopwatch/settings-stopwatch.vue'
 import SettingsItemSearch from '../item-search/settings-item-search.vue'
 import SettingsPob from './pob.vue'
 import SettingsAppearance from './appearance.vue'
+import SettingsPanels from './panels.vue'
 
 function shuffle<T> (array: T[]): T[] {
   let currentIndex = array.length
@@ -217,7 +218,7 @@ function menuByType (type?: string) {
     default:
       return [
         [SettingsHotkeys, SettingsChat],
-        [SettingsGeneral, SettingsAppearance],
+        [SettingsGeneral, SettingsAppearance, SettingsPanels],
         [SettingsPricecheck, SettingsPob, SettingsMaps, SettingsItemcheck],
         [SettingsDebug, SettingsAbout]
       ]

@@ -1,40 +1,12 @@
 <template>
-  <!-- Deathloom fork: Path of Building build impact settings -->
+  <!-- Deathloom fork: Path of Building settings (build impact, folders, player).
+       Hotkeys are in Hotkeys, panel placement in Panels, startup and updates in General. -->
   <div class="max-w-md p-2">
     <div class="mb-4">
       <ui-toggle v-model="pob.enabled">Show build impact when price-checking</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         Runs Path of Building in the background and shows what an item does to your active build
         (the same numbers as PoB's item tooltip).
-      </div>
-    </div>
-    <div class="mb-4">
-      <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Orbhoarder with Windows</ui-toggle>
-      <div class="text-gray-500 text-sm mt-1">
-        Starts in the tray when you sign in to Windows, so hotkeys, the HUD and updates are ready before the game.
-      </div>
-    </div>
-    <div class="mb-4">
-      <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Orbhoarder window when the game starts</ui-toggle>
-      <div class="text-gray-500 text-sm mt-1">
-        A normal window with all panels (build, guide, trades, market) for a second screen. Also from the tray:
-        double-click the icon or "Open Orbhoarder window". It remembers its screen, position and size.
-      </div>
-    </div>
-    <div class="mb-4">
-      <ui-toggle :modelValue="pob.window2?.enabled === true" @update:modelValue="pob.window2 = { ...pob.window2, enabled: $event }">Second Orbhoarder window (for a third screen)</ui-toggle>
-      <div class="text-gray-500 text-sm mt-1">
-        Its own tabs, All-tab layout and look (Settings → Appearance in that window), and its own screen and position.
-        Open it from the tray: "Open second Orbhoarder window". Trade pages, panel hotkeys and the Lab button still go to the main window.
-      </div>
-      <ui-toggle v-if="pob.window2?.enabled" class="mt-2" :modelValue="pob.window2.atStart === true" @update:modelValue="pob.window2 = { ...pob.window2, atStart: $event }">Open it when the game starts too</ui-toggle>
-    </div>
-    <div class="mb-4">
-      <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
-      <div class="text-gray-500 text-sm mt-1">
-        When Orbhoarder or its Path of Building hits an error, it opens an issue in the group's private
-        POE-Builds/poe-builds repo with your GitHub sign-in (build sharing): version, error and the last log lines,
-        without your Windows user folder. Not sent when you're not signed in. Tray → Report a problem… for anything else.
       </div>
     </div>
     <div class="mb-2">
@@ -88,51 +60,6 @@
         Leave empty to use the player folder from PoB's build sharing (Sync…), or the builds folder itself if you don't share builds.
       </div>
     </div>
-    <div class="mt-4 mb-2">
-      <div class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">Build gear panel hotkey</span>
-        <hotkey-input v-model="pob.gearPanelKey" class="w-48" />
-      </div>
-      <div class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">Campaign guide hotkey</span>
-        <hotkey-input v-model="pob.guideKey" class="w-48" />
-      </div>
-      <div class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">Trade companion hotkey</span>
-        <hotkey-input v-model="pob.tradesKey" class="w-48" />
-      </div>
-      <div class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">Market search hotkey <span class="text-gray-500 text-sm">(optional)</span></span>
-        <hotkey-input :modelValue="pob.marketSearchKey ?? null" class="w-48" @update:modelValue="v => { pob.marketSearchKey = v }" />
-      </div>
-      <div class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">Friends' trade board hotkey <span class="text-gray-500 text-sm">(optional)</span></span>
-        <hotkey-input :modelValue="pob.boardKey ?? null" class="w-48" @update:modelValue="v => { pob.boardKey = v }" />
-      </div>
-      <div class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">Post hovered item to the friends' trade board <span class="text-gray-500 text-sm">(optional)</span></span>
-        <hotkey-input :modelValue="pob.boardPostKey ?? null" class="w-48" @update:modelValue="v => { pob.boardPostKey = v }" />
-      </div>
-      <div v-for="p of EXTRA_PANELS" :key="p.panel" class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">{{ p.label }} hotkey <span class="text-gray-500 text-sm">(optional)</span></span>
-        <hotkey-input :modelValue="pob.panelKeys?.[p.panel] ?? null" class="w-48" @update:modelValue="v => setPanelKey(p.panel, v)" />
-      </div>
-      <div class="flex items-center gap-x-2 mb-1">
-        <span class="flex-1">Open Path of Building hotkey</span>
-        <hotkey-input v-model="pob.openPobKey" class="w-48" />
-      </div>
-      <div class="text-gray-500 text-sm mb-1">
-        Each hotkey shows or hides its panel. A pinned panel (Show while playing, below) toggles over
-        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+T; Ctrl+P opens Path of Building.
-        The other panels have no hotkey until you set one (pick keys the game doesn't use).
-      </div>
-      <div class="text-gray-500 text-sm">
-        Shows the active build's items in the overlay (also in the widget menu, hammer icon).
-        Copy puts the unique name or base type on the clipboard for the in-game market
-        (press <code>/</code>, then Ctrl+V); the app never types into the game.
-        The same Copy button is on the price check window.
-      </div>
-    </div>
     <div class="mt-4 mb-2 text-gray-500 text-sm">
       Comparing with your live character (equipped gear, tree, gems, following the character you play) is
       turned off: GGG's rules don't allow shared apps to read character data from pathofexile.com outside
@@ -140,133 +67,23 @@
       registration for its official API.
     </div>
 
-    <div class="mt-6 mb-2">
-      <div class="mb-1">Updates</div>
-      <select :value="pob.updateChannel ?? (/-beta\.\d+$/.test(appVersion) ? 'testing' : 'stable')" class="rounded bg-gray-900 px-1"
-        @change="pob.updateChannel = (($event.target as HTMLSelectElement).value as 'stable' | 'testing')">
-        <option value="stable">Stable releases (everyone)</option>
-        <option value="testing">Testing: also test releases (to try changes before friends get them)</option>
-      </select>
-      <div class="text-gray-500 text-sm mt-1">
-        Testing installs test versions (like 1.0.89-beta.1) as soon as they're out, and the stable release when it comes.
-        Switching back to Stable keeps the version you have until a newer stable release.
-      </div>
-    </div>
-
-    <div class="mt-6 mb-2">
-      <div class="mb-1">Chat buttons (trade companion)</div>
-      <select v-model="pob.chatButtons" class="rounded bg-gray-900 px-1">
-        <option value="copy">Copy the command (paste it in chat yourself)</option>
-        <option value="send">Send it to game chat</option>
-      </select>
-      <div class="text-gray-500 text-sm mt-1">
-        Send: each click focuses the game and sends exactly one chat command (e.g. <code>/invite name</code>),
-        the same as a chat hotkey. Nothing is ever sent without a click.
-      </div>
-    </div>
-
-    <div class="mt-6 mb-2">
-      <ui-toggle :modelValue="pob.tradeLinksInWindow !== false" @update:modelValue="v => pob.tradeLinksInWindow = v">
-        Open Trade buttons in the Orbhoarder window (Trade site tab)</ui-toggle>
-      <div class="text-gray-500 text-sm mt-1">
-        The official trade site in its own tab, signed in separately from your browser (sign in on GGG's own page;
-        Orbhoarder never sees your login). Off: Trade buttons open your browser as before.
-      </div>
-    </div>
-
-    <div class="mt-6 mb-2">
-      <div class="mb-1">Where panels show</div>
-      <div class="text-gray-500 text-sm mb-2">
-        Pick for each panel where you want it: <b>In game</b> (a small window over the game, below),
-        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Orbhoarder window</b> (its All tab; arrange it there with Edit layout).
-        A panel that's in neither In game nor the overlay opens the Orbhoarder window when you press its hotkey.
-      </div>
-      <table class="mb-2">
-        <tr class="text-gray-500 text-sm">
-          <td class="pr-4"></td><td class="pr-4">In game</td><td class="pr-4">Overlay</td><td>Orbhoarder window</td>
-        </tr>
-        <tr v-for="p of PANELS" :key="p.key">
-          <td class="pr-4 py-0.5">{{ p.label }}</td>
-          <td class="pr-4"><ui-toggle v-if="p.hud" :modelValue="Boolean(pob.hud[p.hud])" @update:modelValue="v => { if (p.hud) pob.hud[p.hud] = v }" /><span v-else class="text-gray-600 text-sm">—</span></td>
-          <td class="pr-4">
-            <ui-toggle v-if="p.overlay" :modelValue="placement(p.key).overlay !== false" @update:modelValue="v => setPlacement(p.key, 'overlay', v)" />
-            <span v-else class="text-gray-600 text-sm">—</span></td>
-          <td>
-            <ui-toggle v-if="p.window" :modelValue="placement(p.key).window !== false" @update:modelValue="v => setPlacement(p.key, 'window', v)" />
-            <span v-else class="text-gray-600 text-sm">{{ p.key === 'search' ? 'Trade site tab' : '—' }}</span></td>
-        </tr>
-      </table>
-    </div>
-
-    <div class="mt-6 mb-2">
-      <div class="mb-1">Show while playing</div>
-      <div class="text-gray-500 text-sm mb-2">
-        Pinned panels stay on screen while the game has focus, in a small window of their own that never
-        takes focus from the game. Drag the grip at the top to move it. Unpinned panels only show with
-        the overlay active (Shift+Space). If the game crashes with a panel pinned, try "Solid background",
-        and make sure the game's Display mode is <b>Windowed Fullscreen</b>.
-      </div>
-      <table class="mb-2">
-        <tr class="text-gray-500 text-sm">
-          <td class="pr-4"></td><td class="pr-4">Pinned</td><td>Clicks go through while playing</td>
-        </tr>
-        <tr v-for="p of HUD_PANELS" :key="p.key">
-          <td class="pr-4 py-0.5">{{ p.label }} <span class="text-gray-500 text-sm">({{ hotkeyOf(p) || 'no hotkey' }})</span></td>
-          <td class="pr-4"><ui-toggle :modelValue="Boolean(pob.hud[p.key])" @update:modelValue="v => { pob.hud[p.key] = v }" /></td>
-          <td><ui-toggle v-if="pob.hud[p.key]" v-model="pob.hud.clickThroughPanels[p.key]" /></td>
-        </tr>
-      </table>
-      <div class="text-gray-500 text-sm mb-2">
-        Pinned panels start closed: open and close them with their hotkey. Clicks going through means you can't
-        press that panel's buttons while you play (Shift+Space makes them clickable).
-      </div>
-      <template v-if="pob.hud.trades">
-        <ui-toggle v-model="pob.hud.autoHideTrades" class="mb-1">Trade companion opens on a trade whisper and closes when no trades are left</ui-toggle>
-      </template>
-      <template v-if="HUD_PANELS.some(p => pob.hud[p.key])">
-        <ui-toggle v-model="pob.hud.opaque" class="mb-1">Solid background (no see-through window)</ui-toggle>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="shrink-0">Opacity</span>
-          <input v-model.number="pob.hud.opacity" type="range" min="30" max="100" step="5" class="flex-1">
-          <span class="w-10 text-right">{{ pob.hud.opacity }}%</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="flex-1">Drag a panel's top bar to move it, its bottom-right corner to resize it.</span>
-          <button type="button" class="px-2 bg-gray-800 rounded" @click="resetHudPositions">Reset positions and sizes</button>
-        </div>
-      </template>
-    </div>
-
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref } from 'vue'
+import { defineComponent, ref } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
-import HotkeyInput from './HotkeyInput.vue'
 import PobInstallStatus from '@/web/pob/PobInstallStatus.vue'
 import { configProp } from './utils'
-import { defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import { Host } from '@/web/background/IPC'
-import { PANELS } from '@/web/desktop/panels'
-import type { PanelKey, PanelPlacement, HudPanel } from '@ipc/types'
-import { EXTRA_PANELS } from '@/web/desktop/panel-defs'
+import { usePobConfig } from './pob-config'
 
 export default defineComponent({
   name: 'Path of Building',
-  components: { UiToggle, HotkeyInput, PobInstallStatus },
+  components: { UiToggle, PobInstallStatus },
   props: configProp(),
   setup (props) {
-    const pob = computed(() => {
-      props.config.pob ??= defaultPobConfig()
-      props.config.pob.chatButtons ??= 'copy'
-      props.config.pob.hud ??= defaultHudConfig()
-      props.config.pob.hud.clickThroughPanels ??= defaultHudConfig().clickThroughPanels
-      if (props.config.pob.guideKey === undefined) props.config.pob.guideKey = null
-      if (props.config.pob.tradesKey === undefined) props.config.pob.tradesKey = null
-      if (props.config.pob.openPobKey === undefined) props.config.pob.openPobKey = null
-      return props.config.pob
-    })
+    const pob = usePobConfig(() => props.config)
 
     let nextId = 1
 
@@ -335,9 +152,7 @@ export default defineComponent({
       Host.sendEvent({ name: 'CLIENT->MAIN::pob-copy-builds', payload: { requestId, source } })
     }
 
-    const appVersion = Host.version
     return {
-      appVersion,
       pob,
       defaults,
       existingPob,
@@ -347,32 +162,6 @@ export default defineComponent({
       async copyFromFolder () {
         const picked = await pickFolder('Builds folder of the other Path of Building', existingPob.value?.buildsDir ?? '')
         if (picked) copyBuilds(picked)
-      },
-      PANELS,
-      placement (key: PanelKey): PanelPlacement {
-        return pob.value.panels?.[key] ?? {}
-      },
-      setPlacement (key: PanelKey, where: 'overlay' | 'window', on: boolean) {
-        pob.value.panels ??= {}
-        pob.value.panels[key] = { ...pob.value.panels[key], [where]: on }
-      },
-      HUD_PANELS: [
-        { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },
-        { key: 'trades', label: 'Trade companion', hotkey: 'tradesKey' },
-        { key: 'gear', label: 'Build gear', hotkey: 'gearPanelKey' },
-        ...EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: null }))
-      ] as Array<{ key: HudPanel, label: string, hotkey: 'guideKey' | 'tradesKey' | 'gearPanelKey' | null }>,
-      EXTRA_PANELS,
-      hotkeyOf (p: { key: HudPanel, hotkey: 'guideKey' | 'tradesKey' | 'gearPanelKey' | null }) {
-        return p.hotkey ? pob.value[p.hotkey] : pob.value.panelKeys?.[p.key]
-      },
-      setPanelKey (panel: HudPanel, key: string | null) {
-        pob.value.panelKeys = { ...pob.value.panelKeys, [panel]: key }
-      },
-      // applied when the settings window is closed, like every other setting
-      resetHudPositions () {
-        pob.value.hud.pos = defaultHudConfig().pos
-        pob.value.hud.dims = {}
       },
       async browsePobDir () {
         const picked = await pickFolder('Path of Building folder', pob.value.pobDir || defaults.value.pobDir)
