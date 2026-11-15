@@ -5,7 +5,7 @@
     <div class="flex gap-x-1 p-1 shrink-0">
       <div class="relative flex-1">
         <input ref="inputEl" v-model="text" type="text" spellcheck="false"
-          class="w-full rounded bg-gray-900 px-2 py-0.5" placeholder="Item name (unique, base type, gem, card…)"
+          class="w-full rounded bg-gray-900 px-2 py-0.5" placeholder="Item name (unique, base, gem, card…) or paste a trade link"
           @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)" @keydown.enter.prevent="pickHighlighted"
           @focus="showSuggest = true">
         <div v-if="showSuggest && suggestions.length && !picked"
@@ -22,6 +22,16 @@
       </div>
       <button class="btn" :disabled="!picked || busy" @click="run"><i class="fas fa-search" /> Search</button>
     </div>
+    <div v-if="link" class="mx-1 mb-1 px-2 py-1 rounded bg-gray-900 shrink-0 text-xs">
+      <div class="flex items-center gap-x-2">
+        <span class="text-gray-300 truncate"><i class="fas fa-link mr-1" />Trade site {{ link.kind }} · {{ link.league }}</span>
+        <button class="btn ml-auto shrink-0" @click="openLink"><i class="fas fa-store mr-1" />Open this search</button>
+      </div>
+      <div v-if="league && link.league.toLowerCase() !== league.toLowerCase()" class="text-yellow-400 mt-0.5">
+        This link is for {{ link.league }}; your league is {{ league }}. It opens as it is.</div>
+    </div>
+    <div v-else-if="badLink" class="mx-1 mb-1 px-2 py-1 rounded bg-gray-900 shrink-0 text-xs text-gray-400">
+      Only pathofexile.com trade search links (…/trade/search/League/id or …/trade/exchange/League/id) can be opened here.</div>
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pb-1 shrink-0 text-xs text-gray-400">
       <label>Sellers
         <select v-model="status" class="rounded bg-gray-900 px-1 ml-1">
@@ -101,7 +111,7 @@ import { computed, ref, shallowRef, watch } from 'vue'
 import type { BaseType } from '@/assets/data'
 import { useLeagues } from '@/web/background/Leagues'
 import { runChat, chatMode } from '@/web/companion/chat'
-import { openTradeLink } from '@/web/desktop/trade-tab'
+import { openTradeLink, parseTradeLink } from '@/web/desktop/trade-tab'
 import {
   findMarketItems, searchMarket, moreListings, whisperText, hideoutCommand,
   type ListingStatus, type MarketListing, type MarketResult
@@ -116,7 +126,10 @@ const text = ref('')
 const picked = shallowRef<BaseType | null>(null)
 const showSuggest = ref(false)
 const highlight = ref(0)
-const suggestions = computed(() => picked.value ? [] : findMarketItems(text.value))
+// Deathloom fork (idea 5): a pasted trade site link opens that search in the Trade site tab
+const link = computed(() => parseTradeLink(text.value))
+const badLink = computed(() => !link.value && /^\s*(https?:\/\/|www\.)/i.test(text.value))
+const suggestions = computed(() => (picked.value || link.value || badLink.value) ? [] : findMarketItems(text.value))
 watch(text, (t) => {
   if (picked.value && t !== picked.value.name) picked.value = null
   highlight.value = 0
@@ -136,6 +149,7 @@ function move (d: number) {
   highlight.value = (highlight.value + d + suggestions.value.length) % suggestions.value.length
 }
 function pickHighlighted () {
+  if (link.value) { openLink(); return }
   if (picked.value) { run().catch(() => {}); return }
   const s = suggestions.value[highlight.value]
   if (s) pick(s)
@@ -205,6 +219,10 @@ function toggle (id: string) {
 
 function chat (t: string | undefined) {
   if (t) runChat(t)
+}
+
+function openLink () {
+  if (link.value) openTradeLink(link.value.url)
 }
 
 function openSite () {

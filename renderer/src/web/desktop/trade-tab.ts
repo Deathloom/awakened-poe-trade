@@ -24,6 +24,19 @@ export function isTradeSitePage (url: string): boolean {
   }
 }
 
+// Deathloom fork: a pasted trade site search link (PoE1, www.pathofexile.com) ->
+// the same link rebuilt from its parts, so nothing else in the text is opened
+export function parseTradeLink (text: string): { url: string, kind: 'search' | 'exchange', league: string, id: string } | null {
+  const m = /^\s*(?:https?:\/\/)?(?:www\.)?pathofexile\.com\/trade\/(search|exchange)\/([^/?#\s]{1,60})\/([A-Za-z0-9]{4,40})\/?(?:[?#]\S*)?\s*$/i.exec(text)
+  if (!m) return null
+  let league: string
+  try { league = decodeURIComponent(m[2]) } catch { return null }
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f/\\]/.test(league)) return null
+  const kind = m[1].toLowerCase() as 'search' | 'exchange'
+  return { url: `https://www.pathofexile.com/trade/${kind}/${encodeURIComponent(league)}/${m[3]}`, kind, league, id: m[3] }
+}
+
 // Shows the page in the Trade site tab; anything that isn't a trade site page
 // (or a non-English realm) opens in the browser as before.
 export function openTradeTab (url: string) {
