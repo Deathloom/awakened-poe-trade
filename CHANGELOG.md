@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#138)
+- **Seasonal, fun and league themes** (Settings → Appearance): **Seasonal (changes by itself)** picks summer, autumn, winter or spring for today's date (southern hemisphere by default, northern for friends abroad), with holiday themes for a few days: Valentine's, Easter, Halloween, the festive season and New Year. It shows which theme is on and when it changes. **Just for fun:** Loot Goblin, Potato PC, Comic Exile, Vendor Trash and Mirror Tier. **Follow the current league** uses the league's theme (Covens for now; other leagues use your picked theme). Themes in the Loot Goblin window get small background decorations, drawn by us in CSS (can be turned off). No game artwork or logos are used.
+
 ## [1.0.88] - 2026-11-15
 
 Released as 1.0.88: the 1.0.87 run was cancelled when GitHub paused Actions on the fork.
