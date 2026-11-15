@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#191)
+- **Item search folded into Market search:** the Item search icon is gone from the overlay menu; Market search now shows the poe.ninja price next to each suggestion as you type, and still finds who sells it.
+
 ### Changed (#190)
 - **One checklist:** Help → League start is gone; its list is now the top part of Cheat sheets → **Checklist** (was Progress), followed by the endgame goals. Ticks you already made in either list are kept, per league.
 

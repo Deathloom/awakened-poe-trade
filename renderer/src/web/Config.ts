@@ -499,6 +499,13 @@ function upgradeConfig (_config: Config): Config {
   config.widgets = config.widgets.filter(w => w.wmType !== 'stash-tracker')
   // Deathloom fork (2026-11-16): Stopwatch widget removed (This session has a stopwatch)
   config.widgets = config.widgets.filter(w => w.wmType !== 'timer')
+  // Deathloom fork (2026-11-16): Item search hidden from the menu (Market search shows
+  // the same poe.ninja prices and who sells it). Kept in the settings for upstream merges.
+  for (const w of config.widgets) {
+    if (w.wmType !== 'item-search') continue
+    w.wmWants = 'hide'
+    if (!w.wmFlags.includes('menu::skip')) w.wmFlags = [...w.wmFlags, 'menu::skip']
+  }
   if (config.pob.stash) config.pob.stash.enabled = false
   // live character data off (character-window endpoints are outside GGG's official API)
   config.pob.liveGear = false
