@@ -204,3 +204,12 @@ test('vendor regex: numbers, links, query', () => {
   assert.equal(vr.vendorRegex({ ...vr.emptyQuery(), custom: 'a.b' }).text, '"a\\.b"')
   assert.equal(vr.vendorRegex(vr.emptyQuery()).text, '')
 })
+
+const gk = await import('./.build/game-keys.mjs')
+test('game keys: PoE1 defaults that our hotkeys must not take', () => {
+  assert.match(gk.poe1KeyUse('Ctrl + T'), /skill 13/)
+  assert.match(gk.poe1KeyUse('Ctrl + C'), /copy/)
+  for (const k of ['Ctrl + B', 'Ctrl + G', 'Ctrl + H', 'Ctrl + P', 'Ctrl + D', 'Shift + Space', 'F5', 'F9', null, undefined]) {
+    assert.equal(gk.poe1KeyUse(k), undefined, String(k))
+  }
+})

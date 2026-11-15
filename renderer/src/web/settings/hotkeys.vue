@@ -43,7 +43,7 @@
       </div>
       <div class="text-gray-500 text-sm mb-1">
         Each hotkey shows or hides its panel. A panel pinned over the game (Settings → Panels) toggles over
-        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+T; Ctrl+P opens Path of Building.
+        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+B; Ctrl+P opens Path of Building. Keys the game uses by default are marked in orange.
         The other panels have no hotkey until you set one (pick keys the game doesn't use).
       </div>
       <div class="text-gray-500 text-sm">Chat command hotkeys are with their commands in Settings → Chat.</div>

@@ -135,7 +135,7 @@ function showTrades () {
   }
 }
 
-// no open trades left: close it again if auto-hide is on (Ctrl+T still opens it)
+// no open trades left: close it again if auto-hide is on (its hotkey still opens it)
 function hideTradesIfAuto () {
   if (AppConfig().pob?.hud?.autoHideTrades && !props.hidden.trades) {
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-panel', payload: { panel: 'trades', visible: false } })
