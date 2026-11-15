@@ -38,6 +38,11 @@ export class DesktopWindow {
     if (this.win && !this.win.isDestroyed()) this.win.close()
   }
 
+  // on screen (shown, maybe minimised): reopened after an update
+  isOpen (): boolean {
+    return Boolean(this.win && !this.win.isDestroyed() && this.win.isVisible())
+  }
+
   setPort (port: number) {
     this.port = port
     if (this.openWhenReady) {
