@@ -9,7 +9,9 @@
 //   pages carry their own host name), unless --listen asked for another host;
 // - a browser request that says where it comes from (Origin) must come from
 //   the overlay's own pages (same host:port as the request);
-// - file paths from URLs must stay inside their folder.
+// - file paths from URLs must stay inside their folder;
+// - with --listen, requests from other devices (not loopback) must carry the
+//   remote key: ?key=… once (the server then sets a cookie) or that cookie.
 
 import * as path from 'path'
 
@@ -24,10 +26,33 @@ function hostName (hostHeader: string): string {
 export interface GuardOptions {
   // --listen host (other than loopback): that name / address is accepted too
   listenHost?: string
+  // required from other devices (non-loopback Host) when set
+  remoteKey?: string
+}
+
+export const REMOTE_KEY_COOKIE = 'orbhoarder_key'
+
+// the key a request carries: ?key=… in the URL, else the cookie
+export function requestKey (url: string | undefined, cookie: string | undefined): string | undefined {
+  const m = /[?&]key=([A-Za-z0-9_-]{16,128})(?:&|$)/.exec(url ?? '')
+  if (m) return m[1]
+  for (const part of (cookie ?? '').split(';')) {
+    const [k, v] = part.trim().split('=')
+    if (k === REMOTE_KEY_COOKIE && v) return v
+  }
+  return undefined
+}
+
+// constant-time compare (no early exit on the first different character)
+function sameKey (a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
 }
 
 export function isAllowedRequest (
-  headers: { host?: string, origin?: string, secFetchSite?: string },
+  headers: { host?: string, origin?: string, secFetchSite?: string, key?: string },
   opts: GuardOptions = {}
 ): boolean {
   const host = (headers.host ?? '').toLowerCase()
@@ -35,7 +60,11 @@ export function isAllowedRequest (
   const name = hostName(host)
   const listen = opts.listenHost?.toLowerCase()
   const listensWide = listen === '0.0.0.0' || listen === '::'
-  if (!LOOPBACK.has(name) && !(listen && (listensWide || name === listen))) return false
+  if (!LOOPBACK.has(name)) {
+    if (!(listen && (listensWide || name === listen))) return false
+    // another device: only with the remote key (no key configured = refused)
+    if (!opts.remoteKey || !headers.key || !sameKey(headers.key, opts.remoteKey)) return false
+  }
   // Deathloom fork: a page on another site (image tag, link, form) is never let in,
   // even when the browser sends no Origin (Sec-Fetch-Site still says cross-site)
   if (headers.secFetchSite?.toLowerCase() === 'cross-site') return false

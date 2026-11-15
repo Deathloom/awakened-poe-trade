@@ -10,7 +10,8 @@ import { ConfigStore } from './host-files/ConfigStore'
 import { addFileUploadRoutes } from './host-files/file-uploads'
 import type { AppUpdater } from './AppUpdater'
 import type { Logger } from './RemoteLogger'
-import { isAllowedRequest, safeJoin } from './request-guard'
+import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE } from './request-guard'
+import { remoteKey } from './remote-key'
 
 export const server = createServer()
 
@@ -22,7 +23,8 @@ const serverEmit = server.emit.bind(server)
 server.emit = ((event: string, ...args: any[]) => {
   if (event === 'request' || event === 'upgrade') {
     const req = args[0]
-    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined }, { listenHost })) {
+    const key = listenHost ? requestKey(req.url, req.headers.cookie) : undefined
+    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined, key }, { listenHost, remoteKey: listenHost ? remoteKey() : undefined })) {
       if (rejectedCount++ < 20) {
         console.warn(`[server] refused ${event} ${String(req.url).slice(0, 80)} from origin=${String(req.headers.origin)} host=${String(req.headers.host)}`)
       }
@@ -34,6 +36,11 @@ server.emit = ((event: string, ...args: any[]) => {
         args[1].destroy()
       }
       return true
+    }
+    // Deathloom fork: a device that opened ?key=… keeps the key as a cookie, so the
+    // page's own scripts and WebSocket get in without it in every URL
+    if (event === 'request' && key && /[?&]key=/.test(String(req.url))) {
+      args[1].setHeader('set-cookie', `${REMOTE_KEY_COOKIE}=${key}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000`)
     }
   }
   return serverEmit(event, ...args)
