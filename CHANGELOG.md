@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#166)
+Gems → For my level shows the gems again (it stayed empty below the level since the gem stages update).
+
 ### Added (#165)
 - **Themes show in the Orbhoarder window:** **Glass panels** (on by default) make the panels see-through and lightly blurred, with an accent line on top and the theme's pattern in the corner, so the background shows. **Decoration strength** sets how visible the patterns are. The top bar takes the theme's colour.
 
