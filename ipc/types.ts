@@ -512,6 +512,8 @@ export type IpcEvent =
   IpcAtlasFilesState |
   IpcBuildNotesRequest |
   IpcBuildNotesResult |
+  IpcPlayerStatusRequest |
+  IpcPlayerStatusState |
   IpcPobImportRequest |
   IpcPobImportResult |
   IpcStashRequest |
@@ -1016,6 +1018,36 @@ type IpcBuildNotesResult =
     data?: BuildNotesData
     // the save that went through (other windows reload)
     saved?: boolean
+  }>
+
+// Deathloom fork: what you share with friends through build sync (opt-in):
+// <player folder>/Loot Goblin/status.txt. Friends' copies come in with Pull.
+export interface PlayerStatusData {
+  updated: number
+  character?: { name: string, cls: string, level: number }
+  league?: string
+  // only with "share what I'm doing": the area you're in
+  zone?: string
+  // campaign act splits of that character (ms of campaign time when the act was first entered)
+  splits?: Record<string, number>
+  // followed from level 2 (splits complete)
+  fromStart?: boolean
+}
+export interface PlayerStatusEntry {
+  player: string
+  own: boolean
+  status: PlayerStatusData
+}
+type IpcPlayerStatusRequest =
+  Event<'CLIENT->MAIN::player-status', {
+    op: 'list' | 'write' | 'clear'
+    status?: PlayerStatusData
+  }>
+type IpcPlayerStatusState =
+  Event<'MAIN->CLIENT::player-status', {
+    available: boolean
+    entries: PlayerStatusEntry[]
+    error?: string
   }>
 
 export interface BoardState {
