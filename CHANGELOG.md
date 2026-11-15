@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#140)
+- **Search strings** (Build panel → Notes): copy a stash or vendor search for the build's gems, boots with movement speed, 3/4/5-linked sockets, and maps without the mods your build can't run. One click copies; in game click the search box (or Ctrl+F) and paste. Long lists are split to fit the game's 50-character limit.
+
 ### Added (#139)
 - **Notes per build** (Build panel → **Notes**): notes and guide text, the **map mods this build can't run** (pick from common ones or type your own) and its **loot filter** (a FilterBlade link or a name). They're saved next to the build, so build sync shares them with friends; friends' notes are read-only.
 - **Map check warns** about map mods your active build can't run (red box at the top when you price check a map).
