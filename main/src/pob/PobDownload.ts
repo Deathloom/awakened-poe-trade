@@ -1,12 +1,13 @@
 // Deathloom fork: Path of Building is no longer inside the Orbhoarder installer.
-// Orbhoarder downloads it from the PoB fork's master branch into its own folder
-// (%LOCALAPPDATA%\Loot Goblin\PathOfBuilding), file by file from master's
-// manifest.xml - the same files and source PoB's own updater uses afterwards.
+// Orbhoarder downloads it from the PoB fork at a pinned commit (pob-pin.ts) into
+// its own folder (%LOCALAPPDATA%\Loot Goblin\PathOfBuilding), file by file from
+// that commit's manifest.xml.
 //
 // Layout = the repo's: src\ (Lua, data, trees) + runtime\ (exe, dlls), so
 // ImpactServer, SyncServer and PoBHeadless.exe work as with a git clone.
-// src\manifest.xml gets branch="master" platform="win32" (an "installed" manifest:
-// PoB's updater reads it) and src\bundled.cfg keeps PoB's settings in
+// src\manifest.xml gets branch="<commit>" platform="win32" (an "installed" manifest:
+// PoB's own updater reads it, so it stays on the same commit too) and
+// src\bundled.cfg keeps PoB's settings in
 // Documents\Loot Goblin.
 //
 // No Electron imports here, so this runs in plain Node for tests.
@@ -15,7 +16,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as crypto from 'crypto'
 
-export const POB_REPO_RAW = 'https://raw.githubusercontent.com/Deathloom/PathOfBuilding/master/'
+export const POB_RAW_BASE = 'https://raw.githubusercontent.com/Deathloom/PathOfBuilding/'
 // part -> folder in the PoB folder (same as manifest.cfg; "default" files go to src like PoB's updater does)
 const PART_DIRS: Record<string, string> = { default: 'src', program: 'src', tree: 'src', runtime: 'runtime' }
 
@@ -70,8 +71,8 @@ export function parseManifest (text: string): Manifest {
 }
 
 // Installed-style manifest for PoB's own updater (it needs branch + platform)
-export function installedManifest (remoteText: string): string {
-  return remoteText.replace(/<Version\s+number="([^"]+)"[^>]*\/>/, '<Version number="$1" platform="win32" branch="master" />')
+export function installedManifest (remoteText: string, ref = 'master'): string {
+  return remoteText.replace(/<Version\s+number="([^"]+)"[^>]*\/>/, `<Version number="$1" platform="win32" branch="${ref}" />`)
 }
 
 // Where a manifest file lives in the PoB folder. Rejects anything leaving the folder.
@@ -85,8 +86,8 @@ export function localPath (pobDir: string, file: ManifestFile): string {
   return path.join(pobDir, sub, ...rel.split('/'))
 }
 
-export function fileUrl (manifest: Manifest, file: ManifestFile): string {
-  const base = (manifest.sources[file.part] ?? '').replace('{branch}', 'master')
+export function fileUrl (manifest: Manifest, file: ManifestFile, ref = 'master'): string {
+  const base = (manifest.sources[file.part] ?? '').replace('{branch}', ref)
   if (!base.startsWith('https://raw.githubusercontent.com/Deathloom/PathOfBuilding/')) {
     throw new Error(`Unexpected download source for part "${file.part}": ${base}`)
   }
@@ -146,6 +147,8 @@ export interface SyncOptions {
   beforeReplace?: () => Promise<void> | void
   concurrency?: number
   manifestUrl?: string
+  // PoB fork commit (pob-pin.ts) or branch; default master (tests)
+  ref?: string
 }
 
 async function fetchBuffer (fetchFn: FetchFn, url: string): Promise<Buffer> {
@@ -163,14 +166,16 @@ async function fetchBuffer (fetchFn: FetchFn, url: string): Promise<Buffer> {
   throw new Error(`${url}: ${lastErr?.message ?? 'download failed'}`)
 }
 
-// Brings pobDir in line with master's manifest. Files are downloaded next to
+// Brings pobDir in line with the manifest at opts.ref. Files are downloaded next to
 // their target (*.lgdl) and moved into place only when all of them arrived and
 // passed the hash check, so a failed run leaves the old copy working.
 export async function syncPob (pobDir: string, opts: SyncOptions): Promise<SyncResult> {
   const progress = (p: Progress) => { opts.onProgress?.(p) }
   progress({ phase: 'checking', done: 0, total: 0, bytes: 0 })
   const fetchFn = opts.fetch
-  const manifestRes = await fetchFn(opts.manifestUrl ?? POB_REPO_RAW + 'manifest.xml')
+  const ref = opts.ref ?? 'master'
+  if (!/^[\w.-]+$/.test(ref)) throw new Error(`Bad Path of Building version: ${ref}`)
+  const manifestRes = await fetchFn(opts.manifestUrl ?? `${POB_RAW_BASE}${ref}/manifest.xml`)
   if (!manifestRes.ok) throw new Error(`Couldn't get Path of Building's file list (HTTP ${manifestRes.status})`)
   const remoteText = await manifestRes.text()
   const remote = parseManifest(remoteText)
@@ -194,7 +199,7 @@ export async function syncPob (pobDir: string, opts: SyncOptions): Promise<SyncR
   const updateExe = path.join(pobDir, 'runtime', 'Update.exe')
   if (!fs.existsSync(updateExe)) {
     // same source check as every other file (fileUrl)
-    extras.push({ target: updateExe, url: fileUrl(remote, { part: 'runtime', name: 'Update.exe', sha1: '' }) })
+    extras.push({ target: updateExe, url: fileUrl(remote, { part: 'runtime', name: 'Update.exe', sha1: '' }, ref) })
   }
   const bundledCfg = path.join(pobDir, 'src', 'bundled.cfg')
   if (!fs.existsSync(bundledCfg)) extras.push({ target: bundledCfg, content: '' })
@@ -205,7 +210,7 @@ export async function syncPob (pobDir: string, opts: SyncOptions): Promise<SyncR
     .filter(f => !remoteNames.has(`${f.part}|${f.name}`))
 
   const manifestPath = path.join(pobDir, 'src', 'manifest.xml')
-  const newManifest = installedManifest(remoteText)
+  const newManifest = installedManifest(remoteText, ref)
   let manifestSame = false
   try { manifestSame = fs.readFileSync(manifestPath, 'utf8') === newManifest } catch {}
 
@@ -222,7 +227,7 @@ export async function syncPob (pobDir: string, opts: SyncOptions): Promise<SyncR
   const queue: Array<() => Promise<void>> = [
     ...todo.map(file => async () => {
       const target = localPath(pobDir, file)
-      const data = await fetchBuffer(fetchFn, fileUrl(remote, file))
+      const data = await fetchBuffer(fetchFn, fileUrl(remote, file, ref))
       if (!sha1Matches(data, file.sha1)) throw new Error(`${file.name}: download damaged (hash mismatch)`)
       await fs.promises.mkdir(path.dirname(target), { recursive: true })
       await fs.promises.writeFile(target + '.lgdl', data)
