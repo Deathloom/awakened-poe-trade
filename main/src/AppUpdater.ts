@@ -30,9 +30,13 @@ export class AppUpdater {
   // Deathloom fork: install silently and start Loot Goblin again afterwards. The
   // installer is the assisted (oneClick: false) kind, so a non-silent run shows the
   // whole wizard and waits for Next; /S skips the pages and --force-run relaunches.
+  // Deathloom fork: main remembers which windows to open again after the restart
+  beforeInstall: () => void = () => {}
+
   installNow = () => {
     if (this._info.state !== 'update-downloaded' || this._installing) return
     this._installing = true
+    try { this.beforeInstall() } catch {}
     this.notify('Updating Loot Goblin', `Installing version ${this._info.version}. Loot Goblin starts again by itself in a few seconds.`)
     autoUpdater.quitAndInstall(true, true)
   }

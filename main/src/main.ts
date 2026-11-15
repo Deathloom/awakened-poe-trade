@@ -6,6 +6,7 @@ import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { startServer, eventPipe, server } from './server'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
@@ -175,6 +176,23 @@ app.on('ready', async () => {
       tray.openDesktop = () => { desktop.open() }
       openDesktopWindow = () => { desktop.open() }
       if (desktopRequested) desktop.open()
+      // Deathloom fork: Loot Goblin windows open before an update are opened again
+      // after the restart (the file is written just before installing, read once)
+      const reopenFile = path.join(app.getPath('userData'), 'apt-data', 'reopen-after-update.json')
+      appUpdater.beforeInstall = () => {
+        const open = { desktop: desktop.isOpen(), desktop2: desktop2.isOpen(), at: Date.now() }
+        if (open.desktop || open.desktop2) writeFileSync(reopenFile, JSON.stringify(open))
+      }
+      let reopen2 = false
+      try {
+        const r = JSON.parse(readFileSync(reopenFile, 'utf8')) as { desktop?: boolean, desktop2?: boolean, at?: number }
+        unlinkSync(reopenFile)
+        if (typeof r.at === 'number' && Date.now() - r.at < 15 * 60 * 1000) {
+          logger.write('info [update] opening the Loot Goblin windows that were open before the update')
+          if (r.desktop) desktop.open({ focus: false })
+          reopen2 = r.desktop2 === true
+        }
+      } catch {}
       // Trade site tab: open GGG trade pages from the overlay in the window
       eventPipe.onEventAnyClient('CLIENT->MAIN::user-action', (e) => {
         if (e.action === 'open-window-view') {
@@ -267,6 +285,11 @@ app.on('ready', async () => {
           tray.rebuildMenu()
           // switched on in Settings (not at app start): show it straight away
           if (window2On && firstRunChecked) desktop2.open({ focus: false })
+        }
+        // second window was open before an update (and is still switched on)
+        if (reopen2) {
+          reopen2 = false
+          if (window2On) desktop2.open({ focus: false })
         }
         // first run (setup guide not done yet): open the Loot Goblin window, which
         // shows the setup guide, so it can be done before playing
