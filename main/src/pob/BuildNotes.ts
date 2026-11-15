@@ -43,7 +43,7 @@ export function cleanNotes (d: Partial<BuildNotesData> | undefined): BuildNotesD
 export function notesToFile (d: BuildNotesData): string {
   const text = d.text.split('\n').map(l => l.startsWith('## ') ? `\\${l}` : l).join('\n')
   return [
-    '# Loot Goblin build notes (edit them in Loot Goblin: Build panel → Notes)',
+    '# Orbhoarder build notes (edit them in Orbhoarder: Build panel → Notes)',
     '## Notes',
     text,
     '## Map mods to avoid',

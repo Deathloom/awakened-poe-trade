@@ -11,7 +11,7 @@ export const HUD_PANEL = (params.get('hud') || 'guide') as HudPanel
 // active" overlay client) but may save settings.
 export const IS_DESKTOP = params.has('desktop') && !IS_HUD
 
-// Deathloom fork: optional second Loot Goblin window (?desktop=2, third screen).
+// Deathloom fork: optional second Orbhoarder window (?desktop=2, third screen).
 // It keeps its own tab, All-tab layout and split sizes (localStorage keys with
 // ".w2"), starting from window 1's until changed there.
 export const DESKTOP_ID: 0 | 1 | 2 = IS_DESKTOP ? (params.get('desktop') === '2' ? 2 : 1) : 0

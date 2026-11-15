@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: poelab.com (today's labyrinth layouts) in the Loot Goblin
+  <!-- Deathloom fork: poelab.com (today's labyrinth layouts) in the Orbhoarder
        window. Shown as-is in its own session, ads included; nothing is read
        from or copied off the page. Links to other sites open in your browser. -->
   <div class="flex flex-col h-full min-h-0 rounded bg-gray-800">
@@ -32,7 +32,7 @@
       <button class="ml-auto text-gray-500 hover:text-gray-200" title="Clear the checklist (also happens when you enter Aspirants' Plaza)" @click="resetRun(false)">Reset</button>
     </div>
     <div class="px-3 py-0.5 text-xs text-gray-500 bg-gray-900 shrink-0">
-      poelab.com as-is (community site, not part of Loot Goblin). Links to other sites open in your browser.
+      poelab.com as-is (community site, not part of Orbhoarder). Links to other sites open in your browser.
     </div>
     <webview ref="webviewEl" class="flex-1 min-h-0" :partition="PARTITION" :src="HOME" allowpopups />
   </div>

@@ -69,7 +69,7 @@ export function decodeCode (code: string): string {
     }
   }
   if (/<PathOfBuilding2[\s>]/.test(xml)) {
-    throw new Error('That is a Path of Building 2 (PoE2) build. Loot Goblin is PoE1 only for now.')
+    throw new Error('That is a Path of Building 2 (PoE2) build. Orbhoarder is PoE1 only for now.')
   }
   if (!/<PathOfBuilding[\s>]/.test(xml)) {
     throw new Error('The code unpacked, but it is not a Path of Building build.')

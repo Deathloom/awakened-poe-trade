@@ -24,7 +24,7 @@ export interface AppearanceConfig {
   hemisphere: 'south' | 'north'
   // Seasonal mode: Halloween, festive, New Year, Easter, Valentine's override the season for a few days
   holidays: boolean
-  // our own CSS/SVG background decoration of the theme (Loot Goblin window, theme background only)
+  // our own CSS/SVG background decoration of the theme (Orbhoarder window, theme background only)
   decorations: boolean
   // '' = the theme's own accent
   accent: string
@@ -33,7 +33,7 @@ export interface AppearanceConfig {
   rounding: number
   // 40–100 (%), panels in the overlay over the game
   overlayOpacity: number
-  // Loot Goblin window
+  // Orbhoarder window
   windowBg: 'theme' | 'color' | 'image'
   windowBgColor: string
   // file name in the uploads folder
@@ -78,7 +78,7 @@ interface Theme {
   // blue 100..900 for classic (exact upstream colours), else derived from accent
   blue?: string[]
   accent: string
-  // Loot Goblin window background
+  // Orbhoarder window background
   windowBg: string
 }
 
@@ -192,7 +192,7 @@ export const THEMES: Record<ThemeId, Theme> = {
   },
   // fun
   goblin: {
-    name: 'Loot Goblin (goblin green and gold coins)',
+    name: 'Orbhoarder (goblin green and gold coins)',
     group: 'fun',
     gray: ['#f6fbf2', '#e8f3dc', '#d1e6b9', '#b0cc8f', '#8fae6c', '#62804a', '#3f5530', '#24321b', '#141d0f'],
     accent: '#e8b923',

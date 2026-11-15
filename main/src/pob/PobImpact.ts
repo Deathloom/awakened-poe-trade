@@ -65,9 +65,9 @@ export class PobImpact {
   private resolveTimer: NodeJS.Timeout | null = null
   // Deathloom fork: Lua errors / crashes of the headless PoB (automatic problem report)
   onCodeError: (message: string, detail?: string) => void = () => {}
-  // Deathloom fork: Loot Goblin wrote a file in the player folder (auto sync pushes it)
+  // Deathloom fork: Orbhoarder wrote a file in the player folder (auto sync pushes it)
   onPlayerFilesChanged: () => void = () => {}
-  // Deathloom fork: why Loot Goblin's PoB isn't usable yet (null = it is), from PobInstaller
+  // Deathloom fork: why Orbhoarder's PoB isn't usable yet (null = it is), from PobInstaller
   installStatus: () => string | null = () => null
   private characterBuilds = new CharacterBuilds(path.join(app.getPath('userData'), 'apt-data', 'pob-characters.json'))
 
@@ -198,7 +198,7 @@ export class PobImpact {
     }, this.rawCfg?.pobDir ?? '')
   }
 
-  // Deathloom fork: Loot Goblin's PoB was downloaded or updated: use it (defaults
+  // Deathloom fork: Orbhoarder's PoB was downloaded or updated: use it (defaults
   // change from '' to its folder) and restart the headless PoB on the new files
   usesOwnPob (): boolean {
     return !!this.rawCfg?.pobDir
@@ -216,7 +216,7 @@ export class PobImpact {
 
   configure (raw: PobConfig | undefined) {
     // Deathloom fork: a PoB folder setting pointing at the copy that used to be
-    // inside the install folder means "Loot Goblin's PoB" now
+    // inside the install folder means "Orbhoarder's PoB" now
     if (raw?.pobDir && isLegacyPobSetting(raw.pobDir)) raw = { ...raw, pobDir: '' }
     this.rawCfg = raw
     const cfg = raw && withDefaults(raw, this.defaults())
@@ -535,7 +535,7 @@ export class PobImpact {
     // in the folder and remember it (active.txt)
     const builds = await this.findBuilds(playerDir)
     if (!builds.length) {
-      throw new Error('No build yet. Open Path of Building from Loot Goblin, create or import a build and save it (it saves into your folder). ' +
+      throw new Error('No build yet. Open Path of Building from Orbhoarder, create or import a build and save it (it saves into your folder). ' +
         'Builds in another PoB? Settings → Path of Building → Copy builds.')
     }
     let newest = builds[0]
@@ -631,7 +631,7 @@ export class PobImpact {
       !this.cfg.buildsDir && 'Builds folder'
     ].filter(Boolean)
     if (missing.length) {
-      // Deathloom fork: no PoB folder set and Loot Goblin's own isn't there yet
+      // Deathloom fork: no PoB folder set and Orbhoarder's own isn't there yet
       const pobStatus = !this.cfg.pobDir ? this.installStatus() : null
       if (pobStatus) throw new Error(pobStatus)
       throw new Error(`Missing in settings: ${missing.join(', ')}`)
@@ -766,12 +766,12 @@ export class PobImpact {
     return { ...res, target }
   }
 
-  // Sign-in or player folder changed in Loot Goblin's build sync: pick up the new defaults
+  // Sign-in or player folder changed in Orbhoarder's build sync: pick up the new defaults
   refreshDefaults () {
     if (this.rawCfg) this.configure(this.rawCfg)
   }
 
-  // Folder whose builds Loot Goblin uses: your own, or another player's
+  // Folder whose builds Orbhoarder uses: your own, or another player's
   // (their builds come in with Pull; picked in the build panel)
   playerDir (): string {
     const cfg = this.cfg
@@ -875,7 +875,7 @@ export class PobImpact {
     if (!this.viewingOwn()) throw new Error("You can only edit your own builds (switch Player back to yourself)")
     await this.ensureBuild()
     const buildPath = await this.resolveActiveBuild()
-    // missing spec / skill set = the loadout picked in Loot Goblin
+    // missing spec / skill set = the loadout picked in Orbhoarder
     const current = (await this.call('loadouts')).loadouts as PobLoadouts
     const active = (current as unknown as { active?: { spec?: number, itemSet?: number, skillSet?: number } }).active ?? {}
     const filled = ops.map(op => {

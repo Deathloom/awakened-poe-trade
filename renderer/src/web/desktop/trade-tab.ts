@@ -1,4 +1,4 @@
-// Deathloom fork: opening GGG's trade site in the Loot Goblin window's
+// Deathloom fork: opening GGG's trade site in the Orbhoarder window's
 // Trade site tab, from any window (overlay, HUD panels or the window itself).
 
 import { ref } from 'vue'

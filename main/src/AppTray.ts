@@ -10,7 +10,7 @@ export class AppTray {
   serverPort = 0
   // Deathloom fork: PoB folder in use (bundled copy or settings), for "Open Path of Building"
   pobDir: () => string = () => ''
-  // Deathloom fork: why Loot Goblin's PoB can't open yet (still downloading…), null = fine
+  // Deathloom fork: why Orbhoarder's PoB can't open yet (still downloading…), null = fine
   pobStatus: (() => string | null) | null = null
   // Deathloom fork: "Restart to update" item once an update is downloaded
   updateReady: string | null = null
@@ -36,7 +36,7 @@ export class AppTray {
     }
 
     this.tray = new Tray(trayImage)
-    this.tray.setToolTip(`Loot Goblin v${app.getVersion()}`)
+    this.tray.setToolTip(`Orbhoarder v${app.getVersion()}`)
     if (process.platform === 'win32') this.tray.on('double-click', () => { this.openDesktop() })
     this.rebuildMenu()
 
@@ -54,11 +54,11 @@ export class AppTray {
             { type: 'separator' as const }]
         : []),
       {
-        label: 'Open Loot Goblin window',
+        label: 'Open Orbhoarder window',
         click: () => { this.openDesktop() }
       },
       ...(this.openDesktop2
-        ? [{ label: 'Open second Loot Goblin window', click: () => { this.openDesktop2?.() } }]
+        ? [{ label: 'Open second Orbhoarder window', click: () => { this.openDesktop2?.() } }]
         : []),
       {
         label: 'Settings/League',
@@ -105,7 +105,7 @@ export class AppTray {
   // Deathloom fork: new issue in POE-Builds/poe-builds with the version filled in
   private reportProblem () {
     const body = [
-      `Loot Goblin ${app.getVersion()} · ${process.platform}`,
+      `Orbhoarder ${app.getVersion()} · ${process.platform}`,
       '',
       '**What happened?**',
       '',

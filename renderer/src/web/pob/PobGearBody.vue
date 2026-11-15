@@ -278,7 +278,7 @@ function openTrade (item: PobGearItem) {
 
 // Open the normal price check window for this item (stat filters, prices, build impact)
 function priceCheck (item: PobGearItem, e: MouseEvent) {
-  // Loot Goblin window: the price check window lives in the overlay over the game,
+  // Orbhoarder window: the price check window lives in the overlay over the game,
   // so here it's the item's exact search in the Trade site tab (cheapest first)
   if (props.desktop) {
     tradeError.value = { ...tradeError.value, [item.slot]: '' }

@@ -1,5 +1,5 @@
 // Deathloom fork: builds from a Path of Building install the player already had
-// (first-run setup guide offers to copy them into Loot Goblin's builds folder).
+// (first-run setup guide offers to copy them into Orbhoarder's builds folder).
 //
 // PoB Community keeps its settings in Documents\Path of Building\Settings.xml.
 // Builds are in Documents\Path of Building\Builds unless the settings say
@@ -39,7 +39,7 @@ export async function findExistingBuilds (documents: string, ourBuildsDir: strin
     if (m?.[1]) buildsDir = unescapeXml(m[1])
   } catch {}
   if (!path.isAbsolute(buildsDir)) return null
-  // already the folder Loot Goblin uses (or inside it / around it): nothing to copy
+  // already the folder Orbhoarder uses (or inside it / around it): nothing to copy
   if (ourBuildsDir && (inside(buildsDir, ourBuildsDir) || inside(ourBuildsDir, buildsDir))) return null
   const files = await listBuilds(buildsDir)
   return files.length ? { buildsDir, count: files.length } : null

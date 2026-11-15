@@ -153,7 +153,7 @@ export class OverlayWindow {
         // ----------------------
         'Path of Exile is running with administrator rights.\n' +
         '\n' +
-        'You need to restart Loot Goblin with administrator rights.'
+        'You need to restart Orbhoarder with administrator rights.'
       )
     } else {
       this.server.sendEventTo('broadcast', {

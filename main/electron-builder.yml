@@ -8,7 +8,11 @@ publish:
     # upload (parallel uploads otherwise race to create the release)
     releaseType: "draft"
 appId: "com.deathloom.loot-goblin"
+# Deathloom fork: renamed to Orbhoarder (15 Nov 2026). productName stays, so the
+# install folder, the .exe and the settings folder (%APPDATA%) don't move and
+# updates keep working; what people see uses the new name.
 productName: "Loot Goblin"
+artifactName: "Orbhoarder-Setup-${version}.${ext}"
 npmRebuild: false
 toolsets:
   appimage: 1.0.3
@@ -28,6 +32,8 @@ nsis:
   # to %LOCALAPPDATA%\Loot Goblin\PathOfBuilding on update; removes it on uninstall
   include: "build/installer.nsh"
   oneClick: false
+  shortcutName: "Orbhoarder"
+  uninstallDisplayName: "Orbhoarder"
   allowToChangeInstallationDirectory: true
 win:
   # nsis only: the portable exe can't auto-update

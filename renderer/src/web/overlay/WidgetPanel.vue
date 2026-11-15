@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: overlay widget for a panel that used to be only in the
-       Loot Goblin window (tree map, atlas tree, this session, market overview).
+       Orbhoarder window (tree map, atlas tree, this session, market overview).
        Same body as the window; one widget type per panel (panel-widgets.ts). -->
   <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
     <div v-if="!inHud" class="widget-default-style p-1 flex flex-col" :style="{ width: def.w, height: def.h, maxHeight: '85vh' }">

@@ -1,4 +1,4 @@
-// Deathloom fork: start Loot Goblin (in the tray) when the user signs in to Windows.
+// Deathloom fork: start Orbhoarder (in the tray) when the user signs in to Windows.
 // Uses Electron's login item (HKCU\...\Run for the installed exe). Only for the
 // installed app on Windows; dev runs (npm run dev) never register electron.exe.
 import { app } from 'electron'

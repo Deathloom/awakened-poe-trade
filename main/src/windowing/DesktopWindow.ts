@@ -1,4 +1,4 @@
-// Deathloom fork: Loot Goblin's desktop window.
+// Deathloom fork: Orbhoarder's desktop window.
 // A normal window (title bar, resizable, any monitor) with all panels in one
 // place, meant for a second screen next to the game. It shows the same pages
 // as the overlay (index.html?desktop) and connects like the HUD windows, so it
@@ -59,7 +59,7 @@ export class DesktopWindow {
     const turnedOn = openWithGame && !this.openWithGame
     this.openWithGame = openWithGame
     // switched on while the game is already running: open now
-    // (also when Loot Goblin starts while the game is already running)
+    // (also when Orbhoarder starts while the game is already running)
     if (turnedOn && this.gameRunning) this.open({ focus: false })
   }
 
@@ -88,7 +88,7 @@ export class DesktopWindow {
     let win: BrowserWindow
     try {
       win = new BrowserWindow({
-        title: this.id === 1 ? 'Loot Goblin' : 'Loot Goblin (2)',
+        title: this.id === 1 ? 'Orbhoarder' : 'Orbhoarder (2)',
         icon: path.join(__dirname, process.env.STATIC!, 'icon.png'),
         ...(saved ? { x: saved.x, y: saved.y, width: saved.width, height: saved.height } : this.id === 1 ? DEFAULT_SIZE : centred(DEFAULT_SIZE.width, DEFAULT_SIZE.height)),
         minWidth: MIN_SIZE.width,
@@ -119,9 +119,9 @@ export class DesktopWindow {
       if (!prepareTradeWebview(webPreferences, params)) e.preventDefault()
     })
     win.webContents.on('did-attach-webview', (_e, contents) => { guardTradeWebview(contents) })
-    // the page sets its own title per panel; keep "Loot Goblin" in it
+    // the page sets its own title per panel; keep "Orbhoarder" in it
     win.on('page-title-updated', (e, title) => {
-      if (!title.startsWith('Loot Goblin')) e.preventDefault()
+      if (!title.startsWith('Orbhoarder')) e.preventDefault()
     })
     win.once('ready-to-show', () => {
       if (saved?.maximized) win.maximize()

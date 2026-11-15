@@ -1,12 +1,15 @@
 # Changelog
 
-Changes in Loot Goblin compared with [Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade). Upstream's own changes are listed in [its releases](https://github.com/SnosMe/awakened-poe-trade/releases).
+Changes in Orbhoarder (called Loot Goblin before 1.0.89) compared with [Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade). Upstream's own changes are listed in [its releases](https://github.com/SnosMe/awakened-poe-trade/releases).
 
-Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow the Loot Goblin releases (set when running the Release workflow), not upstream's version numbers.
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow the Orbhoarder releases (set when running the Release workflow), not upstream's version numbers.
 
 **How to maintain:** every PR adds a line under **Unreleased**. Test releases (x.y.z-beta.N) leave it as it is. Before a stable release, rename **Unreleased** to the new version and date, and start a new empty **Unreleased** section.
 
 ## [Unreleased]
+
+### Changed (#159)
+- **Loot Goblin is now Orbhoarder.** "Loot Goblin" turned out to be someone else's trademark. Windows, tray, settings, the Start menu shortcut and the installer use the new name. Your settings, builds and Path of Building stay where they are (the folders keep the old name), and updates keep working.
 
 ### Changed (#157)
 - **Gems follow your build's own stages:** if the build's skill list in Path of Building has groups labelled with level ranges (like "1-27 Rolling Magma", "28-31 Firestorm", "31+ Storm Burst") separated by lines, Gems → For my level shows which stage you're in, only that stage's gems under Socket now, the earlier stages' gems under Take out, and what changes at the next stage's level.

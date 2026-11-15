@@ -1,6 +1,6 @@
 // Deathloom fork: where each panel shows (Settings → Path of Building →
 // Where panels show). In game (HUD) is pob.hud.<panel>; this covers the
-// Shift+Space overlay and the Loot Goblin window's All tab.
+// Shift+Space overlay and the Orbhoarder window's All tab.
 
 import { computed } from 'vue'
 import type { PanelKey, HudPanel } from '@ipc/types'

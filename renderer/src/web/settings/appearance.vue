@@ -2,11 +2,11 @@
   <!-- Deathloom fork: themes and look settings (src/web/appearance.ts) -->
   <div class="max-w-md p-2">
     <div class="text-gray-500 text-sm mb-4">
-      Changes show straight away in this window; Save applies them to the overlay, the in-game panels and the Loot Goblin window.
+      Changes show straight away in this window; Save applies them to the overlay, the in-game panels and the Orbhoarder window.
     </div>
     <div v-if="isWindow2" class="mb-4 p-2 rounded bg-gray-800">
       <ui-toggle :modelValue="ownLook" @update:modelValue="setOwnLook">This window has its own look</ui-toggle>
-      <div class="text-gray-500 text-sm mt-1">{{ ownLook ? 'Changes below only apply to this second window.' : 'Off: this window looks like the main Loot Goblin window.' }}</div>
+      <div class="text-gray-500 text-sm mt-1">{{ ownLook ? 'Changes below only apply to this second window.' : 'Off: this window looks like the main Orbhoarder window.' }}</div>
     </div>
 
     <div class="mb-4">
@@ -50,7 +50,7 @@
       </div>
       <div class="text-gray-500 text-sm">{{ a.themeMode === 'seasonal' ? 'Picking a theme here switches to Pick one.' : '' }}
         Some fun themes bring their own font and corners unless you changed those below.</div>
-      <ui-toggle v-model="a.decorations" class="mt-1">Theme background decorations in the Loot Goblin window</ui-toggle>
+      <ui-toggle v-model="a.decorations" class="mt-1">Theme background decorations in the Orbhoarder window</ui-toggle>
     </div>
 
     <div class="mb-4">
@@ -94,7 +94,7 @@
       <div class="text-gray-500 text-sm">Lower lets the game show through the overlay's panels.</div>
     </div>
 
-    <div class="mb-2 pt-2 border-t border-gray-700">Loot Goblin window</div>
+    <div class="mb-2 pt-2 border-t border-gray-700">Orbhoarder window</div>
     <div class="mb-2">
       <div class="flex gap-x-4">
         <ui-radio v-model="a.windowBg" value="theme">Theme</ui-radio>

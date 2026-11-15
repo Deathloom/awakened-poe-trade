@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: the overlay's settings in the Loot Goblin window. Same
+  <!-- Deathloom fork: the overlay's settings in the Orbhoarder window. Same
        pages as Shift+Space → Settings; Save writes the same config file and
        every window (overlay, HUD panels) picks it up straight away. -->
   <div class="flex h-full min-h-0 rounded overflow-hidden border border-gray-700">
@@ -18,7 +18,7 @@
       <div class="border-t bg-gray-900 border-gray-600 p-2 flex items-center justify-end gap-x-2">
         <button class="px-3 rounded bg-gray-800 text-gray-300" title="The first-run setup guide (build sharing, folders, panels, trade buttons)"
           @click="desktopSetupShown = true"><i class="fas fa-magic mr-1" />Run setup guide</button>
-        <button class="px-3 mr-auto rounded bg-gray-800 text-gray-300 -ml-1" title="Changes in the latest Loot Goblin versions"
+        <button class="px-3 mr-auto rounded bg-gray-800 text-gray-300 -ml-1" title="Changes in the latest Orbhoarder versions"
           @click="whatsNewRequested++"><i class="fas fa-gift mr-1" />What's new</button>
         <span v-if="note" class="text-xs" :class="note.warn ? 'text-yellow-500' : 'text-green-500'">{{ note.text }}</span>
         <button class="px-3 rounded" :class="dirty ? 'bg-gray-600 text-gray-100' : 'bg-gray-800'" @click="save">{{ t('Save') }}</button>

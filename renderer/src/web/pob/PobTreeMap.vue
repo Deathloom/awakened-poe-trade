@@ -57,7 +57,7 @@ import { currentPlan as plan, currentTaken as takenSet, mapHave } from './plan-s
 
 const props = defineProps<{
   // levelling view: colours from the levelling plan (taken / next / later) and
-  // zoom to the next passives (Loot Goblin window)
+  // zoom to the next passives (Orbhoarder window)
   levelling?: boolean
   // smaller header (All tab)
   compact?: boolean
@@ -289,7 +289,7 @@ function onWheel (e: WheelEvent) {
 }
 const dragging = ref(false)
 let dragFrom: { x: number, y: number, offX: number, offY: number } | null = null
-// ---- edit mode (Loot Goblin window): click a passive to take / refund it ----
+// ---- edit mode (Orbhoarder window): click a passive to take / refund it ----
 const editMode = ref(false)
 const editBusy = ref(false)
 const editError = ref('')

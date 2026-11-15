@@ -23,7 +23,7 @@
       <i class="fas fa-dungeon text-yellow-400" />
       <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${lab.name} Labyrinth` }}</span>
       <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
-      <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Loot Goblin window)"
+      <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Orbhoarder window)"
         @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
       <button class="text-gray-500 hover:text-gray-200" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
     </div>
@@ -59,7 +59,7 @@
                   <span v-else-if="questTag(p) === 'items'" class="ml-1 px-1 rounded bg-gray-800 text-gray-400"
                     title="The reward is an item (pick one). Worth it if it fills a slot or gives resistances.">item reward</span>
                   <span v-else-if="questTag(p) === 'gems'" class="ml-1 px-1 rounded bg-gray-800 text-gray-500"
-                    title="Gem reward. Open the Loot Goblin window to see which gem your build takes.">gems</span>
+                    title="Gem reward. Open the Orbhoarder window to see which gem your build takes.">gems</span>
                   <template v-for="g of gemsFor(p)" :key="g.id">
                     <span v-if="g.take" class="ml-1 px-1 rounded bg-gray-700 text-green-300"
                       :title="`Quest reward for your build: pick ${g.take.name}${g.npc ? ` (from ${g.npc})` : ''}`"><i class="fas fa-gem mr-1" />take {{ g.take.name }}</span>
@@ -171,7 +171,7 @@ function showTasks (i: number) {
   return showAll.value || (i >= index.value && i <= index.value + 2)
 }
 
-// which quest reward / vendor gems the build wants (Loot Goblin window, where the
+// which quest reward / vendor gems the build wants (Orbhoarder window, where the
 // levelling planner has the build's gems)
 const questGems = computed(() => {
   const p = currentPlan.value
@@ -225,7 +225,7 @@ const lab = ref<{ name: string, level: number, done: boolean } | null>(null)
 function labName (level: number) {
   return level >= 75 ? 'Eternal' : level >= 68 ? 'Merciless' : level >= 55 ? 'Cruel' : 'Normal'
 }
-// the Loot Goblin window's Lab tab (opens the window without taking focus from the game)
+// the Orbhoarder window's Lab tab (opens the window without taking focus from the game)
 function openPoelab () {
   Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'lab' } })
 }

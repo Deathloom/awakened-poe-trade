@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: friends' trade board (Loot Goblin window, All tab and the overlay).
+  <!-- Deathloom fork: friends' trade board (Orbhoarder window, All tab and the overlay).
        Listings are GitHub issues in the group's builds repo; chat buttons send or copy
        one message per click, never automatically. -->
   <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm"

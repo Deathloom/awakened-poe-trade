@@ -1,4 +1,4 @@
-// Deathloom fork: customisable All tab in the Loot Goblin window.
+// Deathloom fork: customisable All tab in the Orbhoarder window.
 // Columns of stacked panels; widths and heights are fractions. Saved per
 // player in localStorage (each player has their own install).
 import { ref, watch } from 'vue'
@@ -12,7 +12,7 @@ export interface AllPanelDef {
   id: AllPanelId
   label: string
   icon: string
-  // panels with a "Loot Goblin window" toggle in Settings → Where panels show
+  // panels with a "Orbhoarder window" toggle in Settings → Where panels show
   settingsKey?: PanelKey
 }
 
@@ -192,7 +192,7 @@ export function resize (sizes: number[], i: number, j: number, deltaPx: number, 
   sizes[j] -= d
 }
 
-// Settings → Where panels show → Loot Goblin window switched back on: put the
+// Settings → Where panels show → Orbhoarder window switched back on: put the
 // panel back on the All tab if it was taken off
 export function useSettingsSync () {
   for (const p of ALL_PANELS) {

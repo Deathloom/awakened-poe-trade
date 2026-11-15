@@ -2,7 +2,7 @@
 // league mechanics met (by the NPC that speaks), deaths, trades, levelling
 // pace, loading screens and disconnects. Only reads the game's own log
 // (allowed by GGG); nothing is sent anywhere. Recorded by the overlay window,
-// shown in the Loot Goblin window.
+// shown in the Orbhoarder window.
 
 import { parseLogLine } from './game-log'
 

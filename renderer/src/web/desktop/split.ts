@@ -1,4 +1,4 @@
-// Deathloom fork: resizable panels in the Loot Goblin window. Sizes are
+// Deathloom fork: resizable panels in the Orbhoarder window. Sizes are
 // fractions (they add up to 1), saved per layout in localStorage.
 import { ref, type Ref } from 'vue'
 import { readWindowKey, windowKey } from '@/web/hud/is-hud'

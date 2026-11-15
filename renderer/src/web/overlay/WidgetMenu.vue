@@ -44,13 +44,13 @@
             <i class="fas fa-exchange-alt"></i> picks the build and loadout.</li>
           <li>Trade companion: buttons copy the chat command (or send it, see settings). Ledger tab = your sales and buys.</li>
           <li><i class="fas fa-search-dollar"></i> Market search: find an item by name, then <b>Whisper</b> (GGG's buy message) or <b>Hideout</b> the seller, one click = one chat message.</li>
-          <li>Trade buttons open GGG's trade site in the Loot Goblin window's <b>Trade site</b> tab (or your browser, see settings).</li>
-          <li>Which panels show in game, in the overlay or in the Loot Goblin window: Settings → Path of Building → Where panels show.</li>
+          <li>Trade buttons open GGG's trade site in the Orbhoarder window's <b>Trade site</b> tab (or your browser, see settings).</li>
+          <li>Which panels show in game, in the overlay or in the Orbhoarder window: Settings → Path of Building → Where panels show.</li>
           <li>Campaign guide: moves on by itself when you reach the next zone on the route; arrows to fix it by hand.</li>
           <li>The buttons on this bar open or close a panel; hover one to see its name. <i class="fas fa-magic"></i> runs the setup guide again.</li>
         </ul>
         <button class="mt-2 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="openFullHelp">
-          <i class="fas fa-book mr-1"></i>Full help, FAQ and where to get a build (Loot Goblin window)</button>
+          <i class="fas fa-book mr-1"></i>Full help, FAQ and where to get a build (Orbhoarder window)</button>
       </div>
       <div v-if="isEditing" class="text-gray-100 px-2 pb-1 whitespace-nowrap">
         <ui-toggle v-model="config.alwaysShow">{{ t(':always_show') }}</ui-toggle>

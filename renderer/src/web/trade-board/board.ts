@@ -174,7 +174,7 @@ export function listingBody (d: ListingData): string {
   if (d.item) {
     lines.push('', '<details><summary>Item text</summary>', '', '```', d.item.replace(/```/g, "'''"), '```', '', '</details>')
   }
-  lines.push('', "_Posted with Loot Goblin's friends' trade board._")
+  lines.push('', "_Posted with Orbhoarder's friends' trade board._")
   lines.push(`<!-- lg-board:${toB64({ v: 1, ...d })} -->`)
   return lines.join('\n')
 }

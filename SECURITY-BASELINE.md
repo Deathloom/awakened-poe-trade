@@ -1,6 +1,6 @@
-# Loot Goblin security baseline
+# Orbhoarder security baseline
 
-What Loot Goblin must keep true, how each item is checked, and its status. Sources: [Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), the parts of [OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/) Level 1 that apply to a desktop app (secrets, input validation, network, updates), and [OpenSSF Scorecard](https://scorecard.dev/).
+What Orbhoarder must keep true, how each item is checked, and its status. Sources: [Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security), the parts of [OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/) Level 1 that apply to a desktop app (secrets, input validation, network, updates), and [OpenSSF Scorecard](https://scorecard.dev/).
 
 Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2026-11-14 (v1.0.74).
 
@@ -33,7 +33,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 |---|------|--------|
 | 3.1 | No secrets in the repo or in the installer | ✅ |
 | 3.2 | GitHub sign-in token kept by the OS (Windows Credential Manager), not in config files or logs | ✅ |
-| 3.3 | Sign-ins (trade site tab, incl. Steam / Epic / Xbox / PlayStation) happen on the provider's own pages in an isolated session; Loot Goblin never reads passwords. Same rule for the planned Discord / Steam friend sign-in | ✅ |
+| 3.3 | Sign-ins (trade site tab, incl. Steam / Epic / Xbox / PlayStation) happen on the provider's own pages in an isolated session; Orbhoarder never reads passwords. Same rule for the planned Discord / Steam friend sign-in | ✅ |
 | 3.4 | Logs and error reports don't include tokens | ✅ (review on every new sign-in feature) |
 
 ## 4. Input validation (ASVS V5)
@@ -49,7 +49,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | # | Item | Status |
 |---|------|--------|
 | 5.1 | HTTPS only for every remote call | ✅ |
-| 5.2 | GGG requests rate-limited and send `User-Agent: Loot Goblin/<version>` | ✅ |
+| 5.2 | GGG requests rate-limited and send `User-Agent: Orbhoarder/<version>` | ✅ |
 | 5.3 | poe.ninja: economy endpoints only, cached, via our own published JSON (their terms) | ⚠️ in progress (atlas "what pays", step 3) |
 
 ## 6. Updates and releases
@@ -80,4 +80,4 @@ Reviewed 2026-11-14. Re-check when the weekly run warns.
 
 ## 9. Game rules (not security, but checked the same way)
 
-Every feature: one action per key press, nothing moves the mouse or reads the screen or game memory, no game client changes, trade/API requests rate-limited, not-affiliated notice shown. See the Notion page "Loot Goblin: GGG rules alignment".
+Every feature: one action per key press, nothing moves the mouse or reads the screen or game memory, no game client changes, trade/API requests rate-limited, not-affiliated notice shown. See the Notion page "Orbhoarder: GGG rules alignment".

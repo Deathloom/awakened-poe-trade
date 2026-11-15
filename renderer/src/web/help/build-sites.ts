@@ -1,6 +1,6 @@
 // Deathloom fork: where to get a build (Help page, setup guide, README).
 // Popular PoE1 build and atlas sites, checked 14 Nov 2026. Links open in your
-// browser; Loot Goblin doesn't read these sites.
+// browser; Orbhoarder doesn't read these sites.
 
 export interface BuildSite { name: string, url: string, what: string }
 
@@ -9,7 +9,7 @@ export const BUILD_SITES: BuildSite[] = [
   { name: 'Maxroll', url: 'https://maxroll.gg/poe', what: 'Written build guides (league starters, endgame) with levelling steps and PoB links.' },
   { name: 'Mobalytics', url: 'https://mobalytics.gg/poe/builds', what: 'Build guides by experienced players, updated for each patch.' },
   { name: 'poebuilds.cc', url: 'https://www.poebuilds.cc', what: 'Build guide videos from streamers and sites, sorted by league, class and skill.' },
-  { name: 'pobb.in', url: 'https://pobb.in', what: 'Shared Path of Building codes: paste a pobb.in link into Loot Goblin\'s import.' }
+  { name: 'pobb.in', url: 'https://pobb.in', what: 'Shared Path of Building codes: paste a pobb.in link into Orbhoarder\'s import.' }
 ]
 
 export const ATLAS_SITES: BuildSite[] = [

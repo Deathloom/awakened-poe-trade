@@ -7,7 +7,7 @@
   <div class="contents">
   <div v-if="desktop && visible" class="absolute inset-0 z-40 bg-black bg-opacity-60" />
   <div v-if="visible" :class="[$style.window, desktop ? 'z-50 border border-gray-600 shadow-lg' : '']" class="layout-column text-gray-100">
-    <AppTitleBar @close="close" title="Loot Goblin setup" />
+    <AppTitleBar @close="close" title="Orbhoarder setup" />
     <div class="flex grow min-h-0">
       <div class="pl-2 pt-2 bg-gray-900 flex flex-col gap-1 shrink-0" style="min-width: 11rem;">
         <button v-for="(s, i) of STEPS" :key="s"
@@ -21,15 +21,15 @@
 
           <!-- 1. Welcome + build sharing -->
           <template v-if="step === 0">
-            <div class="text-xl mb-2">Welcome to Loot Goblin</div>
-            <p v-if="desktop" class="mb-2">A few quick steps set up Loot Goblin. You don't need to be in game: everything you set
+            <div class="text-xl mb-2">Welcome to Orbhoarder</div>
+            <p v-if="desktop" class="mb-2">A few quick steps set up Orbhoarder. You don't need to be in game: everything you set
               here is used by the overlay and the in-game panels once you play. Every step can be skipped; run this guide again
               any time from this window's <b>Settings</b> tab, or in game: press <b>{{ overlayKey }}</b> and click <i class="fas fa-magic" />.</p>
             <p v-else class="mb-2">A few quick steps set up the overlay. Every step can be skipped and you can run this guide again
               any time: press <b>{{ overlayKey }}</b> and click <i class="fas fa-magic" /> on the top bar.</p>
-            <p class="mb-3 text-gray-400">Loot Goblin is price checking, your Path of Building build next to every item,
+            <p class="mb-3 text-gray-400">Orbhoarder is price checking, your Path of Building build next to every item,
               a campaign guide and levelling planner, market search, a trade companion and the official trade site, with
-              everything also in the Loot Goblin window for a second screen. It never types into the game unless you click a
+              everything also in the Orbhoarder window for a second screen. It never types into the game unless you click a
               button that says so.</p>
             <div class="mb-1">Share builds with your group (optional)</div>
             <div class="text-gray-400 text-sm mb-2">
@@ -40,7 +40,7 @@
               <div class="mb-1"><i class="fas fa-folder-open mr-1" />Found {{ found.existingPob.count }} build{{ found.existingPob.count === 1 ? '' : 's' }}
                 from an earlier Path of Building in <span class="break-all text-gray-400">{{ found.existingPob.buildsDir }}</span></div>
               <div class="text-gray-400 text-sm mb-2">
-                Copy them into Loot Goblin{{ found.player ? ` (your folder ${found.player})` : '' }}? The originals stay where they are;
+                Copy them into Orbhoarder{{ found.player ? ` (your folder ${found.player})` : '' }}? The originals stay where they are;
                 builds with the same name are skipped.
                 <template v-if="found.player">If you're signed in with sync on, they're also uploaded to your folder in POE-Builds.</template>
                 <template v-else>They stay on this PC (sign in above first if you want them shared).</template>
@@ -81,7 +81,7 @@
               <div class="flex gap-1">
                 <input v-model.trim="pob.pobDir"
                   class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic"
-                  placeholder="Empty = Loot Goblin's own Path of Building (downloads by itself)">
+                  placeholder="Empty = Orbhoarder's own Path of Building (downloads by itself)">
                 <button class="btn" @click="browse('pobDir')">Browse…</button>
               </div>
             </div>
@@ -109,7 +109,7 @@
           <!-- 3. Character -->
           <template v-else-if="step === 2">
             <div class="text-xl mb-2">Your build</div>
-            <p class="mb-2 text-gray-400">Loot Goblin compares items, gems and the passive tree with your
+            <p class="mb-2 text-gray-400">Orbhoarder compares items, gems and the passive tree with your
               Path of Building build. Comparing with your live character (what it wears now) is turned off:
               GGG's rules don't allow shared apps to read character data from pathofexile.com outside its
               official API, and we don't risk anyone's account.</p>
@@ -144,7 +144,7 @@
                 <td class="pr-4"><hotkey-input v-model="pob.openPobKey" class="w-40" /></td>
               </tr>
             </table>
-            <div class="text-gray-500 text-sm mb-2">More choices (which panels show in the overlay and in the Loot Goblin window):
+            <div class="text-gray-500 text-sm mb-2">More choices (which panels show in the overlay and in the Orbhoarder window):
               Settings → Path of Building → Where panels show.</div>
             <div class="text-gray-500 text-sm mb-3">"Clicks go through" means the panel can't be clicked while you play
               (press {{ overlayKey }} to click it). Drag a panel by its top bar; resize it from the bottom-right corner.</div>
@@ -177,9 +177,9 @@
             <div class="text-gray-400 text-sm mb-2">Market search (overlay menu) finds an item by name; its Whisper and Hideout
               buttons work the same way as these. Instant buyout uses GGG's own Travel to Hideout on the trade site.</div>
             <ui-toggle :modelValue="pob.tradeLinksInWindow !== false" @update:modelValue="pob.tradeLinksInWindow = $event">
-              Open Trade buttons in the Loot Goblin window's Trade site tab</ui-toggle>
+              Open Trade buttons in the Orbhoarder window's Trade site tab</ui-toggle>
             <div class="text-gray-500 text-sm mt-1">GGG's own trade site, signed in separately from your browser (you sign in on
-              GGG's page; Loot Goblin never sees your login). Off: Trade buttons open your browser.</div>
+              GGG's page; Orbhoarder never sees your login). Off: Trade buttons open your browser.</div>
             <div class="text-gray-500 text-sm mt-1">Only applies when the trade companion is pinned (previous step).
               The Ledger tab keeps your sales and buys per league.</div>
           </template>
@@ -190,7 +190,7 @@
             <div class="mb-3">
               <div class="mb-1"><i class="fas fa-chart-line mr-1" />Market history</div>
               <div class="text-gray-400 text-sm">Click the star ☆ next to the poe.ninja price in a price check. The market
-                history panel then shows its 7-day trend plus prices Loot Goblin records while it runs. Nothing to set up.</div>
+                history panel then shows its 7-day trend plus prices Orbhoarder records while it runs. Nothing to set up.</div>
             </div>
             <div class="mb-3">
               <div class="mb-1"><i class="fas fa-people-carry mr-1" />Friends' trade board</div>
@@ -199,13 +199,13 @@
               <hotkey-input :modelValue="pob.boardPostKey ?? null" class="w-48 mt-1" @update:modelValue="v => { pob.boardPostKey = v }" />
             </div>
             <div class="mb-3">
-              <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Loot Goblin with Windows</ui-toggle>
+              <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Orbhoarder with Windows</ui-toggle>
               <div class="text-gray-400 text-sm mt-1">Starts in the tray when you sign in to Windows, so it's ready
                 before you launch the game.</div>
             </div>
             <div class="mb-3">
               <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
-              <div class="text-gray-400 text-sm mt-1">When something breaks, Loot Goblin opens an issue in the group's private
+              <div class="text-gray-400 text-sm mt-1">When something breaks, Orbhoarder opens an issue in the group's private
                 repo with your GitHub sign-in (version, error, last log lines; no Windows user folder). Only when signed in.
                 Tray icon → Report a problem… for anything else.</div>
             </div>
@@ -221,7 +221,7 @@
                 <b>{{ pob.tradesKey || 'no hotkey' }}</b> trade companion, <b>{{ pob.openPobKey || 'no hotkey' }}</b> Path of Building.</li>
               <li>Build panel: <i class="fas fa-cloud" /> build sharing (Pull / Push), <i class="fas fa-file-import" /> import a PoB code or link,
                 <i class="fas fa-exchange-alt" /> pick the build and loadout.</li>
-              <li>Loot Goblin window (tray icon, double-click): everything in one place, plus the Trade site tab.
+              <li>Orbhoarder window (tray icon, double-click): everything in one place, plus the Trade site tab.
                 All tab: <b>Edit layout</b> to add, remove and move panels.
                 Build tab: <i class="fas fa-pen" /> edit loadouts, <i class="fas fa-folder-open" /> manage builds.</li>
               <li><i class="fas fa-question-circle" /> on the top bar is a short how-to; the window's <b>Help</b> tab has the full help,
@@ -229,7 +229,7 @@
               <li>Something wrong? Tray icon → Report a problem…</li>
             </ul>
             <div class="text-gray-500 text-sm mt-3">
-              Loot Goblin is not affiliated with or endorsed by Grinding Gear Games. It reads the game's log file and your clipboard,
+              Orbhoarder is not affiliated with or endorsed by Grinding Gear Games. It reads the game's log file and your clipboard,
               never game memory, never buys anything by itself, and only sends a chat command when you click a button.
             </div>
           </template>
@@ -282,7 +282,7 @@ import { IS_HUD } from '@/web/hud/is-hud'
 import { desktopSetupShown } from './setup-state'
 import { BUILD_SITES } from '@/web/help/build-sites'
 
-// desktop: shown in the Loot Goblin window (no widget manager; saves itself)
+// desktop: shown in the Orbhoarder window (no widget manager; saves itself)
 const props = defineProps<{ config?: WidgetT, desktop?: boolean }>()
 const wm = props.desktop ? null : inject<WidgetManager>('wm')!
 const visible = computed(() => props.desktop ? desktopSetupShown.value : props.config?.wmWants === 'show')
@@ -316,7 +316,7 @@ const priceKey = computed(() => {
   return pc?.hotkey ? `${pc.hotkeyHold} + ${pc.hotkey}` : 'the price check hotkey'
 })
 
-// Shows once by itself: in the Loot Goblin window on a new install, else the
+// Shows once by itself: in the Orbhoarder window on a new install, else the
 // first time the overlay is opened
 if (props.desktop) {
   if (!pob.value.setupDone) desktopSetupShown.value = true

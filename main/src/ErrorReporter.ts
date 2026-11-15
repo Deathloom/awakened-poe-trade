@@ -93,7 +93,7 @@ export class ErrorReporter {
       const firstLine = scrub(message.split('\n')[0]).slice(0, 110)
       const log = scrub(this.logger.history.trimEnd().split('\n').slice(-LOG_LINES).join('\n'))
       const body = [
-        `**Loot Goblin** ${version} · ${os.type()} ${os.release()} · ${source}${where ? ` (${where})` : ''}`,
+        `**Orbhoarder** ${version} · ${os.type()} ${os.release()} · ${source}${where ? ` (${where})` : ''}`,
         '',
         '```',
         scrub(message),
@@ -108,13 +108,13 @@ export class ErrorReporter {
         '',
         '</details>',
         '',
-        '_Sent automatically by Loot Goblin. Turn off in Settings → Path of Building._'
+        '_Sent automatically by Orbhoarder. Turn off in Settings → Path of Building._'
       ].join('\n')
       void this.sender.report({
         key,
         title: `[auto] ${source}: ${firstLine}`,
         body,
-        seen: `Seen again: Loot Goblin ${version} · ${os.type()} ${os.release()}${where ? ` · ${where}` : ''}`
+        seen: `Seen again: Orbhoarder ${version} · ${os.type()} ${os.release()}${where ? ` · ${where}` : ''}`
       }).then((res) => {
         this.logger.write(res.sent ? `info [report] sent problem report ${key}` : `info [report] not sent (${res.reason ?? 'unknown'})`)
       }).catch((err: Error) => {

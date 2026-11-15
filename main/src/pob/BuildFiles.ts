@@ -1,4 +1,4 @@
-// Deathloom fork: manage builds from the Loot Goblin window (rename, move to a
+// Deathloom fork: manage builds from the Orbhoarder window (rename, move to a
 // folder, duplicate, delete). Only inside your own player folder. Delete moves
 // the file to "Deleted builds" next to the builds folder (same place Path of
 // Building's sync uses), so it can be recovered; the next Push deletes it on

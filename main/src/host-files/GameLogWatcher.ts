@@ -17,7 +17,7 @@ const POSSIBLE_PATH =
     path.join(app.getPath('home'), 'Library/Caches/com.GGG.PathOfExile/Logs/Client.txt')
   ] : []
 
-// lines Loot Goblin reads (levels, quest rewards, zones, passives, deaths, dialogue)
+// lines Orbhoarder reads (levels, quest rewards, zones, passives, deaths, dialogue)
 const KEEP = /\] : |Successfully (un)?allocated|Generating level|LOADING SCREEN|Abnormal disconnect|\] [A-Z][^:#$%&@<>]{1,40}: /
 
 export class GameLogWatcher {
@@ -35,7 +35,7 @@ export class GameLogWatcher {
   } | null = null
 
   // Deathloom fork: where reading stopped last time (saved after every read), so
-  // lines written while Loot Goblin was closed (an update, a restart) aren't missed
+  // lines written while Orbhoarder was closed (an update, a restart) aren't missed
   private posFile = path.join(app.getPath('userData'), 'game-log-position.json')
   private posSaving = Promise.resolve()
   private catchUp: string[] | null = null
@@ -59,7 +59,7 @@ export class GameLogWatcher {
     } catch { return null }
   }
 
-  // Lines (levels, passives, atlas, session) written since Loot Goblin last read
+  // Lines (levels, passives, atlas, session) written since Orbhoarder last read
   // the log, once. The overlay asks when it starts; if the log isn't open yet,
   // they're broadcast as soon as it is.
   takeCatchUp (): string[] | null {
@@ -112,7 +112,7 @@ export class GameLogWatcher {
     await this.open(logFile)
   }
 
-  // Deathloom fork: the whole Client.txt, only the lines Loot Goblin reads
+  // Deathloom fork: the whole Client.txt, only the lines Orbhoarder reads
   // (levels, quest rewards, zones, passives, deaths, dialogue): the levelling
   // planner rebuilds every character's progress from them
   async readHistory (): Promise<string[]> {
@@ -130,7 +130,7 @@ export class GameLogWatcher {
     const buf = Buffer.allocUnsafe(gap)
     const { bytesRead } = await file.read(buf, 0, gap, saved.offset)
     const lines = buf.toString('utf8', 0, bytesRead).split('\n').map(l => l.trim()).filter(l => KEEP.test(l))
-    this.logger.write(`info [GameLogWatcher] ${lines.length} lines written while Loot Goblin was closed`)
+    this.logger.write(`info [GameLogWatcher] ${lines.length} lines written while Orbhoarder was closed`)
     return lines
   }
 

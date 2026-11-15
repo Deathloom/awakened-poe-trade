@@ -1,5 +1,5 @@
 // Deathloom fork: panels added to the overlay and the in-game HUD in 1.0.63
-// (before, they were only in the Loot Goblin window). No imports: Config.ts,
+// (before, they were only in the Orbhoarder window). No imports: Config.ts,
 // main and the widgets all read this.
 import type { HudPanel } from '@ipc/types'
 
@@ -9,7 +9,7 @@ export interface ExtraPanelDef {
   icon: string
   // overlay widget type ('' = the panel already had an overlay widget)
   widget: string
-  // Loot Goblin window tab its hotkey opens when it's in neither the overlay nor in game
+  // Orbhoarder window tab its hotkey opens when it's in neither the overlay nor in game
   view: string
 }
 

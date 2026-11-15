@@ -212,7 +212,7 @@ export default defineComponent({
     })
 
     const leagues = useLeagues()
-    const title = computed(() => leagues.selectedId.value || 'Loot Goblin')
+    const title = computed(() => leagues.selectedId.value || 'Orbhoarder')
     const stableOrbCost = computed(() => (xchgRate.value) ? Math.round(xchgRate.value) : null)
     const isBrowserShown = computed(() => props.config.wmFlags.includes('has-browser'))
     const overlayKey = computed(() => AppConfig().overlayKey)
