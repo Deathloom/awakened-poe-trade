@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#170)
+Lighter and safer: the Orbhoarder window's moving background pauses while you play; quick price checks only calculate the newest item in Path of Building; the debug log no longer grows forever; reading your game log uses less memory. The overlay's built-in browser now has its own sign-in (sign in once more there), key logging (debug) only records keys while the game is active, and the app's local server refuses requests from other websites.
+
 ### Removed (#169)
 Leftovers from the original app: the Patreon button and patron names, the Discord links in About, and the old help website. The credit to Awakened PoE Trade (MIT licence) stays in About.
 
