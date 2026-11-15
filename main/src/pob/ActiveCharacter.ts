@@ -14,6 +14,8 @@ export const LOGIN = /\*{5} LOG FILE OPENING \*{5}|Async connecting to \S+\.logi
 export const ZONE = /Generating level \d+ area "|\] : You have entered /
 // ": MyWitch (Necromancer) is now level 93"
 export const LEVEL_UP = /\] : ([^\s(]+) \([^)]+\) is now level \d+/
+// ": Someone has joined the area." (party members; their level-ups show up too)
+export const JOINED = /\] : ([^\s(]+) has joined the area\./
 
 export interface LogScanState {
   // true until the first area after the game started or after character select
@@ -25,10 +27,12 @@ export interface LogScanResult {
   entered: boolean
   // names seen levelling up (yours, possibly party members')
   levelUps: string[]
+  // names that joined your area (party members)
+  joined: string[]
 }
 
 export function scanLog (lines: string[], state: LogScanState): LogScanResult {
-  const result: LogScanResult = { entered: false, levelUps: [] }
+  const result: LogScanResult = { entered: false, levelUps: [], joined: [] }
   for (const line of lines) {
     if (LOGIN.test(line)) {
       state.atLogin = true
@@ -38,6 +42,8 @@ export function scanLog (lines: string[], state: LogScanState): LogScanResult {
     } else {
       const m = LEVEL_UP.exec(line)
       if (m) result.levelUps.push(m[1])
+      const j = JOINED.exec(line)
+      if (j) result.joined.push(j[1])
     }
   }
   return result

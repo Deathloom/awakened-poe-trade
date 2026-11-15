@@ -16,10 +16,20 @@
     <template v-else-if="plan">
       <div v-if="!levelKnown" class="px-1 pb-1 text-xs text-yellow-500">No level-up seen yet. Type your level above, or level up once in game.</div>
 
+      <!-- the build's own gem stages (level-range labels in PoB's skill list) -->
+      <div v-if="stages.length" class="px-1 pb-1 text-xs flex flex-wrap items-center gap-1"
+        title="From the build's skill list in Path of Building: groups labelled with a level range (e.g. &quot;28-31 Firestorm&quot;), separated by lines">
+        <span class="text-gray-500">Stages:</span>
+        <template v-for="(s, i) of stages" :key="s.title + i">
+          <i v-if="i" class="fas fa-angle-right text-gray-600" />
+          <span class="px-1 rounded" :class="i === stageIdx ? 'bg-green-900 text-green-200' : (i < stageIdx ? 'text-gray-600 line-through' : 'text-gray-400')">{{ s.title }}</span>
+        </template>
+      </div>
+
       <!-- take out -->
       <div v-if="drop.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
         <div class="lg-head text-red-300"><i class="fas fa-minus-circle mr-1" />Take out ({{ drop.length }})</div>
-        <div class="text-xs text-gray-500 pb-px">The previous levelling step used these; this one doesn't.</div>
+        <div class="text-xs text-gray-500 pb-px">{{ stages.length ? `Earlier stages used these; "${stages[stageIdx]?.title}" doesn't.` : 'The previous levelling step used these; this one doesn\'t.' }}</div>
         <div class="flex flex-wrap gap-x-3">
           <button v-for="g of drop" :key="'d' + g.name" type="button" class="line-through"
             :class="hasGem(g.name) ? 'text-red-300' : 'text-gray-600'"
@@ -63,7 +73,7 @@
         <button v-if="later.length > 5" class="text-xs text-gray-500 hover:text-gray-200" @click="allLater = !allLater">
           {{ allLater ? 'fewer' : `all ${later.length}` }}</button>
         <div v-if="swap" class="pt-1 text-xs">
-          <div class="text-gray-400"><i class="fas fa-exchange-alt mr-1 text-gray-500" />At level {{ swap.level }}<template v-if="plan.nextSkillSet"> (skill set "{{ plan.nextSkillSet }}")</template>:</div>
+          <div class="text-gray-400"><i class="fas fa-exchange-alt mr-1 text-gray-500" />At level {{ swap.level }}<template v-if="swap.title"> ("{{ swap.title }}")</template><template v-else-if="plan.nextSkillSet"> (skill set "{{ plan.nextSkillSet }}")</template>:</div>
           <div v-if="swap.add.length" class="flex flex-wrap gap-x-3 pl-2"><span class="text-green-500">add</span>
             <span v-for="g of swap.add" :key="'s+' + g.name" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span></div>
           <div v-if="swap.drop.length" class="flex flex-wrap gap-x-3 pl-2"><span class="text-red-400">take out</span>
@@ -72,7 +82,7 @@
         </div>
       </div>
 
-      <div v-if="plan.phases.length <= 1" class="px-1 text-xs text-gray-500">
+      <div v-if="plan.phases.length <= 1 && !stages.length" class="px-1 text-xs text-gray-500">
         This build has one skill set ("{{ plan.skillSet }}"), so there's nothing to take out yet: it shows the build's gems you can already use.
         For take-out and swap steps, add skill sets in Path of Building named after a level ("Level 12", "Level 30", …) with the gems for that stage.
       </div>
@@ -82,7 +92,8 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
-import type { PobPlan, PobPlanGem } from '@ipc/types'
+import type { PobPlan, PobPlanGem, PobSocketGroup } from '@ipc/types'
+import { gemStages, stageFor } from './gem-stages'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, loadCharLevels, saveCharLevels, currentChar, type CharLevels } from '@/web/companion/char-level'
 
@@ -135,6 +146,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-plan', (e) => {
   plan.value = e.plan ?? null
 })
 function request () {
+  requestGroups()
   loading.value = true
   lastRequestId += 1
   Host.sendEvent({
@@ -146,6 +158,7 @@ defineExpose({ request })
 watch(level, () => { request() }, { immediate: true })
 onUnmounted(() => {
   listener.abort()
+  groupsListener.abort()
   window.removeEventListener('storage', onStorage)
   window.removeEventListener('storage', onTicks)
 })
@@ -160,11 +173,56 @@ function unique (list: PobPlanGem[]) {
   return [...map.values()]
 }
 
-const gems = computed(() => plan.value?.gems ?? [])
+// Deathloom fork: the build's own stages from its skill list labels (gem-stages.ts);
+// the socket groups with their labels come from the Gems request
+const groups = shallowRef<PobSocketGroup[] | null>(null)
+let groupsRequestId = 700_000
+const groupsListener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
+  if (e.requestId !== groupsRequestId) return
+  groups.value = e.ok ? (e.groups ?? []) : null
+})
+function requestGroups () {
+  groupsRequestId += 1
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-gems', payload: { requestId: groupsRequestId, refreshGear: false } })
+}
+const stages = computed(() => {
+  // plan gems must carry their group index to be sorted into stages
+  const planGems = (plan.value?.gems ?? []).filter(g => g.groupId != null)
+  if (!groups.value || !planGems.length) return []
+  // both lists must number the groups the same way (same skill set): check the gems match
+  const byIndex = new Map(groups.value.map(g => [g.index, new Set(g.gems.map(x => x.name))]))
+  const matched = planGems.filter(g => byIndex.get(g.groupId!)?.has(g.name)).length
+  if (matched < planGems.length * 0.8) return []
+  return gemStages(groups.value)
+})
+const stageIdx = computed(() => stages.value.length ? stageFor(stages.value, level.value) : -1)
+const stageOfGroup = computed(() => {
+  const m = new Map<number, number>()
+  stages.value.forEach((s, i) => { for (const id of s.groups) m.set(id, i) })
+  return m
+})
+// gems of one stage (-1: in no stage, used the whole time)
+function stageGems (i: number) {
+  return (plan.value?.gems ?? []).filter(g => (g.groupId != null ? stageOfGroup.value.get(g.groupId) ?? -1 : -1) === i)
+}
+
+// with stages: the current stage's gems plus the ones in no stage
+const gems = computed(() => {
+  const all = plan.value?.gems ?? []
+  if (!stages.value.length) return all
+  return [...stageGems(-1), ...(stageIdx.value >= 0 ? stageGems(stageIdx.value) : [])]
+})
 const names = computed(() => new Set(gems.value.map(g => g.name)))
-const prevNames = computed(() => plan.value?.previousGems ? new Set(plan.value.previousGems.map(g => g.name)) : null)
+const prevNames = computed(() => {
+  if (stages.value.length) return stageIdx.value > 0 ? new Set([...stageGems(-1), ...stageGems(stageIdx.value - 1)].map(g => g.name)) : null
+  return plan.value?.previousGems ? new Set(plan.value.previousGems.map(g => g.name)) : null
+})
 
 const drop = computed(() => {
+  if (stages.value.length) {
+    const earlier = stages.value.flatMap((_, i) => i < stageIdx.value ? stageGems(i) : [])
+    return unique(earlier).filter(g => !names.value.has(g.name))
+  }
   const prev = plan.value?.previousGems
   if (!prev) return []
   return unique(prev).filter(g => !names.value.has(g.name))
@@ -206,6 +264,20 @@ const allLater = ref(false)
 const laterShown = computed(() => allLater.value ? later.value : later.value.slice(0, 5))
 
 const swap = computed(() => {
+  if (stages.value.length) {
+    const next = stages.value[stageIdx.value + 1]
+    if (!next) return null
+    const cur = unique(gems.value)
+    const curNames = new Set(cur.map(g => g.name))
+    const nxt = unique([...stageGems(-1), ...stageGems(stageIdx.value + 1)])
+    const nextNames = new Set(nxt.map(g => g.name))
+    return {
+      level: next.from,
+      title: next.title,
+      add: nxt.filter(g => !curNames.has(g.name)),
+      drop: cur.filter(g => !nextNames.has(g.name))
+    }
+  }
   const p = plan.value
   const next = p?.phases[p.phase]
   if (!p?.nextGems || !next) return null
@@ -215,6 +287,7 @@ const swap = computed(() => {
   const nextNames = new Set(nxt.map(g => g.name))
   return {
     level: (p.phases[p.phase - 1]?.level ?? 0) + 1,
+    title: '',
     add: nxt.filter(g => !curNames.has(g.name)),
     drop: cur.filter(g => !nextNames.has(g.name))
   }
