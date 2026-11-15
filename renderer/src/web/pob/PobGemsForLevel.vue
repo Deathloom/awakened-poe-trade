@@ -41,8 +41,8 @@
             <div class="flex flex-wrap items-baseline gap-x-2">
               <template v-for="(g, i) of grp.gems" :key="g.name">
                 <span v-if="i" class="text-gray-600">+</span>
-                <button type="button" class="text-left"
-                  :class="[gemClass(g), isNew(g) ? 'underline decoration-green-500 underline-offset-2' : '', hasGem(g.name) ? '' : 'opacity-60']"
+                <button type="button" class="text-left gem-chip"
+                  :class="[gemClass(g), isNew(g) ? 'underline decoration-green-500 underline-offset-2' : '', hasGem(g.name) ? 'gem-chip-on' : 'gem-chip-off']"
                   :title="gemTitle(g) + (isNew(g) ? '\nNew in this step' : '') + (hasGem(g.name) ? '\nEquipped (click to untick)' : '\nClick when you have it equipped')"
                   @click="toggleGem(g.name)"><i class="fas mr-0.5 text-xs" :class="hasGem(g.name) ? 'fa-check-square text-green-400' : 'fa-square text-gray-600'" />{{ g.name }}</button>
               </template>
@@ -73,8 +73,8 @@
       </div>
 
       <div v-if="plan.phases.length <= 1" class="px-1 text-xs text-gray-500">
-        This build has one skill set, so it shows the endgame gems you can already use. Name extra skill sets in Path of Building after a level
-        ("Level 12", "Level 30", …) to get take-out and swap steps while levelling.
+        This build has one skill set ("{{ plan.skillSet }}"), so there's nothing to take out yet: it shows the build's gems you can already use.
+        For take-out and swap steps, add skill sets in Path of Building named after a level ("Level 12", "Level 30", …) with the gems for that stage.
       </div>
     </template>
   </div>
@@ -235,6 +235,11 @@ function gemTitle (g: PobPlanGem) {
 </script>
 
 <style scoped>
+/* ticked vs not: filled green chip with a tick vs dashed outline, dimmed */
+.gem-chip { @apply px-1 rounded border; }
+.gem-chip-on { @apply border-green-600 bg-green-900/40; }
+.gem-chip-off { @apply border-dashed border-gray-600 opacity-70; }
+
 .lg-head {
   font-size: 0.75rem;
   text-transform: uppercase;
