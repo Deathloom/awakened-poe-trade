@@ -8,7 +8,7 @@
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2 py-1 space-y-2">
       <template v-if="tab === 'progress'">
-        <div class="text-gray-400">Tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
+        <div class="text-gray-400">League start, then endgame: tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
         <div v-for="g of PROGRESS" :key="g.title">
           <div class="text-gray-100">{{ g.title }} <span class="text-gray-500">{{ g.items.filter(i => ticks.has(i.id)).length }}/{{ g.items.length }}</span></div>
           <label v-for="i of g.items" :key="i.id" class="flex items-baseline gap-x-1.5 cursor-pointer" :class="ticks.has(i.id) ? 'text-gray-500 line-through' : 'text-gray-300'">
@@ -52,7 +52,7 @@ import { PROGRESS, loadProgress, saveProgress } from './progress'
 import { SHEETS, sectionsFor } from './sheets'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 
-const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Progress' }]
+const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Checklist' }]
 const KEY = 'deathloom.cheats.tab.v1'
 const tab = ref((() => { try { return localStorage.getItem(KEY) ?? 'betrayal' } catch { return 'betrayal' } })())
 function setTab (id: string) {

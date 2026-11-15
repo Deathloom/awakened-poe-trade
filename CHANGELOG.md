@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#190)
+- **One checklist:** Help → League start is gone; its list is now the top part of Cheat sheets → **Checklist** (was Progress), followed by the endgame goals. Ticks you already made in either list are kept, per league.
+
 ### Changed (#189)
 - **Stopwatch moved into This session:** the separate Stopwatch widget is gone (it did the same as part of This session). This session now has a stopwatch you start, pause and reset yourself, next to its automatic map timer. Existing Stopwatch widgets and their hotkeys are removed.
 
