@@ -84,13 +84,14 @@ export class Shortcuts {
       }
     })
 
+    // key logging (debug option) only while the game is active: never keys typed in other apps
     uIOhook.on('keydown', (e) => {
-      if (!this.logKeys) return
+      if (!this.logKeys || !this.poeWindow.isActive) return
       const pressed = eventToString(e)
       this.logger.write(`debug [Shortcuts] Keydown ${pressed}`)
     })
     uIOhook.on('keyup', (e) => {
-      if (!this.logKeys) return
+      if (!this.logKeys || !this.poeWindow.isActive) return
       this.logger.write(`debug [Shortcuts] Keyup ${UiohookToName[e.keycode] || 'not_supported_key'}`)
     })
 

@@ -193,7 +193,8 @@ export async function syncPob (pobDir: string, opts: SyncOptions): Promise<SyncR
   const extras: Array<{ target: string, url?: string, content?: string }> = []
   const updateExe = path.join(pobDir, 'runtime', 'Update.exe')
   if (!fs.existsSync(updateExe)) {
-    extras.push({ target: updateExe, url: (remote.sources.runtime ?? '').replace('{branch}', 'master') + 'Update.exe' })
+    // same source check as every other file (fileUrl)
+    extras.push({ target: updateExe, url: fileUrl(remote, { part: 'runtime', name: 'Update.exe', sha1: '' }) })
   }
   const bundledCfg = path.join(pobDir, 'src', 'bundled.cfg')
   if (!fs.existsSync(bundledCfg)) extras.push({ target: bundledCfg, content: '' })

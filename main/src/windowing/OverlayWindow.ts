@@ -1,10 +1,12 @@
-import { lockToAppPages, hardenWebview } from '../safe-open'
+import { lockToAppPages, hardenWebview, denyWebviewPermissions, openWebLink, isWebLink } from '../safe-open'
 import path from 'path'
-import { BrowserWindow, dialog, shell, Menu, WebContents } from 'electron'
+import { BrowserWindow, dialog, shell, Menu, WebContents, session } from 'electron'
 import { OverlayController, OVERLAY_WINDOW_OPTS } from 'electron-overlay-window'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import type { GameWindow } from './GameWindow'
+
+const OVERLAY_BROWSER_PARTITION = 'persist:overlay-browser'
 
 export class OverlayWindow {
   public isInteractable = false
@@ -53,14 +55,23 @@ export class OverlayWindow {
     this.window.webContents.on('before-input-event', this.handleExtraCommands)
     this.window.webContents.on('did-attach-webview', (_, webviewWebContents) => {
       webviewWebContents.on('before-input-event', this.handleExtraCommands)
+      // Deathloom fork: pop-ups open in the browser; the page itself only goes to web links
+      webviewWebContents.setWindowOpenHandler((details) => {
+        openWebLink(details.url)
+        return { action: 'deny' }
+      })
+      webviewWebContents.on('will-navigate', (e, url) => { if (!isWebLink(url)) e.preventDefault() })
     })
+    denyWebviewPermissions(session.fromPartition(OVERLAY_BROWSER_PARTITION))
 
     // Deathloom fork: web links only, and the window stays on the overlay's pages
     lockToAppPages(this.window.webContents)
     // Deathloom fork: <webview> (wiki / trade site browser) gets no preload, no Node,
     // runs sandboxed and only loads web links
     this.window.webContents.on('will-attach-webview', (e, webPreferences, params) => {
-      if (!hardenWebview(webPreferences, params.src)) e.preventDefault()
+      // its own session: sign-ins there never reach the app's requests (/proxy)
+      if (params.partition !== OVERLAY_BROWSER_PARTITION) e.preventDefault()
+      else if (!hardenWebview(webPreferences, params.src)) e.preventDefault()
     })
   }
 

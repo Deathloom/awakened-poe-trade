@@ -1,5 +1,6 @@
 import { execFile } from 'child_process'
-import { promises as fs, watchFile, unwatchFile } from 'fs'
+import { promises as fs, watchFile, unwatchFile, createReadStream, writeFileSync } from 'fs'
+import readline from 'readline'
 import path from 'path'
 import { app } from 'electron'
 import { guessFileLocation } from './utils'
@@ -44,9 +45,28 @@ export class GameLogWatcher {
   constructor (
     private server: ServerEvents,
     private logger: Logger,
-  ) {}
+  ) {
+    // the position not yet written (see savePosition) is saved on quit, so lines
+    // aren't read twice by the next start's catch-up
+    app.on('before-quit', () => {
+      if (!this.posTimer || !this._state) return
+      clearTimeout(this.posTimer)
+      this.posTimer = null
+      try { writeFileSync(this.posFile, JSON.stringify({ path: this._state.path, offset: this._state.offset })) } catch {}
+    })
+  }
 
+  // Deathloom fork: written at most every few seconds while the log grows
+  private posTimer: NodeJS.Timeout | null = null
   private savePosition () {
+    if (this.posTimer) return
+    this.posTimer = setTimeout(() => {
+      this.posTimer = null
+      this.writePosition()
+    }, 3000)
+  }
+
+  private writePosition () {
     if (!this._state) return
     const data = JSON.stringify({ path: this._state.path, offset: this._state.offset })
     this.posSaving = this.posSaving.then(() => fs.writeFile(this.posFile, data)).catch(() => {})
@@ -117,8 +137,13 @@ export class GameLogWatcher {
   // planner rebuilds every character's progress from them
   async readHistory (): Promise<string[]> {
     if (!this._state) throw new Error('Client.txt not found yet (start the game, or set the path in Settings → General)')
-    const text = await fs.readFile(this._state.path, 'utf8')
-    return text.split(/\r?\n/).filter(l => KEEP.test(l))
+    // streamed line by line: Client.txt can be several GB
+    const out: string[] = []
+    const lines = readline.createInterface({ input: createReadStream(this._state.path, { encoding: 'utf8' }), crlfDelay: Infinity })
+    for await (const line of lines) {
+      if (KEEP.test(line)) out.push(line)
+    }
+    return out
   }
 
   private async readCatchUp (file: fs.FileHandle, logFile: string, size: number) {
@@ -180,8 +205,17 @@ export class GameLogWatcher {
     const { file, readBuff, offset } = this._state
     const { bytesRead } = await file.read(readBuff, 0, readBuff.length, offset)
 
+    // Deathloom fork: only whole lines; a line cut at the end of the buffer is read
+    // again next time (unless one line fills the whole buffer)
+    let used = bytesRead
     if (bytesRead) {
-      const str = readBuff.toString('utf8', 0, bytesRead)
+      const lastNl = readBuff.lastIndexOf(0x0a, bytesRead - 1)
+      if (lastNl >= 0) used = lastNl + 1
+      else if (bytesRead < readBuff.length) used = 0
+    }
+
+    if (used) {
+      const str = readBuff.toString('utf8', 0, used)
       const lines = str.split('\n').map(line => line.trim()).filter(line => line.length)
       this.onLines?.(lines, false)
       this.server.sendEventTo('broadcast', {
@@ -190,8 +224,8 @@ export class GameLogWatcher {
       })
     }
 
-    if (bytesRead) {
-      this._state.offset += bytesRead
+    if (used) {
+      this._state.offset += used
       this.savePosition()
       this.readToEOF()
     } else {

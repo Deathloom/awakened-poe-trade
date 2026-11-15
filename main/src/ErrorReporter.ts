@@ -91,7 +91,7 @@ export class ErrorReporter {
       this.sentCount += 1
       const version = app.getVersion()
       const firstLine = scrub(message.split('\n')[0]).slice(0, 110)
-      const log = scrub(this.logger.history.trimEnd().split('\n').slice(-LOG_LINES).join('\n'))
+      const log = scrub(this.logger.history.trimEnd().split('\n').filter(l => !l.includes('debug [Shortcuts]')).slice(-LOG_LINES).join('\n'))
       const body = [
         `**Orbhoarder** ${version} · ${os.type()} ${os.release()} · ${source}${where ? ` (${where})` : ''}`,
         '',

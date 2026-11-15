@@ -95,10 +95,17 @@ export class PobImpact {
         payload: { requestId, ...this.defaults() }
       })
     })
+    // Deathloom fork: price checks in quick succession: only the newest waiting item is
+    // calculated (each one is a full PoB calculation; the overlay shows only the last)
+    let impactSeq = 0
     this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear }) => {
       const send = this.server.replyTo()
+      const seq = ++impactSeq
       this.queue = this.queue
-        .then(async () => await this.impact(itemText, refreshGear === true))
+        .then(async () => {
+          if (seq !== impactSeq) throw new Error('A newer item is being checked.')
+          return await this.impact(itemText, refreshGear === true)
+        })
         .then(({ build, result }) => {
           send({
             name: 'MAIN->CLIENT::pob-impact',

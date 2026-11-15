@@ -5,6 +5,18 @@ import { app } from 'electron'
 import type { Server } from 'http'
 import { safeJoin } from '../request-guard'
 
+// Deathloom fork: uploads are images (window background, fullscreen image); anything
+// else could run as a page on the app's own origin, so only these are taken and served
+const IMAGE_TYPES: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.bmp': 'image/bmp',
+  '.avif': 'image/avif'
+}
+
 export function addFileUploadRoutes (server: Server) {
   const uploadsPath = path.join(app.getPath('userData'), 'apt-data', 'files')
 
@@ -13,11 +25,14 @@ export function addFileUploadRoutes (server: Server) {
 
     // Deathloom fork: stay inside the uploads folder; missing file = 404
     const full = safeJoin(uploadsPath, req.url.slice('/uploads/'.length).split('?')[0])
-    if (!full) {
+    const type = full ? IMAGE_TYPES[path.extname(full).toLowerCase()] : undefined
+    if (!full || !type) {
       res.statusCode = 404
       res.end()
       return
     }
+    res.setHeader('content-type', type)
+    res.setHeader('x-content-type-options', 'nosniff')
     fs.createReadStream(full)
       .on('error', () => {
         if (!res.headersSent) res.statusCode = 404
@@ -28,6 +43,13 @@ export function addFileUploadRoutes (server: Server) {
 
   server.addListener('request', (req, res) => {
     if (req.method !== 'POST' || !req.url?.startsWith('/uploads/')) return
+    const ext = path.extname(req.url.split('?')[0]).toLowerCase()
+    if (!IMAGE_TYPES[ext]) {
+      res.statusCode = 415
+      res.end()
+      req.resume()
+      return
+    }
 
     let contents = Buffer.alloc(0)
     req.on('data', (chunk) => {
@@ -38,13 +60,18 @@ export function addFileUploadRoutes (server: Server) {
     })
     req.once('end', () => {
       const hash = crypto.createHash('md5').update(contents).digest('hex')
-      const filename = `${hash}${path.extname(req.url!)}`
+      const filename = `${hash}${ext}`
 
-      fs.mkdirSync(uploadsPath, { recursive: true })
-      fs.writeFileSync(path.join(uploadsPath, filename), contents)
-
-      res.setHeader('content-type', 'application/json')
-      res.end(JSON.stringify({ name: filename }))
+      // async: a 16 MB write shouldn't block the main process
+      fs.promises.mkdir(uploadsPath, { recursive: true })
+        .then(async () => { await fs.promises.writeFile(path.join(uploadsPath, filename), contents) })
+        .then(() => {
+          res.setHeader('content-type', 'application/json')
+          res.end(JSON.stringify({ name: filename }))
+        }, () => {
+          res.statusCode = 500
+          res.end()
+        })
     })
   })
 }
