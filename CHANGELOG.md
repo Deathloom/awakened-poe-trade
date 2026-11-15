@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (#171)
+Orbhoarder's Path of Building now comes from an approved version of the PoB fork instead of whatever is newest, so a change there only reaches players after it's approved here.
+
 ### Changed (#170)
 Lighter and safer: the Orbhoarder window's moving background pauses while you play; quick price checks only calculate the newest item in Path of Building; the debug log no longer grows forever; reading your game log uses less memory. The overlay's built-in browser now has its own sign-in (sign in once more there), key logging (debug) only records keys while the game is active, and the app's local server refuses requests from other websites.
 
