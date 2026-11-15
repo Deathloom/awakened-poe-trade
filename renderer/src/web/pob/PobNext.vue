@@ -205,11 +205,12 @@
               <span v-if="progress.atlasPoints">Atlas points: {{ progress.atlasPoints }}</span>
             </div>
             <table v-if="splitsOpen && splitRows.length" class="mt-1 text-gray-300">
-              <tr class="text-gray-500"><th class="text-left pr-3 font-normal">Act</th><th class="text-right pr-3 font-normal">Reached at</th><th class="text-right pr-3 font-normal">Time in act</th><th class="text-right font-normal" title="Your fastest split with another character followed from level 2">Best</th></tr>
+              <tr class="text-gray-500"><th class="text-left pr-3 font-normal">Act</th><th class="text-right pr-3 font-normal">Reached at</th><th class="text-right pr-3 font-normal">Time in act</th><th class="text-right pr-3 font-normal" title="Deaths in this act">Deaths</th><th class="text-right font-normal" title="Your fastest split with another character followed from level 2">Best</th></tr>
               <tr v-for="r of splitRows" :key="r.act">
                 <td class="pr-3">{{ r.act }}</td>
                 <td class="text-right pr-3 font-mono">{{ r.at != null ? fmtClock(r.at) : '–' }}</td>
                 <td class="text-right pr-3 font-mono">{{ r.inAct ? fmtClock(r.inAct) : '–' }}</td>
+                <td class="text-right pr-3 font-mono" :class="r.deaths ? 'text-red-300' : 'text-gray-600'">{{ r.deaths || '–' }}</td>
                 <td class="text-right font-mono" :class="r.best == null || r.at == null ? 'text-gray-600' : r.at <= r.best ? 'text-green-400' : 'text-red-300'">
                   {{ r.best != null ? fmtClock(r.best) : '–' }}</td>
               </tr>
@@ -439,7 +440,7 @@ const splitRows = computed(() => {
   return Array.from({ length: 10 }, (_, i) => i + 1)
     .map(act => {
       const bests = others.map(o => o[act]).filter((v): v is number => typeof v === 'number' && v > 0)
-      return { act, at: p.splits?.[act] ?? null, inAct: p.actMs?.[act] ?? 0, best: bests.length ? Math.min(...bests) : null }
+      return { act, at: p.splits?.[act] ?? null, inAct: p.actMs?.[act] ?? 0, deaths: p.deathsByAct?.[act] ?? 0, best: bests.length ? Math.min(...bests) : null }
     })
     .filter(r => r.at != null || r.best != null)
 })

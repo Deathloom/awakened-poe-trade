@@ -16,6 +16,8 @@ export interface MapRun {
   ms: number
   deaths: number
   mechanics: string[]
+  // loot value in chaos, added by the player (Map profit)
+  loot?: number
 }
 
 export interface PlaySession {
@@ -38,6 +40,9 @@ export interface PlaySession {
 }
 
 export const PLAY_SESSION_KEY = 'deathloom.play-session.v1'
+// the session before this one (summary card), and what one map costs to run
+export const LAST_SESSION_KEY = 'deathloom.play-session.last.v1'
+export const MAP_COST_KEY = 'deathloom.map-cost.v1'
 // no log line for this long: a new session starts
 const NEW_SESSION_MS = 2 * 60 * 60 * 1000
 // time between two area changes longer than this isn't counted (AFK / closed game)
@@ -94,6 +99,94 @@ export function savePlaySession (s: PlaySession) {
   try { localStorage.setItem(PLAY_SESSION_KEY, JSON.stringify(s)) } catch {}
 }
 
+// ---- Session summary (the session before this one) ----------------------
+export interface SessionSummary {
+  start: number
+  end: number
+  maps: number
+  mapMs: number
+  deaths: number
+  trades: number
+  loot: number
+  cost: number
+  // levels gained per character
+  levels: Array<{ char: string, from: number, to: number }>
+  topZone?: { name: string, ms: number }
+  mechanics: Array<[string, number]>
+}
+
+export function summarize (s: PlaySession, cost = loadMapCost()): SessionSummary {
+  const maps = s.maps.filter(m => m.ms > 0)
+  const top = topZones(s, 1, s.lastAt)[0]
+  return {
+    start: s.start,
+    end: s.lastAt,
+    maps: maps.length,
+    mapMs: maps.reduce((a, m) => a + m.ms, 0),
+    deaths: s.deaths,
+    trades: s.trades,
+    loot: maps.reduce((a, m) => a + (m.loot ?? 0), 0),
+    cost: cost * maps.length,
+    levels: Object.entries(s.levels)
+      .filter(([, l]) => l.length > 1)
+      .map(([char, l]) => ({ char, from: l[0].level, to: l[l.length - 1].level })),
+    topZone: top,
+    mechanics: Object.entries(s.mechanics).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  }
+}
+
+export function loadLastSession (): SessionSummary | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LAST_SESSION_KEY) ?? 'null')
+    return raw && typeof raw === 'object' && typeof raw.start === 'number' ? raw : null
+  } catch { return null }
+}
+
+// keep a summary of a finished session (skipped when nothing happened in it)
+export function keepLastSession (s: PlaySession) {
+  if (!s.maps.length && !s.deaths && !Object.keys(s.levels).length && s.lastAt - s.start < 10 * 60_000) return
+  try { localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(summarize(s))) } catch {}
+}
+
+// ---- Map profit ----------------------------------------------------------
+export function loadMapCost (): number {
+  try {
+    const v = Number(localStorage.getItem(MAP_COST_KEY))
+    return Number.isFinite(v) && v > 0 ? v : 0
+  } catch { return 0 }
+}
+
+export function saveMapCost (chaos: number) {
+  try { localStorage.setItem(MAP_COST_KEY, String(Math.max(0, chaos || 0))) } catch {}
+}
+
+// add (or with set, replace) loot value on a map of the session; reads the
+// newest copy so the overlay's recording isn't overwritten
+export function addMapLoot (seed: string, code: string, chaos: number, set = false): PlaySession {
+  const s = loadPlaySession()
+  const run = s.maps.find(m => m.seed === seed && m.code === code)
+  if (run) {
+    run.loot = Math.max(0, Math.round(((set ? 0 : (run.loot ?? 0)) + chaos) * 10) / 10)
+    savePlaySession(s)
+  }
+  return s
+}
+
+// profit per hour of map time (null until there's loot and some map time)
+export function mapProfit (s: PlaySession, cost: number, now = Date.now()): { loot: number, cost: number, perHour: number | null, perMap: number | null } {
+  const runs = s.maps.filter(m => m.ms > 0 || m.loot)
+  const loot = runs.reduce((a, m) => a + (m.loot ?? 0), 0)
+  const total = cost * runs.length
+  const live = currentMapMs(s, now)
+  const ms = runs.reduce((a, m) => a + m.ms, 0) + (live != null ? live - (s.maps[s.maps.length - 1]?.ms ?? 0) : 0)
+  return {
+    loot,
+    cost: total,
+    perHour: loot > 0 && ms > 5 * 60_000 ? (loot - total) / (ms / 3600000) : null,
+    perMap: loot > 0 && runs.length ? (loot - total) / runs.length : null
+  }
+}
+
 function lineTime (line: string): number | null {
   const m = line.match(/^(\d{4})\/(\d\d)\/(\d\d) (\d\d):(\d\d):(\d\d)/)
   if (!m) return null
@@ -107,7 +200,10 @@ export function applySessionLines (start: PlaySession, lines: string[], lang: st
   const edit = (ts: number) => {
     if (!s) {
       s = structuredClone(start)
-      if (ts - s.lastAt > NEW_SESSION_MS) s = emptySession(ts)
+      if (ts - s.lastAt > NEW_SESSION_MS) {
+        keepLastSession(s)
+        s = emptySession(ts)
+      }
     }
     s.lastAt = Math.max(s.lastAt, ts)
     return s

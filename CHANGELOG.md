@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#176)
+- **Map profit:** the **This session** panel has **Loot** buttons (+5c, +20c, +50c, +1 div, or type an amount) for the map you're in (or the last one), and a **Cost/map** box. It shows profit per hour of map time, and each map's loot in **Last maps**.
+- **Last session summary:** when a new session starts (after 2 hours without playing, or **New session**), the old one is kept as a short summary in the panel: time played, maps, deaths, trades, profit, levels gained, where the time went and league mechanics.
+- **Deaths per act** in the act splits (Levelling → Next steps → **Campaign time**).
+
 ### Added (#175)
 - **Bug / Idea button** at the top right of the Orbhoarder window: report a bug or suggest a feature in a few lines. It's sent to the group's builds repo on GitHub with your build-sync sign-in (bug reports can include the last log lines, without your Windows user name or passwords). Not signed in? **Open on GitHub** opens it as a new issue in your browser.
 
