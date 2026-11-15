@@ -117,6 +117,18 @@ jobs:
       working-directory: ./main
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # electron-builder only writes latest.yml (its channel detection doesn't apply
+    # here). Testing copies read beta.yml: the same file under that name, on test
+    # and stable releases alike, so Testing copies also get stable releases.
+    - name: Add beta.yml
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        V: ${{ steps.v.outputs.full }}
+      run: |
+        test -f main/dist/latest.yml || { echo "latest.yml not built"; exit 1; }
+        if [[ ! -f main/dist/beta.yml ]]; then cp main/dist/latest.yml main/dist/beta.yml; fi
+        gh release upload "v$V" main/dist/beta.yml --clobber
     - name: Publish release
       if: ${{ !inputs.test_build }}
       shell: bash
