@@ -376,8 +376,9 @@ const takenByLog = computed(() => {
         break
       }
     }
-    // names left over that no linked passive could take: as before, in the plan's order
-    p.order.forEach((node, i) => { if (!placed.has(i) && takeNode(node)) taken.add(i) })
+    // names left over that no linked passive could take (passives off the build's
+    // path) are not placed: guessing them in plan order lit passives further along
+    // the path, and the tree map then filled in everything on the way to them
     return taken
   }
   p.order.forEach((node, i) => { if (takeNode(node)) taken.add(i) })
