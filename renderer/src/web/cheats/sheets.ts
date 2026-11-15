@@ -113,5 +113,62 @@ export const SHEETS: Sheet[] = [
       }
     ],
     check: 'Room rewards, afflictions and boons show on the sanctum map; hover them.'
+  },
+  {
+    id: 'bosses',
+    label: 'Endgame bosses',
+    intro: 'The pinnacle bosses of the atlas. The Searing Exarch, the Eater of Worlds, the Maven and the Uber Elder each give one of the four voidstones the first time.',
+    sections: [
+      {
+        title: 'Before any boss',
+        lines: [
+          'Capped resistances (75%), chaos resistance as high as you can, and enough life or energy shield for the boss\'s big hits.',
+          'Flasks that remove freeze, shock, ignite and bleed; a movement flask.',
+          'Most deaths are from not moving: learn the one or two attacks that kill and walk out of them.',
+          'Boss fights have a limited number of portals: don\'t waste them on easy phases.'
+        ]
+      },
+      {
+        title: 'Who and how to get there',
+        lines: [
+          'The Eater of Worlds and the Searing Exarch: fill their altars by running maps with that content; the boss opens when the bar is full.',
+          'The Maven: let her witness map bosses until she drops her invitation (Maven\'s Writ).',
+          'Sirus: beat the four Conquerors (influenced maps), then the Sirus fight in the Atlas.',
+          'The Shaper and Elder, then the Uber Elder: from the guardians\' fragments, put together at the map device.',
+          'Uber versions (much harder) come from the same bosses\' uber fragments and invitations.'
+        ]
+      },
+      {
+        title: 'The usual killers',
+        lines: [
+          'Ground effects you stand in too long (degeneration): never stand still in anything coloured.',
+          'Slams with a wind-up: dodge sideways, not backwards.',
+          'Stacking debuffs: move to clean ground or use the flask that removes them.'
+        ]
+      }
+    ],
+    check: 'The Atlas panel shows each boss\'s progress (altars, Maven\'s witnessed bosses, conquerors beaten).'
+  },
+  {
+    id: 'leagues',
+    label: 'Map mechanics',
+    intro: 'Old league mechanics that stay in maps. What they are and the one thing to know about each.',
+    sections: [
+      {
+        title: 'In maps',
+        lines: [
+          'Breach: walk into the hand and kill fast; more kills in the time = more splinters for Breachstones.',
+          'Legion: break the frozen monsters in the time you have; generals drop splinters for Timeless Emblems.',
+          'Delirium: the mirror fog makes monsters stronger and drops rewards the longer you stay; leave before it gets too strong.',
+          'Essence: a monster held by essences; corrupt it with a Remnant of Corruption only if you can handle the extra mods.',
+          'Ritual: kill in the circle, then spend tribute on the rewards; defer the ones you want later.',
+          'Expedition: place explosives through the remnants\' area; the remnant mods make monsters stronger and loot better. Trade logbooks with the four NPCs.',
+          'Ultimatum: win the trial rounds; each round adds a modifier. Take the reward when the next risk is too big.',
+          'Blight: build towers on the paths before the monsters reach the pump; Blighted maps need oils on the anoint.',
+          'Harvest: monsters from the seeds; lifeforce from them pays for the crafts at the Horticrafting station.'
+        ]
+      }
+    ],
+    check: 'Your atlas passive tree decides how much of each you meet; the Atlas tab shows the ready-made trees for each.'
   }
 ]

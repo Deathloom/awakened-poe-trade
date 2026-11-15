@@ -639,7 +639,7 @@ type IpcHudPanel =
 // Build gear panel in the HUD: actions the overlay carries out
 type IpcHudGearAction =
   Event<'CLIENT->MAIN::hud-gear-action', {
-    action: 'trade' | 'price-check' | 'loadouts'
+    action: 'trade' | 'upgrade' | 'price-check' | 'loadouts'
     // item text (Ctrl+C format) for trade / price-check
     text?: string
     // new pob.loadouts for 'loadouts' (the overlay saves the settings)
@@ -648,7 +648,7 @@ type IpcHudGearAction =
 
 type IpcHudGearActionRelay =
   Event<'MAIN->CLIENT::hud-gear-action', {
-    action: 'trade' | 'price-check' | 'loadouts'
+    action: 'trade' | 'upgrade' | 'price-check' | 'loadouts'
     text?: string
     loadouts?: Record<string, PobLoadoutChoice>
   }>

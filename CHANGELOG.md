@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#178)
+- **Find an upgrade** (Build panel, gear: the ↑ button next to **Trade**): searches the trade site for any base of the same kind with at least your item's values on its main stats (life, resistances, …).
+- **More search strings** (Build panel → Notes): flasks that remove bleed/freeze/shock/ignite/poison, flasks with quality, rings/amulets/belts with life, all elemental resistances, jewels with life.
+- **Cheat sheets:** **Endgame bosses** (how to reach each pinnacle boss and what usually kills you) and **Map mechanics** (Breach, Legion, Delirium, Essence, Ritual, Expedition, Ultimatum, Blight, Harvest in one line each).
+- **Progress** (Cheat sheets → Progress): tick off labs, voidstones, pinnacle bosses and character goals; saved per league.
+
 ### Added (#177)
 - **Money tools** panel (overlay, in game, Orbhoarder window and the All tab; its own hotkey in Settings → Hotkeys):
   - **Gem levelling:** what a gem costs at level 1 and sells for at level 20 on poe.ninja, best profit first (tick **20% quality** for 1/20 → 20/20). Corrupted gems are left out.

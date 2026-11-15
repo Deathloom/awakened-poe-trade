@@ -12,8 +12,10 @@ import { createTradeRequest } from '@/web/price-check/trade/pathofexile-trade'
 import { getTradeEndpoint } from '@/web/price-check/trade/common'
 import type { PriceCheckWidget } from '../overlay/interfaces'
 
-// Exact stat search on the official trade site; returns an error message or null
-export function openTradeSearch (text: string): string | null {
+// Exact stat search on the official trade site; returns an error message or null.
+// upgrade (idea 8): any base of the same kind, with at least the values this item
+// has on the stats the price check picks by default (life, resistances, …)
+export function openTradeSearch (text: string, upgrade = false): string | null {
   const parsed = parseClipboard(text)
   if (parsed.isErr()) {
     return "The overlay couldn't read this item; try the price check button."
@@ -33,6 +35,17 @@ export function openTradeSearch (text: string): string | null {
     currency: widget.defaultCurrency
   })
   const preset = presets.presets.find(p => p.id === presets.active)!
+  if (upgrade) {
+    if (parsed.value.rarity === 'Unique') {
+      return 'Uniques have fixed stats: use Trade for the same unique with better rolls.'
+    }
+    if (preset.filters.searchRelaxed) preset.filters.searchRelaxed.disabled = false
+    for (const s of preset.stats) {
+      if (s.group || s.disabled || !s.roll || s.roll.isNegated || s.not) continue
+      s.roll.min = s.roll.value
+      s.roll.max = ''
+    }
+  }
   const query = createTradeRequest(preset.filters, preset.stats)
   openTradeLink(`https://${getTradeEndpoint()}/trade/search/${league}?q=${JSON.stringify(query)}`)
   return null
