@@ -32,6 +32,9 @@ export interface CharProgress {
   deathsByAct?: Record<string, number>
   // time per act (ms between zone changes, gaps over 20 min not counted)
   actMs?: Record<string, number>
+  // the game's own count from /passives, and how many allocations the log had counted then:
+  // passives taken now = allocated + allocations since (exact, masteries included)
+  passivesSnap?: { total: number, allocated: number, logCount: number }
   // campaign time (sum of actMs, acts 1-10) when the act was first entered: the act splits
   splits?: Record<string, number>
   kitava?: Array<'cruel' | 'merciless'>
@@ -229,6 +232,9 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
     }
     if (ev.type === 'level') {
       v = recordLevel(v ?? start, ev.char, ev.cls, ev.level)
+    } else if (ev.type === 'passivesTotal') {
+      const p = prog()
+      p.passivesSnap = { total: ev.total, allocated: ev.allocated, logCount: Object.values(p.alloc ?? {}).reduce((n, c) => n + c, 0) }
     } else if (ev.type === 'passivesList') {
       passivesList = []
       prog().passives = ev.total

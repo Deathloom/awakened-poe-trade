@@ -11,6 +11,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Changed (#157)
 - **Gems follow your build's own stages:** if the build's skill list in Path of Building has groups labelled with level ranges (like "1-27 Rolling Magma", "28-31 Firestorm", "31+ Storm Burst") separated by lines, Gems → For my level shows which stage you're in, only that stage's gems under Socket now, the earlier stages' gems under Take out, and what changes at the next stage's level.
 
+### Fixed (#158)
+- **Passives taken and unspent points are exact after /passives:** type **/passives** in game once and the Next steps panel uses the game's own count (masteries included), plus what you allocate after.
+
 ### Fixed (#157)
 - **The build panel's Character follows the character you play again**, from the game log (the character levelling up; party members are ignored), and brings back the build you used with it. The Character list shows the characters from the game log.
 

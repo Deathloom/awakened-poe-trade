@@ -19,6 +19,8 @@ export type LogEvent =
   | { type: 'speech', speaker: string, text: string }
   // /passives: "22 Passive Skill Points from quests:" then "(1 from The Marooned Mariner)" per quest
   | { type: 'passivesList', total: number }
+  // /passives: ": 55 total Passive Skill Points (55 allocated)" (masteries included; ascendancy separate)
+  | { type: 'passivesTotal', total: number, allocated: number }
   | { type: 'passiveFrom', quest: string, count: number }
   // a passive taken / refunded (character tree, or the atlas tree for atlas_* ids)
   | { type: 'passiveAlloc', id: string, name: string, on: boolean, atlas: boolean }
@@ -43,6 +45,7 @@ const RESPEC_POINTS = /^: You have received (?:a|(?<n>\d+)) Passive Respec Point
 // "Brutus, the Warden: Your crime is trespass." (no channel prefix like # $ % & @)
 const SPEECH = /^(?<speaker>[A-Z][^:#$%&@<>]{1,40}): (?<text>\S.*)$/
 const PASSIVES_LIST = /^: (?<n>\d+) Passive Skill Points? from quests:$/
+const PASSIVES_TOTAL = /^: (?<t>\d+) total Passive Skill Points? \((?<a>\d+) allocated\)$/
 const PASSIVE_FROM = /^: \((?<n>\d+) from (?<quest>.+)\)$/
 const ALLOC = /^Successfully (?<un>un)?allocated passive skill id: (?<id>[^,]+), name: (?<name>.+)$/
 // masteries: "Successfully allocated mastery effect id: 16950, mastery: mastery_totem230, name: Totem Mastery"
@@ -69,6 +72,7 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if ((m = text.match(LEVEL_UP))) return { type: 'level', char: m.groups!.char, cls: m.groups!.cls, level: Number(m.groups!.level) }
   if ((m = text.match(PASSIVE_POINT))) return { type: 'questPoint', kind: 'passive', count: Number(m.groups!.n ?? 1) }
   if ((m = text.match(RESPEC_POINTS))) return { type: 'questPoint', kind: 'respec', count: Number(m.groups!.n ?? 1) }
+  if ((m = text.match(PASSIVES_TOTAL))) return { type: 'passivesTotal', total: Number(m.groups!.t), allocated: Number(m.groups!.a) }
   if ((m = text.match(PASSIVES_LIST))) return { type: 'passivesList', total: Number(m.groups!.n) }
   if ((m = text.match(PASSIVE_FROM))) return { type: 'passiveFrom', quest: m.groups!.quest, count: Number(m.groups!.n) }
   if ((m = text.match(MASTERY))) return { type: 'passiveAlloc', id: m.groups!.id.trim(), name: m.groups!.name.trim(), on: !m.groups!.un, atlas: m.groups!.id.startsWith('atlas_') }
