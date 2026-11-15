@@ -60,7 +60,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 6.2 | Release only publishes when installer and `latest.yml` are both present | ✅ `release.yml` |
 | 6.3 | Workflow inputs passed via `env`, never pasted into scripts (injection) | ✅ `release.yml` |
 | 6.5 | Orbhoarder's Path of Building comes from a pinned commit of the PoB fork (`main/src/pob/pob-pin.ts`), every file checked against that commit's manifest (SHA-1) and the source prefix; a push to the PoB fork reaches players only after a PR here moves the pin | ✅ `PobDownload.ts`, `pob-pin.yml` |
-| 6.4 | Windows code signing | ⚠️ not signed (costs money; SmartScreen warns on first install). Revisit if the app is shared beyond friends. |
+| 6.4 | Windows code signing | ⚠️ not signed (costs money; SmartScreen warns on first install). Each installer has a build provenance attestation (#173: `gh attestation verify <file> -R Deathloom/awakened-poe-trade`); stable only from master. Free option to look at: SignPath Foundation (open-source signing). |
 
 ## 7. Supply chain (OpenSSF Scorecard)
 

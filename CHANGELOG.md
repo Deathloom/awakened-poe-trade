@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (#174)
+- **Other devices need a key with --listen:** when Orbhoarder is started with `--listen` (so another device on your network can open it), that device must now open the link with its key once (`?key=…`); without it, it's refused. Your own PC isn't affected.
+- **Problem reports no longer contain your Path of Building settings** (folder paths, player name): the log only says whether each setting is the default or your own.
+
+### Security (#173)
+- **Every installer comes with a signed build record** showing it was built by this project's release workflow from this repo, so a download can be checked. Stable releases can only be built from the master branch; work goes to a dev branch and test builds first.
+
 ## [1.0.89] - 2026-11-15
 
 ### Security (#171)

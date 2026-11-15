@@ -227,10 +227,10 @@ export class PobImpact {
     if (raw?.pobDir && isLegacyPobSetting(raw.pobDir)) raw = { ...raw, pobDir: '' }
     this.rawCfg = raw
     const cfg = raw && withDefaults(raw, this.defaults())
-    this.logger.write(`info [PoB] settings: ${JSON.stringify(raw ?? null)}`)
-    if (cfg && raw && (cfg.pobDir !== raw.pobDir || cfg.buildsDir !== raw.buildsDir || cfg.player !== raw.player)) {
-      this.logger.write(`info [PoB] with defaults: pobDir=${cfg.pobDir} buildsDir=${cfg.buildsDir} player=${cfg.player}`)
-    }
+    // Deathloom fork: the log goes into problem reports, so only say what kind of
+    // setting is used, never folder paths, the player name or other values
+    const kind = (v: unknown) => v ? 'custom' : 'default'
+    this.logger.write(`info [PoB] settings: ${raw ? `enabled=${String(raw.enabled)} pobDir=${kind(raw.pobDir)} buildsDir=${kind(raw.buildsDir)} player=${raw.player ? 'set' : 'not set'} (${Object.keys(raw).length} settings)` : 'none'}`)
     // Live-gear settings don't need a PoB restart
     const procKey = (c: PobConfig | undefined) => JSON.stringify(c && [c.enabled, c.pobDir, c.buildsDir, c.player])
     const same = procKey(cfg) === procKey(this.cfg)
