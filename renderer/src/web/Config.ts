@@ -488,13 +488,24 @@ function upgradeConfig (_config: Config): Config {
     // one-time defaults for configs saved before these hotkeys existed
     config.pob.gearPanelKey ||= 'Ctrl + G'
     config.pob.guideKey ||= 'Ctrl + H'
-    config.pob.tradesKey ||= 'Ctrl + T'
+    config.pob.tradesKey ||= 'Ctrl + B'
     config.pob.hotkeysV1 = true
   }
   if (!config.pob.hotkeysV2) {
     // Ctrl+P opens Path of Building (added after hotkeysV1)
     if (config.pob.openPobKey === undefined) config.pob.openPobKey = 'Ctrl + P'
     config.pob.hotkeysV2 = true
+  }
+  if (!config.pob.hotkeysV3) {
+    // Deathloom fork (2026-11-16): Ctrl+T is PoE's skill 13 key (second skill bar), and
+    // the overlay takes it before the game. Move the trade companion off it, unless the
+    // player already chose Ctrl+B for something else.
+    const used = new Set<string>([config.overlayKey, config.pob.gearPanelKey, config.pob.guideKey, config.pob.openPobKey,
+      config.pob.boardKey, config.pob.boardPostKey, ...Object.values(config.pob.panelKeys ?? {}),
+      ...config.commands.map(c => c.hotkey), ...(config.pob.searchStrings ?? []).map(s => s.hotkey)]
+      .filter((k): k is string => typeof k === 'string'))
+    if (config.pob.tradesKey === 'Ctrl + T' && !used.has('Ctrl + B')) config.pob.tradesKey = 'Ctrl + B'
+    config.pob.hotkeysV3 = true
   }
   // Deathloom fork (2026-11-14): stash tracker removed (GGG rules: no login cookie in shared apps)
   config.widgets = config.widgets.filter(w => w.wmType !== 'stash-tracker')
@@ -801,7 +812,8 @@ export function defaultPobConfig (): PobConfig {
     liveTreeAndGems: true,
     gearPanelKey: 'Ctrl + G',
     guideKey: 'Ctrl + H',
-    tradesKey: 'Ctrl + T',
+    tradesKey: 'Ctrl + B',
+    hotkeysV3: true,
     hotkeysV1: true,
     openPobKey: 'Ctrl + P',
     panelKeys: {},

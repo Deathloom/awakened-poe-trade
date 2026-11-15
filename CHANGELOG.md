@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#194)
+- **Trade companion hotkey is now Ctrl+B** (was Ctrl+T, which is PoE's key for skill 13 on the second skill bar; Orbhoarder caught it first so the skill never fired). If you still had Ctrl+T it moves to Ctrl+B, unless you already use Ctrl+B for something.
+- **Game-key warning:** a hotkey box turns orange when the key is one PoE uses by default (skills, flasks, Ctrl+C, Ctrl+F and so on), with what the game uses it for.
+
 ### Changed (#193)
 - **One Market panel:** Market overview (all poe.ninja prices) is now the **All prices** tab of the Market panel, next to **Watched** (your watched items and alerts). If you had Market overview pinned or on a hotkey, Market gets the pin and the hotkey. The Orbhoarder window's Market tab still shows both side by side.
 - **Map mods:** Settings → Maps (every build, this PC) and Build panel → Notes (this build, shared) now say which is which; the map check uses both, as before.

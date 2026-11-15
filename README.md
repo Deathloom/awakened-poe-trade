@@ -30,7 +30,7 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Import builds** | Import button in the build panel: paste a PoB code or a pobb.in / poe.ninja / pastebin / maxroll link and save it to your folder, without opening PoB. |
 | **Open PoB** (Ctrl+P) | Opens Orbhoarder's own Path of Building. |
 | **Campaign guide** (Ctrl+H) | Route for acts 1–10. It moves forward as you enter zones. |
-| **Trade companion** (Ctrl+T) | Opens on an incoming trade whisper, with Invite / Trade / Thanks / Kick buttons. They copy the command to the clipboard, or send it if you turn that on. |
+| **Trade companion** (Ctrl+B) | Opens on an incoming trade whisper, with Invite / Trade / Thanks / Kick buttons. They copy the command to the clipboard, or send it if you turn that on. |
 | **Ledger** | What you sold and bought per currency, per league. |
 | **Market history** | 7-day poe.ninja trend, plus prices recorded while the app runs. |
 | **Show while playing** | Any panel (guide, trade companion, build, tree map, atlas tree, this session, market history, market overview) can be pinned over the game as a small window you can drag and resize, or shown in the overlay, each with its own hotkey. You choose per panel whether clicks go through to the game. Test option: all pinned panels in one window (Settings → Panels). |
