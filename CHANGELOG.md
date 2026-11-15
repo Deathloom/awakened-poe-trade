@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#142)
+- **Open a trade site link in Market search:** paste a pathofexile.com trade search (or bulk exchange) link into the Market search box and press **Open this search** (or Enter); it opens in the Trade site tab. It tells you when the link is for another league.
+
 ### Added (#141)
 - **Your own chat buttons in the trade companion:** **Your own buttons…** under the whisper list adds up to 8 buttons with your text, for selling, buying or both. Use {name}, {item} and {price} in the text. Like the built-in buttons, each click copies or sends one message.
 
