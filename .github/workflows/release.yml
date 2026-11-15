@@ -40,6 +40,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write      # build provenance (attestation) for the installer
+  attestations: write
 
 jobs:
   release:
@@ -154,6 +156,14 @@ jobs:
           grep -q '^latest.yml$' assets.txt || { echo "latest.yml missing - not publishing"; exit 1; }
           gh release edit "v$V" --draft=false --latest
         fi
+    # Signed record (Sigstore) that this installer was built by this workflow from
+    # this repo and commit. Check a download with:
+    #   gh attestation verify Orbhoarder-Setup-x.y.z.exe -R Deathloom/awakened-poe-trade
+    - name: Build provenance
+      if: ${{ !inputs.test_build }}
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: 'main/dist/*Setup*.exe'
     - name: Hash
       shell: bash
       run: cat ./main/dist/*.yml
