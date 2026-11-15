@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#152)
+- **What's new in a test version** lists the changes that version brings (they weren't shown before), and opens by itself after a test update.
+
 ### Fixed (#151)
 - **Masteries you allocate are ticked off:** the levelling plan (Next tab, tree map) now also recognises a mastery when the game log names the effect you picked.
 
