@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.89] - 2026-11-15
+
 ### Security (#171)
 Orbhoarder's Path of Building now comes from an approved version of the PoB fork instead of whatever is newest, so a change there only reaches players after it's approved here.
 

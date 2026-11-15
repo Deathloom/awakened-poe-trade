@@ -11,8 +11,8 @@
 #   as the newest x.y.z-beta.N test release (what you tested), not from whatever
 #   master has now. Rename [Unreleased] in CHANGELOG.md to the version first.
 #
-# Path of Building isn't in the installer: Loot Goblin downloads it from the PoB
-# fork's master branch (PoB fork workflow "Release PoB (master)").
+# Path of Building isn't in the installer: Orbhoarder downloads it from the PoB
+# fork at the commit pinned in main/src/pob/pob-pin.ts (see the PoB pin workflow).
 name: Release
 
 on:
