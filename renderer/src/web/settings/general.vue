@@ -1,7 +1,8 @@
 <template>
   <div class="max-w-md p-2">
-    <!-- Deathloom fork: PoE2 mode (phase 1: game switch) -->
-    <div class="mb-4">
+    <!-- Deathloom fork: PoE2 mode (phase 1: game switch). Hidden until PoE2 mode is usable;
+         still shown if PoE2 is already selected so it can be switched back. -->
+    <div class="mb-4" v-if="showGameSwitch">
       <div class="flex-1 mb-1">Game</div>
       <div class="flex gap-x-4">
         <ui-radio v-model="game" value="poe1">Path of Exile 1</ui-radio>
@@ -125,6 +126,9 @@ import { configModelValue, configProp } from './utils'
 import { AppConfig } from '@/web/Config'
 import { windowTitleOnSwitch, type Game } from '@ipc/game'
 
+// Deathloom fork: PoE2 mode is deferred until the PoE1 app is done. Set true to show the switch.
+const GAME_SWITCH_ENABLED = false
+
 export default defineComponent({
   name: 'settings.general',
   components: { UiRadio, UiCheckbox, UiToggle },
@@ -164,6 +168,7 @@ export default defineComponent({
       restoreClipboard: configModelValue(() => props.config, 'restoreClipboard'),
       showAttachNotification: configModelValue(() => props.config, 'showAttachNotification'),
       windowTitle: configModelValue(() => props.config, 'windowTitle'),
+      showGameSwitch: computed(() => GAME_SWITCH_ENABLED || props.config.game !== 'poe1'),
       game: computed<Game>({
         get () { return props.config.game },
         set (value) {
