@@ -3,15 +3,82 @@
 // Only things that rarely change; GGG reworks league mechanics now and then, so
 // each sheet says where to check in game. Vendor recipes come from vendor-recipes.ts.
 
+export interface SheetSection { title: string, lines: string[], focus?: string }
+
 export interface Sheet {
   id: string
   label: string
   intro: string
-  sections: Array<{ title: string, lines: string[] }>
+  sections: SheetSection[]
   check: string
+  // optional switch (e.g. mapping profit / bosses / levelling); sections without
+  // a focus show under every choice
+  focuses?: Array<{ id: string, label: string }>
+}
+
+export function sectionsFor (sheet: Pick<Sheet, 'sections' | 'focuses'>, focus: string | null | undefined): SheetSection[] {
+  if (!sheet.focuses?.length) return sheet.sections
+  const f = sheet.focuses.some(x => x.id === focus) ? focus : sheet.focuses[0].id
+  return sheet.sections.filter(s => !s.focus || s.focus === f)
 }
 
 export const SHEETS: Sheet[] = [
+  {
+    id: 'covens',
+    label: 'Covens (3.30)',
+    intro: 'Covens of Umbra: covenites hold rituals around cauldrons. Beat a ritual to pick a Fate for that area\'s boss; Fate-empowered bosses drop Viscera that you put on your Wickerman for a lasting buff. Pick what you\'re doing below.',
+    focuses: [
+      { id: 'levelling', label: 'Levelling' },
+      { id: 'mapping', label: 'Mapping profit' },
+      { id: 'bosses', label: 'Bosses' }
+    ],
+    sections: [
+      {
+        title: 'The loop',
+        lines: [
+          'Ritual → Fate: beating a coven ritual lets you choose a Fate for the area boss. Up to 3 Fates on one boss; you can hold more and choose which 3.',
+          'Fates make the boss harder and its loot better (currency, uniques, maps). Matching Fates unlock rarer rewards (Exceptional supports, new uniques); doubling a Fate boosts the first one\'s reward.',
+          'Wickerman: 4 slots (head, arm, body, leg), so up to 4 Viscera active. Each Viscera is a boss-specific buff (life, regen, poison and more).',
+          'Viscera come in 3 tiers; the top tier only from endgame versions of bosses.'
+        ]
+      },
+      {
+        focus: 'levelling',
+        title: 'Levelling',
+        lines: [
+          'Mora helps you break up the rituals from the first areas of act 1.',
+          'Over two dozen campaign areas now have a boss: Fating them gives power, gems and currency but makes acts longer. Do it when your build kills bosses easily, skip it when it doesn\'t.',
+          'Fill the Wickerman early with life / regen Viscera; swap for damage ones later.',
+          'Single-target damage and defences matter more this league: the rewards come from bosses.',
+          'Keep the act splits (Deaths column) honest: a Fate that keeps killing you isn\'t worth it while levelling.'
+        ]
+      },
+      {
+        focus: 'mapping',
+        title: 'Mapping profit',
+        lines: [
+          'Fate map bosses you can kill fast; pick Fates whose combos give the rewards you sell, and skip ones that slow you down.',
+          'Threads replace Scarabs: the money ones will be expensive at league start and drop later. Track them in Market history.',
+          'Item rarity matters more in 3.30: it decides the drop pools. Most Divines come from tough rares and uniques, not trash packs.',
+          'Higher-tier magic and rare items drop now (tiers 2–5; tier 5 magic can be fractured): check your loot filter isn\'t hiding good bases.',
+          'Mirage can cover a whole map and roll as a map mod: fast clear for loot.',
+          'Use the Loot buttons and Cost/map in This session to see if your Fates and Threads actually pay.'
+        ]
+      },
+      {
+        focus: 'bosses',
+        title: 'Bosses',
+        lines: [
+          'Fated bosses in higher-tier atlas areas can drop Grim Fates. They are kept on the Wickerman until used, and each belongs to one pinnacle boss.',
+          'A Grim Fate pinnacle boss gets new attacks (seen: Sirus with crow swarms, Uber Elder beams from portals, Shaper mirror illusions) and drops Pinnacle Boss Viscera, among the strongest Wickerman buffs.',
+          'Beating a Grim Fate pinnacle is the road to the Coven Queen (exact steps: check in game).',
+          'Each boss has its own Viscera: farming one boss is how you chase its buff.',
+          'Before a Fated pinnacle: read the Fates on it, plan for the extra mechanics, and keep a portal for the last phase.'
+        ]
+      }
+    ],
+    check: 'Fate list, combos and Viscera values: check in game and GGG\'s Covens page (pathofexile.com/covens); some details were not announced.'
+  },
   {
     id: 'betrayal',
     label: 'Betrayal',

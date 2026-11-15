@@ -19,7 +19,11 @@
       </template>
       <template v-else-if="sheet">
         <div class="text-gray-300">{{ sheet.intro }}</div>
-        <div v-for="sec of sheet.sections" :key="sec.title">
+        <div v-if="sheet.focuses?.length" class="flex flex-wrap gap-1">
+          <button v-for="f of sheet.focuses" :key="f.id" class="px-2 rounded border border-gray-600"
+            :class="curFocus === f.id ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setFocus(f.id)">{{ f.label }}</button>
+        </div>
+        <div v-for="sec of shownSections" :key="sec.title">
           <div class="text-gray-100">{{ sec.title }}</div>
           <ul class="list-disc pl-4 text-gray-300 space-y-0.5">
             <li v-for="l of sec.lines" :key="l">{{ l }}</li>
@@ -45,7 +49,7 @@
 import { computed, ref, watch } from 'vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { PROGRESS, loadProgress, saveProgress } from './progress'
-import { SHEETS } from './sheets'
+import { SHEETS, sectionsFor } from './sheets'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 
 const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Progress' }]
@@ -56,6 +60,22 @@ function setTab (id: string) {
   try { localStorage.setItem(KEY, id) } catch {}
 }
 const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (tab.value === 'recipes' || tab.value === 'progress' ? null : SHEETS[0]))
+
+// per-sheet focus switch (Covens: levelling / mapping profit / bosses)
+const FOCUS_KEY = 'deathloom.cheats.focus.v1'
+const focusBySheet = ref<Record<string, string>>((() => { try { return JSON.parse(localStorage.getItem(FOCUS_KEY) ?? '{}') ?? {} } catch { return {} } })())
+const curFocus = computed(() => {
+  const s = sheet.value
+  if (!s?.focuses?.length) return null
+  const f = focusBySheet.value[s.id]
+  return s.focuses.some(x => x.id === f) ? f : s.focuses[0].id
+})
+const shownSections = computed(() => sheet.value ? sectionsFor(sheet.value, curFocus.value) : [])
+function setFocus (id: string) {
+  if (!sheet.value) return
+  focusBySheet.value = { ...focusBySheet.value, [sheet.value.id]: id }
+  try { localStorage.setItem(FOCUS_KEY, JSON.stringify(focusBySheet.value)) } catch {}
+}
 
 // Endgame progress (ticks per league)
 const leagues = useLeagues()
