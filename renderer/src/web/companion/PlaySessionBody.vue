@@ -14,6 +14,22 @@
         <span :class="s.deaths ? 'text-red-300' : ''">Deaths: {{ s.deaths }}</span>
         <span>Trades: {{ s.trades }}</span>
         <span v-if="pace" :title="pace.title">Levelling: {{ pace.text }}</span>
+        <span v-if="profit.perHour != null" class="text-yellow-300" :title="`Loot ${money(profit.loot)} − map costs ${money(profit.cost)}, per hour of map time`">
+          Profit: {{ money(profit.perHour) }}/h</span>
+      </div>
+
+      <!-- Map profit: loot value per map, typed in (nothing is read from the game but the log) -->
+      <div v-if="lootTarget" class="flex flex-wrap items-center gap-1">
+        <span class="lg-sub mr-1" :title="'Add what this map dropped (your estimate). ' + (current ? 'Current map.' : 'Last map.')">
+          Loot{{ current ? '' : ' (last map)' }}:</span>
+        <span class="text-yellow-300 mr-1">{{ money(lootTarget.loot ?? 0) }}</span>
+        <button v-for="b of LOOT_STEPS" :key="b" class="btn-loot" @click="addLoot(b)">+{{ b }}c</button>
+        <button v-if="divine" class="btn-loot" :title="`1 divine = ${Math.round(divine)} c`" @click="addLoot(divine)">+1 div</button>
+        <input v-model.number="lootInput" type="number" min="0" class="w-14 bg-gray-900 rounded px-1" placeholder="c" title="Type an amount in chaos and press Enter"
+          @keydown.enter="lootInput && addLoot(lootInput); lootInput = null">
+        <button v-if="lootTarget.loot" class="btn-loot" title="Clear this map's loot" @click="setLoot(0)"><i class="fas fa-undo" /></button>
+        <span class="ml-auto text-gray-500" title="What running one map costs you (map, scarabs, sextants…), taken off the profit">
+          Cost/map <input :value="cost || ''" type="number" min="0" class="w-12 bg-gray-900 rounded px-1" placeholder="0" @change="setCost(($event.target as HTMLInputElement).valueAsNumber)"> c</span>
       </div>
 
       <div v-if="current" class="text-gray-200">
@@ -34,6 +50,7 @@
           <span class="truncate flex-1 min-w-0">{{ r.name || r.code }} <span class="text-gray-600">{{ r.level }}</span></span>
           <span v-if="r.mechanics.length" class="truncate text-gray-500">{{ r.mechanics.join(', ') }}</span>
           <span v-if="r.deaths" class="text-red-300">{{ r.deaths }}✝</span>
+          <span v-if="r.loot" class="text-yellow-300">{{ money(r.loot) }}</span>
           <span class="font-mono w-12 text-right">{{ dur(r.ms) }}</span>
         </div>
       </div>
@@ -55,6 +72,22 @@
       <div v-for="h of hints" :key="h.text" :class="h.warn ? 'text-yellow-300' : 'text-gray-400'">
         <i class="fas fa-lightbulb mr-1" />{{ h.text }}</div>
 
+      <!-- Summary of the session before this one -->
+      <div v-if="last" class="rounded bg-gray-900 px-2 py-1">
+        <button class="lg-sub w-full text-left" @click="lastOpen = !lastOpen">
+          <i class="fas mr-1" :class="lastOpen ? 'fa-caret-down' : 'fa-caret-right'" />Last session: {{ day(last.start) }} {{ clock(last.start) }}–{{ clock(last.end) }}
+          <span class="text-gray-500">({{ dur(last.end - last.start) }})</span></button>
+        <div v-if="lastOpen" class="flex flex-wrap gap-x-4 text-gray-400 pt-1">
+          <span>Maps: {{ last.maps }}<span v-if="last.maps" class="text-gray-500"> · avg {{ dur(last.mapMs / last.maps) }}</span></span>
+          <span :class="last.deaths ? 'text-red-300' : ''">Deaths: {{ last.deaths }}</span>
+          <span>Trades: {{ last.trades }}</span>
+          <span v-if="last.loot" class="text-yellow-300">Profit: {{ money(last.loot - last.cost) }}<span v-if="last.mapMs > 5 * 60_000"> ({{ money((last.loot - last.cost) / (last.mapMs / 3600000)) }}/h)</span></span>
+          <span v-for="l of last.levels" :key="l.char">{{ l.char }}: {{ l.from }} → {{ l.to }}</span>
+          <span v-if="last.topZone">Most time: {{ last.topZone.name }} ({{ dur(last.topZone.ms) }})</span>
+          <span v-if="last.mechanics.length">{{ last.mechanics.map(([m, n]) => `${m} ×${n}`).join(', ') }}</span>
+        </div>
+      </div>
+
       <div v-if="!maps.length && !s.loadCount" class="text-gray-600">
         Nothing yet this session. Maps, league mechanics, deaths and loading times show up here as you play (read from the game's log).
       </div>
@@ -64,7 +97,11 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
-import { currentMapMs, topZones, emptySession, loadPlaySession, PLAY_SESSION_KEY, savePlaySession, sessionHints, type PlaySession } from './play-session'
+import {
+  currentMapMs, topZones, emptySession, loadPlaySession, PLAY_SESSION_KEY, savePlaySession, sessionHints, type PlaySession,
+  addMapLoot, mapProfit, loadMapCost, saveMapCost, MAP_COST_KEY, loadLastSession, keepLastSession, LAST_SESSION_KEY
+} from './play-session'
+import { usePoeninja } from '@/web/background/Prices'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from './char-level'
 
 const s = ref<PlaySession>(loadPlaySession())
@@ -78,6 +115,8 @@ const timer = setInterval(() => {
 const onStorage = (e: StorageEvent) => {
   if (e.key === PLAY_SESSION_KEY) s.value = loadPlaySession()
   if (e.key === CHAR_LEVELS_KEY) me.value = currentChar(loadCharLevels())?.name ?? ''
+  if (e.key === MAP_COST_KEY) cost.value = loadMapCost()
+  if (e.key === LAST_SESSION_KEY) last.value = loadLastSession()
 }
 window.addEventListener('storage', onStorage)
 onUnmounted(() => {
@@ -86,6 +125,8 @@ onUnmounted(() => {
 })
 
 function reset () {
+  keepLastSession(loadPlaySession())
+  last.value = loadLastSession()
   s.value = emptySession()
   savePlaySession(s.value)
 }
@@ -104,6 +145,41 @@ const mechanics = computed(() => Object.entries(s.value.mechanics).sort((a, b) =
 const avgLoad = computed(() => s.value.loads.length ? s.value.loads.reduce((a, b) => a + b, 0) / s.value.loads.length : 0)
 const hints = computed(() => sessionHints(s.value, now.value))
 const zones = computed(() => topZones(s.value, 8, now.value))
+
+// Map profit
+const LOOT_STEPS = [5, 20, 50]
+const ninja = usePoeninja()
+ninja.queuePricesFetch()
+const divine = computed(() => ninja.xchgRate.value)
+const cost = ref(loadMapCost())
+const lootInput = ref<number | null>(null)
+// the map loot goes on: the one you're in, else the last one finished
+const lootTarget = computed(() => current.value ?? done.value[done.value.length - 1] ?? null)
+function addLoot (chaos: number) {
+  const t = lootTarget.value
+  if (t && chaos > 0) s.value = addMapLoot(t.seed, t.code, chaos)
+}
+function setLoot (chaos: number) {
+  const t = lootTarget.value
+  if (t) s.value = addMapLoot(t.seed, t.code, chaos, true)
+}
+function setCost (v: number) {
+  cost.value = Number.isFinite(v) && v > 0 ? v : 0
+  saveMapCost(cost.value)
+}
+const profit = computed(() => mapProfit(s.value, cost.value, now.value))
+function money (chaos: number) {
+  const d = divine.value
+  if (d && Math.abs(chaos) >= d) return `${(chaos / d).toFixed(1)} div`
+  return `${Math.round(chaos)} c`
+}
+
+// Last session (summary)
+const last = ref(loadLastSession())
+const lastOpen = ref(false)
+function day (at: number) {
+  return new Date(at).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })
+}
 
 const pace = computed(() => {
   const list = s.value.levels[me.value]
@@ -132,3 +208,10 @@ function clock (at: number) {
   return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 </script>
+
+<style lang="postcss" scoped>
+.btn-loot {
+  @apply bg-gray-700 text-gray-300 rounded px-1.5;
+  &:hover { @apply bg-gray-600 text-gray-100; }
+}
+</style>
