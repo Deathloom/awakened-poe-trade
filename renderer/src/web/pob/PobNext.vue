@@ -92,8 +92,8 @@
           </button>
           <template v-if="holdsOpen">
             <div class="flex flex-wrap gap-x-3 gap-y-px text-xs">
-              <span v-for="g of holds" :key="'h' + g.name" class="whitespace-nowrap" :class="(g.levelReq ?? 1) > level ? 'opacity-50' : ''"
-                :title="`Stop at level ${g.level} (max ${g.maxLevel}${g.levelReq ? `, needs character level ${g.levelReq}` : ''})`">
+              <span v-for="g of holds" :key="'h' + g.name" class="whitespace-nowrap" :class="(g.reqLevel ?? 1) > level ? 'opacity-50' : ''"
+                :title="`Stop at level ${g.level} (max ${g.maxLevel})` + ((g.reqLevel ?? 1) > level ? ` · usable from character level ${g.reqLevel}` : '') + (g.levelReq && g.levelReq > level ? ` · gem level ${g.level} needs character level ${g.levelReq}` : '')">
                 <span :class="gemClass(g)">{{ g.name }}</span> <span class="text-yellow-300">L{{ g.level }}</span>
               </span>
             </div>
@@ -411,7 +411,8 @@ const actTimes = computed(() => Object.entries(progress.value?.actMs ?? {})
 
 // gems the build keeps below their normal max level
 const holds = computed(() => uniqueGems.value.filter(g => g.level != null && g.maxLevel != null && g.level < g.maxLevel))
-const holdsNow = computed(() => holds.value.filter(g => (g.levelReq ?? 1) <= level.value))
+// usable now = its level-1 requirement is met (the held level itself may need a higher character level)
+const holdsNow = computed(() => holds.value.filter(g => (g.reqLevel ?? 1) <= level.value))
 // Hold gem levels list: collapsed by default (it gets long), choice remembered
 const HOLDS_KEY = 'deathloom.next.holds-open.v1'
 const holdsOpen = ref((() => { try { return localStorage.getItem(HOLDS_KEY) === '1' } catch { return false } })())
