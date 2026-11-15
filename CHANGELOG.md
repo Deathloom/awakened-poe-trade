@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#146)
+- **Cheat sheets** panel: short guides for Betrayal, Heist, Delve and Sanctum, plus the vendor recipes. Open it with its own hotkey (Settings → Path of Building), in the overlay, in game or on the All tab.
+
 ### Added (#145)
 - **League-start checklist** (Help → **League start**): the steps for a new league, from patch notes and picking a build to loot filter, atlas plan and early selling, each with where to do it in Loot Goblin. Ticks are saved per league.
 

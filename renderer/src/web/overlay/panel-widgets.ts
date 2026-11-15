@@ -8,6 +8,7 @@ import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
 import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import MarketOverview from '../market-history/MarketOverview.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
+import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
 import { EXTRA_PANELS } from '../desktop/panel-defs'
 
 export interface PanelBody {
@@ -27,7 +28,8 @@ const BODIES: Record<string, Omit<PanelBody, 'panel' | 'label' | 'icon'>> = {
   atlas: { body: AtlasTreeMap, props: { compact: true }, boxed: true, w: '34rem', h: '26rem' },
   session: { body: PlaySessionBody, props: {}, boxed: false, w: '22rem', h: '24rem' },
   market: { body: MarketHistoryBody, props: { active: true, fill: true }, boxed: false, w: '26rem', h: '24rem' },
-  overview: { body: MarketOverview, props: {}, boxed: false, w: '30rem', h: '26rem' }
+  overview: { body: MarketOverview, props: {}, boxed: false, w: '30rem', h: '26rem' },
+  cheats: { body: CheatSheetsBody, props: {}, boxed: false, w: '24rem', h: '26rem' }
 }
 
 // by panel (HUD) and by widget type (overlay)
