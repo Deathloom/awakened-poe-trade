@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
-## [1.0.87] - 2026-11-15
+## [1.0.88] - 2026-11-15
+
+Released as 1.0.88: the 1.0.87 run was cancelled when GitHub paused Actions on the fork.
 
 ### Fixed (#136)
 - **About page stuck on "Checking for updates… Please wait":** a window that briefly lost its connection to the app missed the result and kept showing the old state. Windows now get the current update state whenever they (re)connect; a check that gets no answer gives up after 60 s, and a newer check is no longer cut short by an older one finishing. If checking still shows after 20 s, a **Check again** button appears.
