@@ -6,7 +6,7 @@ import type { PanelKey } from '@ipc/types'
 import { inWindow } from './panels'
 import { readWindowKey, windowKey } from '@/web/hud/is-hud'
 
-export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board'
+export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats'
 
 export interface AllPanelDef {
   id: AllPanelId
@@ -29,7 +29,8 @@ export const ALL_PANELS: AllPanelDef[] = [
   { id: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins', settingsKey: 'overview' },
   { id: 'search', label: 'Market search', icon: 'fa-search' },
   { id: 'board', label: "Friends' trade board", icon: 'fa-people-carry', settingsKey: 'board' },
-  { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' }
+  { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' },
+  { id: 'cheats', label: 'Cheat sheets', icon: 'fa-book', settingsKey: 'cheats' }
 ]
 const IDS = new Set(ALL_PANELS.map(p => p.id))
 

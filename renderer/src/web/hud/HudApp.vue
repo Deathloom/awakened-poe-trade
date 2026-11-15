@@ -42,7 +42,7 @@ import type { HudPanel } from '@ipc/types'
 document.documentElement.classList.add('hud')
 
 const playing = ref(true)
-const hidden = ref<Record<HudPanel, boolean>>({ guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true })
+const hidden = ref<Record<HudPanel, boolean>>({ guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true, cheats: true })
 const extra = PANEL_BODY_BY_PANEL[HUD_PANEL]
 // market panels need leagues and poe.ninja prices (the overlay and window load them too)
 if (HUD_PANEL === 'market' || HUD_PANEL === 'overview') {

@@ -9,9 +9,9 @@ import type { ShortcutAction, HudPanel } from '../../../ipc/types'
 
 // Deathloom fork: Loot Goblin window tab for a panel that's in neither the overlay nor in game
 const WINDOW_VIEW: Record<string, string> = {
-  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', board: 'board', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market'
+  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', board: 'board', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market', cheats: 'overview'
 }
-const EXTRA = new Set(['tree', 'atlas', 'session', 'market', 'overview'])
+const EXTRA = new Set(['tree', 'atlas', 'session', 'market', 'overview', 'cheats'])
 import type { Logger } from '../RemoteLogger'
 import type { HudWindow } from '../windowing/HudWindow'
 import type { OverlayWindow } from '../windowing/OverlayWindow'
