@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#143)
+- **Lab run checklist:** the Lab tab has a bar above poelab's page to tick off Izaro 1–3 and the treasure key and count darkshrines, with a run timer. Entering Aspirants' Plaza starts a new run; ticking Izaro 3 stops the timer. Nothing is read from poelab.com.
+
 ### Added (#142)
 - **Open a trade site link in Market search:** paste a pathofexile.com trade search (or bulk exchange) link into the Market search box and press **Open this search** (or Enter); it opens in the Trade site tab. It tells you when the link is for another league.
 
