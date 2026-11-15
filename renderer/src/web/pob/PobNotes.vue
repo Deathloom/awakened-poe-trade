@@ -76,6 +76,9 @@
         </div>
       </div>
     </div>
+
+    <!-- your own saved searches + vendor search maker (replaces the Stash search widget) -->
+    <my-search-strings />
   </div>
 </template>
 
@@ -87,6 +90,7 @@ import UiCheckbox from '@/web/ui/UiCheckbox.vue'
 import { notesState, notesError, notesBusy, loadNotes, saveNotes, buildLabel, filterLink } from './build-notes'
 import { MAP_MOD_PRESETS, presetLabel } from './map-mods'
 import { buildSearchStrings } from './search-strings'
+import MySearchStrings from './MySearchStrings.vue'
 import { useCopyFeedback } from './market'
 import type { PobSocketGroup } from '@ipc/types'
 

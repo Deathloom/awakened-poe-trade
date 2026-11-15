@@ -179,3 +179,28 @@ test('game switch: window title, exe match, default league', () => {
   assert.equal(game.pickDefaultLeague(['Hardcore', 'Standard']), 'Standard')
   assert.equal(game.pickDefaultLeague([]), undefined)
 })
+
+const vr = await import('./.build/vendor-regex.mjs')
+test('vendor regex: numbers, links, query', () => {
+  const re = (n, d) => new RegExp('^(' + vr.atLeast(n, d) + ')$')
+  for (const [n, d] of [[0, 2], [5, 3], [10, 2], [15, 2], [25, 2], [99, 2], [40, 3], [100, 3], [149, 3]]) {
+    for (let v = 0; v < 10 ** d; v++) assert.equal(re(n, d).test(String(v)), v >= n, `atLeast(${n},${d}) on ${v}`)
+  }
+  assert.equal(vr.atLeast(15, 2), '1[5-9]|[2-9]\\d')
+  assert.equal(vr.linkPattern(3, []), '\\w-\\w-\\w')
+  const rgb = vr.linkPattern(3, ['r', 'g', 'b']).split('|')
+  assert.equal(rgb.length, 6)
+  assert.equal(vr.linkPattern(4, ['r', 'r', 'b', 'x']).split('|').length, 12)
+  const q = { ...vr.emptyQuery(), links: 4, moveSpeed: 20, match: 'all' }
+  const r = vr.vendorRegex(q)
+  assert.equal(r.text, '"\\w-\\w-\\w-\\w" "[2-9]\\d% increased mov"')
+  assert.equal(r.tooLong, false)
+  const ms = new RegExp(vr.vendorParts({ ...vr.emptyQuery(), moveSpeed: 15 })[0].regex, 'i')
+  assert.ok(ms.test('15% increased Movement Speed')); assert.ok(!ms.test('10% increased Movement Speed'))
+  const life = new RegExp(vr.vendorParts({ ...vr.emptyQuery(), life: 70 })[0].regex, 'i')
+  assert.ok(life.test('+74 to maximum Life')); assert.ok(life.test('+120 to maximum Life')); assert.ok(!life.test('+69 to maximum Life'))
+  const res = new RegExp(vr.vendorParts({ ...vr.emptyQuery(), resists: ['fire', 'lightning'], resistMin: 30 })[0].regex, 'i')
+  assert.ok(res.test('+34% to Lightning Resistance')); assert.ok(!res.test('+34% to Cold Resistance')); assert.ok(!res.test('+24% to Fire Resistance'))
+  assert.equal(vr.vendorRegex({ ...vr.emptyQuery(), custom: 'a.b' }).text, '"a\\.b"')
+  assert.equal(vr.vendorRegex(vr.emptyQuery()).text, '')
+})
