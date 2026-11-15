@@ -40,12 +40,12 @@
         </select>
       </div>
     </template>
-    <div v-if="character || characters.length" class="flex items-center gap-x-2"
-      title="Character used for 'vs character' and the Gems tab. Follows the character you log into; pick one here to switch now (the next login switches it again).">
+    <div v-if="character || shownChars.length" class="flex items-center gap-x-2"
+      title="Character for the build panel. Follows the character you play (from the game log: the one levelling up); pick one here to switch now. Its remembered build comes back when you play it again.">
       <span class="text-gray-500 w-14 shrink-0">Character</span>
-      <select v-if="characters.length" class="flex-1 min-w-0 bg-gray-900 rounded px-1" :disabled="busy"
+      <select v-if="shownChars.length" class="flex-1 min-w-0 bg-gray-900 rounded px-1" :disabled="busy"
         :value="character" @change="pickCharacter(($event.target as HTMLSelectElement).value)">
-        <option v-if="!characters.some(c => c.name === character)" :value="character">{{ character || 'Pick a character…' }}</option>
+        <option v-if="!shownChars.some(c => c.name === character)" :value="character">{{ character || 'Pick a character…' }}</option>
         <optgroup v-for="lg of leagues" :key="lg.name" :label="lg.name">
           <option v-for="c of lg.chars" :key="c.name" :value="c.name">{{ c.name }}{{ c.class ? ` · ${c.class} ${c.level ?? ''}` : '' }}</option>
         </optgroup>
@@ -65,6 +65,7 @@ import { Host } from '@/web/background/IPC'
 import { IS_HUD } from '@/web/hud/is-hud'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
 import { pobText, pobLoadoutName } from './labels'
+import { loadCharLevels } from '../companion/char-level'
 
 const emit = defineEmits<{
   (e: 'changed', build: PobBuildInfo | null): void
@@ -77,10 +78,18 @@ const loadouts = shallowRef<PobLoadouts | null>(null)
 const customOpen = ref(false)
 const character = ref('')
 const characters = shallowRef<PobCharacterEntry[]>([])
+// Deathloom fork: without the account's character list (pathofexile.com, off),
+// the characters seen levelling up in Client.txt
+const logChars = computed<PobCharacterEntry[]>(() => {
+  // re-read when the character changes (a level-up of a new one)
+  if (character.value == null) return []
+  return loadCharLevels().chars.map(c => ({ name: c.name, class: c.cls, level: c.level, league: 'From the game log' }))
+})
+const shownChars = computed(() => characters.value.length ? characters.value : logChars.value)
 // Leagues in the order of their newest login (the list comes newest first)
 const leagues = computed(() => {
   const map = new Map<string, PobCharacterEntry[]>()
-  for (const c of characters.value) {
+  for (const c of shownChars.value) {
     const lg = c.league ?? 'Other'
     if (!map.has(lg)) map.set(lg, [])
     map.get(lg)!.push(c)

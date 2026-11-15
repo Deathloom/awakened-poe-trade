@@ -58,6 +58,8 @@ export class PobImpact {
   private loadedRel = ''
   // Deathloom fork: character being played (auto mode), from Client.txt + get-characters
   private activeCharacter: string | null = null
+  // Deathloom fork: names that joined your area (party members), not followed as yours
+  private partyNames = new Set<string>()
   private characterAccount = ''
   private logState: LogScanState = { atLogin: true }
   private resolveTimer: NodeJS.Timeout | null = null
@@ -263,15 +265,15 @@ export class PobImpact {
     return Boolean(LIVE_CHARACTER_DATA && cfg?.enabled && cfg.liveGear && cfg.accountName)
   }
 
-  // Detected or picked in the build panel; else the Character setting
+  // Detected (character list or game log) or picked in the build panel; else the Character setting
   currentCharacter () {
-    if (this.listsCharacters() && this.activeCharacter) return this.activeCharacter
+    if (this.activeCharacter) return this.activeCharacter
     return this.cfg?.character ?? ''
   }
 
-  // Picked in the build panel's Character dropdown (until the next detected login)
+  // Picked in the build panel's Character dropdown (until the next detected login / level-up)
   async pickCharacter (name: string) {
-    if (!this.listsCharacters() || name === this.activeCharacter) return
+    if (!name || name === this.activeCharacter) return
     await this.setCharacter(name, false)
   }
 
@@ -281,7 +283,20 @@ export class PobImpact {
 
   // Client.txt lines (history = lines that were already in the file at start)
   handleLogLines (lines: string[], isHistory: boolean) {
-    const { entered, levelUps } = scanLog(lines, this.logState)
+    const { entered, levelUps, joined } = scanLog(lines, this.logState)
+    for (const name of joined) this.partyNames.add(name)
+    // Deathloom fork: without the character list (pathofexile.com, off), follow
+    // the character from Client.txt: the last one levelling up that isn't a party
+    // member who joined your area. Switching restores that character's build.
+    if (!this.listsCharacters()) {
+      if (!this.cfg?.enabled || this.cfg.characterAuto === false) return
+      const mine = levelUps.filter(name => !this.partyNames.has(name))
+      const name = mine[mine.length - 1]
+      if (!name || name === this.activeCharacter) return
+      if (isHistory) this.activeCharacter = name
+      else void this.setCharacter(name, true)
+      return
+    }
     if (isHistory || !this.autoCharacter()) return
     if (entered) {
       // give the server a moment to mark the character as last active
@@ -931,7 +946,7 @@ export class PobImpact {
     await this.writeActive(root, rel)
     if (!this.viewingOwn()) return
     this.onPlayerFilesChanged()
-    if (remember && this.listsCharacters() && this.activeCharacter) {
+    if (remember && this.activeCharacter) {
       // picked by hand while playing this character: use it again next time
       await this.characterBuilds.set(this.activeCharacter, rel).catch((err: Error) => {
         this.logger.write(`warn [PoB] couldn't save build for ${this.activeCharacter}: ${err.message}`)
