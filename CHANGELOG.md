@@ -8,9 +8,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
-### Added (#147)
-- **Friends online and friends' race** (Friends' board → **Friends**, off until you turn it on): **Share my status** shares your character, level, league and act splits with your group through build sync, and **and the area I'm in** adds where you are. Friends' statuses arrive with **Pull** (or every 15 minutes if you turn that on): who's active, their level and area, and a race table of everyone's act splits. Turning sharing off removes your status file.
-
 ### Added (#146)
 - **Cheat sheets** panel: short guides for Betrayal, Heist, Delve and Sanctum, plus the vendor recipes. Open it with its own hotkey (Settings → Path of Building), in the overlay, in game or on the All tab.
 

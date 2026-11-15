@@ -20,7 +20,6 @@
         <i class="fas fa-plus mr-1" />Post</button>
     </div>
 
-    <friends-status class="shrink-0" />
     <div v-if="state.error" class="px-2 py-1 bg-red-900 text-red-100 text-xs shrink-0">{{ state.error }}</div>
 
     <div v-if="state.signedIn === false" class="p-2 text-gray-400">
@@ -133,7 +132,6 @@ import {
   type BoardKind, type Currency, type Listing, type ListingData
 } from './board'
 import { chatMode, runChat } from '../companion/chat'
-import FriendsStatus from '../friends/FriendsStatus.vue'
 
 defineProps<{ fill?: boolean }>()
 
