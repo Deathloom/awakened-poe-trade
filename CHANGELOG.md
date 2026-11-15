@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#151)
+- **Masteries you allocate are ticked off:** the levelling plan (Next tab, tree map) now also recognises a mastery when the game log names the effect you picked.
+
 ### Added (#149)
 - **Testing updates:** Settings → Path of Building → **Updates** → **Testing** also installs test versions (like 1.0.89-beta.1) before everyone else gets them, then the stable release when it's out. **Stable** (the default) works as before.
 
