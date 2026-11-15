@@ -55,12 +55,27 @@
         </div>
       </div>
 
-      <div v-if="state.own" class="flex items-center gap-2">
+      <div v-if="state.own" class="flex items-center gap-2 mb-3">
         <button class="btn" :disabled="!dirty || notesBusy" @click="save">{{ notesBusy ? 'Saving…' : 'Save' }}</button>
         <span v-if="dirty" class="text-gray-500">Not saved yet</span>
         <span v-else-if="savedAt" class="text-gray-500">Saved</span>
       </div>
     </template>
+
+    <!-- search strings (idea 1): one click = one clipboard copy -->
+    <div>
+      <div class="text-gray-300 mb-1"><i class="fas fa-search mr-1 text-gray-500" />Search strings</div>
+      <div class="text-gray-500 mb-1">Copy, then in game click the stash or vendor search (or Ctrl+F) and Ctrl+V.</div>
+      <div v-if="gemsError" class="text-gray-500 mb-1">Build gems: {{ gemsError }}</div>
+      <div v-for="s of searches" :key="s.key" class="flex items-center gap-2 py-0.5">
+        <button class="btn shrink-0 w-16" @click="copy(s.text, s.key)">{{ copiedKey === s.key ? 'Copied' : 'Copy' }}</button>
+        <div class="min-w-0">
+          <div class="text-gray-300">{{ s.label }} <span v-if="s.hint" class="text-gray-500">· {{ s.hint }}</span></div>
+          <div class="font-mono text-xs text-gray-500 truncate" :title="s.text">{{ s.text }}</div>
+          <div v-if="s.dropped" class="text-xs text-orange-400">{{ s.dropped }} mod{{ s.dropped > 1 ? 's' : '' }} left out (the game allows 50 characters)</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -71,6 +86,9 @@ import { Host } from '@/web/background/IPC'
 import UiCheckbox from '@/web/ui/UiCheckbox.vue'
 import { notesState, notesError, notesBusy, loadNotes, saveNotes, buildLabel, filterLink } from './build-notes'
 import { MAP_MOD_PRESETS, presetLabel } from './map-mods'
+import { buildSearchStrings } from './search-strings'
+import { useCopyFeedback } from './market'
+import type { PobSocketGroup } from '@ipc/types'
 
 const props = defineProps<{ hud?: boolean }>()
 
@@ -121,7 +139,24 @@ function onFocusOut () {
 }
 onUnmounted(() => { typing(false) })
 
-function request () { loadNotes() }
+// build gems for the search strings (same request as the Gems tab)
+const { copiedKey, copy } = useCopyFeedback()
+const gemGroups = ref<PobSocketGroup[] | null>(null)
+const gemsError = ref<string | null>(null)
+let gemsRequestId = 0
+const gemsListener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
+  if (e.requestId !== gemsRequestId) return
+  gemsError.value = e.ok ? null : (e.error ?? 'Unknown error').replace(/^.*ImpactServer\.lua:\d+: /, '')
+  gemGroups.value = e.ok ? (e.groups ?? []) : null
+})
+onUnmounted(() => { gemsListener.abort() })
+const searches = computed(() => buildSearchStrings(gemGroups.value, draft.value.mapMods))
+
+function request () {
+  loadNotes()
+  gemsRequestId = Math.floor(Math.random() * 1e9)
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-gems', payload: { requestId: gemsRequestId, refreshGear: false } })
+}
 defineExpose({ request })
 request()
 </script>
