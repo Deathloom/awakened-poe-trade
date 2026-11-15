@@ -40,8 +40,18 @@ const LOGIN_SERVER = /\*{5} LOG FILE OPENING \*{5}|Async connecting to \S+\.logi
 // 'Generating level 1 area "1_1_1"' (any client language) or ": You have entered The Coast."
 const ZONE = /Generating level \d+ area "|\] : You have entered /
 
+// Deathloom fork (idea 16, step 1): a pinned panel's window is only made when the
+// panel is first shown, and is closed again a while after you close the panel
+// with its hotkey (less memory and CPU with many pinned panels). These keep
+// their page while closed because they work in the background: whispers
+// (trades), price alerts (market), the play session timer (session).
+const KEEP_ALIVE: ReadonlySet<HudPanel> = new Set<HudPanel>(['trades', 'market', 'session'])
+const UNLOAD_AFTER_MS = 2 * 60_000
+
 interface PanelWindow {
   win?: BrowserWindow
+  // closes the window of a panel closed with its hotkey
+  unloadTimer?: NodeJS.Timeout
   // last state set by update(): on screen, or invisible + click-through
   shown?: boolean
   builtOpaque?: boolean
@@ -207,10 +217,13 @@ export class HudWindow {
     for (const panel of PANELS) {
       if (!this.isPinned(panel)) continue
       const show = onScreen && !this.hidden[panel]
-      // the page exists even while hidden, so the companion keeps reading whispers
+      const pw = this.windows[panel]
+      this.scheduleUnload(panel)
+      // background panels keep their page while hidden (the companion keeps reading
+      // whispers); the others get a window when first shown
+      if (!show && !KEEP_ALIVE.has(panel) && !(pw.win && !pw.win.isDestroyed())) continue
       const win = this.ensureWindow(panel)
       if (!win) continue
-      const pw = this.windows[panel]
       if (!show) {
         // Not hide(): after hide() + showInactive() (alt-tab away and back) Windows
         // stopped sending clicks to some panels. Invisible and click-through instead.
@@ -238,6 +251,24 @@ export class HudWindow {
       name: 'MAIN->CLIENT::hud-state',
       payload: { playing, hidden: { ...this.hidden } }
     })
+  }
+
+  // closed with its hotkey (not just alt-tabbed away): free the window after a while
+  private scheduleUnload (panel: HudPanel) {
+    const pw = this.windows[panel]
+    const closed = this.hidden[panel] && !KEEP_ALIVE.has(panel) && this.typing !== panel
+    if (!closed || !pw.win) {
+      if (pw.unloadTimer) { clearTimeout(pw.unloadTimer); pw.unloadTimer = undefined }
+      return
+    }
+    if (pw.unloadTimer) return
+    pw.unloadTimer = setTimeout(() => {
+      pw.unloadTimer = undefined
+      if (this.hidden[panel] && this.drag?.panel !== panel && this.resize?.panel !== panel) {
+        this.destroy(panel)
+        this.logger.write(`info [HUD] ${panel} window closed (panel closed for ${UNLOAD_AFTER_MS / 60_000} min)`)
+      }
+    }, UNLOAD_AFTER_MS)
   }
 
   private ensureWindow (panel: HudPanel): BrowserWindow | undefined {
@@ -283,6 +314,8 @@ export class HudWindow {
     win.setMenu(null)
     lockToAppPages(win.webContents)
     win.on('closed', () => { if (pw.win === win) pw.win = undefined })
+    // a page made after the last hud-state missed it (it starts with every panel hidden)
+    win.webContents.on('did-finish-load', () => { this.update() })
     // clicked back into the game while typing: the panel asks again on its next click
     win.on('blur', () => { if (this.typing === panel) this.setTyping(panel, false) })
 
@@ -430,6 +463,7 @@ export class HudWindow {
 
   private destroy (panel: HudPanel) {
     const pw = this.windows[panel]
+    if (pw.unloadTimer) { clearTimeout(pw.unloadTimer); pw.unloadTimer = undefined }
     if (pw.win && !pw.win.isDestroyed()) pw.win.destroy()
     pw.win = undefined
   }
