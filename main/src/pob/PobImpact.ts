@@ -834,6 +834,14 @@ export class PobImpact {
     return path.join(app.getPath('userData'), 'pob-view-active', `${this.viewPlayer}.txt`)
   }
 
+  // Deathloom fork: the active build for build notes (path in the player folder whose builds are used)
+  async activeBuild (): Promise<{ playerDir: string, rel: string, own: boolean, player: string }> {
+    const playerDir = this.playerDir()
+    const rel = path.relative(playerDir, await this.resolveActiveBuild())
+    const own = this.viewingOwn()
+    return { playerDir, rel, own, player: own ? (this.cfg?.player ?? '') : this.viewPlayer }
+  }
+
   // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them
   async listBuilds (): Promise<PobBuildList> {
     const root = this.playerDir()

@@ -16,6 +16,10 @@
     <FullscreenImage v-if="image"
       :class="$style.screenshot" :src="image" />
     <div :class="$style.body">
+      <div v-if="buildWarnings.length" class="mx-2 px-2 py-1 rounded bg-red-900 text-red-100">
+        <div><i class="fas fa-skull-crossbones mr-1" />{{ buildName }} can't run:</div>
+        <div v-for="w of buildWarnings" :key="w.mod" class="text-sm">· {{ w.mod }}</div>
+      </div>
       <div v-if="item.mapArea && MEMORY_MAPS.includes(item.mapArea.refName)"
         :class="$style.mavenReminder">
         <img src="/images/maven-witness.png" class="w-8">
@@ -48,6 +52,8 @@ import { type MapCheckConfig, isOutdated } from './common.js'
 
 import MapStatButton from './MapStatButton.vue'
 import FullscreenImage from '@/web/ui/FullscreenImage.vue'
+import { notesState, loadNotes, buildLabel } from '@/web/pob/build-notes'
+import { badMods } from '@/web/pob/map-mods'
 
 const props = defineProps<{
   item: ParsedItem,
@@ -85,6 +91,16 @@ const image = computed(() => {
 
   return item.info.area?.screenshot ??
     item.mapArea?.area?.screenshot
+})
+
+// Deathloom fork: map mods the active build can't run (Build panel → Notes; synced with friends)
+loadNotes()
+const buildName = computed(() => notesState.value ? buildLabel(notesState.value.build) : 'Your build')
+const buildWarnings = computed(() => {
+  const avoid = notesState.value?.data.mapMods ?? []
+  if (!avoid.length) return []
+  const lines = props.item.rawText.split(/\r?\n/).map(l => l.replace(/ \((implicit|enchant|crafted|fractured)\)$/, '').trim()).filter(Boolean)
+  return badMods(lines, avoid)
 })
 
 const mapStats = computed(() => props.item.statsByType

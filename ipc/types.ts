@@ -509,6 +509,8 @@ export type IpcEvent =
   IpcBoardState |
   IpcAtlasFilesRequest |
   IpcAtlasFilesState |
+  IpcBuildNotesRequest |
+  IpcBuildNotesResult |
   IpcPobImportRequest |
   IpcPobImportResult |
   IpcStashRequest |
@@ -983,6 +985,37 @@ type IpcAtlasFilesRequest =
   }>
 type IpcAtlasFilesState =
   Event<'MAIN->CLIENT::atlas-files', AtlasFilesState>
+
+// Deathloom fork: notes per build, in the player folder so build sync shares them:
+// <player>/Build notes/<build path>.txt (readable text with ## sections)
+export interface BuildNotesData {
+  // free text (guide, reminders)
+  text: string
+  // map mods this build can't run: lowercase text found in the mod
+  mapMods: string[]
+  // loot filter: a FilterBlade link or a filter name
+  filter: string
+}
+type IpcBuildNotesRequest =
+  Event<'CLIENT->MAIN::build-notes', {
+    requestId: number
+    op: 'get' | 'save'
+    data?: BuildNotesData
+  }>
+type IpcBuildNotesResult =
+  Event<'MAIN->CLIENT::build-notes', {
+    requestId: number
+    ok: boolean
+    error?: string
+    // active build (path in the player folder) and whose folder it is
+    build?: string
+    player?: string
+    // your own build: notes can be saved
+    own?: boolean
+    data?: BuildNotesData
+    // the save that went through (other windows reload)
+    saved?: boolean
+  }>
 
 export interface BoardState {
   // what's running ('Loading…', 'Posting…'), null when idle
