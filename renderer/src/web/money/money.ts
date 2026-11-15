@@ -54,7 +54,7 @@ export const COUNTER_KEY = 'deathloom.currency-counter.v1'
 export const DEFAULT_CURRENCIES = [
   'Divine Orb', 'Exalted Orb', 'Orb of Annulment', 'Orb of Alchemy', 'Orb of Fusing',
   'Chromatic Orb', "Jeweller's Orb", 'Orb of Alteration', 'Vaal Orb', "Gemcutter's Prism",
-  'Regal Orb', 'Orb of Regret', 'Orb of Scouring', 'Blessed Orb', 'Awakened Sextant'
+  'Regal Orb', 'Orb of Regret', 'Orb of Scouring', 'Blessed Orb', "Cartographer's Chisel"
 ]
 
 export interface CounterState {

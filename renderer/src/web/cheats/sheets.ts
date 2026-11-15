@@ -117,7 +117,7 @@ export const SHEETS: Sheet[] = [
   {
     id: 'bosses',
     label: 'Endgame bosses',
-    intro: 'The pinnacle bosses of the atlas. The Searing Exarch, the Eater of Worlds, the Maven and the Uber Elder each give one of the four voidstones the first time.',
+    intro: 'The pinnacle bosses of the atlas. The Searing Exarch, the Eater of Worlds, the Maven and the Uber Elder each give one of the four voidstones the first time. Since 3.30 their quests also give more atlas points: 2 each for the Exarch, the Eater, the Maven and each Maven invitation; 4 for the Uber Elder.',
     sections: [
       {
         title: 'Before any boss',
@@ -131,10 +131,12 @@ export const SHEETS: Sheet[] = [
       {
         title: 'Who and how to get there',
         lines: [
-          'The Eater of Worlds and the Searing Exarch: fill their altars by running maps with that content; the boss opens when the bar is full.',
+          'The Eater of Worlds and the Searing Exarch: fill their altars by running maps with that content; the boss opens when the bar is full. Altars can now drop Threads (Eater: Breach, Legion, Blight, Ritual, Incursion; Exarch: Abyss, Expedition, Betrayal, Bestiary, Ultimatum).',
+          'After a pinnacle Eldritch boss (not the Maven invitation or Valdo versions) a Templar Vault can appear as an atlas anomaly.',
           'The Maven: let her witness map bosses until she drops her invitation (Maven\'s Writ).',
           'Sirus: beat the four Conquerors (influenced maps), then the Sirus fight in the Atlas.',
-          'The Shaper and Elder, then the Uber Elder: from the guardians\' fragments, put together at the map device.',
+          'The Shaper and Elder, then the Uber Elder: from the guardians\' fragments, put together at the map device. Since 3.30 Shaper, Elder and Conqueror fragments are not used up with a map and add no item quantity.',
+          'The Coven Queen: the Covens league pinnacle boss, reached through the league\'s Fates and Wickerman.',
           'Uber versions (much harder) come from the same bosses\' uber fragments and invitations.'
         ]
       },
@@ -152,23 +154,42 @@ export const SHEETS: Sheet[] = [
   {
     id: 'leagues',
     label: 'Map mechanics',
-    intro: 'Old league mechanics that stay in maps. What they are and the one thing to know about each.',
+    intro: 'Old league mechanics that stay in maps (as of 3.30 Covens of Umbra). What they are and the one thing to know about each.',
     sections: [
+      {
+        title: 'Threads of Creation (3.30: replace Scarabs)',
+        lines: [
+          'Scarabs are gone. Old ones turned into a matching Thread, or a Frayed Thread (Veiled Scarabs too). A Frayed Thread gives a random Thread when used or vendored.',
+          'Ten Threads: Abyss, Bestiary, Betrayal, Blight, Breach, Expedition, Incursion, Legion, Ritual, Ultimatum.',
+          'Put Threads in the map device: each adds its mechanic to the map; up to 8 of one kind, and each extra one makes random powerful effects on that mechanic more likely.',
+          'Map Item Quantity is now Atlas Drops (more maps and Threads). Monster rarity now decides which loot can drop: higher rarity, better currency.'
+        ]
+      },
+      {
+        title: 'Atlas (3.30)',
+        lines: [
+          'Shaped Regions: 10 kinds, one per Thread. Finish a region\'s objective for a free Thread on the other maps in it. Astrolabes now put a chosen Shaped Region on one map.',
+          'The atlas passive tree starts in the centre and grows outward: 150 points.',
+          'Kirac: Magic maps cost a Transmutation, Rare maps an Alchemy. Corrupting a normal map adds 2 mods (up to 9) instead of rerolling.'
+        ]
+      },
       {
         title: 'In maps',
         lines: [
           'Breach: walk into the hand and kill fast; more kills in the time = more splinters for Breachstones.',
-          'Legion: break the frozen monsters in the time you have; generals drop splinters for Timeless Emblems.',
-          'Delirium: the mirror fog makes monsters stronger and drops rewards the longer you stay; leave before it gets too strong.',
-          'Essence: a monster held by essences; corrupt it with a Remnant of Corruption only if you can handle the extra mods.',
-          'Ritual: kill in the circle, then spend tribute on the rewards; defer the ones you want later.',
-          'Expedition: place explosives through the remnants\' area; the remnant mods make monsters stronger and loot better. Trade logbooks with the four NPCs.',
-          'Ultimatum: win the trial rounds; each round adds a modifier. Take the reward when the next risk is too big.',
+          'Legion: break the frozen monsters in the time you have; generals drop splinters for Timeless Emblems. 3.30: about a third fewer breakout Schisms.',
+          'Delirium: the mirror fog makes monsters stronger and drops rewards the longer you stay; leave before it gets too strong. 3.30: Delirium Orbs make a map Delirious (5–50% each, up to 100%).',
+          'Essence: a monster held by essences; corrupt it with a Remnant of Corruption only if you can handle the extra mods. 3.30: essences can now appear in any map.',
+          'Ritual: kill in the circle, then spend tribute on the rewards; defer the ones you want later. 3.30: Blood-filled Vessels need Ritual Threads.',
+          'Expedition: place explosives through the remnants\' area; the remnant mods make monsters stronger and loot better. 3.30: Gwennen no longer gambles items (a "take a chance" for Astragali instead).',
+          'Ultimatum: win the trial rounds; each round adds a modifier. Take the reward when the next risk is too big. 3.30: rewards keep getting better after round 10.',
           'Blight: build towers on the paths before the monsters reach the pump; Blighted maps need oils on the anoint.',
-          'Harvest: monsters from the seeds; lifeforce from them pays for the crafts at the Horticrafting station.'
+          'Harvest: 3.30: Sacred Flora replaces the Sacred Grove; less lifeforce drops but in bigger stacks, for the crafts at the Horticrafting station.',
+          'Incursion: 3.30: Atziri is now in the Temple of Atzoatl; Royal Visages replace Mortal fragments.',
+          'Mirage: 3.30: now in all leagues, in maps.'
         ]
       }
     ],
-    check: 'Your atlas passive tree decides how much of each you meet; the Atlas tab shows the ready-made trees for each.'
+    check: 'Your Threads and atlas passive tree decide how much of each you meet. Exact numbers: GGG\'s 3.30.0 patch notes.'
   }
 ]

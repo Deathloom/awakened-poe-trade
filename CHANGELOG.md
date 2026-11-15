@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#181)
+- **Up to date for 3.30 Covens of Umbra:** the Map mechanics cheat sheet now covers Threads of Creation (Scarabs are gone), Shaped Regions, the new atlas tree and the 3.30 changes to Delirium, Legion, Essence, Ritual, Expedition, Ultimatum, Harvest, Incursion and Mirage. Endgame bosses lists the new atlas points, Thread drops from altars and the Coven Queen; Progress gets the Coven Queen and Shaped Regions. Cost per map now says threads instead of scarabs and sextants, and the currency counter shows Cartographer's Chisel instead of Awakened Sextant.
+
 ### Changed (#180)
 - **Automatic tests before releases:** every change is now tested (map profit, money tools, backups, search strings, the phone key) and type-checked and built before it can reach a test build.
 
