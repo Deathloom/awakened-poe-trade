@@ -250,6 +250,11 @@ function parseAreaPropNested (line: string, item: ParsedItem): boolean {
   if (line.startsWith(_$.MAP_ITEM_QUANTITY)) {
     item.areaItemQuantity = parseInt(line.slice(_$.MAP_ITEM_QUANTITY.length), 10)
     return true
+  } else if (_$.MAP_ATLAS_DROPS && line.startsWith(_$.MAP_ATLAS_DROPS)) {
+    // 3.30 Covens: Item Quantity on maps became Atlas Drops at the same values
+    item.areaItemQuantity = parseInt(line.slice(_$.MAP_ATLAS_DROPS.length), 10)
+    item.areaAtlasDrops = true
+    return true
   } else if (line.startsWith(_$.MAP_ITEM_RARITY)) {
     item.areaItemRarity = parseInt(line.slice(_$.MAP_ITEM_RARITY.length), 10)
     return true

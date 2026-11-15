@@ -25,7 +25,7 @@ function areaProps (
 
   if (item.areaItemQuantity) {
     ctx.filters.push(propToFilter({
-      ref: 'Item Quantity: +#%',
+      ref: item.areaAtlasDrops ? 'Atlas Drops: +#%' : 'Item Quantity: +#%',
       tradeId: 'item.map_item_quantity',
       roll: { min: 0, max: Number.MAX_SAFE_INTEGER, value: item.areaItemQuantity },
       sources: [],

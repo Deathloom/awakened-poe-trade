@@ -38,6 +38,8 @@ export interface ParsedItem {
   mapArea?: BaseType
   areaLevel?: number
   areaItemQuantity?: number
+  // 3.30+: the map's quantity line is "Atlas Drops" (same values)
+  areaAtlasDrops?: boolean
   areaItemRarity?: number
   areaPackSize?: number
   mapCompletionReward?: BaseType
