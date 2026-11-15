@@ -8,6 +8,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.87] - 2026-11-15
+
+### Changed (#134)
+- **Gem ticks are easy to tell apart:** gems you've ticked are a green chip with a tick; gems you haven't are a dashed, dimmed outline. Applies to the Next tab's **tick what you have** list and the Build panel's Gems → For my level → **Socket now**. The Next tab's **Missing** label now shows how many.
+- **Take out explained:** with one skill set in the build there's nothing to take out, and the hint now says so and names the skill set. For take-out and swap steps, add skill sets in Path of Building named after a level ("Level 12", "Level 30", …).
+
+## [1.0.86] - 2026-11-15
+
+### Fixed (#133)
+- **Market Rising, Falling and Outlook were empty in a new league:** poe.ninja only has a day or two of prices at league start, and Loot Goblin needed four. Changes and the week sparkline now show from two days (the column says how many days there are, with a note while the league is new); the 3-day outlook starts once there are four days.
+
+## [1.0.85] - 2026-11-15
+
+### Added (#132)
+- **What pays, in the ready-made atlas tree picker:** each content shows what its drops sell for now (average of its 5 dearest drops on poe.ninja; hover for the list), with **Order by what pays** and a link to poe.ninja's atlas trees. It uses the poe.ninja economy prices Loot Goblin already downloads for price checks: no extra requests. It's a guide to what's valuable, not profit per map. Contents whose drops poe.ninja doesn't price (e.g. strongboxes, shrines) show no price.
+
+### Changed (#131)
+- **Mastery picks on the passive tree moved to the hover tooltip** ("Build: …") instead of a yellow box on the map, which covered nearby passives.
+
 ## [1.0.84] - 2026-11-15
 
 ### Added (#130)
