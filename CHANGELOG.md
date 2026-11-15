@@ -10,6 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Changed (#184)
 - **Lighter pinned panels:** a pinned panel's window is now only made when you first open the panel, and is closed again 2 minutes after you close the panel with its hotkey (less memory and CPU when many panels are pinned). Trade companion, Market history (price alerts) and This session stay loaded so they keep working in the background.
+
 ### Added (#183)
 - **Compare builds** (Orbhoarder window → Build gear → scales button): pick two builds from your folder or a friend's and see what's different: stats (DPS, life, EHP, resistances…), gear mods per slot, gems added, removed or levelled, and passives only in one of them. Reads the build files; nothing is changed.
 
