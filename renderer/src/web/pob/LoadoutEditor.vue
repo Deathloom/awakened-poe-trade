@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: edit the active build's loadouts in the Loot Goblin window.
+  <!-- Deathloom fork: edit the active build's loadouts in the Orbhoarder window.
        Path of Building makes the changes (like its own buttons); the build file
        is saved (old copy in "Build backups") and synced like any save. -->
   <div class="px-2 py-1 bg-gray-800 text-sm flex flex-col gap-y-2 max-h-[32rem] overflow-y-auto">

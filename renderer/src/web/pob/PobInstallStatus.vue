@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: Loot Goblin's own Path of Building (downloaded on first run) -->
+  <!-- Deathloom fork: Orbhoarder's own Path of Building (downloaded on first run) -->
   <div v-if="st && (!compact || st.state !== 'ready')" class="p-2 rounded bg-gray-900">
     <div class="flex items-center gap-2 mb-1">
       <i class="fas" :class="icon" />

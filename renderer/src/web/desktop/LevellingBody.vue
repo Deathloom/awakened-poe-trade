@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: campaign guide + levelling planner in one pane (Loot Goblin
+  <!-- Deathloom fork: campaign guide + levelling planner in one pane (Orbhoarder
        window): where to go, which quest gem to take, gem swaps and the next passives.
        Drag the line between them to resize. -->
   <div ref="box" class="flex flex-col h-full min-h-0">

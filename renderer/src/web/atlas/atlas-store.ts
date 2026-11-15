@@ -203,7 +203,7 @@ window.addEventListener('storage', (e) => {
 export const taken = ref<Record<string, number>>(loadCharLevels().atlas ?? {})
 export const tracking = computed(() => Object.values(taken.value).some(n => n > 0))
 
-// Client.txt only shows what you allocate while Loot Goblin runs: "I have this
+// Client.txt only shows what you allocate while Orbhoarder runs: "I have this
 // build" sets the count from a build (or from nothing)
 export function setTakenFrom (nodes: number[] | null) {
   const atlas: Record<string, number> = {}

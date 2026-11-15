@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: this play session from Client.txt (Loot Goblin window) -->
+  <!-- Deathloom fork: this play session from Client.txt (Orbhoarder window) -->
   <div class="flex flex-col h-full min-h-0 rounded bg-gray-800 text-xs">
     <div class="flex items-baseline px-2 py-1 border-b border-gray-700">
       <span class="lg-head"><i class="fas fa-stopwatch mr-1 text-gray-500" />This session</span>
@@ -71,7 +71,7 @@ const s = ref<PlaySession>(loadPlaySession())
 const me = ref(currentChar(loadCharLevels())?.name ?? '')
 const now = ref(Date.now())
 // live map timer: only while the window is shown and you're in a map (keeps
-// the Loot Goblin window idle while you play)
+// the Orbhoarder window idle while you play)
 const timer = setInterval(() => {
   if (document.visibilityState === 'visible' && currentMapMs(s.value) != null) now.value = Date.now()
 }, 1000)

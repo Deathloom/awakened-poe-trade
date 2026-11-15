@@ -9,30 +9,30 @@
       </div>
     </div>
     <div class="mb-4">
-      <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Loot Goblin with Windows</ui-toggle>
+      <ui-toggle :modelValue="pob.startWithWindows !== false" @update:modelValue="pob.startWithWindows = $event">Start Orbhoarder with Windows</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         Starts in the tray when you sign in to Windows, so hotkeys, the HUD and updates are ready before the game.
       </div>
     </div>
     <div class="mb-4">
-      <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Loot Goblin window when the game starts</ui-toggle>
+      <ui-toggle :modelValue="pob.desktopAtStart === true" @update:modelValue="pob.desktopAtStart = $event">Open the Orbhoarder window when the game starts</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         A normal window with all panels (build, guide, trades, market) for a second screen. Also from the tray:
-        double-click the icon or "Open Loot Goblin window". It remembers its screen, position and size.
+        double-click the icon or "Open Orbhoarder window". It remembers its screen, position and size.
       </div>
     </div>
     <div class="mb-4">
-      <ui-toggle :modelValue="pob.window2?.enabled === true" @update:modelValue="pob.window2 = { ...pob.window2, enabled: $event }">Second Loot Goblin window (for a third screen)</ui-toggle>
+      <ui-toggle :modelValue="pob.window2?.enabled === true" @update:modelValue="pob.window2 = { ...pob.window2, enabled: $event }">Second Orbhoarder window (for a third screen)</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         Its own tabs, All-tab layout and look (Settings → Appearance in that window), and its own screen and position.
-        Open it from the tray: "Open second Loot Goblin window". Trade pages, panel hotkeys and the Lab button still go to the main window.
+        Open it from the tray: "Open second Orbhoarder window". Trade pages, panel hotkeys and the Lab button still go to the main window.
       </div>
       <ui-toggle v-if="pob.window2?.enabled" class="mt-2" :modelValue="pob.window2.atStart === true" @update:modelValue="pob.window2 = { ...pob.window2, atStart: $event }">Open it when the game starts too</ui-toggle>
     </div>
     <div class="mb-4">
       <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
-        When Loot Goblin or its Path of Building hits an error, it opens an issue in the group's private
+        When Orbhoarder or its Path of Building hits an error, it opens an issue in the group's private
         POE-Builds/poe-builds repo with your GitHub sign-in (build sharing): version, error and the last log lines,
         without your Windows user folder. Not sent when you're not signed in. Tray → Report a problem… for anything else.
       </div>
@@ -46,7 +46,7 @@
       </div>
       <div class="text-gray-500 text-sm mt-1">
         The folder that contains <code>src</code> and <code>runtime\PoBHeadless.exe</code>.
-        Leave empty to use Loot Goblin's own Path of Building (downloaded once, keeps itself up to date; tray menu → Open Path of Building).
+        Leave empty to use Orbhoarder's own Path of Building (downloaded once, keeps itself up to date; tray menu → Open Path of Building).
       </div>
       <PobInstallStatus v-if="!pob.pobDir" class="mt-2" />
       <!-- Deathloom fork: bring builds over from another Path of Building -->
@@ -56,7 +56,7 @@
           <template v-if="existingPob">Found {{ existingPob.count }} build{{ existingPob.count === 1 ? '' : 's' }} in
             <span class="break-all text-gray-400">{{ existingPob.buildsDir }}</span>.</template>
           <template v-else>No other Path of Building found in Documents. Pick its builds folder yourself.</template>
-          Copied into your Loot Goblin builds{{ defaults.player || pob.player ? ` (folder ${pob.player || defaults.player})` : '' }}; the originals stay
+          Copied into your Orbhoarder builds{{ defaults.player || pob.player ? ` (folder ${pob.player || defaults.player})` : '' }}; the originals stay
           where they are, builds with the same name are skipped. With build sync on, they're uploaded too.
         </div>
         <div class="flex flex-wrap items-center gap-2">
@@ -73,7 +73,7 @@
         class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" :placeholder="defaults.buildsDir ? `Default: ${defaults.buildsDir}` : 'e.g. C:\\Games\\poe-builds\\poe1'">
         <button type="button" @click="browseBuildsDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
       </div>
-      <div class="text-gray-500 text-sm mt-1">Leave empty for the builds folder of Loot Goblin's own Path of Building.</div>
+      <div class="text-gray-500 text-sm mt-1">Leave empty for the builds folder of Orbhoarder's own Path of Building.</div>
     </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">Player</div>
@@ -167,10 +167,10 @@
 
     <div class="mt-6 mb-2">
       <ui-toggle :modelValue="pob.tradeLinksInWindow !== false" @update:modelValue="v => pob.tradeLinksInWindow = v">
-        Open Trade buttons in the Loot Goblin window (Trade site tab)</ui-toggle>
+        Open Trade buttons in the Orbhoarder window (Trade site tab)</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         The official trade site in its own tab, signed in separately from your browser (sign in on GGG's own page;
-        Loot Goblin never sees your login). Off: Trade buttons open your browser as before.
+        Orbhoarder never sees your login). Off: Trade buttons open your browser as before.
       </div>
     </div>
 
@@ -178,12 +178,12 @@
       <div class="mb-1">Where panels show</div>
       <div class="text-gray-500 text-sm mb-2">
         Pick for each panel where you want it: <b>In game</b> (a small window over the game, below),
-        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Loot Goblin window</b> (its All tab; arrange it there with Edit layout).
-        A panel that's in neither In game nor the overlay opens the Loot Goblin window when you press its hotkey.
+        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Orbhoarder window</b> (its All tab; arrange it there with Edit layout).
+        A panel that's in neither In game nor the overlay opens the Orbhoarder window when you press its hotkey.
       </div>
       <table class="mb-2">
         <tr class="text-gray-500 text-sm">
-          <td class="pr-4"></td><td class="pr-4">In game</td><td class="pr-4">Overlay</td><td>Loot Goblin window</td>
+          <td class="pr-4"></td><td class="pr-4">In game</td><td class="pr-4">Overlay</td><td>Orbhoarder window</td>
         </tr>
         <tr v-for="p of PANELS" :key="p.key">
           <td class="pr-4 py-0.5">{{ p.label }}</td>

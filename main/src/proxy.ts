@@ -5,7 +5,7 @@ import type { Logger } from './RemoteLogger'
 // Deathloom fork: identify the tool on every request it forwards (GGG asks third-party
 // tools to say who they are). Keeps Electron's browser string so nothing breaks.
 export function lootGoblinUserAgent () {
-  return `${app.userAgentFallback} LootGoblin/${app.getVersion()} (+https://github.com/Deathloom/awakened-poe-trade)`
+  return `${app.userAgentFallback} Orbhoarder/${app.getVersion()} (+https://github.com/Deathloom/awakened-poe-trade)`
 }
 
 const PROXY_HOSTS = [

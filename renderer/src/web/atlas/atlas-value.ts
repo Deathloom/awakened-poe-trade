@@ -1,7 +1,7 @@
 // Deathloom fork: "what pays" per atlas content, from poe.ninja ECONOMY prices only
 // (poe.ninja allows third-party use of its economy overviews; builds/atlas data are
 // internal to poe.ninja and not used). No extra requests: these are the same prices
-// Loot Goblin already downloads for price checks (Prices.ts, one download per ~30 min,
+// Orbhoarder already downloads for price checks (Prices.ts, one download per ~30 min,
 // only while you use it).
 // The value is a rough guide: the average price of the content's 5 dearest drops
 // right now. It is not profit per map (drop rates aren't public data).

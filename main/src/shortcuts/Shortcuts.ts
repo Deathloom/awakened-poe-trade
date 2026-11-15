@@ -7,7 +7,7 @@ import { HostClipboard } from './HostClipboard'
 import { OcrWorker } from '../vision/link-main'
 import type { ShortcutAction, HudPanel } from '../../../ipc/types'
 
-// Deathloom fork: Loot Goblin window tab for a panel that's in neither the overlay nor in game
+// Deathloom fork: Orbhoarder window tab for a panel that's in neither the overlay nor in game
 const WINDOW_VIEW: Record<string, string> = {
   gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', board: 'board', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market', cheats: 'overview'
 }
@@ -107,7 +107,7 @@ export class Shortcuts {
     })
   }
 
-  // Deathloom fork: set by main.ts (panel placement settings + the Loot Goblin window)
+  // Deathloom fork: set by main.ts (panel placement settings + the Orbhoarder window)
   panelOverlayOff?: (panel: string) => boolean
   openWindowView?: (view: string) => void
 
@@ -193,7 +193,7 @@ export class Shortcuts {
             return
           }
           // Deathloom fork: panel set to not show in the overlay: the hotkey opens
-          // the Loot Goblin window on its tab instead (the game keeps focus)
+          // the Orbhoarder window on its tab instead (the game keeps focus)
           const placeKey = hudPanel ?? (entry.action.target === 'market-search' ? 'search' : entry.action.target === 'trade-board' ? 'board' : null)
           if (placeKey && this.panelOverlayOff?.(placeKey)) {
             this.openWindowView?.(WINDOW_VIEW[placeKey] ?? placeKey)

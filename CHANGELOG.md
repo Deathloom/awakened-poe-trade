@@ -1,8 +1,8 @@
 # Changelog
 
-Changes in Loot Goblin compared with [Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade). Upstream's own changes are listed in [its releases](https://github.com/SnosMe/awakened-poe-trade/releases).
+Changes in Orbhoarder (called Loot Goblin before 1.0.89) compared with [Awakened PoE Trade](https://github.com/SnosMe/awakened-poe-trade). Upstream's own changes are listed in [its releases](https://github.com/SnosMe/awakened-poe-trade/releases).
 
-Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow the Loot Goblin releases (set when running the Release workflow), not upstream's version numbers.
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow the Orbhoarder releases (set when running the Release workflow), not upstream's version numbers.
 
 **How to maintain:** every PR adds a line under **Unreleased**. Test releases (x.y.z-beta.N) leave it as it is. Before a stable release, rename **Unreleased** to the new version and date, and start a new empty **Unreleased** section.
 

@@ -31,7 +31,7 @@ export function updateConfig (updates: Config) {
   applyAppearance(surfaceAppearance(_config.value!), IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay', _config.value!.leagueId)
 }
 
-// Deathloom fork: the second Loot Goblin window may have its own look
+// Deathloom fork: the second Orbhoarder window may have its own look
 export function surfaceAppearance (cfg: Config): AppearanceConfig {
   return (IS_DESKTOP2 && cfg.window2Appearance) ? cfg.window2Appearance : cfg.appearance
 }
@@ -138,7 +138,7 @@ export interface Config {
   pob: PobConfig
   // Deathloom fork: Settings → Appearance
   appearance: AppearanceConfig
-  // Deathloom fork: second Loot Goblin window's own look (absent = same as above)
+  // Deathloom fork: second Orbhoarder window's own look (absent = same as above)
   window2Appearance?: AppearanceConfig
   // Deathloom fork: your own chat buttons in the trade companion (companion/quick-whispers.ts)
   quickWhispers?: QuickWhisper[]

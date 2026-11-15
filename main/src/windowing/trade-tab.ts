@@ -1,7 +1,7 @@
-// Deathloom fork: the official trade site inside the Loot Goblin window.
+// Deathloom fork: the official trade site inside the Orbhoarder window.
 //
 // GGG rules: this is just a browser tab on GGG's own site. You sign in on GGG's
-// own page; Loot Goblin never reads, copies or sends the site's cookies or your
+// own page; Orbhoarder never reads, copies or sends the site's cookies or your
 // password, and never clicks or types on the page for you. The tab keeps its
 // own session (partition below), separate from the session the app uses for
 // its own trade API calls, so nothing logged in ever reaches the app.

@@ -1,5 +1,5 @@
-// Deathloom fork: Path of Building is no longer inside the Loot Goblin installer.
-// Loot Goblin downloads it from the PoB fork's master branch into its own folder
+// Deathloom fork: Path of Building is no longer inside the Orbhoarder installer.
+// Orbhoarder downloads it from the PoB fork's master branch into its own folder
 // (%LOCALAPPDATA%\Loot Goblin\PathOfBuilding), file by file from master's
 // manifest.xml - the same files and source PoB's own updater uses afterwards.
 //
@@ -119,7 +119,7 @@ export function readLocalManifest (pobDir: string): Manifest | null {
   }
 }
 
-// PoB folder that Loot Goblin can run (downloaded or migrated and finished)
+// PoB folder that Orbhoarder can run (downloaded or migrated and finished)
 export function isInstalled (pobDir: string): boolean {
   return !!readLocalManifest(pobDir) &&
     fs.existsSync(path.join(pobDir, 'src', 'ImpactServer.lua')) &&
@@ -189,7 +189,7 @@ export async function syncPob (pobDir: string, opts: SyncOptions): Promise<SyncR
     }
     if (opts.full && ++checked % 50 === 0) progress({ phase: 'checking', done: checked, total: remote.files.length, bytes: 0 })
   }
-  // Not in the manifest but needed: PoB's updater (Update.exe) and the Loot Goblin marker
+  // Not in the manifest but needed: PoB's updater (Update.exe) and the Orbhoarder marker
   const extras: Array<{ target: string, url?: string, content?: string }> = []
   const updateExe = path.join(pobDir, 'runtime', 'Update.exe')
   if (!fs.existsSync(updateExe)) {

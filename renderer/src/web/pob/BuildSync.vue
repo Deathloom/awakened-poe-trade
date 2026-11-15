@@ -49,7 +49,7 @@
         <button class="btn-mini ml-1" @click="player = status.login ?? ''; savePlayer()">Set to {{ status.login }}</button>
       </div>
       <label class="flex items-center gap-x-2 text-gray-400 cursor-pointer"
-        title="Pull when Loot Goblin (or PoB) starts, push a few seconds after a build changes. Same setting as PoB's Sync...">
+        title="Pull when Orbhoarder (or PoB) starts, push a few seconds after a build changes. Same setting as PoB's Sync...">
         <input type="checkbox" :checked="status.prefs.autoSync" @change="setAuto(($event.target as HTMLInputElement).checked)">
         Sync automatically
       </label>

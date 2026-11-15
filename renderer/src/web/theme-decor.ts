@@ -1,4 +1,4 @@
-// Deathloom fork: background decorations for themes (Loot Goblin window).
+// Deathloom fork: background decorations for themes (Orbhoarder window).
 // All drawn here by us as plain CSS gradients and tiny inline SVG shapes:
 // no pictures, no GGG artwork, nothing downloaded. Kept faint so text stays readable.
 

@@ -27,7 +27,7 @@ export class AppUpdater {
     this.onChange(info)
   }
 
-  // Deathloom fork: install silently and start Loot Goblin again afterwards. The
+  // Deathloom fork: install silently and start Orbhoarder again afterwards. The
   // installer is the assisted (oneClick: false) kind, so a non-silent run shows the
   // whole wizard and waits for Next; /S skips the pages and --force-run relaunches.
   // Deathloom fork: main remembers which windows to open again after the restart
@@ -37,7 +37,7 @@ export class AppUpdater {
     if (this._info.state !== 'update-downloaded' || this._installing) return
     this._installing = true
     try { this.beforeInstall() } catch {}
-    this.notify('Updating Loot Goblin', `Installing version ${this._info.version}. Loot Goblin starts again by itself in a few seconds.`)
+    this.notify('Updating Orbhoarder', `Installing version ${this._info.version}. Orbhoarder starts again by itself in a few seconds.`)
     autoUpdater.quitAndInstall(true, true)
   }
 
@@ -128,7 +128,7 @@ export class AppUpdater {
     autoUpdater.on('update-available', (info: { version: string }) => {
       this.info = { state: 'update-available', version: info.version, noDownloadReason: this.noAutoUpdatesReason }
       if (this.noAutoUpdatesReason == null && this._notifiedVersion !== info.version) {
-        this.notify('Loot Goblin update', `Downloading version ${info.version} in the background…`)
+        this.notify('Orbhoarder update', `Downloading version ${info.version} in the background…`)
       }
     })
     autoUpdater.on('update-not-available', () => {
@@ -141,7 +141,7 @@ export class AppUpdater {
       this.info = { state: 'update-downloaded', version: info.version }
       if (this._notifiedVersion !== info.version) {
         this._notifiedVersion = info.version
-        this.notify(`Loot Goblin ${info.version} is ready`,
+        this.notify(`Orbhoarder ${info.version} is ready`,
           'It installs by itself while Path of Exile is closed. Click here to update now.',
           this.installNow)
       }

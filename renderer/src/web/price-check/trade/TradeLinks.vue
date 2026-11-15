@@ -38,7 +38,7 @@ export default defineComponent({
       open (isExternal: boolean) {
         const link = props.getLink()
         if (isExternal) {
-          // Deathloom fork: Loot Goblin window's Trade site tab (setting) or the browser
+          // Deathloom fork: Orbhoarder window's Trade site tab (setting) or the browser
           openTradeLink(link)
         } else {
           showBrowser(link)

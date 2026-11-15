@@ -2,7 +2,7 @@
   <div class="p-2 flex flex-col h-full items-center">
     <div class="flex flex-col items-center p-2 mb-4">
       <img class="w-12 h-12" src="/images/TransferOrb.png">
-      <p class="text-base">Loot Goblin</p>
+      <p class="text-base">Orbhoarder</p>
       <p class="text-gray-500">based on <a class="border-b" href="https://github.com/SnosMe/awakened-poe-trade" target="_blank">Awakened PoE Trade</a> by SnosMe (MIT)</p>
       <p class="">{{ t('app.version', [version]) }}</p>
       <p class="text-gray-500 text-sm text-center max-w-md mt-1">Not affiliated with or endorsed by Grinding Gear Games.

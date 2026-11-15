@@ -36,7 +36,7 @@ if (!app.requestSingleInstanceLock()) {
   app.exit()
 }
 
-// Deathloom fork: starting Loot Goblin again (Start menu, desktop shortcut) while
+// Deathloom fork: starting Orbhoarder again (Start menu, desktop shortcut) while
 // it's running opens its desktop window; --desktop opens it at start too
 let openDesktopWindow: (() => void) | null = null
 let desktopRequested = process.argv.includes('--desktop')
@@ -95,7 +95,7 @@ app.on('ready', async () => {
   errorReporter.enabled = () => pobImpact.resolved()?.errorReports !== false
   pobImpact.onCodeError = (message, detail) => { errorReporter.capture('pob', message, detail, 'ImpactServer') }
   pobSync.onCodeError = (message) => { errorReporter.capture('pob', message, undefined, 'SyncServer') }
-  // Deathloom fork: Loot Goblin's own PoB (downloaded on first run, then kept current)
+  // Deathloom fork: Orbhoarder's own PoB (downloaded on first run, then kept current)
   const pobInstaller = new PobInstaller(eventPipe, logger)
   pobImpact.installStatus = () => pobImpact.pobDir() ? null : pobInstaller.statusText()
   tray.pobStatus = () => pobImpact.pobDir() ? null : pobInstaller.statusText()
@@ -109,7 +109,7 @@ app.on('ready', async () => {
   // redirects), 15 s timeout, max 2 MB
   const pobImport = new PobImport(async (url) => {
     const res = await net.fetch(url, {
-      headers: { 'User-Agent': `Loot Goblin/${app.getVersion()}` },
+      headers: { 'User-Agent': `Orbhoarder/${app.getVersion()}` },
       signal: AbortSignal.timeout(15_000)
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -176,7 +176,7 @@ app.on('ready', async () => {
       tray.openDesktop = () => { desktop.open() }
       openDesktopWindow = () => { desktop.open() }
       if (desktopRequested) desktop.open()
-      // Deathloom fork: Loot Goblin windows open before an update are opened again
+      // Deathloom fork: Orbhoarder windows open before an update are opened again
       // after the restart (the file is written just before installing, read once)
       const reopenFile = path.join(app.getPath('userData'), 'apt-data', 'reopen-after-update.json')
       appUpdater.beforeInstall = () => {
@@ -188,7 +188,7 @@ app.on('ready', async () => {
         const r = JSON.parse(readFileSync(reopenFile, 'utf8')) as { desktop?: boolean, desktop2?: boolean, at?: number }
         unlinkSync(reopenFile)
         if (typeof r.at === 'number' && Date.now() - r.at < 15 * 60 * 1000) {
-          logger.write('info [update] opening the Loot Goblin windows that were open before the update')
+          logger.write('info [update] opening the Orbhoarder windows that were open before the update')
           if (r.desktop) desktop.open({ focus: false })
           reopen2 = r.desktop2 === true
         }
@@ -219,7 +219,7 @@ app.on('ready', async () => {
       }
       // Deathloom fork: find Client.txt next to the game once its window shows up
       poeWindow.onAttach(() => { void gameLogWatcher.findFromGameProcess() })
-      // Deathloom fork: "Open the Loot Goblin window when the game starts"
+      // Deathloom fork: "Open the Orbhoarder window when the game starts"
       OverlayController.events.on('attach', () => { desktop.gameStarted(); desktop2.gameStarted() })
       OverlayController.events.on('detach', () => { desktop.gameClosed(); desktop2.gameClosed() })
       // Deathloom fork: first-run setup guide asks what was found
@@ -235,7 +235,7 @@ app.on('ready', async () => {
         })()
       })
       // Deathloom fork: the overlay's level recorder asks once at start for the lines
-      // written while Loot Goblin was closed
+      // written while Orbhoarder was closed
       eventPipe.onEventAnyClient('CLIENT->MAIN::game-log-catchup', () => {
         const lines = gameLogWatcher.takeCatchUp()
         if (lines?.length) eventPipe.replyTo()({ name: 'MAIN->CLIENT::game-log-catchup', payload: { lines } })
@@ -267,7 +267,7 @@ app.on('ready', async () => {
         tray.overlayKey = cfg.overlayKey
         pobImpact.configure(cfg.pob)
         pobSync.configure()
-        // first settings of this run: get / update Loot Goblin's PoB (not when a PoB folder of your own is set)
+        // first settings of this run: get / update Orbhoarder's PoB (not when a PoB folder of your own is set)
         if (!pobInstallStarted && shouldAutoInstall() && !pobImpact.usesOwnPob()) {
           pobInstallStarted = true
           setTimeout(() => { void pobInstaller.ensure() }, 3000)
@@ -291,7 +291,7 @@ app.on('ready', async () => {
           reopen2 = false
           if (window2On) desktop2.open({ focus: false })
         }
-        // first run (setup guide not done yet): open the Loot Goblin window, which
+        // first run (setup guide not done yet): open the Orbhoarder window, which
         // shows the setup guide, so it can be done before playing
         if (!firstRunChecked) {
           firstRunChecked = true

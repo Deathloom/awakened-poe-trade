@@ -79,7 +79,7 @@ export interface PobConfig {
   // Send problem reports (crashes, code errors) as GitHub issues to the builds repo
   // with your GitHub sign-in. undefined = on
   errorReports?: boolean
-  // Start Loot Goblin (in the tray) when you sign in to Windows. undefined = on
+  // Start Orbhoarder (in the tray) when you sign in to Windows. undefined = on
   startWithWindows?: boolean
   // Hotkey that toggles the build gear panel (null = only from the widget menu)
   gearPanelKey: string | null
@@ -108,12 +108,12 @@ export interface PobConfig {
   // Deathloom fork: 'testing' also installs test releases (x.y.z-beta.N); missing = 'stable'
   updateChannel?: 'stable' | 'testing'
   // Trade buttons (price check, build gear, market search) open GGG's trade
-  // site in the Loot Goblin window's Trade site tab instead of the browser
+  // site in the Orbhoarder window's Trade site tab instead of the browser
   // (undefined = on)
   tradeLinksInWindow?: boolean
   // Where each panel shows (undefined = everywhere it can):
   // overlay = in the Shift+Space overlay and its widget menu;
-  // window = on the Loot Goblin window's All tab.
+  // window = on the Orbhoarder window's All tab.
   // In game (HUD) stays in hud.guide / hud.trades / hud.gear.
   panels?: Partial<Record<PanelKey, PanelPlacement>>
   // "Show while playing" HUD: a small separate window that stays on top of the
@@ -122,9 +122,9 @@ export interface PobConfig {
   // Stash tracker (personal, opt-in): reads stash tabs with your POESESSID
   stash: PobStashConfig
   // Open the desktop window (all panels, for a second screen) when the game starts
-  // (key name kept from 1.0.22, when it opened with Loot Goblin)
+  // (key name kept from 1.0.22, when it opened with Orbhoarder)
   desktopAtStart?: boolean
-  // Optional second Loot Goblin window (third screen): its own panels, layout
+  // Optional second Orbhoarder window (third screen): its own panels, layout
   // and look; off by default
   window2?: { enabled: boolean, atStart?: boolean }
   // First-run setup guide was shown (absent = show it the next time the overlay opens)
@@ -221,7 +221,7 @@ export interface PobTreeMapLayout {
   links: Array<[number, number]>
   orbitRadii: number[]
 }
-// Deathloom fork: levelling planner ("Next" tab of the Loot Goblin window)
+// Deathloom fork: levelling planner ("Next" tab of the Orbhoarder window)
 export interface PobPlanNode {
   id: number
   name: string
@@ -710,7 +710,7 @@ type IpcGameLog =
     lines: string[]
   }>
 
-// Deathloom fork: lines written while Loot Goblin was closed (level recorder only)
+// Deathloom fork: lines written while Orbhoarder was closed (level recorder only)
 type IpcGameLogCatchUpRequest =
   Event<'CLIENT->MAIN::game-log-catchup', Record<string, never>>
 type IpcGameLogCatchUp =
@@ -735,17 +735,17 @@ type IpcUserAction =
     action: 'chat-command'
     text: string
   } | {
-    // Deathloom fork: open a page of GGG's trade site in the Loot Goblin
+    // Deathloom fork: open a page of GGG's trade site in the Orbhoarder
     // window's Trade site tab (opens the window if needed, without focus)
     action: 'open-trade-tab'
     url: string
   } | {
-    // Deathloom fork: open the Loot Goblin window on a tab (e.g. Help)
+    // Deathloom fork: open the Orbhoarder window on a tab (e.g. Help)
     action: 'open-window-view'
     view: string
   }>
 
-// Deathloom fork: main → Loot Goblin window: show this trade site page
+// Deathloom fork: main → Orbhoarder window: show this trade site page
 type IpcDesktopView =
   Event<'MAIN->CLIENT::desktop-view', {
     view: string
@@ -827,7 +827,7 @@ type IpcPobDefaultsResult =
     player: string
   }>
 
-// Deathloom fork: first-run setup guide. What Loot Goblin finds by itself
+// Deathloom fork: first-run setup guide. What Orbhoarder finds by itself
 // (Client.txt, PoB folder, builds, player) and, with an account name, the
 // public character list (one get-characters request).
 type IpcPobSetupProbeRequest =
@@ -853,7 +853,7 @@ type IpcPobSetupProbeResult =
     existingPob?: { buildsDir: string, count: number }
   }>
 
-// Deathloom fork: Loot Goblin's own Path of Building (downloaded on first run
+// Deathloom fork: Orbhoarder's own Path of Building (downloaded on first run
 // into %LOCALAPPDATA%\Loot Goblin\PathOfBuilding, then kept up to date)
 export interface PobInstallState {
   // missing: not downloaded; installing: first download (or finishing a moved copy);
@@ -897,7 +897,7 @@ type IpcPobCopyBuildsResult =
     target?: string
   }>
 
-// Deathloom fork: build sync from Loot Goblin (runs PoB's src\SyncServer.lua).
+// Deathloom fork: build sync from Orbhoarder (runs PoB's src\SyncServer.lua).
 // Same sign-in and BuildSync.json as the PoB window.
 export interface PobSyncStatus {
   credAvailable: boolean
@@ -920,11 +920,11 @@ export interface PobSyncState {
   error?: string
   // device flow in progress: enter userCode on verificationUri
   signIn: { userCode: string, verificationUri: string, expiresAt: number } | null
-  // last Pull / Push / Sync now (auto = started by Loot Goblin, not a button)
+  // last Pull / Push / Sync now (auto = started by Orbhoarder, not a button)
   last: { time: number, title: string, success: boolean, auto: boolean, lines: string[] } | null
   // message from the last sign-in (e.g. account can't see the repo)
   notice?: string
-  // Loot Goblin reads builds from another folder than PoB syncs
+  // Orbhoarder reads builds from another folder than PoB syncs
   mismatch?: string
 }
 
@@ -1099,10 +1099,10 @@ type IpcPobBuildsRequest =
     setPlayer?: string
   }>
 
-// Deathloom fork: edit the active build's loadouts (Loot Goblin window). The
+// Deathloom fork: edit the active build's loadouts (Orbhoarder window). The
 // headless PoB applies the edits like PoB's own buttons; main writes the file
 // (backup in "Build backups" next to the builds folder). spec / skillSet left
-// out = the loadout picked in Loot Goblin.
+// out = the loadout picked in Orbhoarder.
 export type PobEditOp =
   | { op: 'renameSet', kind: 'tree' | 'items' | 'skills', id: number, title: string }
   | { op: 'copySet', kind: 'tree' | 'items' | 'skills', id: number, title?: string }
@@ -1128,7 +1128,7 @@ type IpcPobEditResult =
     loadouts?: PobLoadouts
   }>
 
-// Deathloom fork: manage builds in your own folder (Loot Goblin window)
+// Deathloom fork: manage builds in your own folder (Orbhoarder window)
 type IpcPobManageBuild =
   Event<'CLIENT->MAIN::pob-manage-build', {
     requestId: number

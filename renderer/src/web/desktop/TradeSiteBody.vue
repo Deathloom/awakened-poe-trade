@@ -1,6 +1,6 @@
 <template>
-  <!-- Deathloom fork: the official trade site in the Loot Goblin window.
-       Its own session: sign in on GGG's own page; Loot Goblin never sees your
+  <!-- Deathloom fork: the official trade site in the Orbhoarder window.
+       Its own session: sign in on GGG's own page; Orbhoarder never sees your
        login and never clicks or types on the page for you. -->
   <div class="flex flex-col h-full min-h-0 rounded bg-gray-800">
     <div class="flex items-center gap-x-1 px-2 py-1 border-b border-gray-700 shrink-0 text-sm">
@@ -14,7 +14,7 @@
       <button class="px-2 rounded hover:bg-gray-700" title="Open this page in your browser" @click="openExternal"><i class="fas fa-external-link-alt" /></button>
     </div>
     <div class="px-3 py-0.5 text-xs text-gray-500 bg-gray-900 shrink-0">
-      GGG's own trade site, signed in separately from your browser. Loot Goblin never sees your login.
+      GGG's own trade site, signed in separately from your browser. Orbhoarder never sees your login.
       "Whisper" and "Travel to Hideout" are GGG's own buttons here. Not affiliated with Grinding Gear Games.
     </div>
     <webview ref="webviewEl" class="flex-1 min-h-0" :partition="PARTITION" :src="initial" allowpopups />

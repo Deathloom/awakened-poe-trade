@@ -6,7 +6,7 @@
     <div :class="$style.widget" v-if="text">
       <div :class="$style.box">
         <div class="py-2 px-4">
-          <div class="text-base">Loot Goblin</div>
+          <div class="text-base">Orbhoarder</div>
           <p>{{ text }}</p>
         </div>
       </div>

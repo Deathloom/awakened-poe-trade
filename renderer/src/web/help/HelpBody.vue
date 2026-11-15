@@ -1,10 +1,10 @@
 <template>
-  <!-- Deathloom fork: Help, FAQ and where to get a build (Loot Goblin window → Help;
+  <!-- Deathloom fork: Help, FAQ and where to get a build (Orbhoarder window → Help;
        the overlay's ? links here). Keep it in step with the features. -->
   <div class="h-full min-h-0 overflow-y-auto rounded bg-gray-800 text-sm leading-snug">
     <div class="max-w-4xl mx-auto p-4 space-y-5">
       <div class="flex items-center gap-x-3">
-        <div class="text-xl text-gray-100"><i class="fas fa-coins text-yellow-500 mr-2" />Loot Goblin help</div>
+        <div class="text-xl text-gray-100"><i class="fas fa-coins text-yellow-500 mr-2" />Orbhoarder help</div>
         <span class="text-gray-500 text-xs">{{ version }}</span>
         <div class="ml-auto flex gap-x-1">
           <button v-for="s of SECTIONS" :key="s.id" class="px-2 rounded text-xs"
@@ -23,7 +23,7 @@
         </section>
 
         <section>
-          <h2>The Loot Goblin window</h2>
+          <h2>The Orbhoarder window</h2>
           <p>A normal window for your second screen with everything in one place. Open it from the tray (double-click), or let it open when the game starts (Settings → Path of Building).</p>
           <ul>
             <li><b>All</b>: build, levelling, tree map, atlas tree, trades and market history at once. Drag the lines between panels to resize; double-click a line to even those panels out. <b>Edit layout</b> (top right) lets you move panels (drag them by their bar; drop on a column's edge for a new column), take them off with ×, add more (This session, market overview, market search, friends' board) and Reset layout.</li>
@@ -33,11 +33,11 @@
             <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take.</li>
             <li><b>Atlas</b>: the atlas passive tree. <i class="fas fa-file-import" /> adds an atlas build from a pathofexile.com atlas tree link or code
               (poeplanner links use their own format), the drop-down picks one, <i class="fas fa-link" /> copies its link to share with friends.
-              Green = taken, orange = still to take. Loot Goblin ticks atlas passives as you allocate them in game; it can't see what you took
+              Green = taken, orange = still to take. Orbhoarder ticks atlas passives as you allocate them in game; it can't see what you took
               before, so use <i class="fas fa-check-double" /> → "I have this whole build" (or "I have nothing" after a respec or in a new league).
               <b>Edit</b>: click a passive to take it with the path to it, or refund it with what hangs off it; notables with a choice let you pick the effect.
               <i class="fas fa-magic" /> makes a ready-made tree: pick the content you farm (one or more), keep Map sustain on and set the points;
-              Loot Goblin takes that content's notables by the shortest path from the start, using only GGG's own atlas data.
+              Orbhoarder takes that content's notables by the shortest path from the start, using only GGG's own atlas data.
               Atlas builds are saved in your builds folder (Atlas) and sync with your builds, so friends who can see your builds see your atlas builds too
               (listed under their name, read-only: <i class="fas fa-copy" /> copies one to yours). Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
             <li><b>Trades</b>: incoming and outgoing trade whispers and your ledger.</li>
@@ -47,7 +47,7 @@
               or type a name. Mark yours <b>Sold</b> / <b>Given</b> / <b>Got it</b> when done. Also in the overlay menu (<i class="fas fa-people-carry" />)
               and on the All tab (Edit layout → Add panel).</li>
             <li><b>Market</b>: your watchlist and a poe.ninja market overview.</li>
-            <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Loot Goblin never sees your login.</li>
+            <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
             <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide and What's new.</li>
           </ul>
         </section>
@@ -69,7 +69,7 @@
         <section>
           <h2>Your build</h2>
           <ul>
-            <li>Loot Goblin uses your Path of Building build: keep it up to date in PoB (re-import your character, save) and the panels follow.</li>
+            <li>Orbhoarder uses your Path of Building build: keep it up to date in PoB (re-import your character, save) and the panels follow.</li>
             <li><b>Loadouts</b>: name PoB trees after a level ("Level 12", "Level 30") and the levelling planner uses them as steps. <i class="fas fa-pen" /> → New loadout copies the picked one.</li>
             <li><b>Edit loadouts</b> (window, Build tab → <i class="fas fa-pen" />): rename / copy / delete trees, item sets and skill sets; change gem level, quality and on/off.
               Tree map → <b>Edit</b>: click a passive to take or refund it. The old file is kept in <i>Build backups</i> next to your builds folder.</li>
@@ -96,7 +96,7 @@
       <template v-else-if="section === 'builds'">
         <section>
           <h2>No build yet? Get one</h2>
-          <p>Pick a build guide, copy its Path of Building code or pobb.in link, then in Loot Goblin press <i class="fas fa-file-import" /> (Build panel) and paste it.
+          <p>Pick a build guide, copy its Path of Building code or pobb.in link, then in Orbhoarder press <i class="fas fa-file-import" /> (Build panel) and paste it.
             It's saved in your builds folder and becomes your active build. Links open in your browser.</p>
           <div class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));">
             <button v-for="s of BUILD_SITES" :key="s.url" class="site" @click="open(s.url)">
@@ -126,7 +126,7 @@
       </template>
 
       <div class="hint pt-2 border-t border-gray-700">
-        Loot Goblin is not affiliated with or endorsed by Grinding Gear Games. Something wrong? Tray icon → Report a problem…
+        Orbhoarder is not affiliated with or endorsed by Grinding Gear Games. Something wrong? Tray icon → Report a problem…
       </div>
     </div>
   </div>
@@ -173,19 +173,19 @@ function open (url: string) {
 }
 
 const FAQ = [
-  { q: 'Can I get banned for using Loot Goblin?', a: 'Loot Goblin is built to stay inside GGG\'s rules for third-party tools: it reads the game\'s log file (Client.txt) and your clipboard, never game memory or game files, never buys or trades by itself, and sends at most one chat command per click. It doesn\'t read your pathofexile.com login. Features that needed a login or unofficial character data (stash tracker, live character comparison) were removed.' },
+  { q: 'Can I get banned for using Orbhoarder?', a: 'Orbhoarder is built to stay inside GGG\'s rules for third-party tools: it reads the game\'s log file (Client.txt) and your clipboard, never game memory or game files, never buys or trades by itself, and sends at most one chat command per click. It doesn\'t read your pathofexile.com login. Features that needed a login or unofficial character data (stash tracker, live character comparison) were removed.' },
   { q: 'Do I need a GitHub account?', a: 'No. Everything works without one. A GitHub account (invited to POE-Builds) is only needed to share builds with the group and send automatic problem reports.' },
   { q: 'Who can see my builds?', a: 'Nobody, until you let them. Each player has their own private builds repo; others see yours only after they ask and you approve.' },
-  { q: 'Where are my builds and backups?', a: 'Documents\\Loot Goblin\\Builds (your player folder inside it). Next to it: "Deleted builds" (builds you or a friend deleted) and "Build backups" (the file as it was before an edit in Loot Goblin).' },
+  { q: 'Where are my builds and backups?', a: 'Documents\\Loot Goblin\\Builds (your player folder inside it; the folder kept the app\'s old name). Next to it: "Deleted builds" (builds you or a friend deleted) and "Build backups" (the file as it was before an edit in Loot Goblin).' },
   { q: 'I deleted a build by mistake.', a: 'Copy it back from "Deleted builds" next to your builds folder into your player folder. Sync uploads it again.' },
   { q: 'The campaign guide is on the wrong step.', a: 'Use the arrows at the top of the guide. It also catches up by itself when you enter a zone further along the route. "Rebuild from game log" (Levelling tab) re-reads your whole log.' },
   { q: 'The price check shows no build impact.', a: 'Check Settings → Path of Building: build impact on, and a build picked in the Build panel. The first check after starting can take a few seconds while Path of Building loads.' },
   { q: 'The Whisper / Hideout button did nothing in game.', a: 'With Chat buttons set to "copy", the command is on your clipboard: press Enter in game, Ctrl+V, Enter. Set it to "send" to have one chat message sent per click.' },
   { q: 'Why does Hideout not take me to the seller?', a: '/hideout name only works when the seller lets visitors in. Most sellers invite you to their party after your whisper. Instant buyout listings use GGG\'s own Travel to Hideout button on the trade site (Trade site tab).' },
   { q: 'Who sees what I post on the friends\' board?', a: 'Only members of the POE-Builds GitHub organisation (your group). Each listing is a GitHub issue in the group\'s private repo, posted with your own GitHub sign-in, so it always shows who posted it. Only you can mark your listing done or remove it.' },
-  { q: 'Do I have to sign in to the trade site?', a: 'Only for things that need your account on GGG\'s site, like Travel to Hideout for instant buyout. You sign in on GGG\'s own page inside the Trade site tab; it stays signed in and Loot Goblin never sees the login.' },
+  { q: 'Do I have to sign in to the trade site?', a: 'Only for things that need your account on GGG\'s site, like Travel to Hideout for instant buyout. You sign in on GGG\'s own page inside the Trade site tab; it stays signed in and Orbhoarder never sees the login.' },
   { q: 'The game crashes with panels over it.', a: 'Set the game\'s Display mode to Windowed Fullscreen, and try Solid background (Settings → Path of Building → Show while playing). A crash on PoE 3.30 with Vulkan was fixed by switching the game\'s renderer to DirectX 12.' },
-  { q: 'How do updates work?', a: 'Loot Goblin downloads updates by itself and installs them when the game isn\'t running (or click Install now in the window). Path of Building updates itself at the next start. After an update, What\'s new shows what changed.' },
+  { q: 'How do updates work?', a: 'Orbhoarder downloads updates by itself and installs them when the game isn\'t running (or click Install now in the window). Path of Building updates itself at the next start. After an update, What\'s new shows what changed.' },
   { q: 'How do I start over?', a: 'Settings → Run setup guide. The campaign guide\'s ↺ button starts the route again for a new character.' }
 ]
 </script>

@@ -1,6 +1,6 @@
 // Deathloom fork: character levels from Client.txt ("<name> (<class>) is now
-// level N"). The overlay window records them (it runs as long as Loot Goblin
-// does); the Loot Goblin window reads them for the levelling planner. Party
+// level N"). The overlay window records them (it runs as long as Orbhoarder
+// does); the Orbhoarder window reads them for the levelling planner. Party
 // members' level-ups show up too, so every name is kept and the player picks
 // theirs (the most recent one by default). Nothing is sent anywhere.
 
@@ -71,7 +71,7 @@ export interface CharLevels {
   questPoints: number | null
   progress: Record<string, CharProgress>
   // Atlas passives taken, by name (count; refunds subtract). The atlas is the
-  // account's, not a character's; only what's allocated while Loot Goblin runs
+  // account's, not a character's; only what's allocated while Orbhoarder runs
   atlas?: Record<string, number>
 }
 
@@ -326,7 +326,7 @@ export function startLevelRecorder () {
     if (play) savePlaySession(play)
   }
   Host.onEvent('MAIN->CLIENT::game-log', record)
-  // lines written while Loot Goblin was closed (an update or restart): levels,
+  // lines written while Orbhoarder was closed (an update or restart): levels,
   // passives and atlas allocations made meanwhile still count
   Host.onEvent('MAIN->CLIENT::game-log-catchup', record)
   Host.sendEvent({ name: 'CLIENT->MAIN::game-log-catchup', payload: {} })

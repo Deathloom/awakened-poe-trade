@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: manage your builds (Loot Goblin window): rename, move to a
+  <!-- Deathloom fork: manage your builds (Orbhoarder window): rename, move to a
        folder, duplicate, delete. Auto sync pushes the change; a deleted build is
        deleted on GitHub too and kept in "Deleted builds" next to your builds folder. -->
   <div class="px-2 py-1 bg-gray-800 text-sm flex flex-col gap-y-1 max-h-96 overflow-y-auto">

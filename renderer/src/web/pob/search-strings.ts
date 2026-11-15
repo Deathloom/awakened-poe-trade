@@ -1,6 +1,6 @@
 // Deathloom fork: stash / vendor search strings for the build (Build panel → Notes).
 // The game's stash and vendor search takes a regex in quotes, up to 50
-// characters. Loot Goblin only puts the text on the clipboard: one click = one
+// characters. Orbhoarder only puts the text on the clipboard: one click = one
 // copy; you paste it in game yourself (Ctrl+F, Ctrl+V).
 import type { PobSocketGroup } from '@ipc/types'
 import { MAP_MOD_PRESETS } from './map-mods'

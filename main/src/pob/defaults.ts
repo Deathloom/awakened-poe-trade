@@ -1,6 +1,6 @@
 // Deathloom fork: default Path of Building paths, so friends need no setup.
 //
-// - PoB folder: Loot Goblin's own copy of the PoB fork in
+// - PoB folder: Orbhoarder's own copy of the PoB fork in
 //   %LOCALAPPDATA%\Loot Goblin\PathOfBuilding, downloaded on first run (PobInstaller).
 //   Older versions shipped it in resources\PathOfBuilding (still used if found).
 // - Builds folder: PoB's build save path as its build sync recorded it in
@@ -31,16 +31,17 @@ export interface PobDefaultsEnv {
   documents: string
 }
 
+// the app's old name: folders keep it, so builds, settings and PoB stay where they are
 export const APP_DOCS_FOLDER = 'Loot Goblin'
 
-// Where Loot Goblin keeps its PoB (not the install folder: updates replace that,
+// Where Orbhoarder keeps its PoB (not the install folder: updates replace that,
 // and not Roaming AppData: it's ~750 MB)
 export function managedPobDir (): string {
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
   return path.join(local, APP_DOCS_FOLDER, 'PathOfBuilding')
 }
 
-// PoB inside the install folder (Loot Goblin 1.0.x); '' if none
+// PoB inside the install folder (Orbhoarder 1.0.x); '' if none
 export function legacyPobDir (): string {
   if (!process.resourcesPath) return ''
   const dir = path.join(process.resourcesPath, 'PathOfBuilding')
@@ -52,7 +53,7 @@ export function isLegacyPobSetting (dir: string): boolean {
   return /[\\/]resources[\\/]PathOfBuilding[\\/]?$/i.test(dir) && !fs.existsSync(path.join(dir, 'src', 'ImpactServer.lua'))
 }
 
-// Loot Goblin's PoB once it's usable ('' while it's missing or still downloading)
+// Orbhoarder's PoB once it's usable ('' while it's missing or still downloading)
 export function bundledPobDir (_env?: PobDefaultsEnv): string {
   const dir = managedPobDir()
   if (isInstalled(dir)) return dir

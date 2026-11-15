@@ -3,7 +3,7 @@
        normal window for a second screen; live with the game like the overlay. -->
   <div class="desktop-root relative flex flex-col h-full text-gray-200">
     <div class="flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0">
-      <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Loot Goblin<span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
+      <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Orbhoarder<span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
       <button v-for="v of VIEWS" :key="v.key" class="px-3 py-0.5 rounded"
         :class="view === v.key ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         :title="v.title" @click="setView(v.key)">
@@ -19,8 +19,8 @@
     <div v-if="readyVersion && dismissed !== readyVersion"
       class="flex items-center gap-x-3 px-3 py-1 bg-green-900 border-b border-green-700 text-sm shrink-0">
       <i class="fas fa-download text-green-300" />
-      <span class="text-green-100">Loot Goblin <b>{{ readyVersion }}</b> is downloaded and ready to install.</span>
-      <span class="text-xs text-green-300">{{ playing ? 'Installing restarts Loot Goblin (the game keeps running).' : 'Takes a few seconds; Loot Goblin starts again by itself.' }}</span>
+      <span class="text-green-100">Orbhoarder <b>{{ readyVersion }}</b> is downloaded and ready to install.</span>
+      <span class="text-xs text-green-300">{{ playing ? 'Installing restarts Orbhoarder (the game keeps running).' : 'Takes a few seconds; Orbhoarder starts again by itself.' }}</span>
       <button class="ml-auto px-3 rounded bg-green-600 hover:bg-green-500 text-white" @click="installUpdate">Install now</button>
       <button class="text-green-300 hover:text-white" title="Later (installs by itself when the game isn't running)" @click="dismissed = readyVersion">Later</button>
     </div>
@@ -98,10 +98,10 @@ const VIEWS = [
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
-  { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Loot Goblin never sees your login)" },
+  { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Orbhoarder never sees your login)" },
   { key: 'lab', label: 'Lab', icon: 'fa-dungeon', title: "Today's labyrinth layouts on poelab.com (community site, shown as-is)" },
   { key: 'help', label: 'Help', icon: 'fa-question-circle', title: 'How to use it, where to get a build, FAQ' },
-  { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Loot Goblin settings (same as Shift+Space → Settings)' }
+  { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Orbhoarder settings (same as Shift+Space → Settings)' }
 ] as const
 type View = typeof VIEWS[number]['key']
 
@@ -128,7 +128,7 @@ function setView (v: View) {
 }
 watch(view, (v) => {
   const label = VIEWS.find(x => x.key === v)?.label
-  const name = IS_DESKTOP2 ? 'Loot Goblin (2)' : 'Loot Goblin'
+  const name = IS_DESKTOP2 ? 'Orbhoarder (2)' : 'Orbhoarder'
   document.title = v === 'overview' ? name : `${name} · ${label}`
 }, { immediate: true })
 

@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: Atlas passive tree (Loot Goblin window). Your atlas builds
+  <!-- Deathloom fork: Atlas passive tree (Orbhoarder window). Your atlas builds
        (paste a pathofexile.com / poe.ninja / poeplanner atlas link), what you've
        taken (Client.txt), pan (drag), zoom (wheel), hover for stats, Edit. -->
   <div class="flex flex-col min-h-0 h-full text-sm">
@@ -43,7 +43,7 @@
       <button v-if="activeBuild?.own" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
         @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
-      <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: what Loot Goblin saw you allocate in game. Set it here when you already have a tree."
+      <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: what Orbhoarder saw you allocate in game. Set it here when you already have a tree."
         @click="trackOpen = !trackOpen"><i class="fas fa-check-double" /></button>
       <button class="text-gray-500 hover:text-gray-200" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
       <button class="hover:text-gray-200" :class="statsOpen ? 'text-yellow-300' : 'text-gray-500'" title="Stats: everything the passives in this build add up to"
@@ -57,7 +57,7 @@
       <span v-if="importError" class="text-red-400 w-full">{{ importError }}</span>
     </div>
     <div v-if="genOpen" class="px-2 pb-1 text-xs shrink-0">
-      <div class="text-gray-400 pb-1">Pick what you farm. Loot Goblin takes that content's notables{{ genSustain ? ' and general map sustain' : '' }} by the shortest path from the start, within the points. Only GGG's own atlas data is used.</div>
+      <div class="text-gray-400 pb-1">Pick what you farm. Orbhoarder takes that content's notables{{ genSustain ? ' and general map sustain' : '' }} by the shortest path from the start, within the points. Only GGG's own atlas data is used.</div>
       <div class="flex flex-wrap items-center gap-2 pb-1 text-gray-400">
         <label class="flex items-center gap-1" title="Order by what the content's drops sell for now (poe.ninja economy prices)"><input v-model="genByValue" type="checkbox"> Order by what pays</label>
         <span v-if="ninja.isLoading.value && !hasValues" class="text-gray-500">loading prices…</span>
@@ -84,7 +84,7 @@
     </div>
     <div v-if="lastError" class="px-2 pb-1 text-xs text-red-400 shrink-0">{{ lastError }}</div>
     <div v-if="trackOpen" class="px-2 pb-1 text-xs text-gray-400 shrink-0">
-      Loot Goblin ticks atlas passives as you allocate them in game (Client.txt). It can't see what you took before, so:
+      Orbhoarder ticks atlas passives as you allocate them in game (Client.txt). It can't see what you took before, so:
       <button v-if="spec" class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setTakenFrom(spec.nodes)">I have this whole build</button>
       <button class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setTakenFrom(null)">I have nothing (respecced / new league)</button>
     </div>

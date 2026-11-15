@@ -1,4 +1,4 @@
-// Deathloom fork: keeps Loot Goblin's own Path of Building in
+// Deathloom fork: keeps Orbhoarder's own Path of Building in
 // %LOCALAPPDATA%\Loot Goblin\PathOfBuilding (see PobDownload.ts).
 // - First run: downloads it (progress in the setup guide, a notification for
 //   people who already finished the guide).
@@ -82,7 +82,7 @@ export class PobInstaller {
       this.logger.write('info [PoB install] PoB window open; it updates itself')
       return
     }
-    // A copy left inside the install folder (older Loot Goblin, or the installer couldn't move it)
+    // A copy left inside the install folder (older Orbhoarder, or the installer couldn't move it)
     if (fresh && !fs.existsSync(path.join(dir, 'src'))) {
       const legacy = legacyPobDir()
       if (legacy) {
@@ -102,8 +102,8 @@ export class PobInstaller {
     this.publish({ state: fresh ? 'installing' : 'checking', error: undefined, message: undefined, done: 0, total: 0, bytes: 0 })
     if (notifyStart) {
       notify('Getting Path of Building', hadCopy
-        ? 'Loot Goblin is checking its Path of Building and getting the newest files.'
-        : 'Loot Goblin is downloading Path of Building (once, a few hundred MB). The PoB parts of the overlay work when it\'s done.')
+        ? 'Orbhoarder is checking its Path of Building and getting the newest files.'
+        : 'Orbhoarder is downloading Path of Building (once, a few hundred MB). The PoB parts of the overlay work when it\'s done.')
     }
     try {
       await fs.promises.mkdir(dir, { recursive: true })

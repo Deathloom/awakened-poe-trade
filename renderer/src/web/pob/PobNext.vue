@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: levelling planner ("Next" tab of the Loot Goblin window).
+  <!-- Deathloom fork: levelling planner ("Next" tab of the Orbhoarder window).
        Level from Client.txt, quest points from the campaign guide, the rest from
        the active build in Path of Building. No character data is fetched. -->
   <div class="widget-default-style text-gray-200 leading-tight text-sm flex flex-col h-full min-h-0">

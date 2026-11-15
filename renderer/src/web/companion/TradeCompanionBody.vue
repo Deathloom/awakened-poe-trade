@@ -130,7 +130,7 @@ const BUY_BUTTONS = [
 ]
 
 // Deathloom fork: the whisper list is shared by every window that shows it
-// (overlay or HUD, Loot Goblin window) through localStorage, so Sold / dismiss
+// (overlay or HUD, Orbhoarder window) through localStorage, so Sold / dismiss
 // in one window closes the trade everywhere, and a window opened later still
 // shows the open trades. Entries older than 3 h are dropped.
 const TRADES_KEY = 'deathloom.trades-open.v1'

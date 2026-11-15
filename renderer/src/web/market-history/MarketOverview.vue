@@ -1,5 +1,5 @@
 <template>
-  <!-- Deathloom fork: poe.ninja market overview (Loot Goblin window, Market tab):
+  <!-- Deathloom fork: poe.ninja market overview (Orbhoarder window, Market tab):
        current prices, risers/fallers and a short trend outlook -->
   <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm w-full h-full">
     <div class="flex flex-wrap items-center gap-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">

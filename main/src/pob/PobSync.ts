@@ -1,13 +1,13 @@
-// Deathloom fork: build sync from Loot Goblin.
+// Deathloom fork: build sync from Orbhoarder.
 //
 // Runs Path of Building's src\SyncServer.lua (headless, PoB itself isn't
 // loaded) for each sync job: sign in with GitHub (device flow), Pull, Push,
 // Sync now, player folder and auto sync. It uses PoB's own BuildSync.json and
-// the Windows Credential Manager sign-in, so the PoB window and Loot Goblin
+// the Windows Credential Manager sign-in, so the PoB window and Orbhoarder
 // share one sign-in and one sync state.
 //
-// Auto sync (PoB's "Sync automatically" setting): a quiet Pull when Loot Goblin
-// starts, and a quiet Push a few seconds after Loot Goblin changes a file in
+// Auto sync (PoB's "Sync automatically" setting): a quiet Pull when Orbhoarder
+// starts, and a quiet Push a few seconds after Orbhoarder changes a file in
 // the player folder (import, active build).
 
 import { spawn } from 'child_process'
@@ -81,7 +81,7 @@ export class PobSync {
     })
   }
 
-  // Loot Goblin changed a file in the player folder: Push it soon (auto sync)
+  // Orbhoarder changed a file in the player folder: Push it soon (auto sync)
   schedulePush () {
     const st = this.state.status
     if (!st?.signedIn || !st.prefs.autoSync || !st.settings.player) return
@@ -188,7 +188,7 @@ export class PobSync {
     this.publish({ status, mismatch: this.mismatch(status) })
   }
 
-  // Loot Goblin's builds folder / player vs. what PoB syncs
+  // Orbhoarder's builds folder / player vs. what PoB syncs
   private mismatch (st: PobSyncStatus): string | undefined {
     const cfg = this.impact.resolved()
     if (!cfg?.buildsDir || !st.buildPath) return undefined
@@ -197,11 +197,11 @@ export class PobSync {
       return process.platform === 'win32' ? out.toLowerCase() : out
     }
     if (norm(cfg.buildsDir) !== norm(st.buildPath)) {
-      return `Loot Goblin reads builds from ${cfg.buildsDir}, but Path of Building syncs ${st.buildPath}. ` +
+      return `Orbhoarder reads builds from ${cfg.buildsDir}, but Path of Building syncs ${st.buildPath}. ` +
         'Clear the Builds folder in Settings → Path of Building to use PoB\'s.'
     }
     if (st.settings.player && cfg.player && cfg.player !== st.settings.player) {
-      return `Loot Goblin uses the player folder "${cfg.player}", but sync uploads "${st.settings.player}". ` +
+      return `Orbhoarder uses the player folder "${cfg.player}", but sync uploads "${st.settings.player}". ` +
         'Clear the Player field in Settings → Path of Building, or change the player folder here.'
     }
     return undefined
@@ -323,7 +323,7 @@ export class PobSync {
     const srcDir = path.join(pobDir, 'src')
     const exe = path.join(pobDir, 'runtime', 'PoBHeadless.exe')
     if (!fs.existsSync(path.join(srcDir, 'SyncServer.lua'))) {
-      throw new Error(`This Path of Building has no build sync for Loot Goblin yet (${path.join(srcDir, 'SyncServer.lua')} missing). Update it, or clear the PoB folder setting to use the bundled one.`)
+      throw new Error(`This Path of Building has no build sync for Orbhoarder yet (${path.join(srcDir, 'SyncServer.lua')} missing). Update it, or clear the PoB folder setting to use the bundled one.`)
     }
     // For testing on Linux: APT_POB_LAUNCHER="wine" runs the exe through Wine
     const launcher = process.env.APT_POB_LAUNCHER

@@ -21,7 +21,7 @@ const PLAYER_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 const SITE = 'https://www.pathofexile.com/fullscreen-atlas-skill-tree/'
 
 export function atlasFileText (code: string): string {
-  return `# Loot Goblin atlas build: open the link to see the tree on pathofexile.com\n${SITE}${code}\n`
+  return `# Orbhoarder atlas build: open the link to see the tree on pathofexile.com\n${SITE}${code}\n`
 }
 
 // first link / code line of the file -> the tree code
