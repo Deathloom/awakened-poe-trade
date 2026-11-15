@@ -12,7 +12,7 @@
       <span v-if="loading" class="ml-auto text-gray-600"><i class="fas fa-sync-alt fa-spin" /></span>
     </div>
     <div v-if="error" class="p-1 text-gray-400">{{ error }}</div>
-    <div v-else-if="!plan && loading" class="p-1 text-gray-500">Loading from Path of Building…</div>
+    <div v-else-if="!plan && loading" class="p-1 text-gray-500 lg-loading">Loading from Path of Building…</div>
     <template v-else-if="plan">
       <div v-if="!levelKnown" class="px-1 pb-1 text-xs text-yellow-500">No level-up seen yet. Type your level above, or level up once in game.</div>
 

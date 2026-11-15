@@ -2,7 +2,7 @@
   <!-- Deathloom fork: the build's passive tree (keystones, ascendancy, notables, masteries) vs the character's -->
   <div class="overflow-y-auto min-h-0 p-1 text-sm">
     <div v-if="error" class="p-1 text-gray-400">{{ error }}</div>
-    <div v-else-if="!tree && loading" class="p-1 text-gray-500">Loading from Path of Building…</div>
+    <div v-else-if="!tree && loading" class="p-1 text-gray-500 lg-loading">Loading from Path of Building…</div>
     <template v-else-if="tree && comparison">
       <div class="flex items-center gap-x-2 px-1 pb-1 text-xs">
         <span class="text-gray-300">{{ classText(tree) }}</span>

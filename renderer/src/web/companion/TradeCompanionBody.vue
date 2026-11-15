@@ -13,7 +13,7 @@
     </div>
 
     <!-- compact (HUD window): an empty whisper list collapses to the header line -->
-    <div v-if="tab === 'trades' && !(compact && !openTrades.length)" class="overflow-y-auto min-h-0 p-1">
+    <div v-if="tab === 'trades' && !(compact && !openTrades.length)" class="overflow-y-auto min-h-0 p-1 lg-stagger">
       <div v-if="!openTrades.length" class="p-1 text-gray-500">
         No trade whispers yet. They show up here as they arrive (read from Client.txt).
       </div>

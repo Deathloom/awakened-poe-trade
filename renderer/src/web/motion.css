@@ -1,0 +1,87 @@
+/* Deathloom fork: animations (Settings → Appearance → Animations).
+   html.lg-motion-full / -subtle / -off is set by appearance.ts. Only opacity and
+   the translate / scale properties are animated (GPU, never the element's own
+   transform), kept short so the overlay over the game stays snappy. Windows'
+   "reduce motion" turns everything off. */
+
+/* ---- smooth state changes (Full and Subtle) ---------------------------- */
+html:is(.lg-motion-full, .lg-motion-subtle) :is(button, .btn, a, input, select, textarea, label, [role="button"]) {
+  transition: background-color .16s ease, color .16s ease, border-color .16s ease,
+    box-shadow .2s ease, opacity .16s ease, translate .16s cubic-bezier(.2, .8, .2, 1), scale .12s ease;
+}
+html:is(.lg-motion-full, .lg-motion-subtle) .btn:not(:disabled):hover {
+  translate: 0 -1px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / .35), 0 0 0 1px rgb(var(--accent) / .25);
+}
+html:is(.lg-motion-full, .lg-motion-subtle) :is(.btn, button):not(:disabled):active {
+  translate: 0 0;
+  scale: .97;
+}
+html:is(.lg-motion-full, .lg-motion-subtle) .table-stripped tbody tr { transition: background-color .15s ease; }
+html:is(.lg-motion-full, .lg-motion-subtle) :is(input, textarea, select):focus { transition: box-shadow .2s ease; }
+
+/* ---- things easing in (Full) ------------------------------------------ */
+@keyframes lg-pop {
+  from { opacity: 0; translate: 0 8px; scale: .985; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes lg-fade-up {
+  from { opacity: 0; translate: 0 6px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes lg-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* panels and widgets when they open (overlay, in-game panels, window) */
+html.lg-motion-full .widget-default-style { animation: lg-pop .2s cubic-bezier(.2, .8, .2, 1) both; }
+/* the Orbhoarder window's tab content when you switch tabs */
+html.lg-motion-full .lg-view { animation: lg-fade-up .24s cubic-bezier(.2, .8, .2, 1) both; }
+/* lists: rows ease in one after another */
+html.lg-motion-full .lg-stagger > * { animation: lg-fade-up .26s ease-out both; }
+html.lg-motion-full .lg-stagger > :nth-child(2) { animation-delay: .03s; }
+html.lg-motion-full .lg-stagger > :nth-child(3) { animation-delay: .06s; }
+html.lg-motion-full .lg-stagger > :nth-child(4) { animation-delay: .09s; }
+html.lg-motion-full .lg-stagger > :nth-child(5) { animation-delay: .12s; }
+html.lg-motion-full .lg-stagger > :nth-child(6) { animation-delay: .15s; }
+html.lg-motion-full .lg-stagger > :nth-child(7) { animation-delay: .18s; }
+html.lg-motion-full .lg-stagger > :nth-child(n+8) { animation-delay: .21s; }
+
+/* the active tab button glows a little */
+html.lg-motion-full .lg-tab-active { box-shadow: 0 0 0 1px rgb(var(--accent) / .35), 0 0 12px rgb(var(--accent) / .25); }
+
+/* loading text shimmers */
+@keyframes lg-shimmer { from { background-position: -150% 0; } to { background-position: 250% 0; } }
+html:is(.lg-motion-full, .lg-motion-subtle) .lg-loading {
+  background: linear-gradient(90deg, rgb(var(--g-500)) 0%, rgb(var(--g-200)) 50%, rgb(var(--g-500)) 100%) 0 0 / 60% 100% no-repeat;
+  background-color: rgb(var(--g-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lg-shimmer 1.6s linear infinite;
+}
+
+/* ---- moving theme backgrounds (Full, Orbhoarder window) ---------------- */
+/* the drifting decoration is its own layer, moved with transform (no repaint) */
+@keyframes lg-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(var(--decor-dx, 0), var(--decor-dy, 0), 0); }
+}
+html.desktop.lg-drift body::before {
+  content: '';
+  position: fixed;
+  inset: calc(-1 * var(--decor-pad, 0px));
+  background-image: var(--decor-tile, none);
+  background-size: var(--decor-tile-size, auto);
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+  animation: lg-drift var(--decor-seconds, 60s) linear infinite;
+}
+html.desktop.lg-drift #app { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  html *:not(.fa-spin), html *::before, html *::after { animation: none !important; transition: none !important; }
+}
+html.lg-motion-off *:not(.fa-spin), html.lg-motion-off *::before, html.lg-motion-off *::after { animation: none !important; transition: none !important; }

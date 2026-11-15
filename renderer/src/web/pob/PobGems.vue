@@ -11,7 +11,7 @@
     <pob-gems-for-level v-if="mode === 'level'" ref="levelRef" />
     <template v-else>
     <div v-if="error" class="p-1 text-gray-400">{{ error }}</div>
-    <div v-else-if="!groups && loading" class="p-1 text-gray-500">Loading from Path of Building…</div>
+    <div v-else-if="!groups && loading" class="p-1 text-gray-500 lg-loading">Loading from Path of Building…</div>
     <template v-else-if="comparison">
       <div class="flex items-center gap-x-2 px-1 pb-1 text-xs">
         <span v-if="liveError" class="text-gray-500 flex-1">{{ liveError }}</span>

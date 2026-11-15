@@ -54,6 +54,17 @@
     </div>
 
     <div class="mb-4">
+      <div class="mb-1">Animations</div>
+      <div class="flex flex-wrap gap-x-4">
+        <ui-radio v-model="a.motion" value="full">Full</ui-radio>
+        <ui-radio v-model="a.motion" value="subtle">Subtle</ui-radio>
+        <ui-radio v-model="a.motion" value="off">Off</ui-radio>
+      </div>
+      <div class="text-gray-500 text-sm mt-1">{{ a.motion === 'off' ? 'Everything appears instantly.' : a.motion === 'subtle' ? 'Smooth hover and click effects only.' : 'Panels and tabs ease in, new rows slide in, buttons react, and theme backgrounds drift slowly (snow falls, leaves blow, sparkles rise).' }}
+        Windows' "Show animations" setting off turns them off too.</div>
+    </div>
+
+    <div class="mb-4">
       <div class="mb-1">Accent colour</div>
       <div class="flex items-center gap-2">
         <ui-toggle :modelValue="a.accent !== ''" @update:modelValue="a.accent = $event ? THEMES[active.id].accent : ''">Own colour</ui-toggle>

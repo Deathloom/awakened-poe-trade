@@ -3,9 +3,9 @@
        normal window for a second screen; live with the game like the overlay. -->
   <div class="desktop-root relative flex flex-col h-full text-gray-200">
     <div class="flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0">
-      <span class="text-gray-400 mr-3"><i class="fas fa-coins mr-1 text-yellow-500" />Orbhoarder<span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
+      <span class="text-gray-400 mr-3 flex items-center"><img src="/images/orbhoarder.svg" class="w-6 h-6 mr-1.5 lg-logo" alt="" />Orbhoarder<span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
       <button v-for="v of VIEWS" :key="v.key" class="px-3 py-0.5 rounded"
-        :class="view === v.key ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
+        :class="view === v.key ? 'bg-gray-600 text-gray-100 lg-tab-active' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         :title="v.title" @click="setView(v.key)">
         <i class="fas mr-1" :class="v.icon" />{{ v.label }}</button>
       <button v-if="view === 'overview'" class="ml-auto px-2 py-0.5 rounded text-xs"
@@ -26,9 +26,9 @@
     </div>
 
     <!-- All: customisable (Edit layout in the top bar) -->
-    <AllLayout v-if="view === 'overview'" :editing="editLayout" @done="editLayout = false" />
+    <AllLayout v-if="view === 'overview'" class="lg-view" :editing="editLayout" @done="editLayout = false" />
     <div v-else-if="view !== 'trade' && view !== 'lab'" class="flex-1 min-h-0 p-2">
-      <div class="h-full min-h-0">
+      <div :key="view" class="h-full min-h-0 lg-view">
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
         <LevellingBody v-else-if="view === 'levelling'" />
         <div v-else-if="view === 'atlas'" class="h-full min-h-0 flex flex-col rounded bg-gray-800"><AtlasTreeMap /></div>

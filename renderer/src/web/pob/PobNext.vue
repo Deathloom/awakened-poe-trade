@@ -26,7 +26,7 @@
 
     <div class="p-1 overflow-y-auto min-h-0 flex-1">
       <div v-if="error" class="p-1 text-gray-400">{{ error }}</div>
-      <div v-else-if="!plan && loading" class="p-1 text-gray-500">Loading from Path of Building…</div>
+      <div v-else-if="!plan && loading" class="p-1 text-gray-500 lg-loading">Loading from Path of Building…</div>
       <template v-else-if="plan">
         <div v-if="!levelKnown" class="px-1 pb-1 text-xs text-yellow-500">
           No level-up seen yet. Type your level above, or level up once in game (Client.txt).
