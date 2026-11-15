@@ -44,9 +44,32 @@
               :title="b.cmd(t.char)" @click="press(t, b.cmd(t.char), b.key)">
               <i v-if="pressed === t.id + b.key" class="fas fa-check text-green-400" /> {{ b.label }}</button>
           </template>
+          <button v-for="(q, i) of quickFor(t)" :key="'q' + i" class="bg-gray-700 hover:bg-gray-600 rounded px-1.5 border border-gray-600"
+            :title="fillQuick(q.text, t)" @click="press(t, fillQuick(q.text, t), 'q' + i)">
+            <i v-if="pressed === t.id + 'q' + i" class="fas fa-check text-green-400" /> {{ q.label }}</button>
         </div>
       </div>
-      <div v-if="!compact" class="px-1 pt-1 text-xs text-gray-600">{{ modeHelp }}</div>
+      <div v-if="!compact" class="px-1 pt-1 text-xs text-gray-600">{{ modeHelp }}
+        <button v-if="canEdit" class="ml-1 text-blue-400 hover:underline" @click="editing = !editing">{{ editing ? 'Done' : 'Your own buttons…' }}</button>
+      </div>
+      <div v-if="editing" class="m-1 p-2 rounded bg-gray-900 text-sm">
+        <div class="text-gray-500 mb-1">Your own chat buttons (up to {{ MAX_QUICK }}). In the text, {name} = the other player, {item}, {price}. Start with @{name} to whisper, or / for a command.</div>
+        <div v-for="(q, i) of quick" :key="i" class="flex gap-1 mb-1 items-center">
+          <input v-model="q.label" class="rounded px-1 w-20" maxlength="20" placeholder="Label" />
+          <input v-model="q.text" class="rounded px-1 flex-1 min-w-0" :maxlength="MAX_TEXT" placeholder="@{name} …" />
+          <select v-model="q.for" class="rounded px-1">
+            <option value="sell">selling</option>
+            <option value="buy">buying</option>
+            <option value="both">both</option>
+          </select>
+          <button class="text-gray-500 hover:text-gray-200" title="Remove" @click="quick.splice(i, 1)"><i class="fas fa-times" /></button>
+        </div>
+        <div class="flex gap-2 mt-1">
+          <button class="btn" :disabled="quick.length >= MAX_QUICK" @click="quick.push({ label: '', text: '@{name} ', for: 'sell' })">Add</button>
+          <button v-if="!quick.length" class="btn" @click="quick.push(...QUICK_EXAMPLES.map(q => ({ ...q })))">Add examples</button>
+          <button class="btn" @click="saveQuick">Save</button>
+        </div>
+      </div>
     </div>
 
     <div v-else class="overflow-y-auto min-h-0 p-1">
@@ -79,9 +102,11 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
-import { AppConfig } from '@/web/Config'
+import { AppConfig, saveConfig } from '@/web/Config'
 import { parseLogLine, type LogEvent } from './game-log'
 import { runChat, chatMode } from './chat'
+import { cleanQuick, fillQuick, QUICK_EXAMPLES, MAX_QUICK, MAX_TEXT, type QuickWhisper } from './quick-whispers'
+import { IS_HUD } from '@/web/hud/is-hud'
 import { addPrice, type TradeEntry, loadLedger, saveLedger, appendToLedger, onLedgerChange } from './ledger'
 
 // fill: take the whole space (desktop window)
@@ -202,6 +227,22 @@ const stopLedgerSync = onLedgerChange((list) => { ledger.value = list })
 const onTradesStorage = (e: StorageEvent) => { if (e.key === TRADES_KEY) trades.value = loadTrades() }
 window.addEventListener('storage', onTradesStorage)
 onUnmounted(() => { logListener.abort(); stopLedgerSync(); window.removeEventListener('storage', onTradesStorage) })
+
+// Deathloom fork: your own chat buttons (idea 4); edited where settings can be saved (not the HUD)
+const canEdit = !IS_HUD
+const editing = ref(false)
+const quick = ref<QuickWhisper[]>(cleanQuick(AppConfig().quickWhispers))
+const savedQuick = computed(() => cleanQuick(AppConfig().quickWhispers))
+function quickFor (t: TradeEntry) {
+  const dir = t.direction === 'from' ? 'sell' : 'buy'
+  return savedQuick.value.filter(q => q.for === 'both' || q.for === dir)
+}
+function saveQuick () {
+  AppConfig().quickWhispers = cleanQuick(quick.value)
+  quick.value = cleanQuick(quick.value)
+  saveConfig()
+  editing.value = false
+}
 
 let pressTimer: ReturnType<typeof setTimeout> | undefined
 function press (t: TradeEntry, text: string, key: string) {
