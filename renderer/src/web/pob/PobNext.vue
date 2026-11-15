@@ -194,7 +194,7 @@
             <div class="flex flex-wrap gap-x-4 text-gray-300">
               <span :title="progress.questsExact ? 'From /passives' : 'Passive points received from quests (type /passives in game for the exact list)'">
                 Quest passives: {{ progress.passives }}<span class="text-gray-500">{{ progress.questsExact ? ' (/passives)' : '' }}</span></span>
-              <span v-if="logAllocated != null" title="Passives taken minus refunded, counted from the game log">
+              <span v-if="logAllocated != null" :title="progress.passivesSnap ? 'From /passives in game, plus what you allocated since. Type /passives again to re-sync.' : 'Passives taken minus refunded, counted from the game log. Type /passives in game for the exact number.'">
                 Passives taken: {{ logAllocated }}<span v-if="plan.available - logAllocated > 0" class="text-yellow-400"> · {{ plan.available - logAllocated }} unspent</span></span>
               <span>Deaths: {{ progress.deaths ?? 0 }}<span v-if="guideAct && progress.deathsByAct?.[guideAct]" class="text-gray-500"> ({{ progress.deathsByAct[guideAct] }} in act {{ guideAct }})</span></span>
               <button v-if="campaignTime" class="hover:text-gray-100" :title="actTimes + '\nClick: act splits'" @click="toggleSplits">
@@ -318,14 +318,18 @@ onUnmounted(() => {
 // Passives actually taken (game log, characters followed from level 2): match
 // the plan's nodes by name, in order (small passives with the same name are approximate)
 const progress = computed(() => progressOf(levels.value, char.value?.name))
+// followed from level 2: every allocation is in the log
+const followedFromStart = computed(() => Boolean(progress.value?.alloc) && (progress.value?.firstLevel ?? 99) <= 2)
 const logAllocated = computed(() => {
-  const a = progress.value?.alloc
-  if (!a || (progress.value?.firstLevel ?? 99) > 2) return null
-  return Object.values(a).reduce((n, c) => n + c, 0)
+  const p = progress.value
+  const count = Object.values(p?.alloc ?? {}).reduce((n, c) => n + c, 0)
+  // the game's own count from /passives is exact (masteries in, ascendancy out): add what came since
+  if (p?.passivesSnap) return Math.max(0, p.passivesSnap.allocated + count - p.passivesSnap.logCount)
+  return followedFromStart.value ? count : null
 })
 const takenByLog = computed(() => {
   const p = plan.value; const a = progress.value?.alloc
-  if (!p || !a || logAllocated.value == null) return null
+  if (!p || !a || !followedFromStart.value) return null
   // names compared without case and spaces at the ends
   const left: Record<string, number> = {}
   for (const [k, n] of Object.entries(a)) left[k.trim().toLowerCase()] = (left[k.trim().toLowerCase()] ?? 0) + n
