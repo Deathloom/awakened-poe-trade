@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#141)
+- **Your own chat buttons in the trade companion:** **Your own buttons…** under the whisper list adds up to 8 buttons with your text, for selling, buying or both. Use {name}, {item} and {price} in the text. Like the built-in buttons, each click copies or sends one message.
+
 ### Added (#140)
 - **Search strings** (Build panel → Notes): copy a stash or vendor search for the build's gems, boots with movement speed, 3/4/5-linked sockets, and maps without the mods your build can't run. One click copies; in game click the search box (or Ctrl+F) and paste. Long lists are split to fit the game's 50-character limit.
 

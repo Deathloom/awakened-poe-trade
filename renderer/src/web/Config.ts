@@ -10,6 +10,7 @@ import type { ItemCheckWidget } from './item-check/widget'
 import type { ItemSearchWidget } from './item-search/widget'
 import { registry as widgetRegistry } from './overlay/widget-registry.js'
 import { PANEL_WIDGET_TYPES } from './desktop/panel-defs'
+import type { QuickWhisper } from './companion/quick-whispers'
 
 const _config = shallowRef<Config | null>(null)
 let _lastSavedConfig: Config | null = null
@@ -139,6 +140,8 @@ export interface Config {
   appearance: AppearanceConfig
   // Deathloom fork: second Loot Goblin window's own look (absent = same as above)
   window2Appearance?: AppearanceConfig
+  // Deathloom fork: your own chat buttons in the trade companion (companion/quick-whispers.ts)
+  quickWhispers?: QuickWhisper[]
 }
 
 export const defaultConfig = (): Config => ({
