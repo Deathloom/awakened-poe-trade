@@ -60,7 +60,7 @@ Host.onEvent('MAIN->CLIENT::updater-state', (info) => {
 .box::before {
   position: absolute;
   content: '';
-  background: url('/images/TransferOrb.png') no-repeat top right/contain;
+  background: url('/images/orbhoarder.svg') no-repeat top right/contain;
   right: 100%;
   width: 100%;
   height: 100%;
