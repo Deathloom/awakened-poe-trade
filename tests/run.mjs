@@ -21,7 +21,8 @@ const MODULES = {
   'search-strings': 'renderer/src/web/pob/search-strings.ts',
   sheets: 'renderer/src/web/cheats/sheets.ts',
   'build-xml': 'main/src/pob/build-xml.ts',
-  'build-compare': 'renderer/src/web/pob/compare.ts'
+  'build-compare': 'renderer/src/web/pob/compare.ts',
+  game: 'ipc/game.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

@@ -2,6 +2,7 @@ import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
 import { HostConfig, ShortcutAction, PobConfig, PobHudConfig } from '@ipc/types'
+import { asGame, type Game } from '@ipc/game'
 import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from './hud/is-hud'
 import { applyAppearance, defaultAppearance, type AppearanceConfig } from './appearance'
 import type * as widget from './overlay/widgets'
@@ -113,6 +114,9 @@ export function poeWebApi () {
 export interface Config {
   configVersion: number
   leagueId?: string
+  // Deathloom fork: PoE2 mode. Which game, and the league last picked in each
+  game: Game
+  leagueIdByGame?: Partial<Record<Game, string>>
   overlayKey: string
   overlayBackground: string
   overlayBackgroundClose: boolean
@@ -146,6 +150,7 @@ export interface Config {
 
 export const defaultConfig = (): Config => ({
   configVersion: 18,
+  game: 'poe1',
   overlayKey: 'Shift + Space',
   overlayBackground: 'rgba(129, 139, 149, 0.15)',
   overlayBackgroundClose: true,
@@ -455,6 +460,7 @@ function upgradeConfig (_config: Config): Config {
   }
 
   // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
+  config.game = asGame(config.game)
   config.pob ??= defaultPobConfig()
   config.appearance = { ...defaultAppearance(), ...config.appearance }
   if (config.window2Appearance) config.window2Appearance = { ...defaultAppearance(), ...config.window2Appearance }
@@ -703,6 +709,7 @@ function getConfigForHost (): HostConfig {
     logKeys: config.logKeys,
     windowTitle: config.windowTitle,
     language: config.language,
+    game: config.game,
     pob: config.pob
   }
 }

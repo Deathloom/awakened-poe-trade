@@ -18,6 +18,7 @@ const search = await import('./.build/search-strings.mjs')
 const sheets = await import('./.build/sheets.mjs')
 const buildXml = await import('./.build/build-xml.mjs')
 const compare = await import('./.build/build-compare.mjs')
+const game = await import('./.build/game.mjs')
 
 test('request guard: loopback always, other devices only with the key', () => {
   const K = 'k'.repeat(32)
@@ -161,4 +162,20 @@ test('build files: read and compare two builds', () => {
   assert.deepEqual(c.tree.masteriesChanged, [100])
   assert.throws(() => buildXml.parseBuildXml('<html></html>'))
   assert.equal(compare.fmtStat(1234567), '1.23M')
+})
+
+test('game switch: window title, exe match, default league', () => {
+  assert.equal(game.asGame('poe2'), 'poe2'); assert.equal(game.asGame(undefined), 'poe1'); assert.equal(game.asGame('x'), 'poe1')
+  assert.equal(game.windowTitleOnSwitch('poe2', 'Path of Exile'), 'Path of Exile 2')
+  assert.equal(game.windowTitleOnSwitch('poe1', 'Path of Exile 2'), 'Path of Exile')
+  assert.equal(game.windowTitleOnSwitch('poe2', ''), 'Path of Exile 2')
+  assert.equal(game.windowTitleOnSwitch('poe2', 'My PoE'), 'My PoE')
+  assert.equal(game.exeMatchesGame('C:\\Program Files (x86)\\Steam\\steamapps\\common\\Path of Exile 2\\PathOfExileSteam.exe', 'poe2'), true)
+  assert.equal(game.exeMatchesGame('C:\\Program Files (x86)\\Steam\\steamapps\\common\\Path of Exile 2\\PathOfExileSteam.exe', 'poe1'), false)
+  assert.equal(game.exeMatchesGame('D:\\Games\\Path of Exile\\PathOfExile_x64.exe', 'poe1'), true)
+  assert.equal(game.exeMatchesGame('D:\\Games\\Path of Exile 2 backup\\x.exe', 'poe1'), true)
+  assert.equal(game.pickDefaultLeague(['Standard', 'Hardcore', 'Rise of the Abyssal', 'HC Rise of the Abyssal']), 'Rise of the Abyssal')
+  assert.equal(game.pickDefaultLeague(['HC Fate of the Vaal', 'Fate of the Vaal SSF', 'Fate of the Vaal', 'Standard']), 'Fate of the Vaal')
+  assert.equal(game.pickDefaultLeague(['Hardcore', 'Standard']), 'Standard')
+  assert.equal(game.pickDefaultLeague([]), undefined)
 })

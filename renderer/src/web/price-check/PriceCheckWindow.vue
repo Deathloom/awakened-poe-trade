@@ -31,7 +31,12 @@
         <background-info />
         <check-position-circle v-if="showCheckPos"
           :position="checkPosition" style="z-index: -1;" />
-        <template v-if="item?.isErr()">
+        <!-- Deathloom fork: PoE2 mode phase 1 (game switch only); PoE2 items need their own parser -->
+        <div v-if="isPoe2" class="m-4 p-3 rounded bg-gray-900">
+          <div class="font-bold mb-1"><i class="fas fa-info-circle mr-1" />Path of Exile 2 price check isn't ready yet</div>
+          <p class="text-gray-400">Orbhoarder is set to PoE2 (Settings → General → Game). PoE2 price checks come in a later update; switch back to PoE1 there to price check PoE1 items.</p>
+        </div>
+        <template v-else-if="item?.isErr()">
           <ui-error-box class="m-4">
             <template #name>{{ t(item.error.name) }}</template>
             <p>{{ t(item.error.message) }}</p>
@@ -219,6 +224,7 @@ export default defineComponent({
     const overlayKey = computed(() => AppConfig().overlayKey)
     const showCheckPos = computed(() => wm.active.value && props.config.showCursor)
     const isLeagueSelected = computed(() => Boolean(leagues.selectedId.value))
+    const isPoe2 = computed(() => AppConfig().game === 'poe2')
     const clickPosition = computed(() => {
       if (isBrowserShown.value) {
         return 'inventory'
@@ -293,6 +299,7 @@ export default defineComponent({
       handleIdentification,
       overlayKey,
       isLeagueSelected,
+      isPoe2,
       openLeagueSelection
     }
   }

@@ -6,23 +6,28 @@ import { app } from 'electron'
 import { guessFileLocation } from './utils'
 import { ServerEvents } from '../server'
 import { Logger } from '../RemoteLogger'
+import { GAME_FOLDER, exeMatchesGame, type Game } from '../../../ipc/game'
 
-const POSSIBLE_PATH =
-  (process.platform === 'win32') ? [
-    'C:\\Program Files (x86)\\Grinding Gear Games\\Path of Exile\\logs\\Client.txt',
-    'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Path of Exile\\logs\\Client.txt'
+// Deathloom fork: default Client.txt locations per game (PoE2 mode)
+function possiblePaths (game: Game): string[] {
+  const dir = GAME_FOLDER[game]
+  return (process.platform === 'win32') ? [
+    `C:\\Program Files (x86)\\Grinding Gear Games\\${dir}\\logs\\Client.txt`,
+    `C:\\Program Files (x86)\\Steam\\steamapps\\common\\${dir}\\logs\\Client.txt`
   ] : (process.platform === 'linux') ? [
-    path.join(app.getPath('home'), '.wine/drive_c/Program Files (x86)/Grinding Gear Games/Path of Exile/logs/Client.txt'),
-    path.join(app.getPath('home'), '.local/share/Steam/steamapps/common/Path of Exile/logs/Client.txt')
-  ] : (process.platform === 'darwin') ? [
+    path.join(app.getPath('home'), `.wine/drive_c/Program Files (x86)/Grinding Gear Games/${dir}/logs/Client.txt`),
+    path.join(app.getPath('home'), `.local/share/Steam/steamapps/common/${dir}/logs/Client.txt`)
+  ] : (process.platform === 'darwin' && game === 'poe1') ? [
     path.join(app.getPath('home'), 'Library/Caches/com.GGG.PathOfExile/Logs/Client.txt')
   ] : []
+}
 
 // lines Orbhoarder reads (levels, quest rewards, zones, passives, deaths, dialogue)
 const KEEP = /\] : |Successfully (un)?allocated|Generating level|LOADING SCREEN|Abnormal disconnect|\] [A-Z][^:#$%&@<>]{1,40}: /
 
 export class GameLogWatcher {
   private _wantedPath: string | null = null
+  private _game: Game = 'poe1'
   // Deathloom fork: main-process listeners (HUD: are we in a zone yet?).
   // Called with the end of the existing log when a file is opened, then with new lines.
   onLines?: (lines: string[], isHistory: boolean) => void
@@ -89,9 +94,10 @@ export class GameLogWatcher {
     return lines ?? []
   }
 
-  async restart (logFile: string) {
-    if (this._wantedPath !== logFile) {
+  async restart (logFile: string, game: Game = 'poe1') {
+    if (this._wantedPath !== logFile || this._game !== game) {
       this._wantedPath = logFile
+      this._game = game
       if (this._state) {
         unwatchFile(this._state.path)
         await this._state.file.close()
@@ -102,7 +108,7 @@ export class GameLogWatcher {
     }
 
     if (!logFile.length) {
-      const guessedPath = await guessFileLocation(POSSIBLE_PATH)
+      const guessedPath = await guessFileLocation(possiblePaths(game))
       if (guessedPath != null) {
         logFile = guessedPath
       } else {
@@ -116,12 +122,14 @@ export class GameLogWatcher {
 
   // Deathloom fork: no Client.txt path set and none guessed (game installed
   // elsewhere, or both Steam and standalone installed): take it from the
-  // running PoE1 process, i.e. <game folder>\logs\Client.txt.
+  // running game process (PoE1 or PoE2, per the game setting), i.e.
+  // <game folder>\logs\Client.txt.
   // Only lists processes; nothing reads the game's memory.
   async findFromGameProcess () {
     if (this._state || this._wantedPath || process.platform !== 'win32') return
-    const exe = await findPoe1Exe()
-    if (!exe || this._state || this._wantedPath) return
+    const game = this._game
+    const exe = await findGameExe(game)
+    if (!exe || this._state || this._wantedPath || this._game !== game) return
     const logFile = path.join(path.dirname(exe), 'logs', 'Client.txt')
     try {
       await fs.access(logFile)
@@ -234,13 +242,17 @@ export class GameLogWatcher {
   }
 }
 
-// Deathloom fork: path of the running PoE1 executable (PoE2 lives in a "Path of Exile 2" folder)
-function findPoe1Exe (): Promise<string | null> {
+// Deathloom fork: path of the running game's executable (PoE2 lives in a "Path of Exile 2" folder)
+function findGameExe (game: Game): Promise<string | null> {
   const script = "Get-Process | Where-Object { $_.ProcessName -like 'PathOfExile*' } | " +
-    'ForEach-Object { $_.Path } | Where-Object { $_ -and $_ -notmatch "Path of Exile 2" } | Select-Object -First 1'
+    'ForEach-Object { $_.Path } | Where-Object { $_ }'
   return new Promise((resolve) => {
     execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script],
       { timeout: 8000, windowsHide: true },
-      (err, stdout) => { resolve(err ? null : (stdout.trim() || null)) })
+      (err, stdout) => {
+        if (err) return resolve(null)
+        const exe = stdout.split(/\r?\n/).map(l => l.trim()).find(l => l && exeMatchesGame(l, game))
+        resolve(exe ?? null)
+      })
   })
 }

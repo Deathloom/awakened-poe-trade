@@ -4,21 +4,28 @@ import ini from 'ini'
 import { app } from 'electron'
 import { hotkeyToString, CodeToKey } from '../../../ipc/KeyToCode'
 import { guessFileLocation } from './utils'
+import { GAME_FOLDER, GAME_CONFIG_FILE, type Game } from '../../../ipc/game'
 import type { Logger } from '../RemoteLogger'
 import type { ServerEvents } from '../server'
 
-const POSSIBLE_PATH =
-  (process.platform === 'win32') ? [
-    path.join(app.getPath('documents'), 'My Games\\Path of Exile\\production_Config.ini')
+// Deathloom fork: default config file locations per game (PoE2 mode)
+function possiblePaths (game: Game): string[] {
+  const dir = GAME_FOLDER[game]
+  const file = GAME_CONFIG_FILE[game]
+  const steamId = game === 'poe2' ? '2694490' : '238960'
+  return (process.platform === 'win32') ? [
+    path.join(app.getPath('documents'), `My Games\\${dir}\\${file}`)
   ] : (process.platform === 'linux') ? [
-    path.join(app.getPath('documents'), 'My Games/Path of Exile/production_Config.ini'),
-    path.join(app.getPath('home'), '.local/share/Steam/steamapps/compatdata/238960/pfx/drive_c/users/steamuser/Documents/My Games/Path of Exile/production_Config.ini')
+    path.join(app.getPath('documents'), `My Games/${dir}/${file}`),
+    path.join(app.getPath('home'), `.local/share/Steam/steamapps/compatdata/${steamId}/pfx/drive_c/users/steamuser/Documents/My Games/${dir}/${file}`)
   ] : (process.platform === 'darwin') ? [
-    path.join(app.getPath('appData'), 'Path of Exile/Preferences/production_Config.ini')
+    path.join(app.getPath('appData'), `${dir}/Preferences/${file}`)
   ] : []
+}
 
 export class GameConfig {
   private _wantedPath: string | null = null
+  private _game: Game = 'poe1'
   private _actualPath: string | null = null
   get actualPath () { return this._actualPath }
 
@@ -31,16 +38,17 @@ export class GameConfig {
     private logger: Logger
   ) {}
 
-  async readConfig (filePath: string) {
-    if (this._wantedPath !== filePath) {
+  async readConfig (filePath: string, game: Game = 'poe1') {
+    if (this._wantedPath !== filePath || this._game !== game) {
       this._wantedPath = filePath
+      this._game = game
       this._actualPath = null
     } else {
       return
     }
 
     if (!filePath.length) {
-      const guessedPath = await guessFileLocation(POSSIBLE_PATH)
+      const guessedPath = await guessFileLocation(possiblePaths(game))
       if (guessedPath != null) {
         filePath = guessedPath
       } else {
