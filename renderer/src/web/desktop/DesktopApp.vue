@@ -13,6 +13,9 @@
         title="Add, remove, move and resize the panels on the All tab" @click="editLayout = !editLayout">
         <i class="fas fa-th mr-1" />{{ editLayout ? 'Done' : 'Edit layout' }}</button>
       <span class="text-xs text-gray-500" :class="view === 'overview' ? 'ml-3' : 'ml-auto'" :title="playingHelp">{{ status }}</span>
+      <button class="ml-3 px-2 py-0.5 rounded text-xs text-gray-400 hover:text-gray-100 hover:bg-gray-700"
+        title="Report a bug or suggest a feature" @click="feedback = 'bug'">
+        <i class="fas fa-bug mr-1" />Bug<span class="text-gray-600 mx-1">/</span><i class="fas fa-lightbulb mr-1" />Idea</button>
     </div>
 
     <!-- an update is downloaded: install from here (it also installs by itself once the game is closed) -->
@@ -56,6 +59,7 @@
     <WidgetSetupGuide v-if="!IS_DESKTOP2" desktop />
     <!-- after an update (not while the setup guide is open) -->
     <WhatsNew v-if="!IS_DESKTOP2" :active="!desktopSetupShown" />
+    <FeedbackDialog v-if="feedback" :initial="feedback" @close="feedback = null" />
   </div>
 </template>
 
@@ -72,6 +76,7 @@ import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
+import FeedbackDialog from './FeedbackDialog.vue'
 import TradeSiteBody from './TradeSiteBody.vue'
 import LabSiteBody from './LabSiteBody.vue'
 import HelpBody from '../help/HelpBody.vue'
@@ -121,6 +126,8 @@ function loadView (): View {
   } catch { return 'overview' }
 }
 const view = ref<View>(loadView())
+// Deathloom fork: Report a bug / Suggest a feature dialog
+const feedback = ref<'bug' | 'idea' | null>(null)
 // a panel's hotkey asked for its tab (panel not shown in the overlay)
 function viewFromHotkey (v: string) {
   if (VIEWS.some(x => x.key === v)) setView(v as View)

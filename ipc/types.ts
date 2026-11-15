@@ -535,7 +535,9 @@ export type IpcEvent =
   IpcHudResize |
   IpcHudDims |
   IpcHudTyping |
-  IpcReportError
+  IpcReportError |
+  IpcUserReport |
+  IpcUserReportResult
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -587,6 +589,27 @@ type IpcReportError =
     stack?: string
     // page / component, e.g. "hud=gear" or the Vue component name
     where?: string
+  }>
+
+// Deathloom fork: Report a bug / Suggest a feature (desktop window)
+type IpcUserReport =
+  Event<'CLIENT->MAIN::user-report', {
+    requestId: number
+    kind: 'bug' | 'idea'
+    title: string
+    text: string
+    includeLog: boolean
+    // true: open it as a new GitHub issue in the browser instead of sending it
+    viaBrowser?: boolean
+  }>
+
+type IpcUserReportResult =
+  Event<'MAIN->CLIENT::user-report', {
+    requestId: number
+    sent: boolean
+    // opened in the browser instead
+    opened?: boolean
+    reason?: string
   }>
 
 type IpcHudDims =

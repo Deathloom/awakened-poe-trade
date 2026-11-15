@@ -1,7 +1,7 @@
 'use strict'
 
 import { app, clipboard, net, session } from 'electron'
-import { denyWebviewPermissions } from './safe-open'
+import { denyWebviewPermissions, openWebLink } from './safe-open'
 import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
 import { promises as fs } from 'node:fs'
@@ -25,7 +25,7 @@ import { PobImpact } from './pob/PobImpact'
 import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
 import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
-import { ErrorReporter } from './ErrorReporter'
+import { ErrorReporter, issueUrl } from './ErrorReporter'
 import { AtlasFiles } from './pob/AtlasFiles'
 import { BuildNotes } from './pob/BuildNotes'
 import { TradeBoard } from './pob/TradeBoard'
@@ -93,6 +93,18 @@ app.on('ready', async () => {
   // eslint-disable-next-line no-new
   new BuildNotes(eventPipe, logger, async () => await pobImpact.activeBuild(), () => { pobSync.schedulePush() })
   errorReporter.enabled = () => pobImpact.resolved()?.errorReports !== false
+  // Deathloom fork: Report a bug / Suggest a feature (desktop window)
+  eventPipe.onEventAnyClient('CLIENT->MAIN::user-report', (req) => {
+    const send = eventPipe.replyTo()
+    if (req.viaBrowser) {
+      openWebLink(issueUrl(req.kind, req.title, req.text), 'github.com')
+      send({ name: 'MAIN->CLIENT::user-report', payload: { requestId: req.requestId, sent: false, opened: true } })
+      return
+    }
+    void errorReporter.userReport(req).then(
+      (res) => { send({ name: 'MAIN->CLIENT::user-report', payload: { requestId: req.requestId, ...res } }) },
+      (err: Error) => { send({ name: 'MAIN->CLIENT::user-report', payload: { requestId: req.requestId, sent: false, reason: err.message } }) })
+  })
   pobImpact.onCodeError = (message, detail) => { errorReporter.capture('pob', message, detail, 'ImpactServer') }
   pobSync.onCodeError = (message) => { errorReporter.capture('pob', message, undefined, 'SyncServer') }
   // Deathloom fork: Orbhoarder's own PoB (downloaded on first run, then kept current)
