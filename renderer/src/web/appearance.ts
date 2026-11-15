@@ -96,7 +96,7 @@ const CLASSIC_BLUE = ['#ebf8ff', '#bee3f8', '#90cdf4', '#63b3ed', '#4299e1', '#3
 
 export const THEMES: Record<ThemeId, Theme> = {
   classic: {
-    name: 'Classic (Awakened PoE Trade)',
+    name: 'Classic',
     gray: ['#f7fafc', '#edf2f7', '#e2e8f0', '#cbd5e0', '#a0aec0', '#718096', '#4a5568', '#2d3748', '#1a202c'],
     blue: CLASSIC_BLUE,
     accent: '#4299e1',
