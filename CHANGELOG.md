@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#168)
+Settings sorted by topic: all panel hotkeys are under **Hotkeys**; startup, windows, updates and problem reports under **General**; a new **Panels** page has where panels show, pinning over the game, chat buttons and the trade site tab; **Path of Building** only has PoB things. Your settings stay as they were.
+
 ### Fixed (#167)
 Passive tree: a notable further along the path no longer shows as taken before you allocate it.
 
