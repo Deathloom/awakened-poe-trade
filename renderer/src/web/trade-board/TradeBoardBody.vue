@@ -61,8 +61,8 @@
     </div>
 
     <!-- listings -->
-    <div v-else class="overflow-y-auto min-h-0 p-1">
-      <div v-if="state.signedIn == null || (state.busy === 'Loading…' && !state.updated)" class="p-1 text-gray-500">Loading the board…</div>
+    <div v-else class="overflow-y-auto min-h-0 p-1 lg-stagger">
+      <div v-if="state.signedIn == null || (state.busy === 'Loading…' && !state.updated)" class="p-1 text-gray-500 lg-loading">Loading the board…</div>
       <div v-else-if="!shown.length" class="p-1 text-gray-500">
         {{ onlyMine ? 'You have nothing on this tab.' : emptyText }}
       </div>

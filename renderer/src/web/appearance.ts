@@ -2,8 +2,9 @@
 // Tailwind's gray and blue colours, corner rounding and panel opacity are CSS
 // variables (tailwind.config.js); this file sets them for the chosen theme.
 // Gray = surfaces and text, blue = the accent colour.
-import { DECOR } from './theme-decor'
+import { DECOR, splitLayers } from './theme-decor'
 import './theme-decor.css'
+import './motion.css'
 
 export type ThemeId = 'classic' | 'midnight' | 'ember' | 'abyss' | 'contrast' |
   // seasons and holidays (also picked by date in Seasonal mode)
@@ -26,6 +27,8 @@ export interface AppearanceConfig {
   holidays: boolean
   // our own CSS/SVG background decoration of the theme (Orbhoarder window, theme background only)
   decorations: boolean
+  // full: transitions, panels easing in, theme backgrounds that move; subtle: transitions only; off
+  motion: 'full' | 'subtle' | 'off'
   // '' = the theme's own accent
   accent: string
   font: UiFont
@@ -50,6 +53,7 @@ export const defaultAppearance = (): AppearanceConfig => ({
   hemisphere: 'south',
   holidays: true,
   decorations: true,
+  motion: 'full',
   accent: '',
   font: 'poe-sc',
   rounding: 1,
@@ -417,8 +421,10 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
   root.setProperty('--ui-font', (FONTS[font] ?? FONTS['poe-sc']).css)
 
   const cls = document.documentElement.classList
-  Array.from(cls).filter(c => c.startsWith('lg-style-')).forEach(c => { cls.remove(c) })
+  Array.from(cls).filter(c => c.startsWith('lg-style-') || c.startsWith('lg-motion-')).forEach(c => { cls.remove(c) })
   if (theme.style) cls.add(`lg-style-${theme.style}`)
+  const motion = a.motion === 'off' || a.motion === 'subtle' ? a.motion : 'full'
+  cls.add(`lg-motion-${motion}`)
 
   const pct = (v: number) => String(Math.max(40, Math.min(100, v)) / 100)
   root.setProperty('--panel-alpha', surface === 'desktop' ? pct(a.windowOpacity) : surface === 'overlay' ? pct(a.overlayOpacity) : '1')
@@ -434,10 +440,27 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
       root.setProperty('--window-bg-image', `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), url("${url}")`)
     } else if (a.windowBg === 'theme' && a.decorations && theme.decor && DECOR[theme.decor]) {
       const d = DECOR[theme.decor]
-      root.setProperty('--window-bg-image', d.image)
-      root.setProperty('--window-bg-size', d.size)
+      const images = splitLayers(d.image)
+      const sizes = splitLayers(d.size)
+      // Animations: Full: the drifting layer moves on its own layer (html.lg-drift, motion.css)
+      if (d.drift && motion === 'full' && images[d.drift.layer]) {
+        const [tile] = images.splice(d.drift.layer, 1)
+        const [tileSize] = sizes.splice(d.drift.layer, 1)
+        root.setProperty('--decor-tile', tile)
+        root.setProperty('--decor-tile-size', tileSize)
+        root.setProperty('--decor-dx', `${d.drift.dx}px`)
+        root.setProperty('--decor-dy', `${d.drift.dy}px`)
+        root.setProperty('--decor-pad', `${Math.max(Math.abs(d.drift.dx), Math.abs(d.drift.dy))}px`)
+        root.setProperty('--decor-seconds', `${d.drift.seconds}s`)
+        cls.add('lg-drift')
+      } else {
+        cls.remove('lg-drift')
+      }
+      root.setProperty('--window-bg-image', images.length ? images.join(', ') : 'none')
+      root.setProperty('--window-bg-size', sizes.length ? sizes.join(', ') : 'cover')
     } else {
       root.setProperty('--window-bg-image', 'none')
     }
+    if (!(a.windowBg === 'theme' && a.decorations && theme.decor && DECOR[theme.decor]?.drift && motion === 'full')) cls.remove('lg-drift')
   }
 }

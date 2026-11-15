@@ -46,7 +46,7 @@
     <pob-notes v-else-if="tab === 'notes'" ref="notesRef" :hud="hud" />
     <template v-else>
     <div v-if="error" class="p-2 text-gray-400 text-sm">{{ error }}</div>
-    <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm">Loading from Path of Building…</div>
+    <div v-else-if="!items && loading" class="p-2 text-gray-500 text-sm lg-loading">Loading from Path of Building…</div>
     <div v-else-if="items && !items.length" class="p-2 text-gray-500 text-sm">This build's item set is empty.</div>
 
     <div v-else-if="items" class="overflow-y-auto min-h-0 p-1">

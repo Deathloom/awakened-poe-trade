@@ -43,7 +43,7 @@
             <th />
           </tr>
         </thead>
-        <tbody>
+        <tbody class="lg-stagger">
           <tr v-for="r of rows" :key="r.key" class="border-t border-gray-800 hover:bg-gray-900">
             <td class="py-0.5 pr-1 max-w-0 w-full">
               <div class="truncate" :title="r.label">{{ r.label }}</div>
