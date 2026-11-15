@@ -130,6 +130,19 @@ function toggleGem (name: string) {
   try { localStorage.setItem(TICKS_KEY, JSON.stringify(ticks.value)) } catch {}
 }
 
+// Deathloom fork: the build's own stages from its skill list labels (gem-stages.ts);
+// the socket groups with their labels come from the Gems request
+// (declared before request(): the level watch below calls it right away)
+const groups = shallowRef<PobSocketGroup[] | null>(null)
+let groupsRequestId = 700_000
+const groupsListener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
+  if (e.requestId !== groupsRequestId) return
+  groups.value = e.ok ? (e.groups ?? []) : null
+})
+function requestGroups () {
+  groupsRequestId += 1
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-gems', payload: { requestId: groupsRequestId, refreshGear: false } })
+}
 const loading = ref(false)
 const error = ref<string | null>(null)
 const plan = shallowRef<PobPlan | null>(null)
@@ -173,18 +186,6 @@ function unique (list: PobPlanGem[]) {
   return [...map.values()]
 }
 
-// Deathloom fork: the build's own stages from its skill list labels (gem-stages.ts);
-// the socket groups with their labels come from the Gems request
-const groups = shallowRef<PobSocketGroup[] | null>(null)
-let groupsRequestId = 700_000
-const groupsListener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
-  if (e.requestId !== groupsRequestId) return
-  groups.value = e.ok ? (e.groups ?? []) : null
-})
-function requestGroups () {
-  groupsRequestId += 1
-  Host.sendEvent({ name: 'CLIENT->MAIN::pob-gems', payload: { requestId: groupsRequestId, refreshGear: false } })
-}
 const stages = computed(() => {
   // plan gems must carry their group index to be sorted into stages
   const planGems = (plan.value?.gems ?? []).filter(g => g.groupId != null)
