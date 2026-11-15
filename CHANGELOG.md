@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#149)
+- **Testing updates:** Settings → Path of Building → **Updates** → **Testing** also installs test versions (like 1.0.89-beta.1) before everyone else gets them, then the stable release when it's out. **Stable** (the default) works as before.
+
 ### Added (#146)
 - **Cheat sheets** panel: short guides for Betrayal, Heist, Delve and Sanctum, plus the vendor recipes. Open it with its own hotkey (Settings → Path of Building), in the overlay, in game or on the All tab.
 
