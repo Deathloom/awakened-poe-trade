@@ -166,23 +166,37 @@ export class AppUpdater {
   // updates" on screen for good (and every later check waited on the same
   // request). After 90 s it counts as failed and the next check starts afresh.
   private _checkTimer: NodeJS.Timeout | undefined
+  private _checkSeq = 0
   private check = async () => {
     this._lastCheck = Date.now()
+    // a check that's stuck: start afresh instead of waiting on the same request
+    if (this._info.state === 'checking-for-update' || this._info.state === 'error') {
+      ;(autoUpdater as unknown as { checkForUpdatesPromise: unknown }).checkForUpdatesPromise = null
+    }
+    const seq = ++this._checkSeq
     clearTimeout(this._checkTimer)
     this._checkTimer = setTimeout(() => {
-      if (this._info.state !== 'checking-for-update') return
-      this.logger?.write('warn [updater] Update check got no answer in 90 s; giving up on it')
+      if (seq !== this._checkSeq || this._info.state !== 'checking-for-update') return
+      this.logger?.write('warn [updater] Update check got no answer in 60 s; giving up on it')
       ;(autoUpdater as unknown as { checkForUpdatesPromise: unknown }).checkForUpdatesPromise = null
       this.info = { state: 'error', checkedAt: Date.now() }
-    }, 90 * 1000)
+    }, 60 * 1000)
     try {
       const res = await autoUpdater.checkForUpdates()
       // not packaged (dev): no events at all
       if (res == null && this._info.state === 'checking-for-update') this.info = { state: 'update-not-available', checkedAt: Date.now() }
-    } catch {
-      // handled by event
+      // answered, but no event moved the state on: count it as up to date
+      if (res != null && seq === this._checkSeq && this._info.state === 'checking-for-update') {
+        this.logger?.write('warn [updater] Check answered without a result event')
+        this.info = { state: 'update-not-available', checkedAt: Date.now() }
+      }
+    } catch (err) {
+      // usually handled by the 'error' event; make sure the screen moves on
+      this.logger?.write(`warn [updater] Check failed: ${(err as Error)?.message ?? String(err)}`)
+      if (seq === this._checkSeq && this._info.state === 'checking-for-update') this.info = { state: 'error', checkedAt: Date.now() }
     } finally {
-      clearTimeout(this._checkTimer)
+      // only the newest check owns the timer (an older one finishing mustn't clear it)
+      if (seq === this._checkSeq) clearTimeout(this._checkTimer)
     }
   }
 }

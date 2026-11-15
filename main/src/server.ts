@@ -143,6 +143,10 @@ export async function startServer (
   websocketServer.on('connection', (socket) => {
     const isHud = hudClients.has(socket)
     if (!isHud) lastActiveClient = socket
+    // Deathloom fork: a window that (re)connects gets the updater state now. It only
+    // read it once at load, so a broadcast missed while its socket was reconnecting
+    // left "Checking for updates" on screen for good.
+    socket.send(JSON.stringify({ name: 'MAIN->CLIENT::updater-state', payload: appUpdater.info }))
     socket.on('message', (bytes) => {
       const event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
       if (event.name === 'CLIENT->MAIN::used-recently') {
