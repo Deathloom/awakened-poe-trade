@@ -4,11 +4,22 @@ import CHANGELOG from '../../../../CHANGELOG.md?raw'
 
 export interface ChangelogVersion { version: string, date: string, body: string }
 
-// "## [1.0.31] - 2026-11-14" sections, newest first (Unreleased skipped)
-export function parseChangelog (text: string = CHANGELOG): ChangelogVersion[] {
+export const isTestVersion = (v: string) => /^\d+\.\d+\.\d+-beta\.\d+$/.test(v)
+
+// "## [1.0.31] - 2026-11-14" sections, newest first. [Unreleased] is skipped,
+// except in a test version (x.y.z-beta.N): that's what the test version has
+// on top of the last release, so it's shown under the test version's number.
+export function parseChangelog (text: string = CHANGELOG, current = ''): ChangelogVersion[] {
   const out: ChangelogVersion[] = []
   const parts = text.split(/^## /m).slice(1)
   for (const part of parts) {
+    if (isTestVersion(current)) {
+      const u = part.match(/^\[Unreleased\][^\n]*\n([\s\S]*)$/i)
+      if (u) {
+        if (u[1].trim()) out.push({ version: current, date: 'test version', body: u[1].trim() })
+        continue
+      }
+    }
     const m = part.match(/^\[(\d+\.\d+\.\d+)\](?:\s*-\s*(\S+))?[^\n]*\n([\s\S]*)$/)
     if (!m) continue
     out.push({ version: m[1], date: m[2] ?? '', body: m[3].trim() })
@@ -16,18 +27,25 @@ export function parseChangelog (text: string = CHANGELOG): ChangelogVersion[] {
   return out
 }
 
+// 1.0.89-beta.2 < 1.0.89-beta.3 < 1.0.89 < 1.0.90
 export function compareVersions (a: string, b: string): number {
-  const pa = a.split('.').map(Number); const pb = b.split('.').map(Number)
-  for (let i = 0; i < 3; i++) {
-    const d = (pa[i] || 0) - (pb[i] || 0)
-    if (d) return d
+  const split = (v: string) => {
+    const [main, pre] = v.split('-')
+    const n = main.split('.').map(Number)
+    const beta = pre ? Number(pre.replace(/^beta\./, '')) || 0 : Infinity
+    return [n[0] || 0, n[1] || 0, n[2] || 0, beta]
+  }
+  const pa = split(a); const pb = split(b)
+  for (let i = 0; i < 4; i++) {
+    if (pa[i] === pb[i]) continue
+    return pa[i] < pb[i] ? -1 : 1
   }
   return 0
 }
 
 // versions after `seen`, up to and including `current`
 export function changesSince (seen: string, current: string): ChangelogVersion[] {
-  return parseChangelog().filter(v => compareVersions(v.version, seen) > 0 && compareVersions(v.version, current) <= 0)
+  return parseChangelog(CHANGELOG, current).filter(v => compareVersions(v.version, seen) > 0 && compareVersions(v.version, current) <= 0)
 }
 
 const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')

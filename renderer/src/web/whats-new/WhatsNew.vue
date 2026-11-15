@@ -29,7 +29,7 @@
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
-import { changesSince, compareVersions, parseChangelog, renderMarkdown, type ChangelogVersion } from './changelog'
+import { changesSince, compareVersions, isTestVersion, parseChangelog, renderMarkdown, type ChangelogVersion } from './changelog'
 import { whatsNewRequested } from './whats-new-state'
 
 // active: the window is showing (overlay: Shift+Space open; Loot Goblin window: always)
@@ -41,7 +41,7 @@ const shown = ref(false)
 const versions = shallowRef<ChangelogVersion[]>([])
 const hidden = ref(0)
 const current = computed(() => Host.version.value)
-const realVersion = computed(() => /^\d+\.\d+\.\d+$/.test(current.value) && current.value !== '0.0.0')
+const realVersion = computed(() => (/^\d+\.\d+\.\d+$/.test(current.value) || isTestVersion(current.value)) && current.value !== '0.0.0')
 
 function loadSeen (): string | null {
   try { return localStorage.getItem(KEY) } catch { return null }
@@ -72,7 +72,7 @@ watch([() => props.active, current], check, { immediate: true })
 // Settings → What's new
 watch(whatsNewRequested, (n, before) => {
   if (n === before) return
-  versions.value = parseChangelog().slice(0, 5)
+  versions.value = parseChangelog(undefined, current.value).slice(0, 5)
   hidden.value = 0
   shown.value = true
 })
