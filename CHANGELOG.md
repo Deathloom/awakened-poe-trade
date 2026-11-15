@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#155)
+- **The Loot Goblin window comes back after an update:** windows that were open when an update installed open again when Loot Goblin restarts.
+
 ### Fixed (#152)
 - **What's new in a test version** lists the changes that version brings (they weren't shown before), and opens by itself after a test update.
 
