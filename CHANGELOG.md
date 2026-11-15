@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#139)
+- **Notes per build** (Build panel → **Notes**): notes and guide text, the **map mods this build can't run** (pick from common ones or type your own) and its **loot filter** (a FilterBlade link or a name). They're saved next to the build, so build sync shares them with friends; friends' notes are read-only.
+- **Map check warns** about map mods your active build can't run (red box at the top when you price check a map).
+- **Loot filter reminder:** the Build panel shows which loot filter the active build uses, so you remember to switch it in game.
+
 ### Added (#138)
 - **Seasonal, fun and league themes** (Settings → Appearance): **Seasonal (changes by itself)** picks summer, autumn, winter or spring for today's date (southern hemisphere by default, northern for friends abroad), with holiday themes for a few days: Valentine's, Easter, Halloween, the festive season and New Year. It shows which theme is on and when it changes. **Just for fun:** Loot Goblin, Potato PC, Comic Exile, Vendor Trash and Mirror Tier. **Follow the current league** uses the league's theme (Covens for now; other leagues use your picked theme). Themes in the Loot Goblin window get small background decorations, drawn by us in CSS (can be turned off). No game artwork or logos are used.
 
