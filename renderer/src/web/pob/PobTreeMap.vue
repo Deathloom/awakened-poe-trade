@@ -142,7 +142,10 @@ const levelPlan = computed(() => {
     for (const [a, b] of lay.links) { add(a, b); add(b, a) }
     const starts = lay.nodes.filter(n => n[3] === 5 || n[3] === 6).map(n => n[0])
     const parent = new Map<number, number>()
-    const q = starts.slice()
+    // the tree data may not link the class start to its first passives: then the
+    // plan's first passive (nearest the start) is where the build's paths begin
+    const startLinked = starts.some(id => (adj.get(id) ?? []).length > 0)
+    const q = startLinked ? starts.slice() : [...starts, ...(order.length ? [order[0]] : [])]
     const seen = new Set(q)
     for (let i = 0; i < q.length; i++) {
       for (const nb of adj.get(q[i]) ?? []) {
@@ -152,6 +155,15 @@ const levelPlan = computed(() => {
     }
     for (const id of [...have]) {
       for (let c = parent.get(id); c != null && target.has(c) && !have.has(c); c = parent.get(c)) have.add(c)
+    }
+    // a build passive between two taken ones (e.g. a same-named "Intelligence"
+    // whose count went to another node) is taken too: it joins them
+    for (let again = true; again;) {
+      again = false
+      for (const id of target) {
+        if (have.has(id)) continue
+        if ((adj.get(id) ?? []).filter(nb => have.has(nb)).length >= 2) { have.add(id); again = true }
+      }
     }
   }
   return {
