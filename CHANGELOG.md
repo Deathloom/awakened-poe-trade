@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Removed (#169)
+Leftovers from the original app: the Patreon button and patron names, the Discord links in About, and the old help website. The credit to Awakened PoE Trade (MIT licence) stays in About.
+
 ### Changed (#168)
 Settings sorted by topic: all panel hotkeys are under **Hotkeys**; startup, windows, updates and problem reports under **General**; a new **Panels** page has where panels show, pinning over the game, chat buttons and the trade site tab; **Path of Building** only has PoB things. Your settings stay as they were.
 

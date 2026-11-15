@@ -15,7 +15,6 @@
     "leagues_failed_help_alt": "Price check any item, and follow the instructions in the error description there.",
     "thanks_3rd_party": "This tool relies on {0} and {1}, consider supporting them as well",
     "toggle_browser_hint": "Press {0} to switch between browser and game.",
-    "contact_me": "Contact me on one of the PoE Discords,",
     "version": "Version {0}",
     "release_notes": "Release notes",
     "report_bug": "Report a bug on GitHub",
@@ -25,7 +24,6 @@
   "map.mods.heist": "heist",
   "map.mods.uber": "T16+",
   "map.mods.outdated": "outdated",
-  "Support development on": "Support development\u00A0on",
 
   "Magic": "Magic",
   "Shaper": "Shaper",
@@ -331,7 +329,6 @@
     "stash_scroll" :"Stash tab scrolling",
     "delve_grid" :"Grid for Delve Chart",
     "window_title": "PoE window title",
-    "thank_you": "App development continues thanks to:",
     "hotkeys": "Hotkeys",
     "chat": "Chat",
     "general": "General",
