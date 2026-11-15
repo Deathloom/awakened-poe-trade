@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#186)
+- **Game switch (PoE2 mode, part 1):** Settings → General → Game: Path of Exile 1 or 2. In PoE2 mode Orbhoarder looks for the PoE2 window, Client.txt (from the running game too) and `poe2_production_Config.ini`, and lists PoE2 trade leagues; each game remembers its own league, and the default window title follows the switch. Price check, Path of Building and poe.ninja prices stay PoE1 only for now (the price check says so in PoE2 mode). PoE1 is unchanged.
+
 ### Fixed (#185)
 - **Map price check in 3.30:** maps now show **Atlas Drops** instead of Item Quantity; the price check reads it again and uses it as the quantity filter (same values, GGG renamed it).
 

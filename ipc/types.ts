@@ -1,3 +1,5 @@
+import type { Game } from './game'
+
 export interface HostConfig {
   shortcuts: ShortcutAction[]
   restoreClipboard: boolean
@@ -8,6 +10,8 @@ export interface HostConfig {
   logKeys: boolean
   windowTitle: string
   language: string
+  // Deathloom fork: PoE2 mode (absent = poe1)
+  game?: Game
   // Deathloom fork: Path of Building build impact
   pob?: PobConfig
 }

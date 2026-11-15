@@ -33,6 +33,7 @@ import { BuildNotes } from './pob/BuildNotes'
 import { TradeBoard } from './pob/TradeBoard'
 import { isAllowedImportUrl, MAX_IMPORT_BYTES } from './pob/PobImport'
 import { applyStartWithWindows } from './StartWithWindows'
+import { asGame } from '../../ipc/game'
 
 if (!app.requestSingleInstanceLock()) {
   app.exit()
@@ -300,8 +301,8 @@ app.on('ready', async () => {
       eventPipe.onEventAnyClient('CLIENT->MAIN::update-host-config', (cfg) => {
         overlay.updateOpts(cfg.overlayKey, cfg.windowTitle)
         shortcuts.updateActions(cfg.shortcuts, cfg.stashScroll, cfg.logKeys, cfg.restoreClipboard, cfg.language)
-        gameLogWatcher.restart(cfg.clientLog ?? '')
-        gameConfig.readConfig(cfg.gameConfig ?? '')
+        gameLogWatcher.restart(cfg.clientLog ?? '', asGame(cfg.game))
+        gameConfig.readConfig(cfg.gameConfig ?? '', asGame(cfg.game))
         appUpdater.setChannel(cfg.pob?.updateChannel)
         appUpdater.checkAtStartup()
         tray.overlayKey = cfg.overlayKey
