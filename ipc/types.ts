@@ -49,6 +49,9 @@ export interface PobHudConfig {
   autoHideTrades: boolean
   // Solid background instead of a see-through window (try this if the game crashes)
   opaque: boolean
+  // Deathloom fork (idea 16 step 2, test): all pinned panels in one see-through
+  // window over the game instead of one window each. Off/absent = one window each.
+  sharedWindow?: boolean
   // 30-100
   opacity: number
   // Top-left corner of each panel's window, in pixels from the game window's top-left corner
@@ -542,6 +545,8 @@ export type IpcEvent =
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
+  IpcHudHover |
+  IpcHudPos |
   IpcHudState |
   IpcOpenTradeTab |
   IpcPobManageBuild |
@@ -578,6 +583,21 @@ type IpcHudDrag =
     phase: 'start' | 'move' | 'end'
     screenX: number
     screenY: number
+  }>
+
+// Shared HUD window: the pointer is over this panel (null: over empty space).
+// Main makes the window clickable only there; elsewhere clicks reach the game.
+type IpcHudHover =
+  Event<'CLIENT->MAIN::hud-hover', {
+    panel: HudPanel | null
+  }>
+
+// Shared HUD window: a panel's position while it is being dragged
+type IpcHudPos =
+  Event<'MAIN->CLIENT::hud-pos', {
+    panel: HudPanel
+    x: number
+    y: number
   }>
 
 type IpcHudMoved =

@@ -1,142 +1,89 @@
 <template>
-  <!-- Deathloom fork: "show while playing" HUD window, one per pinned panel
-       (index.html?hud=guide / trades / gear). Read-only view of the settings;
-       the overlay window owns and saves them. -->
-  <!-- drag from the grip or any empty spot of the panel (not buttons, lists or inputs) -->
-  <div ref="root" class="hud-root relative flex flex-col items-start select-none" :class="{ 'invisible': hiddenByAlt }"
-    :style="dimsStyle" @pointerdown="dragStart" @pointerup="dragEnd">
-    <div class="hud-grip self-stretch flex items-center justify-center gap-x-2 px-2 rounded-t bg-gray-900 text-gray-600 text-xs"
-      title="Drag to move">
-      <i class="fas fa-grip-lines" />
-      <span>{{ playing ? '' : 'Drag to move' }}</span>
-    </div>
-    <CampaignGuideBody v-if="HUD_PANEL === 'guide'" :tall="Boolean(dims)" />
-    <TradeCompanionBody v-else-if="HUD_PANEL === 'trades'" compact @incoming="showTrades" @empty="hideTradesIfAuto" />
-    <PobGearBody v-else-if="HUD_PANEL === 'gear'" :active="!hidden.gear" hud />
-    <!-- panels added in 1.0.63 (tree map, atlas, session, market history, market overview) -->
-    <div v-else-if="extra" class="flex flex-col p-1 rounded-b bg-gray-900"
-      :style="{ width: `var(--hud-w, ${extra.w})`, height: `var(--hud-h, ${extra.h})` }">
-      <div class="flex-1 min-h-0 flex flex-col rounded" :class="{ 'bg-gray-800': extra.boxed }">
-        <component :is="extra.body" v-if="!hidden[HUD_PANEL]" v-bind="extra.props" />
+  <!-- Deathloom fork: "show while playing" HUD. One window per pinned panel
+       (index.html?hud=guide / trades / gear ...), or all pinned panels in one
+       window the size of the game (?hud=all, Settings → Panels → "One window
+       for all pinned panels"). Read-only view of the settings; the overlay
+       window owns and saves them. -->
+  <div v-if="IS_HUD_SHARED" class="hud-shared" :class="{ 'invisible': hiddenByAlt }">
+    <template v-for="p of sharedPanels" :key="p">
+      <!-- panels that work in the background (whispers, price alerts, session timer)
+           stay loaded while closed; the others are only made while open -->
+      <div v-if="!hidden[p] || KEEP_ALIVE.has(p)" v-show="!hidden[p]"
+        class="absolute" :style="panelStyle(p)">
+        <HudPanelView :panel="p" :playing="playing" :hidden="hidden" shared @size="sizes[p] = $event" />
       </div>
-    </div>
-    <!-- resize by the bottom-right corner -->
-    <div class="hud-resize" data-no-drag title="Drag to resize (Settings: Reset positions and sizes)"
-      @pointerdown.stop="resizeStart" @pointerup.stop="resizeEnd" />
+    </template>
+  </div>
+  <div v-else :class="{ 'invisible': hiddenByAlt }">
+    <HudPanelView :panel="HUD_PANEL" :playing="playing" :hidden="hidden" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
-import { HUD_PANEL } from './is-hud'
+import { HUD_PANEL, IS_HUD_SHARED } from './is-hud'
 import { AppConfig } from '@/web/Config'
-import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
-import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
-import PobGearBody from '../pob/PobGearBody.vue'
-import { PANEL_BODY_BY_PANEL } from '../overlay/panel-widgets'
+import HudPanelView from './HudPanelView.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 import type { HudPanel } from '@ipc/types'
 
 document.documentElement.classList.add('hud')
+if (IS_HUD_SHARED) document.documentElement.classList.add('hud-all')
+
+const ALL: HudPanel[] = ['guide', 'trades', 'gear', 'tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money']
+// same list as main (HudWindow.ts KEEP_ALIVE)
+const KEEP_ALIVE: ReadonlySet<HudPanel> = new Set<HudPanel>(['trades', 'market', 'session'])
 
 const playing = ref(true)
 const hidden = ref<Record<HudPanel, boolean>>({ guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true, cheats: true, money: true })
-const extra = PANEL_BODY_BY_PANEL[HUD_PANEL]
+const hiddenByAlt = ref(false)
+
+const sharedPanels = computed(() => ALL.filter(p => Boolean(AppConfig().pob?.hud?.[p])))
 // market panels need leagues and poe.ninja prices (the overlay and window load them too)
-if (HUD_PANEL === 'market' || HUD_PANEL === 'overview') {
+let marketLoaded = false
+watch(() => IS_HUD_SHARED ? sharedPanels.value : [HUD_PANEL], (panels) => {
+  if (marketLoaded || !panels.some(p => p === 'market' || p === 'overview')) return
+  marketLoaded = true
   usePoeninja()
   useLeagues().load()
+}, { immediate: true })
+
+// shared window: live position while dragging, else the saved one
+const livePos = reactive<Partial<Record<HudPanel, { x: number, y: number } | undefined>>>({})
+const sizes = reactive<Partial<Record<HudPanel, { width: number, height: number }>>>({})
+function panelStyle (p: HudPanel) {
+  const hud = AppConfig().pob?.hud
+  const pos = livePos[p] ?? hud?.pos?.[p] ?? { x: 10, y: 90 }
+  const size = sizes[p] ?? { width: 0, height: 0 }
+  // kept inside the window (= the game window), the same way main clamps it
+  const x = Math.max(0, Math.min(window.innerWidth - size.width, Math.round(pos.x)))
+  const y = Math.max(0, Math.min(window.innerHeight - size.height, Math.round(pos.y)))
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+    opacity: Math.max(30, Math.min(100, hud?.opacity || 100)) / 100
+  }
 }
-const hiddenByAlt = ref(false)
-// size set by dragging the corner: from settings, live while resizing
-const liveDims = ref<{ w: number, h: number } | null>(null)
-let resizing = false
-const dims = computed(() => liveDims.value ?? AppConfig().pob?.hud?.dims?.[HUD_PANEL] ?? null)
-// never bigger than the screen, so the resize corner can't end up off-screen
-// (older saved sizes could be; main also clamps new resizes to the game window)
-const dimsStyle = computed(() => dims.value
-  ? {
-      '--hud-w': `${Math.min(dims.value.w, Math.max(200, window.screen.availWidth - 40))}px`,
-      '--hud-h': `${Math.min(dims.value.h, Math.max(80, window.screen.availHeight - 40))}px`
-    }
-  : {})
 
 const listeners = [
-  Host.onEvent('MAIN->CLIENT::hud-dims', (e) => {
-    if (e.panel !== HUD_PANEL) return
-    // kept after the resize until the saved setting comes back from the overlay
-    liveDims.value = { w: e.w, h: e.h }
-    resizing = !e.done
-  }),
-  Host.onEvent('MAIN->CLIENT::config-changed', () => { if (!resizing) liveDims.value = null }),
   Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing; hidden.value = e.hidden }),
+  Host.onEvent('MAIN->CLIENT::hud-pos', (e) => { livePos[e.panel] = { x: e.x, y: e.y } }),
+  // saved position is back from the overlay: use it again
+  Host.onEvent('MAIN->CLIENT::config-changed', () => {
+    const saved = AppConfig().pob?.hud?.pos
+    for (const p of ALL) {
+      const live = livePos[p]
+      if (live && saved?.[p] && saved[p].x === live.x && saved[p].y === live.y) livePos[p] = undefined
+    }
+  }),
   // same as the overlay: holding Alt hides it (to read ground labels)
   Host.onEvent('MAIN->OVERLAY::visibility', (e) => { hiddenByAlt.value = !e.isVisible })
 ]
-
-const root = ref<HTMLElement>()
-let observer: ResizeObserver | undefined
-let lastSize = { width: 0, height: 0 }
-onMounted(() => {
-  observer = new ResizeObserver(() => {
-    const el = root.value
-    if (!el) return
-    // the root is max-content wide, so its size is the panel's size (not the window's)
-    const width = Math.ceil(el.scrollWidth)
-    const height = Math.ceil(el.scrollHeight)
-    if (width === lastSize.width && height === lastSize.height) return
-    lastSize = { width, height }
-    Host.sendEvent({ name: 'CLIENT->MAIN::hud-size', payload: { panel: HUD_PANEL, width, height } })
-  })
-  observer.observe(root.value!)
-})
 onUnmounted(() => {
-  observer?.disconnect()
   for (const l of listeners) l.abort()
 })
-
-// Main moves the window with the real cursor until the button is released
-// (the page can't capture the mouse: the HUD is never the foreground window)
-function sendDrag (phase: 'start' | 'end', e: PointerEvent) {
-  Host.sendEvent({ name: 'CLIENT->MAIN::hud-drag', payload: { panel: HUD_PANEL, phase, screenX: e.screenX, screenY: e.screenY } })
-}
-const NO_DRAG = 'button, a, input, select, textarea, option, label, [data-no-drag]'
-function dragStart (e: PointerEvent) {
-  if (e.button !== 0) return
-  const target = e.target as HTMLElement | null
-  if (target?.closest(NO_DRAG)) return
-  sendDrag('start', e)
-}
-function dragEnd (e: PointerEvent) {
-  sendDrag('end', e)
-}
-
-function resizeStart (e: PointerEvent) {
-  if (e.button !== 0) return
-  // the first child after the grip is the panel; start from its current size
-  const panel = root.value?.children[1] as HTMLElement | undefined
-  const r = panel?.getBoundingClientRect()
-  Host.sendEvent({ name: 'CLIENT->MAIN::hud-resize', payload: { panel: HUD_PANEL, phase: 'start', w: r?.width ?? 300, h: r?.height ?? 200 } })
-}
-function resizeEnd () {
-  Host.sendEvent({ name: 'CLIENT->MAIN::hud-resize', payload: { panel: HUD_PANEL, phase: 'end', w: 0, h: 0 } })
-}
-
-// a trade whisper arrived: open the companion (it starts closed)
-function showTrades () {
-  if (hidden.value.trades) {
-    Host.sendEvent({ name: 'CLIENT->MAIN::hud-panel', payload: { panel: 'trades', visible: true } })
-  }
-}
-
-// no open trades left: close it again if auto-hide is on (Ctrl+T still opens it)
-function hideTradesIfAuto () {
-  if (AppConfig().pob?.hud?.autoHideTrades && !hidden.value.trades) {
-    Host.sendEvent({ name: 'CLIENT->MAIN::hud-panel', payload: { panel: 'trades', visible: false } })
-  }
-}
 </script>
 
 <style>
@@ -148,22 +95,15 @@ html.hud, html.hud body, html.hud #app {
 html.hud #app {
   align-items: flex-start;
 }
-.hud-root {
-  width: max-content;
+html.hud-all, html.hud-all body, html.hud-all #app {
+  height: 100%;
 }
-.hud-resize {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 14px;
-  height: 14px;
-  cursor: nwse-resize;
-  border-right: 3px solid rgba(156, 163, 175, 0.6);
-  border-bottom: 3px solid rgba(156, 163, 175, 0.6);
-  border-bottom-right-radius: 3px;
+.hud-shared {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
 }
-.hud-grip {
-  cursor: move;
-  height: 1rem;
+.hud-shared > div {
+  pointer-events: auto;
 }
 </style>

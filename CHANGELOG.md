@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#188)
+- **One window for all pinned panels (test):** Settings → Panels → Show while playing → "One window for all pinned panels". All pinned panels share one see-through window over the game instead of one window each (less memory with several pinned). Clicks outside a panel go to the game; per-panel "clicks go through" still works; drag, resize, hotkeys and Alt-to-hide work as before. Off by default while it is tested on Windows.
+
 ### Changed (#187)
 - **Game switch hidden for now:** the PoE2 switch from #186 is not shown in Settings until PoE2 mode does more (the code stays). If PoE2 was already picked, the switch still shows so you can go back to PoE1.
 
