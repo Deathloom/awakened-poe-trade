@@ -67,7 +67,7 @@
           <span v-else class="w-4" />
         </div>
         <div class="flex items-center gap-2 pt-1">
-          <input v-model="addName" list="money-item-names" class="flex-1 min-w-0 bg-gray-900 rounded px-1" placeholder="Add another item (scarab, fossil, essence…)" spellcheck="false"
+          <input v-model="addName" list="money-item-names" class="flex-1 min-w-0 bg-gray-900 rounded px-1" placeholder="Add another item (thread, fossil, essence…)" spellcheck="false"
             @keydown.enter="addExtra">
           <datalist id="money-item-names"><option v-for="n of itemNames" :key="n" :value="n" /></datalist>
           <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" :disabled="!addName.trim()" @click="addExtra">Add</button>

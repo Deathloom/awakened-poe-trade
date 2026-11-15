@@ -19,6 +19,7 @@ export const PROGRESS: ProgressGroup[] = [
       { id: 'kirac', label: 'Kirac\'s missions unlocked', hint: 'first maps after the campaign' },
       { id: 'red', label: 'Red maps (tier 11+) reached' },
       { id: 'bonus', label: 'Most atlas bonus objectives done', hint: 'complete maps (all bonus) for atlas points' },
+      { id: 'regions', label: 'First Shaped Region objective done', hint: '3.30: gives free Threads in that region' },
       { id: 'void1', label: 'Voidstone 1' },
       { id: 'void2', label: 'Voidstone 2' },
       { id: 'void3', label: 'Voidstone 3' },
@@ -35,6 +36,7 @@ export const PROGRESS: ProgressGroup[] = [
       { id: 'elder', label: 'The Elder' },
       { id: 'uelder', label: 'The Uber Elder' },
       { id: 'sirus', label: 'Sirus' },
+      { id: 'covenqueen', label: 'The Coven Queen', hint: 'Covens league boss' },
       { id: 'ubers', label: 'Any uber boss', hint: 'the hardest versions' }
     ]
   },

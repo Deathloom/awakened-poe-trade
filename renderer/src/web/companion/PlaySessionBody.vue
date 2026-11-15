@@ -28,7 +28,7 @@
         <input v-model.number="lootInput" type="number" min="0" class="w-14 bg-gray-900 rounded px-1" placeholder="c" title="Type an amount in chaos and press Enter"
           @keydown.enter="lootInput && addLoot(lootInput); lootInput = null">
         <button v-if="lootTarget.loot" class="btn-loot" title="Clear this map's loot" @click="setLoot(0)"><i class="fas fa-undo" /></button>
-        <span class="ml-auto text-gray-500" title="What running one map costs you (map, scarabs, sextants…), taken off the profit">
+        <span class="ml-auto text-gray-500" title="What running one map costs you (map, threads, astrolabes…), taken off the profit">
           Cost/map <input :value="cost || ''" type="number" min="0" class="w-12 bg-gray-900 rounded px-1" placeholder="0" @change="setCost(($event.target as HTMLInputElement).valueAsNumber)"> c</span>
       </div>
 
