@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#165)
+- **Themes show in the Orbhoarder window:** **Glass panels** (on by default) make the panels see-through and lightly blurred, with an accent line on top and the theme's pattern in the corner, so the background shows. **Decoration strength** sets how visible the patterns are. The top bar takes the theme's colour.
+
 ### Added (#162)
 - **Animations** (Settings → Appearance → **Animations**: Full, Subtle or Off): panels and tabs ease in, new rows slide in, buttons react when you hover and click, loading text shimmers, and theme backgrounds drift slowly in the Orbhoarder window (snow falls, leaves blow, sparkles rise). Windows' "reduce motion" setting turns them off.
 
