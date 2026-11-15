@@ -1,6 +1,16 @@
 # Deathloom fork: build the Windows installer and publish it as a GitHub release.
-# Installed copies check this repo's latest release and update themselves.
-# Run from the Actions tab: Release -> Run workflow -> version (e.g. 1.0.0).
+# Installed copies check this repo's releases and update themselves.
+# Run from the Actions tab: Release -> Run workflow.
+#
+# Two channels:
+# - testing: a test release x.y.z-beta.N (N counts up by itself), published as a
+#   GitHub pre-release. Only copies set to Updates = Testing (Settings → Path of
+#   Building) install it. Run it from master as often as you like; CHANGELOG stays
+#   under [Unreleased].
+# - stable: the release for everyone. By default it's built from the same commit
+#   as the newest x.y.z-beta.N test release (what you tested), not from whatever
+#   master has now. Rename [Unreleased] in CHANGELOG.md to the version first.
+#
 # Path of Building isn't in the installer: Loot Goblin downloads it from the PoB
 # fork's master branch (PoB fork workflow "Release PoB (master)").
 name: Release
@@ -9,10 +19,19 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (x.y.z, higher than the last release)'
+        description: 'Version x.y.z (higher than the last stable release). Testing makes x.y.z-beta.N from it.'
         required: true
+      channel:
+        description: 'testing = test release for Testing copies only; stable = release for everyone'
+        type: choice
+        options: [testing, stable]
+        default: testing
+      from_tested:
+        description: 'Stable only: build from the commit of the newest x.y.z-beta.N test release (off = from this branch now)'
+        type: boolean
+        default: true
       test_build:
-        description: 'Test build: leave it as a draft release (installers check published releases only, so nobody gets it). Use a low version like 0.99.x, so the next real release updates it.'
+        description: 'Leave it as a draft release (nobody gets it). For checking the build only.'
         type: boolean
         default: false
 
@@ -24,26 +43,63 @@ jobs:
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        fetch-depth: 0
     - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version: 22
-    - name: Check version
-      shell: bash
-      env:
-        V: ${{ inputs.version }}
-      run: |
-        [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 1.2.3"; exit 1; }
-    - name: Create draft release
+    - name: Work out version and commit
+      id: v
       shell: bash
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         V: ${{ inputs.version }}
+        CHANNEL: ${{ inputs.channel }}
+        FROM_TESTED: ${{ inputs.from_tested }}
       run: |
-        if gh release view "v$V" >/dev/null 2>&1; then
-          echo "Release v$V already exists. Use a higher version, or delete that release (and its tag) first."
+        [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 1.2.3"; exit 1; }
+        # test releases of this version (vX.Y.Z-beta.N): numbering counts drafts too,
+        # promoting uses the newest published one (drafts have no tag)
+        betas () { gh release list --limit 200 "$@" --json tagName --jq '.[].tagName' | grep -E "^v${V//./\\.}-beta\.[0-9]+$" | sed -E 's/.*-beta\.//' | sort -n | tail -1 || true; }
+        last=$(betas)
+        tested=$(betas --exclude-drafts)
+        sha="$GITHUB_SHA"
+        if [[ "$CHANNEL" == "testing" ]]; then
+          full="$V-beta.$(( ${last:-0} + 1 ))"
+        else
+          full="$V"
+          if [[ "$FROM_TESTED" == "true" ]]; then
+            [[ -n "$tested" ]] || { echo "No published test release $V-beta.N to promote. Run a testing release first, or untick from_tested."; exit 1; }
+            sha=$(git rev-list -n 1 "v$V-beta.$tested")
+            echo "Building stable $V from tested v$V-beta.$tested ($sha)"
+          fi
+        fi
+        if gh release view "v$full" >/dev/null 2>&1; then
+          echo "Release v$full already exists. Use a higher version, or delete that release (and its tag) first."
           exit 1
         fi
-        gh release create "v$V" --draft --title "$V" --target "$GITHUB_SHA" --notes "Loot Goblin $V (built from ${GITHUB_SHA::7})"
+        echo "full=$full" >> "$GITHUB_OUTPUT"
+        echo "sha=$sha" >> "$GITHUB_OUTPUT"
+        echo "Version: $full from ${sha::7}"
+    - name: Check out the commit to build
+      shell: bash
+      env:
+        SHA: ${{ steps.v.outputs.sha }}
+      run: git checkout --detach "$SHA"
+    - name: Create draft release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        V: ${{ steps.v.outputs.full }}
+        SHA: ${{ steps.v.outputs.sha }}
+        CHANNEL: ${{ inputs.channel }}
+      run: |
+        if [[ "$CHANNEL" == "testing" ]]; then
+          notes="Loot Goblin $V: test release (built from ${SHA::7}). Only copies with Updates = Testing install it."
+          gh release create "v$V" --draft --prerelease --title "$V (test)" --target "$SHA" --notes "$notes"
+        else
+          gh release create "v$V" --draft --title "$V" --target "$SHA" --notes "Loot Goblin $V (built from ${SHA::7})"
+        fi
     - run: npm ci
       working-directory: ./renderer
     - run: npm run build
@@ -54,7 +110,7 @@ jobs:
       working-directory: ./main
       shell: bash
       env:
-        V: ${{ inputs.version }}
+        V: ${{ steps.v.outputs.full }}
     - run: npm run build
       working-directory: ./main
     - run: npm run package -- --win -p always
@@ -66,11 +122,19 @@ jobs:
       shell: bash
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        V: ${{ inputs.version }}
+        V: ${{ steps.v.outputs.full }}
+        CHANNEL: ${{ inputs.channel }}
       run: |
         gh release view "v$V" --json assets --jq '.assets[].name' | tee assets.txt
-        grep -q '^latest.yml$' assets.txt || { echo "latest.yml missing - not publishing"; exit 1; }
+        grep -q '^beta.yml$' assets.txt || { echo "beta.yml missing - not publishing"; exit 1; }
         grep -q 'Setup.*\.exe$' assets.txt || { echo "installer missing - not publishing"; exit 1; }
-        gh release edit "v$V" --draft=false --latest
+        if [[ "$CHANNEL" == "testing" ]]; then
+          # a pre-release, never "Latest": stable copies don't see it
+          gh release edit "v$V" --draft=false --prerelease --latest=false
+        else
+          grep -q '^latest.yml$' assets.txt || { echo "latest.yml missing - not publishing"; exit 1; }
+          gh release edit "v$V" --draft=false --latest
+        fi
     - name: Hash
-      run: type .\main\dist\latest.yml
+      shell: bash
+      run: cat ./main/dist/*.yml

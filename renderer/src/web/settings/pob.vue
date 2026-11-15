@@ -141,6 +141,19 @@
     </div>
 
     <div class="mt-6 mb-2">
+      <div class="mb-1">Updates</div>
+      <select :value="pob.updateChannel ?? (/-beta\.\d+$/.test(appVersion) ? 'testing' : 'stable')" class="rounded bg-gray-900 px-1"
+        @change="pob.updateChannel = (($event.target as HTMLSelectElement).value as 'stable' | 'testing')">
+        <option value="stable">Stable releases (everyone)</option>
+        <option value="testing">Testing: also test releases (to try changes before friends get them)</option>
+      </select>
+      <div class="text-gray-500 text-sm mt-1">
+        Testing installs test versions (like 1.0.89-beta.1) as soon as they're out, and the stable release when it comes.
+        Switching back to Stable keeps the version you have until a newer stable release.
+      </div>
+    </div>
+
+    <div class="mt-6 mb-2">
       <div class="mb-1">Chat buttons (trade companion)</div>
       <select v-model="pob.chatButtons" class="rounded bg-gray-900 px-1">
         <option value="copy">Copy the command (paste it in chat yourself)</option>
@@ -322,7 +335,9 @@ export default defineComponent({
       Host.sendEvent({ name: 'CLIENT->MAIN::pob-copy-builds', payload: { requestId, source } })
     }
 
+    const appVersion = Host.version
     return {
+      appVersion,
       pob,
       defaults,
       existingPob,

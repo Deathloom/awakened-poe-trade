@@ -10,7 +10,7 @@ Loot Goblin is a fork of [Awakened PoE Trade](https://github.com/SnosMe/awakened
 
 Go to [Releases](https://github.com/Deathloom/awakened-poe-trade/releases), download `Loot Goblin Setup x.y.z.exe` and run it. Windows SmartScreen may warn you because the installer isn't signed: click **More info → Run anyway**.
 
-Installed copies update themselves from this repo's releases.
+Installed copies update themselves from this repo's releases. Test releases (`x.y.z-beta.N`, marked Pre-release) are only for testers: they're installed by copies set to Settings → Path of Building → Updates → **Testing**.
 
 If you already use Awakened PoE Trade or PoE Overlay, close it first, because the hotkeys clash.
 
@@ -94,6 +94,7 @@ How this fork is kept up to date:
 - The **Upstream release check** workflow runs every Tuesday. It opens a PR in this repo when Awakened PoE Trade has a new release.
 - Nothing is ever pushed to the upstream project.
 - Every PR adds a line to `CHANGELOG.md` under **Unreleased**.
+- Releases (Actions → **Release**): run it with channel **testing** as often as needed (`x.y.z-beta.N`, only Testing copies get it). When the test version is good, rename **Unreleased** in the changelog to the version and run it with channel **stable**: by default it builds the commit of the newest test release, so everyone gets exactly what was tested.
 
 ## Credits and licence
 
