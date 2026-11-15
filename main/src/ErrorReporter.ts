@@ -57,7 +57,28 @@ export function scrub (text: string): string {
     .replace(/((?:access_token|refresh_token|client_secret|device_code|password|secret)["']?\s*[=:]\s*["']?)[^\s"'&,}]+/gi, '$1<secret>')
 }
 
+// Deathloom fork: "Report a bug / Suggest a feature" (desktop window). Without a
+// GitHub sign-in in Orbhoarder, the same text opens as a new issue in the browser.
+export type UserReportKind = 'bug' | 'idea'
+
+export function issueUrl (kind: UserReportKind, title: string, text: string): string {
+  const body = [
+    `Orbhoarder ${app.getVersion()} · ${os.type()} ${os.release()}`,
+    '',
+    text.trim() || (kind === 'bug' ? '**What happened?**\n\n\n**What did you expect?**\n' : '**What would you like Orbhoarder to do?**\n'),
+    '',
+    kind === 'bug' ? '_Log: tray → Open config folder → apt-data (or attach a screenshot)._' : ''
+  ].join('\n')
+  return 'https://github.com/POE-Builds/poe-builds/issues/new?labels=' + (kind === 'bug' ? 'report' : 'idea') +
+    '&title=' + encodeURIComponent(title.trim() ? `[${kind}] ${title.trim()}` : '') +
+    '&body=' + encodeURIComponent(body)
+}
+
+const MAX_USER_REPORTS_PER_RUN = 10
+
 export class ErrorReporter {
+  private userReports = 0
+
   private sentKeys = new Set<string>()
   private sentCount = 0
   enabled: () => boolean = () => true
@@ -80,6 +101,30 @@ export class ErrorReporter {
       this.logger.write(`error [overlay] ${e.message}${e.stack ? '\n' + e.stack : ''}`)
       this.capture('overlay', e.message, e.stack, e.where)
     })
+  }
+
+  async userReport (r: { kind: UserReportKind, title: string, text: string, includeLog: boolean, where?: string }): Promise<{ sent: boolean, reason?: string }> {
+    const title = scrub(r.title.replace(/\s+/g, ' ').trim()).slice(0, 110)
+    const text = scrub(r.text.trim()).slice(0, 8000)
+    if (!title) return { sent: false, reason: 'no title' }
+    if (this.userReports >= MAX_USER_REPORTS_PER_RUN) return { sent: false, reason: 'too many reports this run' }
+    this.userReports += 1
+    const version = app.getVersion()
+    const log = r.includeLog
+      ? scrub(this.logger.history.trimEnd().split('\n').filter(l => !l.includes('debug [Shortcuts]')).slice(-LOG_LINES).join('\n'))
+      : ''
+    const body = [
+      `**Orbhoarder** ${version} · ${os.type()} ${os.release()}${r.where ? ` · ${r.where}` : ''}`,
+      '',
+      text || '_(no details)_',
+      ...(log ? ['', '<details><summary>Last log lines</summary>', '', '```', log, '```', '', '</details>'] : []),
+      '',
+      `_Sent from Orbhoarder's ${r.kind === 'bug' ? 'Report a bug' : 'Suggest a feature'} button._`
+    ].join('\n')
+    const key = 'user-' + crypto.randomBytes(6).toString('hex')
+    const res = await this.sender.report({ key, title: `[${r.kind}] ${title}`, body, seen: '' })
+    this.logger.write(res.sent ? `info [report] sent ${r.kind} ${key}` : `info [report] ${r.kind} not sent (${res.reason ?? 'unknown'})`)
+    return res
   }
 
   capture (source: ReportSource, message: string, stack?: string, where?: string) {

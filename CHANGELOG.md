@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#175)
+- **Bug / Idea button** at the top right of the Orbhoarder window: report a bug or suggest a feature in a few lines. It's sent to the group's builds repo on GitHub with your build-sync sign-in (bug reports can include the last log lines, without your Windows user name or passwords). Not signed in? **Open on GitHub** opens it as a new issue in your browser.
+
 ### Security (#174)
 - **Other devices need a key with --listen:** when Orbhoarder is started with `--listen` (so another device on your network can open it), that device must now open the link with its key once (`?key=…`); without it, it's refused. Your own PC isn't affected.
 - **Problem reports no longer contain your Path of Building settings** (folder paths, player name): the log only says whether each setting is the default or your own.
