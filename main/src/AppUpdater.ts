@@ -146,6 +146,29 @@ export class AppUpdater {
     // on('download-progress') https://github.com/electron-userland/electron-builder/issues/2521
   }
 
+  // Deathloom fork: update channel (Settings → Path of Building → Updates).
+  // stable: published releases only. testing: test releases (x.y.z-beta.N,
+  // GitHub pre-releases) too; stable releases still reach testing (they carry
+  // beta.yml as well) and win once they're newer. Never goes back a version.
+  private _channel: 'stable' | 'testing' | null = null
+  // Not set yet: a test version (installed by hand from GitHub) stays on testing.
+  setChannel (ch: 'stable' | 'testing' | undefined) {
+    const next = ch ?? (/-beta\.\d+$/.test(app.getVersion()) ? 'testing' : 'stable')
+    if (next === this._channel) return
+    const first = this._channel == null
+    this._channel = next
+    if (next === 'testing') {
+      autoUpdater.channel = 'beta'
+      autoUpdater.allowPrerelease = true
+    } else {
+      autoUpdater.channel = 'latest'
+      autoUpdater.allowPrerelease = false
+    }
+    autoUpdater.allowDowngrade = false
+    this.logger?.write(`info [updater] update channel: ${next}`)
+    if (!first) this.checkSoon()
+  }
+
   checkAtStartup () {
     if (!this._checkedAtStartup) {
       this._checkedAtStartup = true

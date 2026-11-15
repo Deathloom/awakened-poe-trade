@@ -4,9 +4,12 @@ Changes in Loot Goblin compared with [Awakened PoE Trade](https://github.com/Sno
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow the Loot Goblin releases (set when running the Release workflow), not upstream's version numbers.
 
-**How to maintain:** every PR adds a line under **Unreleased**. When you run a release, rename **Unreleased** to the new version and date, and start a new empty **Unreleased** section.
+**How to maintain:** every PR adds a line under **Unreleased**. Test releases (x.y.z-beta.N) leave it as it is. Before a stable release, rename **Unreleased** to the new version and date, and start a new empty **Unreleased** section.
 
 ## [Unreleased]
+
+### Added (#149)
+- **Testing updates:** Settings → Path of Building → **Updates** → **Testing** also installs test versions (like 1.0.89-beta.1) before everyone else gets them, then the stable release when it's out. **Stable** (the default) works as before.
 
 ### Added (#146)
 - **Cheat sheets** panel: short guides for Betrayal, Heist, Delve and Sanctum, plus the vendor recipes. Open it with its own hotkey (Settings → Path of Building), in the overlay, in game or on the All tab.

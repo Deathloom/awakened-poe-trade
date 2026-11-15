@@ -105,6 +105,8 @@ export interface PobConfig {
   // Trade companion: 'copy' puts the chat command on the clipboard,
   // 'send' types it into game chat (one command per click)
   chatButtons: 'copy' | 'send'
+  // Deathloom fork: 'testing' also installs test releases (x.y.z-beta.N); missing = 'stable'
+  updateChannel?: 'stable' | 'testing'
   // Trade buttons (price check, build gear, market search) open GGG's trade
   // site in the Loot Goblin window's Trade site tab instead of the browser
   // (undefined = on)

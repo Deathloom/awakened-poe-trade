@@ -244,6 +244,7 @@ app.on('ready', async () => {
         shortcuts.updateActions(cfg.shortcuts, cfg.stashScroll, cfg.logKeys, cfg.restoreClipboard, cfg.language)
         gameLogWatcher.restart(cfg.clientLog ?? '')
         gameConfig.readConfig(cfg.gameConfig ?? '')
+        appUpdater.setChannel(cfg.pob?.updateChannel)
         appUpdater.checkAtStartup()
         tray.overlayKey = cfg.overlayKey
         pobImpact.configure(cfg.pob)
