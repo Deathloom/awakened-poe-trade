@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#162)
+- **Animations** (Settings → Appearance → **Animations**: Full, Subtle or Off): panels and tabs ease in, new rows slide in, buttons react when you hover and click, loading text shimmers, and theme backgrounds drift slowly in the Orbhoarder window (snow falls, leaves blow, sparkles rise). Windows' "reduce motion" setting turns them off.
+
 ### Changed (#161)
 - **New logo:** a goblin hoarding glowing orbs, made for Orbhoarder. It replaces the old icon (app, tray, taskbar, installer) and the game's orb picture on About, the update notice and the loading animation.
 
