@@ -197,12 +197,24 @@
               <span v-if="logAllocated != null" title="Passives taken minus refunded, counted from the game log">
                 Passives taken: {{ logAllocated }}<span v-if="plan.available - logAllocated > 0" class="text-yellow-400"> · {{ plan.available - logAllocated }} unspent</span></span>
               <span>Deaths: {{ progress.deaths ?? 0 }}<span v-if="guideAct && progress.deathsByAct?.[guideAct]" class="text-gray-500"> ({{ progress.deathsByAct[guideAct] }} in act {{ guideAct }})</span></span>
-              <span v-if="campaignTime" :title="actTimes">Campaign time: {{ campaignTime }}</span>
+              <button v-if="campaignTime" class="hover:text-gray-100" :title="actTimes + '\nClick: act splits'" @click="toggleSplits">
+                <i class="fas fa-stopwatch mr-1 text-gray-500" />Campaign time: {{ campaignTime }}</button>
               <span v-if="progress.kitava?.length" :class="progress.kitava.includes('merciless') ? 'text-red-300' : 'text-orange-300'"
                 title="Kitava's resistance penalty (act 5: -30%, act 10: -60% total). Fix your resistances!">
                 Kitava: {{ progress.kitava.includes('merciless') ? '-60% res' : '-30% res' }}</span>
               <span v-if="progress.atlasPoints">Atlas points: {{ progress.atlasPoints }}</span>
             </div>
+            <table v-if="splitsOpen && splitRows.length" class="mt-1 text-gray-300">
+              <tr class="text-gray-500"><th class="text-left pr-3 font-normal">Act</th><th class="text-right pr-3 font-normal">Reached at</th><th class="text-right pr-3 font-normal">Time in act</th><th class="text-right font-normal" title="Your fastest split with another character followed from level 2">Best</th></tr>
+              <tr v-for="r of splitRows" :key="r.act">
+                <td class="pr-3">{{ r.act }}</td>
+                <td class="text-right pr-3 font-mono">{{ r.at != null ? fmtClock(r.at) : '–' }}</td>
+                <td class="text-right pr-3 font-mono">{{ r.inAct ? fmtClock(r.inAct) : '–' }}</td>
+                <td class="text-right font-mono" :class="r.best == null || r.at == null ? 'text-gray-600' : r.at <= r.best ? 'text-green-400' : 'text-red-300'">
+                  {{ r.best != null ? fmtClock(r.best) : '–' }}</td>
+              </tr>
+            </table>
+            <div v-if="splitsOpen && progress.firstLevel !== 2" class="text-gray-600">Followed from level {{ progress.firstLevel }}: splits before that are missing.</div>
             <div v-if="!progress.questsExact" class="text-gray-600">Type <b>/passives</b> in game once to sync the exact list of passive quests done.</div>
           </template>
           <div v-else class="text-gray-600">Nothing yet for this character. Level up once, or Rebuild from game log.</div>
@@ -353,6 +365,32 @@ const campaignTime = computed(() => {
   if (!t) return ''
   const total = Object.entries(t).filter(([a]) => Number(a) >= 1 && Number(a) <= 10).reduce((n, [, ms]) => n + ms, 0)
   return total ? fmtMs(total) : ''
+})
+// Deathloom fork (idea 9): act splits = campaign time when each act was first entered
+const SPLITS_KEY = 'deathloom.next.splits-open.v1'
+const splitsOpen = ref((() => { try { return localStorage.getItem(SPLITS_KEY) === '1' } catch { return false } })())
+function toggleSplits () {
+  splitsOpen.value = !splitsOpen.value
+  try { localStorage.setItem(SPLITS_KEY, splitsOpen.value ? '1' : '0') } catch {}
+}
+function fmtClock (ms: number) {
+  const s = Math.round(ms / 1000)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`
+}
+const splitRows = computed(() => {
+  const p = progress.value
+  if (!p?.splits) return []
+  const others = Object.entries(levels.value.progress)
+    .filter(([name, o]) => name !== char.value?.name && o.firstLevel === 2 && o.splits)
+    .map(([, o]) => o.splits!)
+  return Array.from({ length: 10 }, (_, i) => i + 1)
+    .map(act => {
+      const bests = others.map(o => o[act]).filter((v): v is number => typeof v === 'number' && v > 0)
+      return { act, at: p.splits?.[act] ?? null, inAct: p.actMs?.[act] ?? 0, best: bests.length ? Math.min(...bests) : null }
+    })
+    .filter(r => r.at != null || r.best != null)
 })
 const actTimes = computed(() => Object.entries(progress.value?.actMs ?? {})
   .filter(([a]) => Number(a) >= 1 && Number(a) <= 10)

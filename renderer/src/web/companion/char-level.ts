@@ -32,6 +32,8 @@ export interface CharProgress {
   deathsByAct?: Record<string, number>
   // time per act (ms between zone changes, gaps over 20 min not counted)
   actMs?: Record<string, number>
+  // campaign time (sum of actMs, acts 1-10) when the act was first entered: the act splits
+  splits?: Record<string, number>
   kitava?: Array<'cruel' | 'merciless'>
   // where the character was and since when (for the act timer)
   lastAct?: number
@@ -200,6 +202,11 @@ export function rebuildFromLog (current: CharLevels, lines: string[], lang: stri
   return { ...v, selected: current.selected, manual: current.manual, questPoints: current.questPoints, atlas: current.atlas }
 }
 
+// campaign time so far: time in acts 1-10
+export function campaignMs (p: Pick<CharProgress, 'actMs'>): number {
+  return Object.entries(p.actMs ?? {}).filter(([a]) => Number(a) >= 1 && Number(a) <= 10).reduce((n, [, ms]) => n + ms, 0)
+}
+
 // Client.txt lines -> updated store (null: nothing changed)
 export function applyLogLines (start: CharLevels, lines: string[], lang: string, guideIndex = loadCampaignStep(), session?: SessionInfo, now = Date.now()): CharLevels | null {
   let v: CharLevels | null = null
@@ -258,6 +265,10 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
       const p = prog()
       if (p.lastAct && p.lastAt && ts - p.lastAt < ACT_GAP_MS && ts > p.lastAt) {
         p.actMs = { ...p.actMs, [p.lastAct]: (p.actMs?.[p.lastAct] ?? 0) + (ts - p.lastAt) }
+      }
+      // first time in this act: its split is the campaign time so far
+      if (act && act >= 1 && act <= 10 && p.splits?.[act] == null) {
+        p.splits = { ...p.splits, [act]: campaignMs(p) }
       }
       p.lastAct = act ?? undefined
       p.lastAt = ts

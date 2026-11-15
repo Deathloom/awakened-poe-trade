@@ -23,7 +23,9 @@ export interface PlaySession {
   lastAt: number
   maps: MapRun[]
   // instance you're in now
-  here?: { seed: string, code: string, at: number, mechanics: string[] }
+  here?: { seed: string, code: string, at: number, mechanics: string[], name?: string }
+  // time per area this session (ms, by area name), for "where the time went"
+  zones?: Record<string, number>
   mechanics: Record<string, number>
   deaths: number
   trades: number
@@ -123,6 +125,13 @@ export function applySessionLines (start: PlaySession, lines: string[], lang: st
       // time in the instance we're leaving
       const run = currentRun(v)
       if (run && v.here && ts > v.here.at && ts - v.here.at < GAP_MS) run.ms += ts - v.here.at
+      // time per area (town and hideout too)
+      if (v.here && ts > v.here.at && ts - v.here.at < GAP_MS) {
+        const key = v.here.name || v.here.code
+        const zones = Object.entries({ ...v.zones, [key]: (v.zones?.[key] ?? 0) + (ts - v.here.at) })
+        // keep the 60 biggest
+        v.zones = Object.fromEntries(zones.length > 60 ? zones.sort((a, b) => b[1] - a[1]).slice(0, 60) : zones)
+      }
       const seed = ev.seed ?? `${ev.code}@${ts}`
       const back = v.here?.seed === seed
       v.here = { seed, code: ev.code, at: ts, mechanics: back ? v.here!.mechanics : [] }
@@ -138,6 +147,7 @@ export function applySessionLines (start: PlaySession, lines: string[], lang: st
       }
     } else if (ev.type === 'zone') {
       const v = edit(ts)
+      if (v.here && !v.here.name) v.here.name = ev.name
       const run = currentRun(v)
       if (run && !run.name) run.name = ev.name
     } else if (ev.type === 'speech') {
@@ -179,6 +189,16 @@ export function applySessionLines (start: PlaySession, lines: string[], lang: st
     }
   }
   return s
+}
+
+// Areas you spent the most time in this session (live time of the current one included)
+export function topZones (s: PlaySession, n = 8, now = Date.now()): Array<{ name: string, ms: number }> {
+  const zones = { ...s.zones }
+  if (s.here && now > s.here.at && now - s.here.at < GAP_MS) {
+    const key = s.here.name || s.here.code
+    zones[key] = (zones[key] ?? 0) + (now - s.here.at)
+  }
+  return Object.entries(zones).map(([name, ms]) => ({ name, ms })).sort((a, b) => b.ms - a.ms).slice(0, n)
 }
 
 // Time in the current map so far (live timer)

@@ -38,6 +38,13 @@
         </div>
       </div>
 
+      <div v-if="zones.length">
+        <div class="lg-sub" title="Time in each area this session (town and hideout too; breaks over 20 min not counted)">Where the time went</div>
+        <div class="flex flex-wrap gap-x-3 text-gray-400">
+          <span v-for="z of zones" :key="z.name">{{ z.name }} <span class="font-mono text-gray-300">{{ dur(z.ms) }}</span></span>
+        </div>
+      </div>
+
       <div class="flex flex-wrap gap-x-4 text-gray-500">
         <span v-if="s.loads.length" :title="`Last ${s.loads.length} loading screens · slowest ${Math.max(...s.loads).toFixed(1)} s`">
           Loading: avg {{ avgLoad.toFixed(1) }} s ({{ s.loadCount }} screens)</span>
@@ -57,7 +64,7 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
-import { currentMapMs, emptySession, loadPlaySession, PLAY_SESSION_KEY, savePlaySession, sessionHints, type PlaySession } from './play-session'
+import { currentMapMs, topZones, emptySession, loadPlaySession, PLAY_SESSION_KEY, savePlaySession, sessionHints, type PlaySession } from './play-session'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from './char-level'
 
 const s = ref<PlaySession>(loadPlaySession())
@@ -96,6 +103,7 @@ const recent = computed(() => done.value.slice(-6).reverse())
 const mechanics = computed(() => Object.entries(s.value.mechanics).sort((a, b) => b[1] - a[1]))
 const avgLoad = computed(() => s.value.loads.length ? s.value.loads.reduce((a, b) => a + b, 0) / s.value.loads.length : 0)
 const hints = computed(() => sessionHints(s.value, now.value))
+const zones = computed(() => topZones(s.value, 8, now.value))
 
 const pace = computed(() => {
   const list = s.value.levels[me.value]
@@ -107,7 +115,8 @@ const pace = computed(() => {
   const levels = steps[steps.length - 1].level - steps[0].level
   const perLevel = levels > 0 ? span / levels : 0
   return {
-    text: `level ${last.level} took ${dur(Math.max(0, last.at - prev.at) / Math.max(1, last.level - prev.level))}`,
+    text: `level ${last.level} took ${dur(Math.max(0, last.at - prev.at) / Math.max(1, last.level - prev.level))}` +
+      (perLevel ? ` · ${(3600000 / perLevel).toFixed(1)} levels/h` : ''),
     title: perLevel ? `Last ${levels} levels: ${dur(perLevel)} per level (${(3600000 / perLevel).toFixed(1)} levels/hour)` : ''
   }
 })
