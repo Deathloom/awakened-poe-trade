@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#145)
+- **League-start checklist** (Help → **League start**): the steps for a new league, from patch notes and picking a build to loot filter, atlas plan and early selling, each with where to do it in Loot Goblin. Ticks are saved per league.
+
 ### Added (#144)
 - **Act splits:** in the Build panel's Next tab, click **Campaign time** to see when you reached each act, how long each act took, and your best split from your other characters (green when you're ahead). **Rebuild from game log** fills them in for characters you already played.
 - **This session** shows **Where the time went** (the areas you spent the most time in) and levels per hour.
