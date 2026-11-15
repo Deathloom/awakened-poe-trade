@@ -326,10 +326,23 @@ const logAllocated = computed(() => {
 const takenByLog = computed(() => {
   const p = plan.value; const a = progress.value?.alloc
   if (!p || !a || logAllocated.value == null) return null
-  const left = { ...a }
+  // names compared without case and spaces at the ends
+  const left: Record<string, number> = {}
+  for (const [k, n] of Object.entries(a)) left[k.trim().toLowerCase()] = (left[k.trim().toLowerCase()] ?? 0) + n
+  const take = (key: string | undefined) => {
+    const k = key?.trim().toLowerCase()
+    if (!k || (left[k] ?? 0) <= 0) return false
+    left[k]--
+    return true
+  }
   const taken = new Set<number>()
   p.order.forEach((node, i) => {
-    if ((left[node.name] ?? 0) > 0) { taken.add(i); left[node.name]-- }
+    if (take(node.name)) { taken.add(i); return }
+    // Masteries: the game log may name the picked effect instead of the
+    // mastery ("Life Mastery"); accept the effect's text (any of its lines) too
+    if (node.type === 'Mastery' && node.effect) {
+      if (take(node.effect) || node.effect.split(/\r?\n/).some(l => take(l))) taken.add(i)
+    }
   })
   // The log only names passives. Taking or refunding a same-named small passive
   // off the plan (e.g. "Intelligence") moves the count and leaves a hole in the
