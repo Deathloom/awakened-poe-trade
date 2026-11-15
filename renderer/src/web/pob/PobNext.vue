@@ -145,12 +145,14 @@
             <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showTicks = !showTicks">{{ showTicks ? 'hide' : 'tick what you have' }}</button>
           </div>
           <div v-if="showTicks" class="flex flex-wrap gap-x-3 gap-y-px text-xs pb-1">
-            <label v-for="g of uniqueGems" :key="'t' + g.name" class="flex items-center gap-1 cursor-pointer">
-              <input type="checkbox" :checked="hasGem(g.name)" @change="toggleGem(g.name)">
-              <span :class="[gemClass(g), hasGem(g.name) ? '' : 'underline decoration-dotted']">{{ g.name }}</span>
-            </label>
+            <button v-for="g of uniqueGems" :key="'t' + g.name" type="button" class="gem-chip flex items-center gap-1"
+              :class="hasGem(g.name) ? 'gem-chip-on' : 'gem-chip-off'" :title="hasGem(g.name) ? 'You have it (click to untick)' : 'Click when you have it'"
+              @click="toggleGem(g.name)">
+              <i class="fas text-xs" :class="hasGem(g.name) ? 'fa-check-square text-green-400' : 'fa-square text-gray-600'" />
+              <span :class="gemClass(g)">{{ g.name }}</span>
+            </button>
           </div>
-          <div v-else-if="missingGems.length" class="text-xs pb-1"><span class="text-red-300">Missing:</span>
+          <div v-else-if="missingGems.length" class="text-xs pb-1"><span class="text-red-300" title="Usable at your level and not ticked as yours">Missing ({{ missingGems.length }}):</span>
             <span v-for="g of missingGems" :key="'m' + g.name" class="ml-2" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span></div>
           <div class="text-xs text-gray-500" title="Gems of this step's skill set you can socket at your level (level-1 requirement). Changes when you reach the next gem's level or the next levelling tree.">
             Gems in this step usable at level {{ level }}: {{ usableNow.length }} of {{ uniqueGems.length }}<template v-if="upcoming.length">
@@ -487,6 +489,11 @@ function gemTitle (g: PobPlanGem) {
 </script>
 
 <style>
+/* gem ticks: filled green chip with a tick vs dashed outline, dimmed */
+.gem-chip { @apply px-1 rounded border; }
+.gem-chip-on { @apply border-green-600 bg-green-900/40; }
+.gem-chip-off { @apply border-dashed border-gray-600 opacity-70; }
+
 /* Deathloom fork: one look for section headers across the levelling pane */
 .lg-head {
   font-size: 0.7rem;
