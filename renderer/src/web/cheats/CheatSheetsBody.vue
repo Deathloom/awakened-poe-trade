@@ -7,7 +7,17 @@
         :class="tab === s.id ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab(s.id)">{{ s.label }}</button>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2 py-1 space-y-2">
-      <template v-if="sheet">
+      <template v-if="tab === 'progress'">
+        <div class="text-gray-400">Tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
+        <div v-for="g of PROGRESS" :key="g.title">
+          <div class="text-gray-100">{{ g.title }} <span class="text-gray-500">{{ g.items.filter(i => ticks.has(i.id)).length }}/{{ g.items.length }}</span></div>
+          <label v-for="i of g.items" :key="i.id" class="flex items-baseline gap-x-1.5 cursor-pointer" :class="ticks.has(i.id) ? 'text-gray-500 line-through' : 'text-gray-300'">
+            <input type="checkbox" :checked="ticks.has(i.id)" @change="toggle(i.id)">
+            <span>{{ i.label }}</span><span v-if="i.hint" class="text-gray-600 no-underline">· {{ i.hint }}</span>
+          </label>
+        </div>
+      </template>
+      <template v-else-if="sheet">
         <div class="text-gray-300">{{ sheet.intro }}</div>
         <div v-for="sec of sheet.sections" :key="sec.title">
           <div class="text-gray-100">{{ sec.title }}</div>
@@ -32,16 +42,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useLeagues } from '@/web/background/Leagues'
+import { PROGRESS, loadProgress, saveProgress } from './progress'
 import { SHEETS } from './sheets'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 
-const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }]
+const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Progress' }]
 const KEY = 'deathloom.cheats.tab.v1'
 const tab = ref((() => { try { return localStorage.getItem(KEY) ?? 'betrayal' } catch { return 'betrayal' } })())
 function setTab (id: string) {
   tab.value = id
   try { localStorage.setItem(KEY, id) } catch {}
 }
-const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (tab.value === 'recipes' ? null : SHEETS[0]))
+const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (tab.value === 'recipes' || tab.value === 'progress' ? null : SHEETS[0]))
+
+// Endgame progress (ticks per league)
+const leagues = useLeagues()
+const league = computed(() => leagues.selectedId.value ?? '')
+const ticks = ref(loadProgress(league.value))
+watch(league, (l) => { ticks.value = loadProgress(l) })
+function toggle (id: string) {
+  const t = loadProgress(league.value)
+  if (t.has(id)) t.delete(id)
+  else t.add(id)
+  saveProgress(league.value, t)
+  ticks.value = t
+}
 </script>

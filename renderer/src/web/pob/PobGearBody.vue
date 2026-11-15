@@ -73,6 +73,9 @@
                 <i v-else class="far fa-copy" /></button>
               <button class="bg-gray-700 text-gray-300 px-1.5" title="Exact stat search on the official trade site"
                 @click="openTrade(item)">Trade</button>
+              <button v-if="item.rarity !== 'Unique'" class="bg-gray-700 text-gray-300 px-1.5"
+                title="Find an upgrade: any base of this kind with at least this item's values on its main stats (life, resistances, …)"
+                @click="openTrade(item, true)"><i class="fas fa-arrow-up" /></button>
               <button class="bg-gray-700 text-gray-300 rounded-r px-1.5"
                 :title="desktop ? 'Prices for this item: its exact search in the Trade site tab, cheapest first' : 'Price check (edit stat filters, build impact)'"
                 @click="priceCheck(item, $event)"><i class="fas fa-search-dollar" /></button>
@@ -265,14 +268,14 @@ function itemTitle (item: PobGearItem) {
   return parts.join(' · ')
 }
 
-function openTrade (item: PobGearItem) {
+function openTrade (item: PobGearItem, upgrade = false) {
   tradeError.value = { ...tradeError.value, [item.slot]: '' }
   if (props.hud) {
     // the overlay owns the league list; it opens the trade site
-    Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'trade', text: item.text } })
+    Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: upgrade ? 'upgrade' : 'trade', text: item.text } })
     return
   }
-  const err = openTradeSearch(item.text)
+  const err = openTradeSearch(item.text, upgrade)
   if (err) tradeError.value[item.slot] = err
 }
 

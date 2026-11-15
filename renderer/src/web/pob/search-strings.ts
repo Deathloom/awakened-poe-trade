@@ -72,7 +72,13 @@ export function buildSearchStrings (groups: PobSocketGroup[] | null, mapMods: st
     { key: 'ms20', label: 'Movement speed 20% or more', hint: 'vendor', text: '"([2-9]\\d)% increased movement"' },
     { key: 'l3', label: '3-linked sockets', hint: 'vendor', text: '"\\w-\\w-\\w"' },
     { key: 'l4', label: '4-linked sockets', hint: 'vendor', text: '"\\w-\\w-\\w-\\w"' },
-    { key: 'l5', label: '5-linked sockets', hint: 'vendor or stash', text: '"\\w-\\w-\\w-\\w-\\w"' }
+    { key: 'l5', label: '5-linked sockets', hint: 'vendor or stash', text: '"\\w-\\w-\\w-\\w-\\w"' },
+    // idea 9: flasks, jewellery and jewels (several quoted parts = all must match)
+    { key: 'flaskImm', label: 'Flasks that remove bleed, freeze, shock, ignite or poison', hint: 'stash or vendor', text: '"of (staunch|heat|ground|dous|curing)"' },
+    { key: 'flaskQ', label: 'Flasks with quality', hint: 'stash', text: '"flask" "quality: \\+"' },
+    { key: 'ringLife', label: 'Rings, amulets, belts with life', hint: 'stash or vendor', text: '"ring|amulet|belt" "maximum life"' },
+    { key: 'allRes', label: 'All elemental resistances', hint: 'stash or vendor', text: '"all elemental res"' },
+    { key: 'jewelLife', label: 'Jewels with life', hint: 'stash', text: '"jewel" "maximum life"' }
   )
   const avoid = avoidString(mapMods)
   if (avoid.text) {
