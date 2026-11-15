@@ -18,7 +18,8 @@ const MODULES = {
   'play-session': 'renderer/src/web/companion/play-session.ts',
   money: 'renderer/src/web/money/money.ts',
   'settings-tools': 'renderer/src/web/settings/tools.ts',
-  'search-strings': 'renderer/src/web/pob/search-strings.ts'
+  'search-strings': 'renderer/src/web/pob/search-strings.ts',
+  sheets: 'renderer/src/web/cheats/sheets.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

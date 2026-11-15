@@ -15,6 +15,7 @@ const session = await import('./.build/play-session.mjs')
 const money = await import('./.build/money.mjs')
 const tools = await import('./.build/settings-tools.mjs')
 const search = await import('./.build/search-strings.mjs')
+const sheets = await import('./.build/sheets.mjs')
 
 test('request guard: loopback always, other devices only with the key', () => {
   const K = 'k'.repeat(32)
@@ -72,4 +73,20 @@ test('search strings fit the game\'s 50-character limit', () => {
   const list = search.buildSearchStrings([{ enabled: true, gems: [{ name: 'Fireball', enabled: true }, { name: 'Spell Echo Support', enabled: true, support: true }] }], ['Monsters reflect #% of Elemental Damage'])
   assert.ok(list.length > 5)
   for (const s of list) assert.ok(s.text.length <= search.MAX_SEARCH, `${s.key}: ${s.text}`)
+})
+
+test('cheat sheet focus switch', () => {
+  const cov = sheets.SHEETS.find(s => s.id === 'covens')
+  assert.ok(cov && cov.focuses.length === 3)
+  for (const f of cov.focuses) {
+    const secs = sheets.sectionsFor(cov, f.id)
+    assert.ok(secs.some(s => s.focus === f.id), f.id + ' has its own section')
+    assert.ok(secs.every(s => !s.focus || s.focus === f.id))
+  }
+  // unknown focus falls back to the first; sheets without focuses show everything
+  assert.deepEqual(sheets.sectionsFor(cov, 'nope'), sheets.sectionsFor(cov, cov.focuses[0].id))
+  const plain = sheets.SHEETS.find(s => !s.focuses)
+  assert.equal(sheets.sectionsFor(plain, 'x').length, plain.sections.length)
+  // ids are unique
+  assert.equal(new Set(sheets.SHEETS.map(s => s.id)).size, sheets.SHEETS.length)
 })
