@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue'
+import { defineComponent, computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Host } from '@/web/background/IPC'
 import { DateTime } from 'luxon'
@@ -62,13 +62,26 @@ export default defineComponent({
   setup () {
     const { t } = useI18n()
 
+    // Deathloom fork: offer "Check again" if checking shows for over 20 s
+    const slowCheck = ref(false)
+    let slowTimer: ReturnType<typeof setTimeout> | undefined
+    watch(() => Host.updateInfo.value.state, (st) => {
+      clearTimeout(slowTimer)
+      slowCheck.value = false
+      if (st === 'checking-for-update') slowTimer = setTimeout(() => { slowCheck.value = true }, 20_000)
+    }, { immediate: true })
+    onUnmounted(() => { clearTimeout(slowTimer) })
+
     const info = computed(() => {
       const rawInfo = Host.updateInfo.value
       switch (rawInfo.state) {
         case 'initial':
           return { str1: t('updates.maybe_outdated'), str2: t('updates.never_checked'), action: checkForUpdates, actionText: t('updates.check_now') }
         case 'checking-for-update':
-          return { str1: t('updates.checking'), str2: t('please_wait') }
+          // Deathloom fork: never leave a dead end on screen
+          return slowCheck.value
+            ? { str1: t('updates.checking'), str2: 'Taking longer than usual.', action: checkForUpdates, actionText: 'Check again' }
+            : { str1: t('updates.checking'), str2: t('please_wait') }
         case 'update-not-available':
           return { str1: t('updates.latest'), str2: t('updates.last_checked', [fmtTime(rawInfo.checkedAt)]), action: checkForUpdates, actionText: t('updates.check_now') }
         case 'error':

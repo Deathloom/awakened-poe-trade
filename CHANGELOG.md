@@ -10,6 +10,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [1.0.87] - 2026-11-15
 
+### Fixed (#136)
+- **About page stuck on "Checking for updates… Please wait":** a window that briefly lost its connection to the app missed the result and kept showing the old state. Windows now get the current update state whenever they (re)connect; a check that gets no answer gives up after 60 s, and a newer check is no longer cut short by an older one finishing. If checking still shows after 20 s, a **Check again** button appears.
+
 ### Changed (#134)
 - **Gem ticks are easy to tell apart:** gems you've ticked are a green chip with a tick; gems you haven't are a dashed, dimmed outline. Applies to the Next tab's **tick what you have** list and the Build panel's Gems → For my level → **Socket now**. The Next tab's **Missing** label now shows how many.
 - **Take out explained:** with one skill set in the build there's nothing to take out, and the hint now says so and names the skill set. For take-out and swap steps, add skill sets in Path of Building named after a level ("Level 12", "Level 30", …).
