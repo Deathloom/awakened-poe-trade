@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 flex flex-col h-full items-center">
     <div class="flex flex-col items-center p-2 mb-4">
-      <img class="w-12 h-12" src="/images/TransferOrb.png">
+      <img class="w-20 h-20 logo-float" src="/images/orbhoarder.svg" alt="Orbhoarder">
       <p class="text-base">Orbhoarder</p>
       <p class="text-gray-500">based on <a class="border-b" href="https://github.com/SnosMe/awakened-poe-trade" target="_blank">Awakened PoE Trade</a> by SnosMe (MIT)</p>
       <p class="">{{ t('app.version', [version]) }}</p>
@@ -104,3 +104,10 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped>
+/* Deathloom fork: the logo bobs gently (not with "reduce motion") */
+.logo-float { animation: logo-float 4s ease-in-out infinite; filter: drop-shadow(0 6px 10px rgb(0 0 0 / .5)); }
+@keyframes logo-float { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .logo-float { animation: none; } }
+</style>
