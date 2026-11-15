@@ -3,13 +3,16 @@
 # Run from the Actions tab: Release -> Run workflow.
 #
 # Two channels:
+# Branches: work is merged into dev; master only gets dev when a stable release
+# is due (master = what everyone runs; running apps also read the PoB pin there).
+#
 # - testing: a test release x.y.z-beta.N (N counts up by itself), published as a
-#   GitHub pre-release. Only copies set to Updates = Testing (Settings → Path of
-#   Building) install it. Run it from master as often as you like; CHANGELOG stays
-#   under [Unreleased].
-# - stable: the release for everyone. By default it's built from the same commit
-#   as the newest x.y.z-beta.N test release (what you tested), not from whatever
-#   master has now. Rename [Unreleased] in CHANGELOG.md to the version first.
+#   GitHub pre-release. Only copies set to Updates = Testing (Settings → General)
+#   install it. Run it from dev as often as you like; CHANGELOG stays under
+#   [Unreleased].
+# - stable: the release for everyone. Only runs from master: merge dev into
+#   master first (with [Unreleased] renamed to the version). With from_tested it
+#   builds the newest x.y.z-beta.N's commit, which must already be on master.
 #
 # Path of Building isn't in the installer: Orbhoarder downloads it from the PoB
 # fork at the commit pinned in main/src/pob/pob-pin.ts (see the PoB pin workflow).
@@ -37,6 +40,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write      # build provenance (attestation) for the installer
+  attestations: write
 
 jobs:
   release:
@@ -64,6 +69,9 @@ jobs:
         last=$(betas)
         tested=$(betas --exclude-drafts)
         sha="$GITHUB_SHA"
+        if [[ "$CHANNEL" == "stable" && "$GITHUB_REF" != "refs/heads/master" ]]; then
+          echo "Stable releases only run from master (merge dev into master first)."; exit 1
+        fi
         if [[ "$CHANNEL" == "testing" ]]; then
           full="$V-beta.$(( ${last:-0} + 1 ))"
         else
@@ -71,6 +79,7 @@ jobs:
           if [[ "$FROM_TESTED" == "true" ]]; then
             [[ -n "$tested" ]] || { echo "No published test release $V-beta.N to promote. Run a testing release first, or untick from_tested."; exit 1; }
             sha=$(git rev-list -n 1 "v$V-beta.$tested")
+            git merge-base --is-ancestor "$sha" origin/master || { echo "Tested v$V-beta.$tested (${sha::7}) isn't on master yet. Merge dev into master first, or untick from_tested."; exit 1; }
             echo "Building stable $V from tested v$V-beta.$tested ($sha)"
           fi
         fi
@@ -95,10 +104,10 @@ jobs:
         CHANNEL: ${{ inputs.channel }}
       run: |
         if [[ "$CHANNEL" == "testing" ]]; then
-          notes="Loot Goblin $V: test release (built from ${SHA::7}). Only copies with Updates = Testing install it."
+          notes="Orbhoarder $V: test release (built from ${SHA::7}). Only copies with Updates = Testing install it."
           gh release create "v$V" --draft --prerelease --title "$V (test)" --target "$SHA" --notes "$notes"
         else
-          gh release create "v$V" --draft --title "$V" --target "$SHA" --notes "Loot Goblin $V (built from ${SHA::7})"
+          gh release create "v$V" --draft --title "$V" --target "$SHA" --notes "Orbhoarder $V (built from ${SHA::7})"
         fi
     - run: npm ci
       working-directory: ./renderer
@@ -147,6 +156,14 @@ jobs:
           grep -q '^latest.yml$' assets.txt || { echo "latest.yml missing - not publishing"; exit 1; }
           gh release edit "v$V" --draft=false --latest
         fi
+    # Signed record (Sigstore) that this installer was built by this workflow from
+    # this repo and commit. Check a download with:
+    #   gh attestation verify Orbhoarder-Setup-x.y.z.exe -R Deathloom/awakened-poe-trade
+    - name: Build provenance
+      if: ${{ !inputs.test_build }}
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: 'main/dist/*Setup*.exe'
     - name: Hash
       shell: bash
       run: cat ./main/dist/*.yml
