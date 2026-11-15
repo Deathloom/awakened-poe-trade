@@ -69,7 +69,7 @@ import { defineComponent, PropType, computed, inject, ref } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import UiPopover from '@/web/ui/Popover.vue'
 import { Widget as IWidget, WidgetManager, WidgetMenu, WidgetSpec } from './interfaces'
-import { registry } from './widget-registry'
+import { registry, REMOVED_WIDGETS } from './widget-registry'
 import { Host } from '@/web/background/IPC'
 import Widget from './Widget.vue'
 import { useI18nNs } from '@/web/i18n'
@@ -180,6 +180,8 @@ export default defineComponent({
       instantiableWidgets: computed(() => {
         return registry.widgets
           .filter(({ widget }) => widget.instances === 'multi')
+          // Deathloom fork: replaced by other panels (see REMOVED_WIDGETS)
+          .filter(({ widget }) => !REMOVED_WIDGETS.has(widget.type))
           .map(({ widget }) => widget)
       }),
       openSetup () {

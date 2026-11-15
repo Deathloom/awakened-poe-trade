@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#189)
+- **Stopwatch moved into This session:** the separate Stopwatch widget is gone (it did the same as part of This session). This session now has a stopwatch you start, pause and reset yourself, next to its automatic map timer. Existing Stopwatch widgets and their hotkeys are removed.
+
 ### Added (#188)
 - **One window for all pinned panels (test):** Settings → Panels → Show while playing → "One window for all pinned panels". All pinned panels share one see-through window over the game instead of one window each (less memory with several pinned). Clicks outside a panel go to the game; per-panel "clicks go through" still works; drag, resize, hotkeys and Alt-to-hide work as before. Off by default while it is tested on Windows.
 

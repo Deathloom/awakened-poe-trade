@@ -19,6 +19,12 @@ import WidgetTradeBoard from '../trade-board/WidgetTradeBoard.vue'
 import WidgetPanel from './WidgetPanel.vue'
 import { panelWidgetSpecs } from './panel-widgets'
 
+// Deathloom fork: upstream widgets replaced by Orbhoarder panels. Still
+// registered (upstream merges stay simple) but can't be added any more, and
+// existing ones are removed from the settings (Config.ts).
+//   timer: This session has a stopwatch
+export const REMOVED_WIDGETS: ReadonlySet<string> = new Set(['timer'])
+
 type WidgetComponent = Component & { widget: WidgetSpec }
 
 export const registry = {

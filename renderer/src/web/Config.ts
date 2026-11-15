@@ -497,6 +497,8 @@ function upgradeConfig (_config: Config): Config {
   }
   // Deathloom fork (2026-11-14): stash tracker removed (GGG rules: no login cookie in shared apps)
   config.widgets = config.widgets.filter(w => w.wmType !== 'stash-tracker')
+  // Deathloom fork (2026-11-16): Stopwatch widget removed (This session has a stopwatch)
+  config.widgets = config.widgets.filter(w => w.wmType !== 'timer')
   if (config.pob.stash) config.pob.stash.enabled = false
   // live character data off (character-window endpoints are outside GGG's official API)
   config.pob.liveGear = false
