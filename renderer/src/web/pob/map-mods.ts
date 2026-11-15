@@ -6,31 +6,34 @@ export interface MapModPreset {
   label: string
   // lowercase text found in the mod (# = any number); also used in the stash search string
   text: string
+  // shorter regex for the stash search (the game allows 50 characters); checked to
+  // match only this mod among the map mods in stats.ndjson
+  search: string
 }
 
 export const MAP_MOD_PRESETS: MapModPreset[] = [
-  { label: 'Elemental thorns (reflect)', text: 'elemental thorns' },
-  { label: 'Physical thorns (reflect)', text: 'physical thorns' },
-  { label: 'No regeneration', text: 'cannot regenerate' },
-  { label: 'Less recovery rate', text: 'less recovery' },
-  { label: 'Less max resistances', text: 'maximum resistances' },
-  { label: "Monsters can't be leeched from", text: 'cannot be leeched' },
-  { label: 'Reduced leech recovery', text: 'reduced maximum total' },
-  { label: 'Elemental Weakness curse', text: 'elemental weakness' },
-  { label: 'Vulnerability curse', text: 'with vulnerability' },
-  { label: 'Temporal Chains curse', text: 'temporal chains' },
-  { label: 'Enfeeble curse', text: 'with enfeeble' },
-  { label: 'Monsters avoid elemental ailments', text: 'avoid elemental ailments' },
-  { label: 'Hexproof monsters', text: 'hexproof' },
-  { label: 'Less area of effect', text: 'less area of effect' },
-  { label: 'Extra monster projectiles', text: 'additional projectiles' },
-  { label: 'Monsters steal charges', text: 'steal power' },
-  { label: 'Buffs expire faster', text: 'expire #% faster' },
-  { label: 'Reduced chance to block', text: 'reduced chance to block' },
-  { label: 'Monster action speed floor', text: 'below base value' },
-  { label: 'Less accuracy', text: 'less accuracy' },
-  { label: 'Reduced non-curse auras', text: 'reduced effect of non-curse' },
-  { label: 'Reduced flask charges', text: 'reduced flask charges gained' }
+  { label: 'Elemental thorns (reflect)', text: 'elemental thorns', search: 'ntal th' },
+  { label: 'Physical thorns (reflect)', text: 'physical thorns', search: 'ical th' },
+  { label: 'No regeneration', text: 'cannot regenerate', search: 'not reg' },
+  { label: 'Less recovery rate', text: 'less recovery', search: 'ss rec' },
+  { label: 'Less max resistances', text: 'maximum resistances', search: 'um res' },
+  { label: "Monsters can't be leeched from", text: 'cannot be leeched', search: 'be lee' },
+  { label: 'Reduced leech recovery', text: 'reduced maximum total', search: 'reduced max' },
+  { label: 'Elemental Weakness curse', text: 'elemental weakness', search: 'l weak' },
+  { label: 'Vulnerability curse', text: 'with vulnerability', search: 'vuln' },
+  { label: 'Temporal Chains curse', text: 'temporal chains', search: 'poral' },
+  { label: 'Enfeeble curse', text: 'with enfeeble', search: 'enfee' },
+  { label: 'Monsters avoid elemental ailments', text: 'avoid elemental ailments', search: 'avoid el' },
+  { label: 'Hexproof monsters', text: 'hexproof', search: 'hexp' },
+  { label: 'Less area of effect', text: 'less area of effect', search: 'ss area' },
+  { label: 'Extra monster projectiles', text: 'additional projectiles', search: 'al proj' },
+  { label: 'Monsters steal charges', text: 'steal power', search: 'steal p' },
+  { label: 'Buffs expire faster', text: 'expire #% faster', search: 'expire \\d+% f' },
+  { label: 'Reduced chance to block', text: 'reduced chance to block', search: 'uced chance to b' },
+  { label: 'Monster action speed floor', text: 'below base value', search: 'base val' },
+  { label: 'Less accuracy', text: 'less accuracy', search: 'ss acc' },
+  { label: 'Reduced non-curse auras', text: 'reduced effect of non-curse', search: 'uced eff' },
+  { label: 'Reduced flask charges', text: 'reduced flask charges gained', search: 'uced flask charges g' }
 ]
 
 export function presetLabel (text: string): string {
