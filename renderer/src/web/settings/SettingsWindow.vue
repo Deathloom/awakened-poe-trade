@@ -49,6 +49,7 @@ import SettingsItemSearch from '../item-search/settings-item-search.vue'
 import SettingsPob from './pob.vue'
 import SettingsAppearance from './appearance.vue'
 import SettingsPanels from './panels.vue'
+import SettingsTools from './tools.vue'
 
 function quit () {
   Host.sendEvent({
@@ -168,7 +169,7 @@ function menuByType (type?: string) {
         [SettingsHotkeys, SettingsChat],
         [SettingsGeneral, SettingsAppearance, SettingsPanels],
         [SettingsPricecheck, SettingsPob, SettingsMaps, SettingsItemcheck],
-        [SettingsDebug, SettingsAbout]
+        [SettingsTools, SettingsDebug, SettingsAbout]
       ]
   }
 }

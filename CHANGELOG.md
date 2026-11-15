@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#179)
+- **Settings → Tools** (overlay settings and the Orbhoarder window's Settings):
+  - **Health check:** one button checks the game log and game settings files, Path of Building, your GitHub sign-in, whether poe.ninja and GitHub can be reached, the app's port, updates, and hotkeys used twice, with what to do for each problem.
+  - **Settings backup:** save all settings, hotkeys, panel layouts, notes, ticks and session data to one file, and restore it on a new PC or a friend's (no sign-ins or passwords in it).
+  - **Phone or other devices:** turn it on, restart, and open the Orbhoarder window in your phone's browser on the same Wi-Fi with the link shown (it has a key; **New key** makes old links stop working).
+
 ### Added (#178)
 - **Find an upgrade** (Build panel, gear: the ↑ button next to **Trade**): searches the trade site for any base of the same kind with at least your item's values on its main stats (life, resistances, …).
 - **More search strings** (Build panel → Notes): flasks that remove bleed/freeze/shock/ignite/poison, flasks with quality, rings/amulets/belts with life, all elemental resistances, jewels with life.
