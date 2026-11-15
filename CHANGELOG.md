@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#144)
+- **Act splits:** in the Build panel's Next tab, click **Campaign time** to see when you reached each act, how long each act took, and your best split from your other characters (green when you're ahead). **Rebuild from game log** fills them in for characters you already played.
+- **This session** shows **Where the time went** (the areas you spent the most time in) and levels per hour.
+
 ### Added (#143)
 - **Lab run checklist:** the Lab tab has a bar above poelab's page to tick off Izaro 1–3 and the treasure key and count darkshrines, with a run timer. Entering Aspirants' Plaza starts a new run; ticking Izaro 3 stops the timer. Nothing is read from poelab.com.
 
