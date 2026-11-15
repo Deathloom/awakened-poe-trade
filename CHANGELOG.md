@@ -12,7 +12,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - **What's new in a test version** lists the changes that version brings (they weren't shown before), and opens by itself after a test update.
 
 ### Fixed (#151)
-- **Masteries you allocate are ticked off:** the levelling plan (Next tab, tree map) now also recognises a mastery when the game log names the effect you picked.
+- **Masteries you allocate are ticked off:** the levelling plan (Levelling tab's Next steps, tree map) now also recognises a mastery when the game log names the effect you picked.
 
 ### Added (#149)
 - **Testing updates:** Settings → Path of Building → **Updates** → **Testing** also installs test versions (like 1.0.89-beta.1) before everyone else gets them, then the stable release when it's out. **Stable** (the default) works as before.
@@ -24,7 +24,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - **League-start checklist** (Help → **League start**): the steps for a new league, from patch notes and picking a build to loot filter, atlas plan and early selling, each with where to do it in Loot Goblin. Ticks are saved per league.
 
 ### Added (#144)
-- **Act splits:** in the Build panel's Next tab, click **Campaign time** to see when you reached each act, how long each act took, and your best split from your other characters (green when you're ahead). **Rebuild from game log** fills them in for characters you already played.
+- **Act splits:** in the Levelling tab's **Next steps** panel, at the bottom under **From the game log**, click **Campaign time** to see when you reached each act, how long each act took, and your best split from your other characters (green when you're ahead). **Rebuild from game log** fills them in for characters you already played.
 - **This session** shows **Where the time went** (the areas you spent the most time in) and levels per hour.
 
 ### Added (#143)
