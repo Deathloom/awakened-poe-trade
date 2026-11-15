@@ -171,7 +171,8 @@ html.desktop, html.desktop body {
   /* Deathloom fork: Settings → Appearance (window background) */
   background-color: var(--window-bg, #1a202c);
   background-image: var(--window-bg-image, none);
-  background-size: cover;
+  /* theme decorations repeat small tiles; pictures cover */
+  background-size: var(--window-bg-size, cover);
   background-position: center;
   background-attachment: fixed;
 }

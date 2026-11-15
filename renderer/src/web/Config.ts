@@ -27,7 +27,7 @@ export function AppConfig (type?: string) {
 export function updateConfig (updates: Config) {
   _config.value = deepReactive(JSON.parse(JSON.stringify(updates)))
   document.documentElement.style.fontSize = `${_config.value!.fontSize}px`
-  applyAppearance(surfaceAppearance(_config.value!), IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay')
+  applyAppearance(surfaceAppearance(_config.value!), IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay', _config.value!.leagueId)
 }
 
 // Deathloom fork: the second Loot Goblin window may have its own look
