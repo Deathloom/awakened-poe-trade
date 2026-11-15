@@ -45,6 +45,9 @@ const SPEECH = /^(?<speaker>[A-Z][^:#$%&@<>]{1,40}): (?<text>\S.*)$/
 const PASSIVES_LIST = /^: (?<n>\d+) Passive Skill Points? from quests:$/
 const PASSIVE_FROM = /^: \((?<n>\d+) from (?<quest>.+)\)$/
 const ALLOC = /^Successfully (?<un>un)?allocated passive skill id: (?<id>[^,]+), name: (?<name>.+)$/
+// masteries: "Successfully allocated mastery effect id: 16950, mastery: mastery_totem230, name: Totem Mastery"
+// (picking another effect logs "unallocated passive skill id: mastery_…" first, then this)
+const MASTERY = /^Successfully (?<un>un)?allocated mastery effect id: (?<effect>\d+), mastery: (?<id>[^,]+), name: (?<name>.+)$/
 const SLAIN = /^: (?<char>.+) has been slain\.$/
 const KITAVA = /^: You have been permanently weakened by Kitava's (?<which>cruel|merciless) affliction/
 const ATLAS_POINT = /^: You have received (?:an|(?<n>\d+)) Atlas Skill Points?\.$/
@@ -68,6 +71,7 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if ((m = text.match(RESPEC_POINTS))) return { type: 'questPoint', kind: 'respec', count: Number(m.groups!.n ?? 1) }
   if ((m = text.match(PASSIVES_LIST))) return { type: 'passivesList', total: Number(m.groups!.n) }
   if ((m = text.match(PASSIVE_FROM))) return { type: 'passiveFrom', quest: m.groups!.quest, count: Number(m.groups!.n) }
+  if ((m = text.match(MASTERY))) return { type: 'passiveAlloc', id: m.groups!.id.trim(), name: m.groups!.name.trim(), on: !m.groups!.un, atlas: m.groups!.id.startsWith('atlas_') }
   if ((m = text.match(ALLOC))) return { type: 'passiveAlloc', id: m.groups!.id.trim(), name: m.groups!.name.trim(), on: !m.groups!.un, atlas: m.groups!.id.startsWith('atlas_') }
   if ((m = text.match(SLAIN))) return { type: 'death', char: m.groups!.char }
   if ((m = text.match(KITAVA))) return { type: 'kitava', which: m.groups!.which as 'cruel' | 'merciless' }
