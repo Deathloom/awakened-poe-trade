@@ -13,12 +13,12 @@ export interface HostConfig {
 }
 
 // Deathloom fork: panels pinned over the game while it has focus
-export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats'
+export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats' | 'money'
 // panels added after the first three (1.0.63): pinned flag and hotkey live in
 // hud.<panel> (optional) and pob.panelKeys
-export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview', 'cheats'] as const
+export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money'] as const
 
-export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats'
+export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats' | 'money'
 
 export interface PanelPlacement {
   overlay?: boolean
@@ -36,6 +36,7 @@ export interface PobHudConfig {
   market?: boolean
   overview?: boolean
   cheats?: boolean
+  money?: boolean
   // Per panel: mouse clicks go through to the game while playing (the panel is read-only then)
   clickThroughPanels: Record<HudPanel, boolean>
   // older single setting (moved into clickThroughPanels)

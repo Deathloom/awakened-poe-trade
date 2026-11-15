@@ -712,7 +712,7 @@ export function defaultHudConfig (): PobHudConfig {
     guide: false,
     trades: false,
     gear: false,
-    clickThroughPanels: { guide: false, trades: false, gear: false, tree: false, atlas: false, session: false, market: false, overview: false, cheats: false },
+    clickThroughPanels: { guide: false, trades: false, gear: false, tree: false, atlas: false, session: false, market: false, overview: false, cheats: false, money: false },
     autoHideTrades: true,
     opaque: false,
     opacity: 90,
@@ -725,7 +725,8 @@ export function defaultHudConfig (): PobHudConfig {
       session: { x: 880, y: 440 },
       market: { x: 440, y: 440 },
       overview: { x: 440, y: 440 },
-      cheats: { x: 880, y: 90 }
+      cheats: { x: 880, y: 90 },
+      money: { x: 880, y: 440 }
     }
   }
 }
