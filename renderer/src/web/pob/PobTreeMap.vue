@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobTreeAlloc, PobTreeMapLayout, PobTreeMapNode } from '@ipc/types'
-import { currentPlan as plan, currentTaken as takenSet, mapHave } from './plan-store'
+import { currentPlan as plan, currentTaken as takenSet, mapHave, treeLayout } from './plan-store'
 
 const props = defineProps<{
   // levelling view: colours from the levelling plan (taken / next / later) and
@@ -87,6 +87,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-tree-map', (e) => {
   const newVersion = e.version !== version.value
   if (e.layout) {
     layout.value = e.layout
+    treeLayout.value = e.layout
     version.value = e.version
   }
   alloc.value = e.alloc

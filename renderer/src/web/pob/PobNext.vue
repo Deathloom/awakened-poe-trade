@@ -238,7 +238,7 @@ import { AppConfig } from '@/web/Config'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
 import { planQuestGems } from '../companion/quest-gems'
-import { currentPlan, currentTaken, mapHave } from './plan-store'
+import { currentPlan, currentTaken, mapHave, treeLayout } from './plan-store'
 
 const levels = ref<CharLevels>(loadCharLevels())
 const guideStep = ref(loadCampaignStep())
@@ -340,14 +340,40 @@ const takenByLog = computed(() => {
     return true
   }
   const taken = new Set<number>()
-  p.order.forEach((node, i) => {
-    if (take(node.name)) { taken.add(i); return }
-    // Masteries: the game log may name the picked effect instead of the
-    // mastery ("Life Mastery"); accept the effect's text (any of its lines) too
-    if (node.type === 'Mastery' && node.effect) {
-      if (take(node.effect) || node.effect.split(/\r?\n/).some(l => take(l))) taken.add(i)
+  const takeNode = (node: PobPlanNode) => take(node.name) ||
+    // Masteries: also accept the picked effect's text (any of its lines)
+    (node.type === 'Mastery' && node.effect != null && (take(node.effect) || node.effect.split(/\r?\n/).some(l => take(l))))
+  const lay = treeLayout.value
+  if (lay) {
+    // The log only names passives ("Intelligence" is many nodes), so place them
+    // along the tree: a passive counts as taken only next to one already taken
+    // (start, passives kept from the previous tree, or placed before). Kept
+    // passives use up their names first.
+    const byId = new Map(lay.nodes.map(n => [n[0], n]))
+    const adj = new Map<number, number[]>()
+    const add = (x: number, y: number) => { const l = adj.get(x); if (l) l.push(y); else adj.set(x, [y]) }
+    for (const [x, y] of lay.links) { add(x, y); add(y, x) }
+    const have = new Set<number>(lay.nodes.filter(n => n[3] === 5).map(n => n[0]))
+    for (const id of p.keptIds ?? []) {
+      have.add(id)
+      take(byId.get(id)?.[6])
     }
-  })
+    const placed = new Set<number>()
+    for (let again = true; again;) {
+      again = false
+      for (let i = 0; i < p.order.length; i++) {
+        const node = p.order[i]
+        if (placed.has(i)) continue
+        const reachable = node.type === 'Mastery' || (adj.get(node.id) ?? []).some(nb => have.has(nb))
+        if (!reachable || !takeNode(node)) continue
+        placed.add(i); taken.add(i); have.add(node.id)
+        again = true
+        break
+      }
+    }
+    return taken
+  }
+  p.order.forEach((node, i) => { if (takeNode(node)) taken.add(i) })
   // The log only names passives. Taking or refunding a same-named small passive
   // off the plan (e.g. "Intelligence") moves the count and leaves a hole in the
   // path; a small passive before a taken one is on the way to it, so count it.
