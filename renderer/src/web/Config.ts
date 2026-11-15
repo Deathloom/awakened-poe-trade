@@ -518,6 +518,21 @@ function upgradeConfig (_config: Config): Config {
   }
   config.widgets = config.widgets.filter(w => w.wmType !== 'stash-search')
   config.widgets = config.widgets.filter(w => w.wmType !== 'timer')
+  // Deathloom fork (2026-11-16): Market overview is a tab of Market history. Its pin
+  // and hotkey move to Market history; its overlay widget leaves the menu.
+  if (config.pob.hud.overview) {
+    config.pob.hud.market = true
+    config.pob.hud.overview = false
+  }
+  if (config.pob.panelKeys?.overview) {
+    if (!config.pob.panelKeys.market) config.pob.panelKeys = { ...config.pob.panelKeys, market: config.pob.panelKeys.overview }
+    config.pob.panelKeys = { ...config.pob.panelKeys, overview: null }
+  }
+  for (const w of config.widgets) {
+    if (w.wmType !== 'market-overview') continue
+    w.wmWants = 'hide'
+    if (!w.wmFlags.includes('menu::skip')) w.wmFlags = [...w.wmFlags, 'menu::skip']
+  }
   // Deathloom fork (2026-11-16): Item search hidden from the menu (Market search shows
   // the same poe.ninja prices and who sells it). Kept in the settings for upstream merges.
   for (const w of config.widgets) {

@@ -19,7 +19,7 @@
         <span>Maps: {{ maps.length }}<span v-if="avgMap" class="text-gray-500"> · avg {{ dur(avgMap) }}</span></span>
         <span v-if="perHour" title="Maps finished per hour of map time">{{ perHour }}/h</span>
         <span :class="s.deaths ? 'text-red-300' : ''">Deaths: {{ s.deaths }}</span>
-        <span>Trades: {{ s.trades }}</span>
+        <span title="Trades this session. What you sold and bought, with prices: Trade companion → Ledger.">Trades: {{ s.trades }}</span>
         <span v-if="pace" :title="pace.title">Levelling: {{ pace.text }}</span>
         <span v-if="profit.perHour != null" class="text-yellow-300" :title="`Loot ${money(profit.loot)} − map costs ${money(profit.cost)}, per hour of map time`">
           Profit: {{ money(profit.perHour) }}/h</span>

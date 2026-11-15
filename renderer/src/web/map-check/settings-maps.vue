@@ -1,5 +1,10 @@
 <template>
   <div class="flex flex-col overflow-hidden h-full">
+    <!-- Deathloom fork: one place per job (duplicate review 16 Nov) -->
+    <div class="px-2 pt-1 text-sm text-gray-500">
+      Map mods for <b class="text-gray-400">every build</b>, on this PC. Mods one build can't run go in
+      <b class="text-gray-400">Build panel → Notes</b> (shared with friends, also made into a map search); the map check shows both.
+    </div>
     <div class="flex p-1">
       <input :placeholder="t('Search') + '...'" v-model="search" class="bg-gray-900 rounded px-1">
       <UiToggle v-model="onlySelected" class="mx-2">{{ t(':search_selected') }}</UiToggle>

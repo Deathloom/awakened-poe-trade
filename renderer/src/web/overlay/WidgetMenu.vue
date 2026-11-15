@@ -36,18 +36,8 @@
           <li><b>{{ help.overlayKey }}</b>: open / close the overlay (this bar). Esc closes it too.</li>
           <li><b>{{ help.priceKey }}</b> over an item in game: price check, with what it does to your PoB build.</li>
           <li><b>{{ help.gearKey }}</b> build gear, <b>{{ help.guideKey }}</b> campaign guide, <b>{{ help.tradesKey }}</b> trade companion: show / hide.</li>
-          <li><b>{{ help.openPobKey }}</b> opens Path of Building. In the build panel, <i class="fas fa-cloud" /> shares builds (GitHub sign-in, Pull / Push) and <i class="fas fa-file-import" /> imports a PoB code or link.</li>
-          <li>Pinned panels (Settings <i class="fas fa-cog"></i> → Path of Building → Show while playing) stay on screen while you play.
-            Drag them by the top bar or any empty spot.</li>
-          <li>Build gear: <i class="far fa-copy"></i> copies the name for the in-game market (press <b>/</b>, then Ctrl+V),
-            <b>Trade</b> opens an exact search on the trade site, <i class="fas fa-search-dollar"></i> opens the price check.
-            <i class="fas fa-exchange-alt"></i> picks the build and loadout.</li>
-          <li>Trade companion: buttons copy the chat command (or send it, see settings). Ledger tab = your sales and buys.</li>
-          <li><i class="fas fa-search-dollar"></i> Market search: find an item by name, then <b>Whisper</b> (GGG's buy message) or <b>Hideout</b> the seller, one click = one chat message.</li>
-          <li>Trade buttons open GGG's trade site in the Orbhoarder window's <b>Trade site</b> tab (or your browser, see settings).</li>
-          <li>Which panels show in game, in the overlay or in the Orbhoarder window: Settings → Path of Building → Where panels show.</li>
-          <li>Campaign guide: moves on by itself when you reach the next zone on the route; arrows to fix it by hand.</li>
-          <li>The buttons on this bar open or close a panel; hover one to see its name. <i class="fas fa-magic"></i> runs the setup guide again.</li>
+          <li><b>{{ help.openPobKey }}</b> opens Path of Building. The buttons on this bar open or close a panel; hover one to see its name.</li>
+          <li>Everything else (build sharing, pinned panels, trade buttons, search strings, FAQ) is in the full help below.</li>
         </ul>
         <button class="mt-2 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="openFullHelp">
           <i class="fas fa-book mr-1"></i>Full help, FAQ and where to get a build (Orbhoarder window)</button>
