@@ -31,7 +31,7 @@
           <template v-for="(r, m) of visItems(c)" :key="cols[c].items[r].id">
             <SplitGutter v-if="m > 0" dir="y" reset-label="even out"
               @drag="d => resizeRows(c, visItems(c)[m - 1], r, d)" @end="saveLayout" @reset="evenRows(c)" />
-            <div class="relative min-h-0 flex flex-col" :style="{ flex: `${cols[c].items[r].h} 1 0` }">
+            <div class="relative min-h-0 flex flex-col lg-panel" :style="{ flex: `${cols[c].items[r].h} 1 0` }">
               <template v-if="editing">
                 <div class="flex items-center gap-x-2 px-2 py-0.5 rounded-t bg-gray-700 text-sm cursor-move shrink-0"
                   draggable="true" @dragstart="start($event, cols[c].items[r].id)" @dragend="end">

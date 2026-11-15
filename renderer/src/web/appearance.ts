@@ -2,7 +2,7 @@
 // Tailwind's gray and blue colours, corner rounding and panel opacity are CSS
 // variables (tailwind.config.js); this file sets them for the chosen theme.
 // Gray = surfaces and text, blue = the accent colour.
-import { DECOR, splitLayers } from './theme-decor'
+import { decorAt, splitLayers } from './theme-decor'
 import './theme-decor.css'
 import './motion.css'
 
@@ -29,6 +29,10 @@ export interface AppearanceConfig {
   decorations: boolean
   // full: transitions, panels easing in, theme backgrounds that move; subtle: transitions only; off
   motion: 'full' | 'subtle' | 'off'
+  // Orbhoarder window: panels are frosted glass over the background (blurred, see-through)
+  glass: boolean
+  // how visible the theme's decorations are, % (100 = as drawn)
+  decorStrength: number
   // '' = the theme's own accent
   accent: string
   font: UiFont
@@ -54,6 +58,8 @@ export const defaultAppearance = (): AppearanceConfig => ({
   holidays: true,
   decorations: true,
   motion: 'full',
+  glass: true,
+  decorStrength: 180,
   accent: '',
   font: 'poe-sc',
   rounding: 1,
@@ -430,6 +436,20 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
   root.setProperty('--panel-alpha', surface === 'desktop' ? pct(a.windowOpacity) : surface === 'overlay' ? pct(a.overlayOpacity) : '1')
 
   if (surface === 'desktop') {
+    const decor = decorAt(Math.max(25, Math.min(300, a.decorStrength ?? 100)) / 100)
+    // glass panels: see-through (unless you set your own panel opacity) and blurred
+    cls.toggle('lg-glass', a.glass !== false)
+    if (a.glass !== false && a.windowOpacity >= 100) root.setProperty('--panel-alpha', '0.62')
+    // the theme's motif in the corner of each glass panel (its first pattern layer)
+    const motifDecor = a.windowBg === 'theme' && a.decorations && theme.decor ? decor[theme.decor] : undefined
+    const motifIdx = motifDecor ? splitLayers(motifDecor.image).findIndex(l => l.startsWith('url(')) : -1
+    if (motifDecor && motifIdx >= 0) {
+      root.setProperty('--theme-motif', splitLayers(motifDecor.image)[motifIdx])
+      root.setProperty('--theme-motif-size', splitLayers(motifDecor.size)[motifIdx] ?? 'auto')
+      cls.add('lg-motif')
+    } else {
+      cls.remove('lg-motif')
+    }
     const base = a.windowBg === 'color' && isValidColor(a.windowBgColor) ? a.windowBgColor : theme.windowBg
     root.setProperty('--window-bg', base)
     root.setProperty('--window-bg-size', 'cover')
@@ -438,8 +458,8 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
       // file name comes from our own uploads route (hash + extension); quoted and encoded
       const url = `/uploads/${encodeURIComponent(a.windowBgImage)}`
       root.setProperty('--window-bg-image', `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), url("${url}")`)
-    } else if (a.windowBg === 'theme' && a.decorations && theme.decor && DECOR[theme.decor]) {
-      const d = DECOR[theme.decor]
+    } else if (a.windowBg === 'theme' && a.decorations && theme.decor && decor[theme.decor]) {
+      const d = decor[theme.decor]
       const images = splitLayers(d.image)
       const sizes = splitLayers(d.size)
       // Animations: Full: the drifting layer moves on its own layer (html.lg-drift, motion.css)
@@ -461,6 +481,6 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
     } else {
       root.setProperty('--window-bg-image', 'none')
     }
-    if (!(a.windowBg === 'theme' && a.decorations && theme.decor && DECOR[theme.decor]?.drift && motion === 'full')) cls.remove('lg-drift')
+    if (!(a.windowBg === 'theme' && a.decorations && theme.decor && decor[theme.decor]?.drift && motion === 'full')) cls.remove('lg-drift')
   }
 }
