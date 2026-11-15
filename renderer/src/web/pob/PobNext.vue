@@ -353,7 +353,12 @@ const takenByLog = computed(() => {
     const adj = new Map<number, number[]>()
     const add = (x: number, y: number) => { const l = adj.get(x); if (l) l.push(y); else adj.set(x, [y]) }
     for (const [x, y] of lay.links) { add(x, y); add(y, x) }
-    const have = new Set<number>(lay.nodes.filter(n => n[3] === 5).map(n => n[0]))
+    const starts = lay.nodes.filter(n => n[3] === 5).map(n => n[0])
+    const have = new Set<number>(starts)
+    // the tree data may not link the class start to its first passives: then
+    // the plan's first passive (nearest the start) is where a path begins
+    const startLinked = starts.some(id => (adj.get(id) ?? []).length > 0)
+    const rootId = startLinked ? null : p.order[0]?.id
     for (const id of p.keptIds ?? []) {
       have.add(id)
       take(byId.get(id)?.[6])
@@ -364,13 +369,15 @@ const takenByLog = computed(() => {
       for (let i = 0; i < p.order.length; i++) {
         const node = p.order[i]
         if (placed.has(i)) continue
-        const reachable = node.type === 'Mastery' || (adj.get(node.id) ?? []).some(nb => have.has(nb))
+        const reachable = node.type === 'Mastery' || node.id === rootId || (adj.get(node.id) ?? []).some(nb => have.has(nb))
         if (!reachable || !takeNode(node)) continue
         placed.add(i); taken.add(i); have.add(node.id)
         again = true
         break
       }
     }
+    // names left over that no linked passive could take: as before, in the plan's order
+    p.order.forEach((node, i) => { if (!placed.has(i) && takeNode(node)) taken.add(i) })
     return taken
   }
   p.order.forEach((node, i) => { if (takeNode(node)) taken.add(i) })
