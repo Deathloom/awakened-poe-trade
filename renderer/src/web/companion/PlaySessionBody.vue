@@ -4,7 +4,14 @@
     <div class="flex items-baseline px-2 py-1 border-b border-gray-700">
       <span class="lg-head"><i class="fas fa-stopwatch mr-1 text-gray-500" />This session</span>
       <span class="ml-2 text-gray-500">since {{ clock(s.start) }} · {{ dur(Math.max(0, s.lastAt - s.start)) }}</span>
-      <button class="ml-auto text-gray-500 hover:text-gray-200" title="Start a new session (a new one also starts after 2 hours without playing)"
+      <!-- stopwatch you start yourself (replaces the old Stopwatch widget) -->
+      <span class="ml-auto flex items-center gap-x-1 text-gray-300" title="Stopwatch: start and pause it yourself">
+        <i class="fas fa-hourglass-half text-gray-500" />{{ dur(watchMs) }}
+        <button class="text-gray-500 hover:text-gray-200 px-0.5" :title="watch.startedAt ? 'Pause' : 'Start'" @click="toggleWatch">
+          <i class="fas" :class="watch.startedAt ? 'fa-pause' : 'fa-play'" /></button>
+        <button class="text-gray-500 hover:text-gray-200 px-0.5" title="Reset the stopwatch" @click="resetWatch"><i class="fas fa-undo" /></button>
+      </span>
+      <button class="ml-3 text-gray-500 hover:text-gray-200" title="Start a new session (a new one also starts after 2 hours without playing)"
         @click="reset"><i class="fas fa-redo mr-1" />New session</button>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2 py-1 space-y-1">
@@ -110,13 +117,42 @@ const now = ref(Date.now())
 // live map timer: only while the window is shown and you're in a map (keeps
 // the Orbhoarder window idle while you play)
 const timer = setInterval(() => {
-  if (document.visibilityState === 'visible' && currentMapMs(s.value) != null) now.value = Date.now()
+  if (document.visibilityState === 'visible' && (currentMapMs(s.value) != null || watch.value.startedAt)) now.value = Date.now()
 }, 1000)
+
+// Stopwatch (Deathloom fork: replaces the upstream Stopwatch widget). Kept per
+// window in local storage; runs while the app is closed too (start time based).
+const WATCH_KEY = 'orbhoarder.stopwatch'
+interface Watch { startedAt: number | null, ms: number }
+function loadWatch (): Watch {
+  try {
+    const w = JSON.parse(localStorage.getItem(WATCH_KEY) ?? 'null') as Watch | null
+    if (w && typeof w.ms === 'number') return { startedAt: typeof w.startedAt === 'number' ? w.startedAt : null, ms: w.ms }
+  } catch {}
+  return { startedAt: null, ms: 0 }
+}
+const watch = ref<Watch>(loadWatch())
+function saveWatch (w: Watch) {
+  watch.value = w
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify(w)) } catch {}
+}
+const watchMs = computed(() => watch.value.ms + (watch.value.startedAt ? Math.max(0, now.value - watch.value.startedAt) : 0))
+function toggleWatch () {
+  const t = Date.now()
+  now.value = t
+  const w = watch.value
+  saveWatch(w.startedAt ? { startedAt: null, ms: w.ms + t - w.startedAt } : { startedAt: t, ms: w.ms })
+}
+function resetWatch () {
+  now.value = Date.now()
+  saveWatch({ startedAt: watch.value.startedAt ? Date.now() : null, ms: 0 })
+}
 const onStorage = (e: StorageEvent) => {
   if (e.key === PLAY_SESSION_KEY) s.value = loadPlaySession()
   if (e.key === CHAR_LEVELS_KEY) me.value = currentChar(loadCharLevels())?.name ?? ''
   if (e.key === MAP_COST_KEY) cost.value = loadMapCost()
   if (e.key === LAST_SESSION_KEY) last.value = loadLastSession()
+  if (e.key === WATCH_KEY) watch.value = loadWatch()
 }
 window.addEventListener('storage', onStorage)
 onUnmounted(() => {
