@@ -10,9 +10,10 @@ import * as fs from 'fs/promises'
 import { readFileSync } from 'fs'
 import * as path from 'path'
 import { applyBuildOp, type BuildFileOp } from './BuildFiles'
+import { parseBuildXml } from './build-xml'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobEditOp, PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan } from '../../../ipc/types'
+import type { PobEditOp, PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan, PobBuildSummary } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -138,6 +139,12 @@ export class PobImpact {
       this.reply('MAIN->CLIENT::pob-tree-map', requestId, async () =>
         await this.treeMap(refreshGear === true, typeof haveVersion === 'string' ? haveVersion.slice(0, 32) : undefined))
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-compare', ({ requestId, a, b }) => {
+      this.reply('MAIN->CLIENT::pob-compare', requestId, async () => ({
+        a: await this.readBuildSummary(a),
+        b: await this.readBuildSummary(b)
+      }))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints }) => {
       this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints))
     })
@@ -164,7 +171,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-edit' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-edit' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan' | 'MAIN->CLIENT::pob-compare'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -862,6 +869,19 @@ export class PobImpact {
     const rel = path.relative(playerDir, await this.resolveActiveBuild())
     const own = this.viewingOwn()
     return { playerDir, rel, own, player: own ? (this.cfg?.player ?? '') : this.viewPlayer }
+  }
+
+  // Deathloom fork (idea 6): one build of the player folder, read from the file
+  // (no PoB needed). Only .xml files inside the player folder, at most 8 MB.
+  private async readBuildSummary (rel: unknown): Promise<PobBuildSummary> {
+    if (typeof rel !== 'string' || !rel.toLowerCase().endsWith('.xml')) throw new Error('Pick two builds')
+    const root = path.resolve(this.playerDir())
+    const full = path.resolve(root, rel)
+    if (!full.startsWith(root + path.sep)) throw new Error('Not in your builds folder')
+    const st = await fs.stat(full).catch(() => null)
+    if (!st?.isFile()) throw new Error(`Build not found: ${path.basename(rel)}`)
+    if (st.size > 8 * 1024 * 1024) throw new Error(`Build file too big: ${path.basename(rel)}`)
+    return parseBuildXml(await fs.readFile(full, 'utf8'))
   }
 
   // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them

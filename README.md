@@ -41,6 +41,7 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Trade site tab** | GGG's official trade site inside the Orbhoarder window, signed in separately (on GGG's own page; Orbhoarder never sees your login). Trade buttons open there. |
 | **Edit loadouts** | In the window: new loadouts, rename / copy / delete trees, item sets and skill sets, gem levels and quality, take or refund passives on the tree map. The old file is kept in `Build backups`. |
 | **Manage builds** | Rename, move to folders, duplicate and delete builds. Deletions sync; deleted builds are kept in `Deleted builds`. |
+| **Compare builds** | Pick two builds (yours or a friend's) and see the differences: stats, gear mods per slot, gems and passive tree. Read-only. |
 | **Where panels show** | Per panel: in game, in the overlay and/or in the Orbhoarder window. |
 
 Shift+Space opens the full overlay. Hover the menu icons to see their names and hotkeys, or press **?** for a quick how-to. The Orbhoarder window's **Help** tab has the full help, an FAQ and links to build guides.

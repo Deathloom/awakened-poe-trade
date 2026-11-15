@@ -16,6 +16,8 @@ const money = await import('./.build/money.mjs')
 const tools = await import('./.build/settings-tools.mjs')
 const search = await import('./.build/search-strings.mjs')
 const sheets = await import('./.build/sheets.mjs')
+const buildXml = await import('./.build/build-xml.mjs')
+const compare = await import('./.build/build-compare.mjs')
 
 test('request guard: loopback always, other devices only with the key', () => {
   const K = 'k'.repeat(32)
@@ -89,4 +91,74 @@ test('cheat sheet focus switch', () => {
   assert.equal(sheets.sectionsFor(plain, 'x').length, plain.sections.length)
   // ids are unique
   assert.equal(new Set(sheets.SHEETS.map(s => s.id)).size, sheets.SHEETS.length)
+})
+
+const BUILD = (o) => `<?xml version="1.0" encoding="UTF-8"?>
+<PathOfBuilding>
+  <Build level="${o.level}" className="Witch" ascendClassName="Necromancer" mainSocketGroup="1">
+    <PlayerStat stat="Life" value="${o.life}"/>
+    <PlayerStat stat="CombinedDPS" value="${o.dps}"/>
+    <PlayerStat stat="FireResist" value="75"/>
+  </Build>
+  <Skills activeSkillSet="2">
+    <SkillSet id="1"><Skill enabled="true"><Gem nameSpec="Wrong Set" level="1" enabled="true"/></Skill></SkillSet>
+    <SkillSet id="2">
+      <Skill enabled="true" slot="Body Armour" label=""><Gem nameSpec="${o.skill}" level="${o.gemLevel}" quality="20" enabled="true"/><Gem nameSpec="Minion Damage Support" level="20" enabled="true"/></Skill>
+      <Skill enabled="false"><Gem nameSpec="Disabled Gem" level="20" enabled="true"/></Skill>
+    </SkillSet>
+  </Skills>
+  <Tree activeSpec="1"><Spec treeVersion="3_30" nodes="${o.nodes}" masteryEffects="{100,${o.mastery}}"><URL>x</URL></Spec></Tree>
+  <Items activeItemSet="1">
+    <Item id="1">
+Rarity: RARE
+Doom Cowl
+Hubris Circlet
+Unique ID: abc
+Item Level: 84
+Quality: 20
+Implicits: 0
++${o.helmLife} to maximum Life
+{crafted}{range:0.5}+30% to Fire Resistance
+Corrupted
+</Item>
+    <Item id="2">
+Rarity: UNIQUE
+Tabula Rasa
+Simple Robe
+Sockets: W-W-W-W-W-W
+Has no Sockets &amp; stuff
+</Item>
+    <ItemSet id="1"><Slot name="Helmet" itemId="1"/><Slot name="Body Armour" itemId="${o.body}"/><Slot name="Gloves" itemId="0"/></ItemSet>
+  </Items>
+</PathOfBuilding>`
+
+test('build files: read and compare two builds', () => {
+  const a = buildXml.parseBuildXml(BUILD({ level: 90, life: 4000, dps: 1e6, skill: 'Raise Zombie', gemLevel: 20, nodes: '1,2,3,100', mastery: 5, helmLife: 80, body: 2 }))
+  const b = buildXml.parseBuildXml(BUILD({ level: 92, life: 4500, dps: 9e5, skill: 'Summon Skeletons', gemLevel: 21, nodes: '2,3,4,5,100', mastery: 6, helmLife: 90, body: 3 }))
+  assert.equal(a.ascendancy, 'Necromancer')
+  assert.equal(a.level, 90)
+  assert.equal(a.mainSkill, 'Raise Zombie')
+  assert.equal(a.stats.Life, 4000)
+  assert.equal(a.groups.length, 2)
+  assert.ok(!a.groups.flatMap(g => g.gems).some(g => g.name === 'Wrong Set'))
+  assert.deepEqual(a.items.map(i => i.slot), ['Helmet', 'Body Armour'])
+  assert.deepEqual(a.items[0].mods, ['+80 to maximum Life', '+30% to Fire Resistance'])
+  assert.equal(a.items[1].name, 'Tabula Rasa')
+  assert.deepEqual(a.items[1].mods, ['Has no Sockets & stuff'])
+  assert.equal(b.items.length, 1) // item 3 doesn't exist
+  assert.deepEqual(a.tree.masteries, { 100: '5' })
+
+  const c = compare.compareBuilds(a, b)
+  const life = c.stats.find(r => r.stat === 'Life')
+  assert.equal(life.diff, 500); assert.equal(life.better, 'b')
+  assert.equal(c.stats.find(r => r.stat === 'CombinedDPS').better, 'a')
+  assert.equal(c.stats.find(r => r.stat === 'FireResist').better, undefined)
+  const helm = c.gear.find(g => g.slot === 'Helmet')
+  assert.deepEqual(helm.onlyA, ['+80 to maximum Life']); assert.deepEqual(helm.onlyB, ['+90 to maximum Life'])
+  assert.equal(c.gear.find(g => g.slot === 'Body Armour').b, undefined)
+  assert.deepEqual(c.gems.map(g => `${g.change}:${g.name}`), ['removed:Raise Zombie', 'added:Summon Skeletons'])
+  assert.deepEqual(c.tree.onlyA, [1]); assert.deepEqual(c.tree.onlyB, [4, 5]); assert.equal(c.tree.same, 3)
+  assert.deepEqual(c.tree.masteriesChanged, [100])
+  assert.throws(() => buildXml.parseBuildXml('<html></html>'))
+  assert.equal(compare.fmtStat(1234567), '1.23M')
 })

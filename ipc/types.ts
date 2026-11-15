@@ -389,6 +389,19 @@ export interface PobBuildInfo {
   stats: Record<string, number | undefined>
 }
 
+// Deathloom fork (idea 6): one build file read for "Compare builds"
+export interface PobBuildSummary {
+  className?: string
+  ascendancy?: string
+  level?: number
+  mainSkill?: string
+  // PoB's saved PlayerStat values (Life, CombinedDPS, FireResist, …)
+  stats: Record<string, number>
+  groups: Array<{ label?: string, slot?: string, enabled: boolean, gems: Array<{ name: string, level?: number, quality?: number, enabled: boolean }> }>
+  items: Array<{ slot: string, rarity: string, name: string, base: string, mods: string[] }>
+  tree: { version?: string, nodes: number[], masteries: Record<string, string> }
+}
+
 export interface PobImpactCompare {
   header: string
   summary: Array<{ stat: string, label: string, old: number, new: number, diff: number, pct?: number }>
@@ -502,11 +515,13 @@ export type IpcEvent =
   IpcPobTreeRequest |
   IpcPobTreeResult |
   IpcPobTreeMapRequest |
+  IpcPobCompareRequest |
   IpcPobPlanRequest |
   IpcReadGameLogRequest |
   IpcReadGameLogResult |
   IpcPobPlanResult |
   IpcPobTreeMapResult |
+  IpcPobCompareResult |
   IpcPobSyncRequest |
   IpcPobSyncState |
   IpcBoardRequest |
@@ -1267,6 +1282,24 @@ type IpcPobPlanResult =
     error?: string
     build?: PobBuildInfo
     plan?: PobPlan
+  }>
+
+// Deathloom fork (idea 6): read two builds of the player folder for "Compare builds"
+type IpcPobCompareRequest =
+  Event<'CLIENT->MAIN::pob-compare', {
+    requestId: number
+    // paths relative to the player folder (from pob-builds)
+    a: string
+    b: string
+  }>
+
+type IpcPobCompareResult =
+  Event<'MAIN->CLIENT::pob-compare', {
+    requestId: number
+    ok: boolean
+    error?: string
+    a?: PobBuildSummary
+    b?: PobBuildSummary
   }>
 
 type IpcPobTreeMapRequest =
