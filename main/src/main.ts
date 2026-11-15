@@ -25,7 +25,9 @@ import { PobImpact } from './pob/PobImpact'
 import { PobSync } from './pob/PobSync'
 import { PobImport } from './pob/PobImport'
 import { PobInstaller, shouldAutoInstall } from './pob/PobInstaller'
+import type { IpcEventPayload } from '../../ipc/types'
 import { ErrorReporter, issueUrl } from './ErrorReporter'
+import { healthCheck, remoteInfo, setRemote, newKey, saveBackup, openBackup } from './tools'
 import { AtlasFiles } from './pob/AtlasFiles'
 import { BuildNotes } from './pob/BuildNotes'
 import { TradeBoard } from './pob/TradeBoard'
@@ -93,6 +95,32 @@ app.on('ready', async () => {
   // eslint-disable-next-line no-new
   new BuildNotes(eventPipe, logger, async () => await pobImpact.activeBuild(), () => { pobSync.schedulePush() })
   errorReporter.enabled = () => pobImpact.resolved()?.errorReports !== false
+  // Deathloom fork: Settings → Tools
+  eventPipe.onEventAnyClient('CLIENT->MAIN::tools', (req) => {
+    const send = eventPipe.replyTo()
+    const reply = (p: Omit<IpcEventPayload<'MAIN->CLIENT::tools'>, 'requestId'>) => {
+      send({ name: 'MAIN->CLIENT::tools', payload: { requestId: req.requestId, ...p } })
+    }
+    void (async () => {
+      switch (req.op) {
+        case 'health': reply({
+          health: await healthCheck({
+            clientLog: () => gameLogWatcher.actualPath,
+            gameConfig: () => gameConfig.actualPath,
+            pobDir: () => pobImpact.pobDir(),
+            pobStatus: () => pobInstaller.statusText(),
+            signedIn: () => pobSync.signedIn,
+            updater: () => appUpdater.info
+          })
+        }); break
+        case 'remote-info': reply({ remote: remoteInfo() }); break
+        case 'remote-set': reply({ remote: setRemote(req.enabled === true) }); break
+        case 'remote-newkey': reply({ remote: newKey() }); break
+        case 'backup-save': reply({ backup: await saveBackup(req.text ?? '') }); break
+        case 'backup-open': reply({ backup: await openBackup() }); break
+      }
+    })().catch((err: Error) => { logger.write(`error [tools] ${req.op}: ${err.message}`) })
+  })
   // Deathloom fork: Report a bug / Suggest a feature (desktop window)
   eventPipe.onEventAnyClient('CLIENT->MAIN::user-report', (req) => {
     const send = eventPipe.replyTo()

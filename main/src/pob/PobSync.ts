@@ -38,6 +38,8 @@ interface Device {
 
 export class PobSync {
   private state: PobSyncState = { busy: null, status: null, signIn: null, last: null }
+  // Deathloom fork: for the health check
+  get signedIn (): boolean { return this.state.status?.signedIn === true }
   // one SyncServer job at a time
   private queue: Promise<unknown> = Promise.resolve()
   private device: Device | null = null

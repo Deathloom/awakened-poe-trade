@@ -538,7 +538,9 @@ export type IpcEvent =
   IpcHudTyping |
   IpcReportError |
   IpcUserReport |
-  IpcUserReportResult
+  IpcUserReportResult |
+  IpcToolsRequest |
+  IpcToolsResult
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -611,6 +613,27 @@ type IpcUserReportResult =
     // opened in the browser instead
     opened?: boolean
     reason?: string
+  }>
+
+// Deathloom fork: Settings → Tools (health check, backup, phone or other devices)
+export interface HealthItem { name: string, ok: boolean, warn?: boolean, detail: string }
+export interface RemoteInfo { enabled: boolean, listening: boolean, urls: string[] }
+
+type IpcToolsRequest =
+  Event<'CLIENT->MAIN::tools', {
+    requestId: number
+    op: 'health' | 'remote-info' | 'remote-set' | 'remote-newkey' | 'backup-save' | 'backup-open'
+    enabled?: boolean
+    // backup-save: the backup file's text
+    text?: string
+  }>
+
+type IpcToolsResult =
+  Event<'MAIN->CLIENT::tools', {
+    requestId: number
+    health?: HealthItem[]
+    remote?: RemoteInfo
+    backup?: { ok: boolean, path?: string, text?: string, error?: string }
   }>
 
 type IpcHudDims =

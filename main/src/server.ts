@@ -12,12 +12,18 @@ import type { AppUpdater } from './AppUpdater'
 import type { Logger } from './RemoteLogger'
 import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE } from './request-guard'
 import { remoteKey } from './remote-key'
+import { remoteAccessOn } from './remote-access'
+
+// Deathloom fork: where the server listens (Settings → Tools)
+let listening: { host: string, port: number } | undefined
+export function listenInfo () { return listening }
 
 export const server = createServer()
 
 // Deathloom fork: refuse requests and WebSocket upgrades from other web pages
 // (see request-guard.ts). Checked before any route or the WebSocket server sees them.
-const listenHost = process.argv.find(arg => arg.startsWith('--listen='))?.split('=')[1]?.split(':')[0] || undefined
+// set in startServer: --listen, or "Phone or other devices" (remote-access.ts)
+let listenHost: string | undefined = process.argv.find(arg => arg.startsWith('--listen='))?.split('=')[1]?.split(':')[0] || undefined
 let rejectedCount = 0
 const serverEmit = server.emit.bind(server)
 server.emit = ((event: string, ...args: any[]) => {
@@ -203,16 +209,22 @@ export async function startServer (
   // --listen=[host][:port]
   const listenOpt = process.argv.find(arg => arg.startsWith('--listen'))
   if (listenOpt) {
-    const [hostArg, portArg] = listenOpt.split('=')[1].split(':')
+    const [hostArg, portArg] = (listenOpt.split('=')[1] ?? '').split(':')
     if (hostArg) host = hostArg
     if (portArg) port = parseInt(portArg, 10)
+  } else if (!process.env.VITE_DEV_SERVER_URL && remoteAccessOn()) {
+    // Deathloom fork: Settings → Tools → Phone or other devices
+    host = '0.0.0.0'
+    listenHost = host
   }
+  listening = { host, port }
 
   const listen = (p: number) => new Promise<number>((resolve, reject) => {
     server.listen({ port: p, host })
       .once('error', reject)
       .once('listening', () => {
-        resolve((server.address() as AddressInfo).port)
+        listening = { host, port: (server.address() as AddressInfo).port }
+        resolve(listening.port)
       })
   })
   try {

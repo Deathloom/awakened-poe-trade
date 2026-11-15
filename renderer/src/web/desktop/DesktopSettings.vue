@@ -42,6 +42,7 @@ import SettingsDebug from '../settings/debug.vue'
 import SettingsMaps from '../map-check/settings-maps.vue'
 import SettingsPob from '../settings/pob.vue'
 import SettingsAppearance from '../settings/appearance.vue'
+import SettingsTools from '../settings/tools.vue'
 import { desktopSetupShown } from '../setup/setup-state'
 import { whatsNewRequested } from '../whats-new/whats-new-state'
 
@@ -53,7 +54,7 @@ const GROUPS: Component[][] = [
   [SettingsHotkeys, SettingsChat],
   [SettingsGeneral, SettingsAppearance],
   [SettingsPricecheck, SettingsMaps, SettingsItemcheck],
-  [SettingsDebug, SettingsAbout]
+  [SettingsTools, SettingsDebug, SettingsAbout]
 ]
 
 const selected = shallowRef<Component>(SettingsPob)
