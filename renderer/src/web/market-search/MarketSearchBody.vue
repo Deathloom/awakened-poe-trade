@@ -16,6 +16,8 @@
             @mousedown.prevent="pick(s)">
             <img :src="s.icon" class="w-5 h-5 object-contain">
             <span class="flex-1 truncate">{{ s.name }}</span>
+            <!-- poe.ninja price (was the Item search widget's job) -->
+            <span v-if="ninjaPrice(s)" class="text-xs text-yellow-300 font-mono" title="poe.ninja price">{{ ninjaPrice(s) }}</span>
             <span class="text-xs text-gray-500">{{ kind(s) }}</span>
           </button>
         </div>
@@ -110,12 +112,23 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import type { BaseType } from '@/assets/data'
 import { useLeagues } from '@/web/background/Leagues'
+import { usePoeninja, displayRounding } from '@/web/background/Prices'
 import { runChat, chatMode } from '@/web/companion/chat'
 import { openTradeLink, parseTradeLink } from '@/web/desktop/trade-tab'
 import {
   findMarketItems, searchMarket, moreListings, whisperText, hideoutCommand,
   type ListingStatus, type MarketListing, type MarketResult
 } from './market-api'
+
+// Deathloom fork: quick poe.ninja prices in the suggestions (replaces the upstream Item search widget)
+const ninja = usePoeninja()
+ninja.queuePricesFetch()
+function ninjaPrice (item: BaseType): string {
+  const p = ninja.findPriceByQuery({ ns: item.namespace, name: item.refName, variant: item.unique?.base })
+  if (!p) return ''
+  const v = ninja.autoCurrency(p.chaos)
+  return `${displayRounding(v.min)} ${v.currency === 'div' ? 'div' : 'c'}`
+}
 
 const leagues = useLeagues()
 const league = computed(() => leagues.selectedId.value ?? '')
