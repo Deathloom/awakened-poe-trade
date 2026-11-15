@@ -59,13 +59,14 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 6.1 | Updates only from this repo's GitHub releases over HTTPS (electron-updater checks the SHA-512 in `latest.yml`) | ✅ |
 | 6.2 | Release only publishes when installer and `latest.yml` are both present | ✅ `release.yml` |
 | 6.3 | Workflow inputs passed via `env`, never pasted into scripts (injection) | ✅ `release.yml` |
+| 6.5 | Orbhoarder's Path of Building comes from a pinned commit of the PoB fork (`main/src/pob/pob-pin.ts`), every file checked against that commit's manifest (SHA-1) and the source prefix; a push to the PoB fork reaches players only after a PR here moves the pin | ✅ `PobDownload.ts`, `pob-pin.yml` |
 | 6.4 | Windows code signing | ⚠️ not signed (costs money; SmartScreen warns on first install). Revisit if the app is shared beyond friends. |
 
 ## 7. Supply chain (OpenSSF Scorecard)
 
 | # | Item | Status |
 |---|------|--------|
-| 7.1 | GitHub Actions pinned to full commit SHAs | ✅ release, security, scorecard workflows |
+| 7.1 | GitHub Actions pinned to full commit SHAs | ✅ release, security, scorecard, PoB pin workflows |
 | 7.2 | Workflows run with least `permissions` | ✅ |
 | 7.3 | Dependabot alerts and updates on | ✅ |
 | 7.4 | Branch protection on master (ruleset "protect master") | ✅ |

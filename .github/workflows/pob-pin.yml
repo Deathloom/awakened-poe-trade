@@ -1,0 +1,60 @@
+# Deathloom fork: Orbhoarder installs Path of Building at a pinned commit of the
+# PoB fork (main/src/pob/pob-pin.ts), not whatever is on its master. When the PoB
+# fork's master moves, this opens a PR that moves the pin; merging it is what
+# sends the new PoB to players (running apps read the pin from this repo's master).
+#
+# Needs: Settings -> Actions -> General -> Workflow permissions:
+#   "Read and write" + "Allow GitHub Actions to create and approve pull requests"
+name: PoB pin
+
+on:
+  schedule:
+    - cron: '41 4 * * *'  # daily 04:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pob-pin
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    env:
+      POB_REPO: Deathloom/PathOfBuilding
+      PIN_FILE: main/src/pob/pob-pin.ts
+      BASE: master
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ env.BASE }}
+
+      - name: Open a PR when the PoB fork's master moved
+        run: |
+          set -euo pipefail
+          NEW=$(git ls-remote "https://github.com/$POB_REPO.git" refs/heads/master | cut -f1)
+          OLD=$(grep -oE "POB_PIN = '[0-9a-f]{40}'" "$PIN_FILE" | grep -oE '[0-9a-f]{40}')
+          if ! [[ "$NEW" =~ ^[0-9a-f]{40}$ ]]; then echo "No commit for $POB_REPO master"; exit 1; fi
+          echo "pinned $OLD, PoB master $NEW"
+          if [ "$NEW" = "$OLD" ]; then echo "Up to date."; exit 0; fi
+          BRANCH="pob-pin/${NEW:0:12}"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            echo "Branch $BRANCH already exists (PR open or handled)."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          sed -i "s/POB_PIN = '$OLD'/POB_PIN = '$NEW'/" "$PIN_FILE"
+          git commit -qam "PoB pin: ${NEW:0:7}"
+          git push origin "$BRANCH"
+          gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$BRANCH" \
+            --title "PoB pin: ${NEW:0:7}" \
+            --body "Moves the Path of Building version players get to $POB_REPO@$NEW.
+
+          Changes: https://github.com/$POB_REPO/compare/$OLD...$NEW
+
+          Merging sends it to everyone: running apps pick it up at their next start (no Orbhoarder release needed). Check the changes are yours first."

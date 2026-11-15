@@ -4,9 +4,10 @@
 //   people who already finished the guide).
 // - Existing installs: the installer moves the old resources\PathOfBuilding
 //   there (build/installer.nsh); then only changed files download.
-// - Each app start, while the PoB window is closed: one manifest check against
-//   master, so the overlay's headless PoB stays current even for people who
-//   never open PoB (the PoB window updates itself with its own updater).
+// - Each app start, while the PoB window is closed: one manifest check at the
+//   pinned PoB commit (pob-pin.ts, read from this repo's master), so the overlay's
+//   headless PoB stays current even for people who never open PoB. PoB's own
+//   updater stays on the same commit (the installed manifest names it).
 
 import { app, net, Notification } from 'electron'
 import { execFile } from 'child_process'
@@ -17,6 +18,22 @@ import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { syncPob, isInstalled, readLocalManifest, type FetchFn } from './PobDownload'
 import { managedPobDir, legacyPobDir } from './defaults'
+import { POB_PIN, POB_PIN_URL, parsePobPin } from './pob-pin'
+
+// the pinned PoB commit: master's pob-pin.ts when reachable, else the one built in
+async function pobPin (logger: Logger): Promise<string> {
+  try {
+    const res = await net.fetch(POB_PIN_URL, { cache: 'no-store' })
+    if (res.ok) {
+      const pin = parsePobPin(await res.text())
+      if (pin) return pin
+    }
+    logger.write(`warn [PoB install] pin not readable (HTTP ${res.status}); using the built-in one`)
+  } catch (err) {
+    logger.write(`warn [PoB install] pin not reachable (${(err as Error).message}); using the built-in one`)
+  }
+  return POB_PIN
+}
 
 export class PobInstaller {
   state: PobInstallState
@@ -79,7 +96,7 @@ export class PobInstaller {
     const dir = this.state.dir
     const fresh = !isInstalled(dir)
     if (!fresh && !repair && await isPobWindowRunning()) {
-      this.logger.write('info [PoB install] PoB window open; it updates itself')
+      this.logger.write('info [PoB install] PoB window open; checking next start')
       return
     }
     // A copy left inside the install folder (older Orbhoarder, or the installer couldn't move it)
@@ -107,8 +124,10 @@ export class PobInstaller {
     }
     try {
       await fs.promises.mkdir(dir, { recursive: true })
+      const ref = await pobPin(this.logger)
       const res = await syncPob(dir, {
         fetch: net.fetch as unknown as FetchFn,
+        ref,
         full: fresh || repair,
         onProgress: (p) => {
           const state = fresh ? 'installing' : (p.phase === 'checking' ? 'checking' : 'updating')
@@ -124,7 +143,7 @@ export class PobInstaller {
         },
         beforeReplace: async () => { await this.beforeReplace() }
       })
-      this.logger.write(`info [PoB install] ${res.changed ? `PoB ${res.version}: ${res.downloaded} files (${Math.round(res.bytes / 1048576)} MB), ${res.removed} removed, ${Math.round((Date.now() - startedAt) / 1000)} s` : `PoB ${res.version} up to date`}`)
+      this.logger.write(`info [PoB install] ${res.changed ? `PoB ${res.version}: ${res.downloaded} files (${Math.round(res.bytes / 1048576)} MB), ${res.removed} removed, ${Math.round((Date.now() - startedAt) / 1000)} s` : `PoB ${res.version} up to date`} (${ref.slice(0, 7)})`)
       this.publish({ state: 'ready', version: res.version, message: undefined, error: undefined })
       if (res.changed) this.onChanged()
       if (fresh && !userAsked) notify('Path of Building is ready', 'Build impact, the build panel and build sharing work now.')
