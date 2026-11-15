@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#167)
+Passive tree: a notable further along the path no longer shows as taken before you allocate it.
+
 ### Fixed (#166)
 Gems → For my level shows the gems again (it stayed empty below the level since the gem stages update).
 
