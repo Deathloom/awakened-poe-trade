@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#161)
+- **New logo:** a goblin hoarding glowing orbs, made for Orbhoarder. It replaces the old icon (app, tray, taskbar, installer) and the game's orb picture on About, the update notice and the loading animation.
+
 ### Changed (#159)
 - **Loot Goblin is now Orbhoarder.** "Loot Goblin" turned out to be someone else's trademark. Windows, tray, settings, the Start menu shortcut and the installer use the new name. Your settings, builds and Path of Building stay where they are (the folders keep the old name), and updates keep working.
 
