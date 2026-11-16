@@ -402,3 +402,38 @@ test('timeless find: wants replace per notable / per stat, trade query for any c
   assert.equal(any.query.stats[0].filters.length, 3)
   assert.deepEqual(any.query.stats[0].filters[2].value, { min: 12345, max: 12345 })
 })
+
+test('item regex: mods to short stash search parts', async () => {
+  const ir = await import('./.build/item-regex.mjs')
+  const life = new RegExp(ir.modRegex('+85 to maximum Life'), 'i')
+  assert.ok(life.test('+85 to maximum Life')); assert.ok(life.test('+112 to maximum Life'))
+  assert.ok(!life.test('+70 to maximum Life'))
+  const anyLife = new RegExp(ir.modRegex('+85 to maximum Life', false), 'i')
+  assert.ok(anyLife.test('+70 to maximum Life'))
+  const res = new RegExp(ir.modRegex('+45% to Fire Resistance'), 'i')
+  assert.ok(res.test('+46% to Fire Resistance')); assert.ok(!res.test('+40% to Fire Resistance'))
+  assert.ok(!res.test('+46% to Cold Resistance'))
+  const adds = new RegExp(ir.modRegex('Adds 12 to 24 Physical Damage to Attacks'), 'i')
+  assert.ok(adds.test('Adds 15 to 30 Physical Damage to Attacks')); assert.ok(!adds.test('Adds 5 to 9 Physical Damage to Attacks'))
+  const dec = new RegExp(ir.modRegex('1.5% of Physical Attack Damage Leeched as Life'), 'i')
+  assert.ok(dec.test('0.8% of Physical Attack Damage Leeched as Life'))
+  const deep = new RegExp(ir.modRegex('Socketed Gems are Supported by Level 20 Elemental Damage with Attacks'), 'i')
+  assert.ok(deep.test('Socketed Gems are Supported by Level 21 Elemental Damage with Attacks'))
+  assert.ok(!deep.test('Socketed Gems are Supported by Level 18 Elemental Damage with Attacks'))
+  const plain = ir.modRegex('Cannot be Frozen')
+  assert.ok(new RegExp(plain, 'i').test('Cannot be Frozen'))
+  for (const t of ['+85 to maximum Life', '+45% to Fire Resistance', 'Adds 12 to 24 Physical Damage to Attacks', '30% increased Movement Speed']) {
+    assert.ok(ir.modRegex(t).length <= 45, `${t}: ${ir.modRegex(t)}`)
+  }
+  const item = { name: 'Doom Stride', baseName: 'Two-Toned Boots', rarity: 'Rare', mods: [{ text: '+85 to maximum Life', kind: 'explicit' }, { text: '30% increased Movement Speed', kind: 'explicit' }] }
+  const parts = ir.itemRegexParts(item)
+  assert.equal(parts[0].kind, 'base')
+  const r = ir.itemRegex(parts.slice(1), 'all')
+  assert.equal(r.text.split('" "').length, 2)
+  assert.equal(r.tooLong, true)
+  // any value on life: fits the game's 50 characters
+  const loose = ir.itemRegex(ir.itemRegexParts(item, { mod0: false }).slice(1), 'all')
+  assert.equal(loose.tooLong, false, loose.text)
+  assert.ok(ir.itemRegex(parts.slice(1), 'any').text.includes('|'))
+  assert.equal(ir.itemRegexParts({ ...item, rarity: 'Unique' })[0].kind, 'name')
+})

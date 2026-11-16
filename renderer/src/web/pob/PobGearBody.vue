@@ -57,7 +57,8 @@
         <i class="far fa-copy" /> name for the in-game market (press <span class="bg-gray-700 rounded px-1">/</span> then Ctrl+V) ·
         <b>Trade</b> this exact item on the trade site ·
         <i class="fas fa-arrow-up" /> find an upgrade (any base, at least these values) ·
-        <i class="fas fa-flask" /> how to craft it<template v-if="!desktop"> ·
+        <i class="fas fa-flask" /> how to craft it ·
+        <i class="fas fa-code" /> stash / vendor search for items like it<template v-if="!desktop"> ·
         <i class="fas fa-search-dollar" /> price check here (edit the filters, see what it does to your build)</template>.
       </div>
       <template v-for="group of groups" :key="group.key">
@@ -85,11 +86,42 @@
               <button v-if="item.rarity === 'Rare' || item.rarity === 'Magic'" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1"
                 title="Craft this: opens the Craft tab with this base and its mods filled in, and a step-by-step plan (cheapest method, what order)"
                 @click="requestCraft(item)"><i class="fas fa-flask" /></button>
+              <button class="bg-gray-700 rounded px-1.5 ml-1" :class="regexSlot === item.slot ? 'text-gray-100 bg-gray-600' : 'text-gray-300'"
+                title="Regex: make a stash / vendor search for items like this (pick the lines, at least these values)"
+                @click="toggleRegex(item.slot)"><i class="fas fa-code" /></button>
               <!-- the price check window lives in the overlay; in the Orbhoarder window it would only repeat Trade -->
-              <button v-if="!desktop" class="bg-gray-700 text-gray-300 rounded-r px-1.5"
+              <button v-if="!desktop" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1"
                 title="Price check (edit stat filters, build impact)"
                 @click="priceCheck(item, $event)"><i class="fas fa-search-dollar" /></button>
             </div>
+          </div>
+          <div v-if="regexSlot === item.slot" class="my-1 p-1.5 rounded bg-gray-900 text-sm" style="margin-left: 6.5rem;">
+            <div class="flex items-center gap-2 mb-1 text-xs text-gray-400">
+              <span>Stash / vendor search: tick the lines to look for</span>
+              <span class="ml-auto">Match</span>
+              <button class="px-1 rounded" :class="regexMatch === 'all' ? 'bg-gray-700 text-gray-100' : 'hover:text-gray-200'" title="Every ticked line must be on the item" @click="regexMatch = 'all'">all</button>
+              <button class="px-1 rounded" :class="regexMatch === 'any' ? 'bg-gray-700 text-gray-100' : 'hover:text-gray-200'" title="One of the ticked lines is enough" @click="regexMatch = 'any'">any</button>
+            </div>
+            <div v-for="p of regexParts" :key="p.key" class="flex items-center gap-2">
+              <label class="flex-1 min-w-0 flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" :checked="regexPick[p.key] === true" @change="regexPick = { ...regexPick, [p.key]: !regexPick[p.key] }">
+                <span class="truncate" :class="p.kind === 'mod' ? 'text-indigo-300' : 'text-gray-300'" :title="p.regex">{{ p.label }}</span>
+              </label>
+              <label v-if="p.hasValue" class="shrink-0 flex items-center gap-1 text-xs text-gray-500 cursor-pointer" title="On: this value or higher. Off: any value (shorter)">
+                <input type="checkbox" :checked="regexMin[p.key] ?? true" @change="regexMin = { ...regexMin, [p.key]: !(regexMin[p.key] ?? true) }">at least
+              </label>
+            </div>
+            <div class="mt-1 flex items-center gap-2">
+              <code class="flex-1 min-w-0 truncate rounded bg-gray-800 px-1" :class="regexResult.tooLong ? 'text-red-400' : 'text-gray-200'" :title="regexResult.text">{{ regexResult.text || 'Tick a line' }}</code>
+              <span class="text-xs shrink-0" :class="regexResult.tooLong ? 'text-red-400' : 'text-gray-500'">{{ regexResult.length }}/{{ MAX_LEN }}</span>
+              <button class="bg-gray-700 text-gray-300 rounded px-1.5" :disabled="!regexResult.text" title="Copy, then paste it in the stash or vendor search (Ctrl+F, Ctrl+V)"
+                @click="copy(regexResult.text, 'rx-' + item.slot)">
+                <i v-if="copiedKey === 'rx-' + item.slot" class="fas fa-check text-green-400" /><i v-else class="far fa-copy" /></button>
+              <button v-if="!hud" class="bg-gray-700 text-gray-300 rounded px-1.5" :disabled="!regexResult.text || regexResult.tooLong"
+                title="Save to Notes → Search strings (you can give it a hotkey there)" @click="saveRegex(item)">
+                <i v-if="savedKey === item.slot" class="fas fa-check text-green-400" /><i v-else class="fas fa-save" /></button>
+            </div>
+            <div v-if="regexResult.tooLong" class="text-xs text-red-400 mt-0.5">Too long for the game (50 characters). Untick a line, untick "at least", or match any.</div>
           </div>
           <div v-if="tradeError[item.slot]" class="text-xs text-red-400" style="padding-left: 6.5rem;">{{ tradeError[item.slot] }}</div>
           <div v-if="isOpen(item.slot) && item.mods.length" class="pb-1 text-sm" style="padding-left: 6.5rem;">
@@ -126,6 +158,8 @@ import PobTreeMap from './PobTreeMap.vue'
 import PobNotes from './PobNotes.vue'
 import { notesState, loadNotes, buildLabel } from './build-notes'
 import { pobText } from './labels'
+import { itemRegexParts, itemRegex, MAX_LEN } from './item-regex'
+import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
 // hud: inside the HUD window (Trade / price check are done by the overlay)
@@ -290,6 +324,35 @@ function openTrade (item: PobGearItem, upgrade = false) {
   }
   const err = openTradeSearch(item.text, upgrade)
   if (err) tradeError.value[item.slot] = err
+}
+
+// Regex: stash / vendor search for items like this one (one item at a time)
+const regexSlot = ref<string | null>(null)
+const regexPick = ref<Record<string, boolean>>({})
+const regexMin = ref<Record<string, boolean>>({})
+const regexMatch = ref<'all' | 'any'>('all')
+const savedKey = ref<string | null>(null)
+const regexItem = computed(() => items.value?.find(i => i.slot === regexSlot.value) ?? null)
+const regexParts = computed(() => regexItem.value ? itemRegexParts(regexItem.value, regexMin.value) : [])
+const regexResult = computed(() => itemRegex(regexParts.value.filter(p => regexPick.value[p.key]), regexMatch.value))
+function toggleRegex (slot: string) {
+  regexSlot.value = regexSlot.value === slot ? null : slot
+  regexPick.value = {}
+  regexMin.value = {}
+  regexMatch.value = 'all'
+}
+function saveRegex (item: PobGearItem) {
+  const r = regexResult.value
+  if (!r.text || r.tooLong) return
+  const list = AppConfig().pob?.searchStrings ?? []
+  if (!list.some(s => s.text === r.text)) {
+    const id = Math.max(0, ...list.map(s => s.id)) + 1
+    AppConfig().pob.searchStrings = [...list, { id, name: `${item.label}: ${item.title || item.name}`.slice(0, 40), text: r.text, hotkey: null }]
+    saveConfig()
+    pushHostConfig()
+  }
+  savedKey.value = item.slot
+  setTimeout(() => { if (savedKey.value === item.slot) savedKey.value = null }, 1500)
 }
 
 // Open the normal price check window for this item (stat filters, prices, build impact)
