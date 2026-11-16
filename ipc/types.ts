@@ -1365,6 +1365,43 @@ export interface TimelessResult {
   nodes: TimelessNode[]
 }
 
+// Deathloom fork (16 Nov 2026): timeless seed search ("Find seeds")
+export interface TimelessWant {
+  // outcome: legion passive name or added stat line, as in TimelessOptions
+  label: string
+  // that notable must get it; empty = count the notables in radius that get it
+  node?: number
+  // with no node: at least this many notables (default 1)
+  min?: number
+}
+export interface TimelessOption {
+  label: string
+  // how many seeds give it
+  seeds: number
+}
+export interface TimelessOptions {
+  jewel: string
+  socket: number
+  nodes: Array<{ id: number, name: string, alloc: boolean, options: TimelessOption[] }>
+  // every outcome in radius and how many notables can get it
+  labels: Array<{ label: string, nodes: number }>
+}
+export interface TimelessSeedHit {
+  node: number
+  name: string
+  label: string
+  alloc: boolean
+}
+export interface TimelessSearch {
+  jewel: string
+  socket: number
+  wants: number
+  // seeds that meet every want
+  complete: number
+  total: number
+  seeds: Array<{ seed: number, score: number, met: number, all: boolean, hits: TimelessSeedHit[] }>
+}
+
 type IpcPobTimelessRequest =
   Event<'CLIENT->MAIN::pob-timeless', {
     requestId: number
@@ -1373,6 +1410,8 @@ type IpcPobTimelessRequest =
     conqueror?: string
     seed?: number
     socket?: number
+    find?: 'options' | 'search'
+    wants?: TimelessWant[]
   }>
 
 type IpcPobTimelessResult =
@@ -1383,6 +1422,8 @@ type IpcPobTimelessResult =
     jewels?: TimelessJewelInfo[]
     sockets?: TimelessSocket[]
     result?: TimelessResult
+    options?: TimelessOptions
+    search?: TimelessSearch
   }>
 
 // Deathloom fork (16 Nov 2026): crafting simulator (mod pool from PoB's data)

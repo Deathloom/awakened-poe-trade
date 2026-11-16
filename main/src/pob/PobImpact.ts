@@ -518,7 +518,7 @@ export class PobImpact {
     return this.ready
   }
 
-  private async call (cmd: string, params: Record<string, unknown> = {}): Promise<any> {
+  private async call (cmd: string, params: Record<string, unknown> = {}, timeout = REQUEST_TIMEOUT): Promise<any> {
     await this.start()
     const proc = this.proc
     if (!proc) throw new Error('Path of Building is not running')
@@ -527,7 +527,7 @@ export class PobImpact {
       const timer = setTimeout(() => {
         this.pending.delete(id)
         reject(new Error(`Path of Building did not answer '${cmd}' in time`))
-      }, REQUEST_TIMEOUT)
+      }, timeout)
       this.pending.set(id, { resolve, reject, timer })
       proc.stdin.write(JSON.stringify({ id, cmd, ...params }) + '\n')
     })
@@ -1074,17 +1074,24 @@ export class PobImpact {
 
   // Deathloom fork: timeless jewel explorer (Craft tab). PoB works it out on a
   // scratch tree; the active build is only read (which passives it allocates).
-  async timeless (req: { sockets?: boolean, jewel?: string, conqueror?: string, seed?: number, socket?: number }): Promise<Record<string, unknown>> {
+  async timeless (req: { sockets?: boolean, jewel?: string, conqueror?: string, seed?: number, socket?: number, find?: string, wants?: unknown }): Promise<Record<string, unknown>> {
     await this.ensureBuild()
     const params: Record<string, unknown> = {}
     if (req.sockets === true) params.sockets = true
+    const find = req.find === 'options' || req.find === 'search' ? req.find : undefined
     if (typeof req.jewel === 'string') {
       params.jewel = req.jewel.slice(0, 40)
-      params.conqueror = String(req.conqueror ?? '').slice(0, 40)
-      params.seed = Number(req.seed)
       params.socket = Number(req.socket)
+      if (find) {
+        params.find = find
+        if (find === 'search') params.wants = timelessWants(req.wants)
+      } else {
+        params.conqueror = String(req.conqueror ?? '').slice(0, 40)
+        params.seed = Number(req.seed)
+      }
     }
-    const reply = await this.call('timeless', params)
+    // a seed search reads every seed of the jewel (up to ~8000), give it longer
+    const reply = await this.call('timeless', params, find ? 120_000 : undefined)
     const list = (v: unknown): any[] => Array.isArray(v) ? v : []
     return {
       jewels: list(reply.jewels).map((j: any) => ({ ...j, conquerors: list(j.conquerors) })),
@@ -1093,6 +1100,19 @@ export class PobImpact {
         ? {
             ...reply.result,
             nodes: list(reply.result.nodes).map((n: any) => ({ ...n, stats: list(n.stats), before: list(n.before) }))
+          }
+        : undefined,
+      options: reply.options
+        ? {
+            ...reply.options,
+            nodes: list(reply.options.nodes).map((n: any) => ({ ...n, options: list(n.options) })),
+            labels: list(reply.options.labels)
+          }
+        : undefined,
+      search: reply.search
+        ? {
+            ...reply.search,
+            seeds: list(reply.search.seeds).map((s: any) => ({ ...s, hits: list(s.hits) }))
           }
         : undefined
     }
@@ -1220,4 +1240,23 @@ export class PobImpact {
     }
     return { build: this.loadedBuild!, result }
   }
+}
+
+// Deathloom fork: wanted outcomes for the timeless seed search, from the
+// renderer. Kept small and typed before they reach PoB.
+function timelessWants (v: unknown): Array<{ label: string, node?: number, min?: number }> {
+  if (!Array.isArray(v)) return []
+  const out: Array<{ label: string, node?: number, min?: number }> = []
+  for (const w of v.slice(0, 10)) {
+    if (!w || typeof w !== 'object') continue
+    const label = (w as any).label
+    if (typeof label !== 'string' || !label.trim()) continue
+    const want: { label: string, node?: number, min?: number } = { label: label.slice(0, 300) }
+    const node = Number((w as any).node)
+    if (Number.isInteger(node) && node > 0) want.node = node
+    const min = Number((w as any).min)
+    if (Number.isInteger(min) && min > 1) want.min = Math.min(min, 20)
+    out.push(want)
+  }
+  return out
 }
