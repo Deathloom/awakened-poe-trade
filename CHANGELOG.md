@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#217)
+- **Build → Gear: regex button** next to each item. Tick the item's lines (base type or unique name, each mod with "at least this value" or any value) and get a stash / vendor search for items like it, with the 50-character count, Copy and Save (to Notes → Search strings, where it can get a hotkey).
+
 ## [1.0.90] - 2026-11-16
 
 ### Added (#214)
