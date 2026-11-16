@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.90] - 2026-11-16
+
 ### Added (#214)
 - **Timeless jewel: Find seeds.** Craft tab → Timeless jewel → Find seeds: pick the jewel and socket, then what you want (a passive or stat on a certain notable, or a stat on at least N notables anywhere in the radius). Orbhoarder lists the best seeds, what each one gives, a button to show all its passives and a trade search for that seed with any conqueror.
 
