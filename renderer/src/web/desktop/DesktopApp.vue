@@ -2,18 +2,18 @@
   <!-- Deathloom fork: desktop window (index.html?desktop). All panels in one
        normal window for a second screen; live with the game like the overlay. -->
   <div class="desktop-root relative flex flex-col h-full text-gray-200">
-    <div class="flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0">
-      <span class="text-gray-400 mr-3 flex items-center"><img src="/images/orbhoarder.svg" class="w-6 h-6 mr-1.5 lg-logo" alt="" />Orbhoarder<span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
-      <button v-for="v of VIEWS" :key="v.key" class="px-3 py-0.5 rounded"
-        :class="view === v.key ? 'bg-gray-600 text-gray-100 lg-tab-active' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
+    <div class="desktop-topbar flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0 whitespace-nowrap overflow-x-auto">
+      <span class="text-gray-300 mr-3 flex items-center shrink-0 font-semibold"><img src="/images/orbhoarder.svg" class="w-6 h-6 mr-1.5 lg-logo" alt="" /><span class="hidden 2xl:inline">Orbhoarder</span><span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
+      <button v-for="v of VIEWS" :key="v.key" class="shrink-0 px-2 py-1 rounded-md text-sm"
+        :class="view === v.key ? 'bg-blue-600/25 text-blue-100 lg-tab-active' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         :title="v.title" @click="setView(v.key)">
-        <i class="fas mr-1" :class="v.icon" />{{ v.label }}</button>
-      <button v-if="view === 'overview'" class="ml-auto px-2 py-0.5 rounded text-xs"
+        <i class="fas xl:mr-1.5" :class="v.icon" /><span class="hidden xl:inline">{{ v.label }}</span></button>
+      <button v-if="view === 'overview'" class="shrink-0 ml-auto px-2 py-1 rounded-md text-xs"
         :class="editLayout ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         title="Add, remove, move and resize the panels on the All tab" @click="editLayout = !editLayout">
         <i class="fas fa-th mr-1" />{{ editLayout ? 'Done' : 'Edit layout' }}</button>
-      <span class="text-xs text-gray-500" :class="view === 'overview' ? 'ml-3' : 'ml-auto'" :title="playingHelp">{{ status }}</span>
-      <button class="ml-3 px-2 py-0.5 rounded text-xs text-gray-400 hover:text-gray-100 hover:bg-gray-700"
+      <span class="shrink-0 text-xs text-gray-500" :class="view === 'overview' ? 'ml-3' : 'ml-auto'" :title="playingHelp">{{ status }}</span>
+      <button class="shrink-0 ml-3 px-2 py-1 rounded-md text-xs text-gray-400 hover:text-gray-100 hover:bg-gray-700"
         title="Report a bug or suggest a feature" @click="feedback = 'bug'">
         <i class="fas fa-bug mr-1" />Bug<span class="text-gray-600 mx-1">/</span><i class="fas fa-lightbulb mr-1" />Idea</button>
     </div>
@@ -196,6 +196,8 @@ html.desktop, html.desktop body {
 html.desktop #app {
   justify-content: flex-start;
 }
+/* thin scrollbar when the tabs don't fit (narrow window) */
+.desktop-topbar::-webkit-scrollbar { height: 4px; }
 .desktop-root .widget-default-style {
   max-height: none;
 }

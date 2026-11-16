@@ -1,5 +1,5 @@
 <template>
-  <div :class="[$style.btn, { [$style.active]: !filter.disabled }]">
+  <div :class="[$style.btn, 'pc-chip', { [$style.active]: !filter.disabled, 'pc-chip-on': !filter.disabled }]">
     <button @click="filter.disabled = !filter.disabled" class="pl-2">{{ name }}</button>
     <input :class="$style.input" step="any" type="number"
       v-model.number="inputMin"
