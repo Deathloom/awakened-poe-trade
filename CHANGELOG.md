@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#222)
+- **Tickboxes instead of switch icons** everywhere in Settings: the switch icon didn't show on some PCs, so options looked like plain text.
+- **Tree map always opens zoomed in** and always has the **target** button: next passives of the levelling plan, else the build's passives you haven't taken yet, else the whole build (before, without a levelling plan it showed the whole tree and no target).
+- **Settings → Panels: "One window for all pinned panels"** is always listed (it only showed once a panel was pinned).
+
 ### Changed (#221)
 - **Mapping layout has the Tree map** (you still level in maps): Tree map / Build / Money tools in the right column. Mapping layouts saved in 1.0.91-beta.1 to beta.3 get it added once, above Build.
 - **Atlas tree: target button** (crosshairs, next to Fit) like the passive tree's: zooms to the next passives to take, or to the whole build when nothing is left. The atlas also follows the next passives as you take them in game (not while editing).

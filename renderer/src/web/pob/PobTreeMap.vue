@@ -26,7 +26,7 @@
       <span v-else-if="alloc"><i class="fas fa-circle text-yellow-400" /> in the build</span>
       <span class="flex-1" />
       <input v-if="!compact" v-model="search" class="px-1 rounded bg-gray-800 text-gray-200 w-40" placeholder="Search nodes / stats" spellcheck="false">
-      <button v-if="levellingOn && levelPlan" class="text-gray-500 hover:text-gray-200" title="Zoom to the next passives" @click="focusNext"><i class="fas fa-crosshairs" /></button>
+      <button v-if="alloc || live || levelPlan" class="text-gray-500 hover:text-gray-200" :title="levelPlan ? 'Zoom to the next passives' : 'Zoom to the passives still to take (or the build)'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
       <button v-if="!compact" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it). Saved to the build file; masteries are picked in Path of Building."
         :disabled="editBusy" @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
@@ -117,8 +117,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-tree-map', (e) => {
   // the active build may have changed (Switching from fills in by itself)
   if (!props.compact) requestBuilds()
   if (newVersion || !fitted) {
-    if (levellingOn.value && levelPlan.value) focusNext()
-    else fit()
+    focusTarget()
   } else draw()
 })
 const characterListener = Host.onEvent('MAIN->CLIENT::pob-character', () => { request() })
@@ -362,6 +361,17 @@ function fit () {
   draw()
 }
 
+// Deathloom fork (Gerhard 17 Nov): target button and the first view always zoom
+// in: the levelling plan's next passives; else the build's passives you haven't
+// taken yet (live character); else the whole build; else the whole tree
+function focusTarget () {
+  if (levellingOn.value && levelPlan.value) { focusNext(); return }
+  const build = [...buildSet.value]
+  const todo = live.value ? build.filter(id => !liveSet.value.has(id)) : []
+  if (todo.length) zoomTo(todo)
+  else if (build.length) zoomTo(build)
+  else fit()
+}
 // zoom to the next passives of the levelling plan (with what's around them)
 function focusNext () {
   const lp = levelPlan.value
