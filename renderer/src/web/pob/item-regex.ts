@@ -3,7 +3,7 @@
 // regex: its value ("at least" or any) plus the start of the text after it.
 // The game's search is case-insensitive, max 50 characters; "quoted" parts
 // must all match. Pure logic (unit tested in tests/logic.test.mjs).
-import { atLeast, MAX_LEN } from './vendor-regex'
+import { atLeast, linkPattern, MAX_LEN } from './vendor-regex'
 
 export { MAX_LEN }
 
@@ -61,16 +61,41 @@ export interface ItemRegexPart {
   label: string
   regex: string
   // base type part, or a mod line
-  kind: 'name' | 'base' | 'mod'
+  kind: 'name' | 'base' | 'defence' | 'links' | 'mod'
   // the mod has a number (an "at least" choice makes sense)
   hasValue: boolean
 }
 
 export interface ItemLike {
   name: string
+  // the item in the game's Ctrl+C format (defences and sockets are read from it)
+  text?: string
   baseName: string
   rarity: string
   mods: Array<{ text: string, kind: string, unsupported?: boolean }>
+}
+
+// Defences as the game shows them ("Energy Shield: 250"); the search matches
+// these lines too. Short, still unique: the last word of the name + ": ".
+const DEFENCES: Array<[string, string]> = [
+  ['Armour', 'armour: '],
+  ['Evasion Rating', 'rating: '],
+  ['Energy Shield', 'shield: '],
+  ['Ward', 'ward: ']
+]
+
+function defenceRegex (prefix: string, n: number, minValue: boolean): string {
+  if (!minValue) return `${prefix}\\d+`
+  // up to one digit more (armour 950 → 1200 still matches)
+  const digits = String(n).length
+  return prefix + group(atLeast(n, digits + 1).replace(/\[1-9\]\\d\{(\d)\}/g, (_, k: string) => `\\d{${Number(k) + 1}}`))
+}
+
+// longest linked group from "Sockets: R-G-B B"
+function linkedSockets (text: string): number {
+  const line = /^Sockets: (.+)$/m.exec(text)
+  if (!line) return 0
+  return Math.max(0, ...line[1].trim().split(' ').map(g => g.split('-').length))
 }
 
 export function itemRegexParts (item: ItemLike, minValue: Record<string, boolean> = {}): ItemRegexPart[] {
@@ -79,6 +104,19 @@ export function itemRegexParts (item: ItemLike, minValue: Record<string, boolean
     parts.push({ key: 'name', label: `Name: ${item.name}`, regex: escapeRe(item.name.toLowerCase()), kind: 'name', hasValue: false })
   } else if (item.baseName) {
     parts.push({ key: 'base', label: `Base: ${item.baseName}`, regex: escapeRe(item.baseName.toLowerCase()), kind: 'base', hasValue: false })
+  }
+  const text = item.text ?? ''
+  for (const [name, prefix] of DEFENCES) {
+    const m = new RegExp(`^${name}: (\\d+)`, 'm').exec(text)
+    if (!m) continue
+    const key = `def-${prefix.trim()}`
+    const n = Number(m[1])
+    if (n <= 0) continue
+    parts.push({ key, label: `${name}: ${n}`, regex: defenceRegex(prefix, n, minValue[key] ?? true), kind: 'defence', hasValue: true })
+  }
+  const links = linkedSockets(text)
+  if (links >= 2) {
+    parts.push({ key: 'links', label: `${links}-link (any colours)`, regex: linkPattern(links, []), kind: 'links', hasValue: false })
   }
   item.mods.forEach((mod, i) => {
     if (!mod.text.trim()) return

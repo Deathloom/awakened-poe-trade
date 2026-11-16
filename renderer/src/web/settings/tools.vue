@@ -33,12 +33,22 @@
       <div class="text-base mb-1">Phone or other devices</div>
       <div class="text-gray-500 mb-2">Open the Orbhoarder window in a browser on your phone or another PC on the same Wi-Fi (campaign guide, build notes, cheat sheets on a second screen). Only devices that open the link with its key get in.</div>
       <ui-toggle :modelValue="remote?.enabled === true" @update:modelValue="setRemote">Allow my phone or other devices on my network</ui-toggle>
-      <div v-if="remote && remote.enabled !== remote.listening" class="text-yellow-300 mt-1">Restart Orbhoarder (tray → Quit, then start it) for this to take effect. Windows may ask to allow it through the firewall: allow Private networks only.</div>
+      <div v-if="remote && remote.enabled !== remote.listening" class="text-yellow-300 mt-1">
+        {{ remote.enabled ? 'Orbhoarder makes the phone link after a restart.' : 'Phone access stops after a restart.' }}
+        <button class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="restart">Restart now</button>
+        <div v-if="remote.enabled" class="text-gray-500">Windows may ask to allow it through the firewall: allow Private networks only.</div>
+      </div>
+      <div v-if="remote?.listening && !remote.urls.length" class="text-yellow-300 mt-1">No network address found: is this PC on Wi-Fi or a network cable?</div>
       <template v-if="remote?.listening && remote.urls.length">
-        <div class="mt-2 text-gray-400">Open this on your phone (same Wi-Fi):</div>
-        <div v-for="u of remote.urls" :key="u" class="flex items-center gap-2 mt-1">
-          <code class="flex-1 min-w-0 truncate bg-gray-900 rounded px-1" :title="u">{{ u }}</code>
-          <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" @click="copy(u)">{{ copied === u ? 'Copied' : 'Copy' }}</button>
+        <div class="mt-2 text-gray-400">Scan with your phone's camera (same Wi-Fi), or copy the link:</div>
+        <div v-for="u of remote.urls" :key="u" class="mt-1">
+          <div class="flex items-center gap-2">
+            <code class="flex-1 min-w-0 truncate bg-gray-900 rounded px-1" :title="u">{{ u }}</code>
+            <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" @click="copy(u)">{{ copied === u ? 'Copied' : 'Copy' }}</button>
+            <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" @click="qrFor = qrFor === u ? '' : u">{{ qrFor === u ? 'Hide QR' : 'QR code' }}</button>
+          </div>
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <div v-if="qrFor === u" class="mt-2 inline-block bg-white p-2 rounded" style="width: 14rem;" v-html="qrSvg(u)" />
         </div>
         <div class="text-gray-500 mt-1">The key is like a password: don't share the link outside your home. The connection isn't encrypted, so only use it on your own Wi-Fi.
           <button class="underline hover:text-gray-200" @click="newKey">New key</button> (old links stop working).</div>
@@ -48,7 +58,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, onUnmounted } from 'vue'
+import { defineComponent, computed, ref, watch, onUnmounted } from 'vue'
+import qrcode from 'qrcode-generator'
 import type { HealthItem, RemoteInfo, IpcEventPayload } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import type { Config } from '@/web/Config'
@@ -75,7 +86,7 @@ export default defineComponent({
     })
     onUnmounted(() => { listener.abort() })
 
-    function ask (op: 'health' | 'remote-info' | 'remote-set' | 'remote-newkey' | 'backup-save' | 'backup-open', extra: { enabled?: boolean, text?: string } = {}) {
+    function ask (op: 'health' | 'remote-info' | 'remote-set' | 'remote-newkey' | 'restart' | 'backup-save' | 'backup-open', extra: { enabled?: boolean, text?: string } = {}) {
       return new Promise<Reply>((resolve) => {
         const id = ++requestId
         pending.set(id, resolve)
@@ -98,6 +109,17 @@ export default defineComponent({
     ask('remote-info').then(e => { remote.value = e.remote ?? null }, () => {})
     async function setRemote (on: boolean) { remote.value = (await ask('remote-set', { enabled: on })).remote ?? null }
     async function newKey () { remote.value = (await ask('remote-newkey')).remote ?? null }
+    function restart () { ask('restart').then(() => {}, () => {}) }
+    // first link's QR open by default (the usual one is the Wi-Fi address)
+    const qrFor = ref('')
+    watch(() => remote.value?.urls[0], (u) => { if (u && !qrFor.value) qrFor.value = u })
+    function qrSvg (text: string): string {
+      const qr = qrcode(0, 'M')
+      qr.addData(text)
+      qr.make()
+      // our own link only (local address + key), no user text
+      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true })
+    }
     function copy (text: string) {
       Host.sendEvent({ name: 'CLIENT->MAIN::write-clipboard', payload: { text } })
       copied.value = text
@@ -124,7 +146,7 @@ export default defineComponent({
       } finally { busy.value = null }
     }
 
-    return { busy, health, allHealth, runHealth, remote, setRemote, newKey, copy, copied, saveBackup, openBackup, backupMsg, backupErr }
+    return { busy, health, allHealth, runHealth, remote, setRemote, newKey, restart, qrFor, qrSvg, copy, copied, saveBackup, openBackup, backupMsg, backupErr }
   }
 })
 </script>

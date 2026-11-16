@@ -5,6 +5,8 @@ import { ref, watch } from 'vue'
 import type { PanelKey } from '@ipc/types'
 import { inWindow } from './panels'
 import { readWindowKey, windowKey } from '@/web/hud/is-hud'
+import { effectiveMode, phaseForArea, type LayoutMode, type LayoutPref } from './layout-phase'
+import { PLAY_SESSION_KEY, loadPlaySession } from '../companion/play-session'
 
 export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money'
 
@@ -41,6 +43,10 @@ export interface AllLayout { v: 1, cols: LayoutCol[] }
 export const MAX_COLS = 5
 const MIN = 0.06
 const KEY = 'deathloom.all-layout.v1'
+// Mapping layout (16 Nov 2026), and which one shows
+const MAP_KEY = 'deathloom.all-layout.mapping.v1'
+const PREF_KEY = 'deathloom.all-layout.pref.v1'
+const PHASE_KEY = 'deathloom.all-layout.phase.v1'
 
 export function defaultLayout (): AllLayout {
   return {
@@ -49,6 +55,20 @@ export function defaultLayout (): AllLayout {
       { w: 0.33, items: [{ id: 'gear', h: 0.6 }, { id: 'trades', h: 0.2 }, { id: 'market', h: 0.2 }] },
       { w: 0.33, items: [{ id: 'guide', h: 1 }] },
       { w: 0.34, items: [{ id: 'tree', h: 0.5 }, { id: 'atlas', h: 0.5 }] }
+    ]
+  }
+}
+
+// Mapping (Gerhard 16 Nov 2026: the panels that help most while mapping):
+// This session (map timer, profit/h) / Trades / Market | Atlas tree / Cheat
+// sheets (map mechanics, bosses) | Build / Money tools
+export function defaultMappingLayout (): AllLayout {
+  return {
+    v: 1,
+    cols: [
+      { w: 0.3, items: [{ id: 'session', h: 0.45 }, { id: 'trades', h: 0.25 }, { id: 'market', h: 0.3 }] },
+      { w: 0.4, items: [{ id: 'atlas', h: 0.6 }, { id: 'cheats', h: 0.4 }] },
+      { w: 0.3, items: [{ id: 'gear', h: 0.6 }, { id: 'money', h: 0.4 }] }
     ]
   }
 }
@@ -95,23 +115,64 @@ function normalise (l: AllLayout) {
   }
 }
 
-function load (): AllLayout {
-  try {
-    const saved = JSON.parse(readWindowKey(KEY) ?? 'null')
-    if (valid(saved)) { normalise(saved); return saved }
-  } catch {}
-  return fromOldSplits()
+function readStr (key: string): string | null {
+  try { return readWindowKey(key) } catch { return null }
 }
 
-export const layout = ref<AllLayout>(load())
+export const layoutPref = ref<LayoutPref>((['auto', 'levelling', 'mapping'] as const).find(p => p === readStr(PREF_KEY)) ?? 'auto')
+const phase = ref<LayoutMode>(readStr(PHASE_KEY) === 'mapping' ? 'mapping' : 'levelling')
+export const layoutMode = () => effectiveMode(layoutPref.value, phase.value)
+
+function load (mode: LayoutMode): AllLayout {
+  try {
+    const saved = JSON.parse(readWindowKey(mode === 'mapping' ? MAP_KEY : KEY) ?? 'null')
+    if (valid(saved)) { normalise(saved); return saved }
+  } catch {}
+  return mode === 'mapping' ? defaultMappingLayout() : fromOldSplits()
+}
+
+let shownMode: LayoutMode = layoutMode()
+export const layout = ref<AllLayout>(load(shownMode))
 
 export function saveLayout () {
-  try { localStorage.setItem(windowKey(KEY), JSON.stringify(layout.value)) } catch {}
+  try { localStorage.setItem(windowKey(shownMode === 'mapping' ? MAP_KEY : KEY), JSON.stringify(layout.value)) } catch {}
 }
 
 export function resetLayout () {
-  layout.value = defaultLayout()
+  layout.value = shownMode === 'mapping' ? defaultMappingLayout() : defaultLayout()
   saveLayout()
+}
+
+function showMode () {
+  const m = layoutMode()
+  if (m === shownMode) return
+  shownMode = m
+  layout.value = load(m)
+}
+
+export function setLayoutPref (p: LayoutPref) {
+  layoutPref.value = p
+  try { localStorage.setItem(windowKey(PREF_KEY), p) } catch {}
+  showMode()
+}
+
+function setPhase (p: LayoutMode) {
+  if (phase.value === p) return
+  phase.value = p
+  try { localStorage.setItem(windowKey(PHASE_KEY), p) } catch {}
+  showMode()
+}
+
+// Auto: follow the zone the overlay last saw (This session, shared storage)
+export function useLayoutPhase () {
+  const check = () => {
+    const p = phaseForArea(loadPlaySession().here?.code)
+    if (p) setPhase(p)
+  }
+  check()
+  const onStorage = (e: StorageEvent) => { if (e.key === PLAY_SESSION_KEY) check() }
+  window.addEventListener('storage', onStorage)
+  return () => window.removeEventListener('storage', onStorage)
 }
 
 export function panelDef (id: AllPanelId) {

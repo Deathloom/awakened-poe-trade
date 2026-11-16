@@ -117,6 +117,8 @@ app.on('ready', async () => {
         case 'remote-info': reply({ remote: remoteInfo() }); break
         case 'remote-set': reply({ remote: setRemote(req.enabled === true) }); break
         case 'remote-newkey': reply({ remote: newKey() }); break
+        // "Restart now" after turning phone access on/off (the server binds at start)
+        case 'restart': reply({}); setTimeout(() => { app.relaunch(); app.quit() }, 300); break
         case 'backup-save': reply({ backup: await saveBackup(req.text ?? '') }); break
         case 'backup-open': reply({ backup: await openBackup() }); break
       }

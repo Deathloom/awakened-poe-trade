@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#218)
+- **All tab: Levelling and Mapping layouts.** Auto (default) switches to the Mapping layout when you enter your first atlas map, and back to Levelling when a new character starts in The Twilight Strand. Mapping layout: This session, Trade companion, Market | Atlas tree, Cheat sheets | Build, Money tools. Each layout has its own Edit layout; pick one by hand with the layout menu next to Edit layout.
+- **Phone or other devices:** QR code to scan with your phone, a **Restart now** button after switching it on (the link appears after the restart), and a note when the PC has no network address.
+- **Gear regex:** armour, evasion, energy shield, ward (at least this value) and the item's link count can be ticked too.
+
 ### Added (#217)
 - **Build → Gear: regex button** next to each item. Tick the item's lines (base type or unique name, each mod with "at least this value" or any value) and get a stash / vendor search for items like it, with the 50-character count, Copy and Save (to Notes → Search strings, where it can get a hotkey).
 
