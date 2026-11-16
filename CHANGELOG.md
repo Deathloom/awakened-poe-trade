@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#209)
+- **Price check data for new leagues:** a new once-per-league job adds the trade site's new items, uniques, mod lines and bulk-exchange tags to the price check data in all four languages, without changing what's already there.
+
 ### Changed (#208)
 Path of Building updated for league 3.30 (Covens): the 3.30 passive tree, new uniques, Wickerman gear and Viscera mods, Polaric Devastation and the new flask mods. It arrives the next time you start Orbhoarder.
 

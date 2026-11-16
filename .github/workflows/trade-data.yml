@@ -1,0 +1,88 @@
+# Deathloom fork: once per league, add new items / stat lines / exchange tags
+# to the price check data from the trade site's public data lists
+# (/api/trade/data/items, stats, static). Merge only, see tools/gen-trade-data.py.
+# Runs here on GitHub, never in players' installs: 3 requests per language,
+# 5 s apart, with a User-Agent that says who we are.
+# Start it from the Actions tab (Trade data refresh -> Run workflow), or by
+# pushing any commit to the branch trade-data/run.
+name: Trade data refresh
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['trade-data/run']
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: trade-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      BASE: dev
+      UA: 'Orbhoarder-data-refresh/1.0 (github.com/Deathloom/awakened-poe-trade; once per league)'
+    steps:
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        ref: ${{ env.BASE }}
+    - name: Fetch the trade site's data lists
+      run: |
+        set -uo pipefail
+        D="$RUNNER_TEMP/dumps"
+        fetch () {  # lang host
+          mkdir -p "$D/$1"
+          for kind in items stats static; do
+            if ! curl -sSf --compressed -A "$UA" -H 'Accept: application/json' \
+                 "https://$2/api/trade/data/$kind" -o "$D/$1/$kind.json"; then
+              echo "::warning::$1 $kind: request failed"
+              rm -f "$D/$1/$kind.json"
+            elif ! python3 -c 'import json,sys; json.load(open(sys.argv[1]))["result"]' "$D/$1/$kind.json"; then
+              echo "::warning::$1 $kind: not JSON (blocked?)"
+              rm -f "$D/$1/$kind.json"
+            fi
+            sleep 5
+          done
+        }
+        fetch en www.pathofexile.com
+        fetch ru ru.pathofexile.com
+        fetch ko poe.game.daum.co.kr
+        fetch cmn-Hant pathofexile.tw
+        for k in items stats static; do
+          test -f "$D/en/$k.json" || { echo "::error::en $k missing, stopping"; exit 1; }
+        done
+        ls -la "$D"/*
+    - name: PoB item bases (pinned PoB fork commit, for base categories)
+      run: |
+        PIN=$(sed -n "s/.*POB_PIN = '\([0-9a-f]\{40\}\)'.*/\1/p" main/src/pob/pob-pin.ts)
+        mkdir -p "$RUNNER_TEMP/pob" && cd "$RUNNER_TEMP/pob"
+        git init -q && git remote add origin https://github.com/Deathloom/PathOfBuilding
+        git sparse-checkout set src/Data/Bases
+        git fetch -q --depth 1 origin "$PIN" && git checkout -q FETCH_HEAD
+    - name: Merge into the price check data
+      run: python3 -I tools/gen-trade-data.py "$RUNNER_TEMP/dumps" "$RUNNER_TEMP/pob/src/Data/Bases" --report "$RUNNER_TEMP/report.md"
+    - name: Open a PR into dev if anything changed
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if git diff --quiet; then
+          echo "Price check data already has everything the trade site lists."
+          exit 0
+        fi
+        git diff --stat
+        BRANCH="trade-data/$(date -u +%Y-%m-%d)"
+        git config user.name "github-actions[bot]"
+        git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+        git checkout -b "$BRANCH"
+        git commit -qam "Trade data refresh $(date -u +%Y-%m-%d)"
+        git push -f origin "$BRANCH"
+        { echo 'Added from the trade site data lists by **Trade data refresh**. Check the lists below, run a price check on a new item, then merge.'; echo; cat "$RUNNER_TEMP/report.md"; } > "$RUNNER_TEMP/body.md"
+        if gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; then
+          gh pr edit "$BRANCH" --body-file "$RUNNER_TEMP/body.md"
+        else
+          gh pr create --base "$BASE" --head "$BRANCH" --title "Trade data refresh $(date -u +%Y-%m-%d)" --body-file "$RUNNER_TEMP/body.md"
+        fi
