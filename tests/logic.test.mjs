@@ -476,3 +476,14 @@ test('poe.ninja categories: new slugs land in a Market group and atlas value', a
   const v = av.contentValues([{ name: 'Mysterious Wombgift', chaos: 20, category: 'wombgifts' }])
   assert.equal(v.breach.chaos, 20)
 })
+
+test('Mapping layout: tree map added once to saved layouts, above Build', async () => {
+  const lp = await import('./.build/layout-phase.mjs')
+  const l = { cols: [{ items: [{ id: 'session', h: 1 }] }, { items: [{ id: 'gear', h: 0.6 }, { id: 'money', h: 0.4 }] }] }
+  lp.addTreeMapOnce(l)
+  assert.deepEqual(l.cols[1].items.map(i => i.id), ['tree', 'gear', 'money'])
+  lp.addTreeMapOnce(l)
+  assert.equal(l.cols[1].items.filter(i => i.id === 'tree').length, 1)
+  const noGear = { cols: [{ items: [{ id: 'atlas', h: 1 }] }] }
+  assert.deepEqual(lp.addTreeMapOnce(noGear).cols[0].items.map(i => i.id), ['atlas', 'tree'])
+})

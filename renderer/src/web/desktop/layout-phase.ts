@@ -17,3 +17,16 @@ export function phaseForArea (code: string | undefined | null): LayoutMode | nul
 export function effectiveMode (pref: LayoutPref, phase: LayoutMode): LayoutMode {
   return pref === 'auto' ? phase : pref
 }
+
+// Mapping layouts saved before the tree map was in the Mapping default
+// (1.0.91-beta.1/2; Gerhard: you still level in maps): add it once, above Build
+// (or at the end of the last column). Removing it afterwards sticks (caller
+// remembers it ran). Heights are re-normalised by the caller.
+interface LayoutLike { cols: Array<{ items: Array<{ id: string, h: number }> }> }
+export function addTreeMapOnce<T extends LayoutLike> (l: T): T {
+  if (!l.cols.length || l.cols.some(c => c.items.some(it => it.id === 'tree'))) return l
+  const col = l.cols.find(c => c.items.some(it => it.id === 'gear')) ?? l.cols[l.cols.length - 1]
+  const gear = col.items.findIndex(it => it.id === 'gear')
+  col.items.splice(gear >= 0 ? gear : col.items.length, 0, { id: 'tree', h: 1 / col.items.length })
+  return l
+}
