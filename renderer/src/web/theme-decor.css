@@ -166,3 +166,13 @@ html.lg-style-clean .hk-input { font-family: inherit; font-size: 0.875rem; }
 input.hk-input.hk-unset::placeholder { color: rgb(252 129 129) !important; }
 input.hk-input.hk-game::placeholder { color: rgb(246 173 85) !important; }
 input.hk-input.hk-game { box-shadow: inset 0 0 0 1px rgb(237 137 54), 0 0 0 1px rgb(237 137 54) !important; }
+/* Easier-to-read small print (Settings → Appearance, on by default): the small
+   hint text and greyed-out text were hard to read, Fontin Small Caps most of all */
+html.lg-readable .text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.15rem;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-variant-caps: normal;
+}
+html.lg-readable .text-gray-600 { color: rgb(var(--g-500)); }
+html.lg-readable .text-gray-500 { color: rgb(var(--g-400)); }

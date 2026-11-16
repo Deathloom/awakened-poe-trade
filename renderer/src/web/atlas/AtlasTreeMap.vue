@@ -33,13 +33,20 @@
         <span class="text-gray-500">{{ points }} / {{ ATLAS.points ?? '?' }} points</span>
       </template>
       <template v-if="spec">
-        <span><i class="fas fa-circle text-green-500" /> taken ({{ counts.have }})</span>
+        <span :title="fromSpec ? 'In both trees: keep these' : undefined"><i class="fas fa-circle text-green-500" /> {{ fromSpec ? 'keep' : 'taken' }} ({{ counts.have }})</span>
         <span><i class="fas fa-circle text-orange-400" /> to take ({{ counts.todo }})</span>
+        <button v-if="fromSpec" class="text-red-400 hover:text-red-200" :title="refundTitle" @click="refundListOpen = !refundListOpen">
+          <i class="fas fa-circle" /> to remove ({{ refundIds.length }})</button>
         <button v-if="nextIds.length" class="text-cyan-300 hover:text-cyan-100" :title="nextTitle" @click="focusNext">
           <i class="fas fa-crosshairs" /> next {{ nextIds.length }}</button>
       </template>
       <span class="flex-1" />
-      <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200" :class="compact ? 'w-28' : 'w-36'" placeholder="Search atlas" spellcheck="false">
+      <span v-if="searchHits" class="text-yellow-300" :title="searchHits.size ? 'Enter (or click) zooms to the next one' : undefined">
+        <button v-if="searchHits.size" class="hover:text-yellow-100" @click="nextHit">{{ hitIdx >= 0 ? `${hitIdx + 1} / ` : '' }}{{ searchHits.size }} found <i class="fas fa-crosshairs" /></button>
+        <template v-else>none found</template>
+      </span>
+      <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200" :class="compact ? 'w-28' : 'w-36'" placeholder="Search atlas" spellcheck="false"
+        @keydown.enter="nextHit" @keydown.esc="search = ''">
       <button v-if="activeBuild?.own" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
         @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
@@ -83,6 +90,20 @@
       </div>
     </div>
     <div v-if="lastError" class="px-2 pb-1 text-xs text-red-400 shrink-0">{{ lastError }}</div>
+    <div v-if="spec && store.builds.length > 1" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 pb-1 text-xs shrink-0">
+      <span class="text-gray-400" title="Moving on from another atlas build? Pick it: passives only in that one turn red (remove them: one Orb of Unmaking each), the ones in both stay green">Switching from</span>
+      <select class="rounded bg-gray-800 px-1 max-w-[12rem]" :value="fromId ?? ''" @change="setFrom(($event.target as HTMLSelectElement).value || null)">
+        <option value="">nothing (show what you took in game)</option>
+        <optgroup v-for="g of groups" :key="g.label" :label="g.label">
+          <option v-for="b of g.builds.filter(x => x.id !== store.active)" :key="b.id" :value="b.id">{{ b.name }}</option>
+        </optgroup>
+      </select>
+      <span v-if="fromSpec" class="text-gray-500">{{ refundIds.length }} to remove ({{ refundIds.length }} Orb{{ refundIds.length === 1 ? '' : 's' }} of Unmaking), {{ counts.todo }} to take</span>
+    </div>
+    <div v-if="fromSpec && refundListOpen && refundIds.length" class="px-2 pb-1 text-xs shrink-0 max-h-24 overflow-y-auto">
+      <span class="text-gray-400">Remove, outermost first (click to show): </span>
+      <button v-for="(id, i) of refundIds" :key="id" class="mr-2 text-red-300 hover:text-red-100" @click="zoomTo([id], 1600, 0.35)">{{ i + 1 }}. {{ ATLAS_BY_ID.get(id)?.[6] || 'Atlas passive' }}</button>
+    </div>
     <div v-if="trackOpen" class="px-2 pb-1 text-xs text-gray-400 shrink-0">
       Orbhoarder ticks atlas passives as you allocate them in game (Client.txt). It can't see what you took before, so:
       <button v-if="spec" class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setTakenFrom(spec.nodes)">I have this whole build</button>
@@ -134,7 +155,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
-import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, pointsOf, statsOf, type AtlasNode } from './atlas-tree'
+import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, decodeAtlas, pointsOf, statsOf, type AtlasNode } from './atlas-tree'
 import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, setTakenFrom, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
 import { sumStats, cleanStat } from './atlas-stats'
 import { CONTENTS, CONTENT_NOTABLES, SUSTAIN, generateAtlas, type GenResult } from './atlas-generator'
@@ -150,7 +171,14 @@ const importName = ref('')
 const importError = ref('')
 const trackOpen = ref(false)
 const copied = ref(false)
-function onPick (e: Event) { setActive((e.target as HTMLSelectElement).value || null) }
+function onPick (e: Event) {
+  const prev = store.value.active
+  const next = (e.target as HTMLSelectElement).value || null
+  // moving on to another build: show what to remove from the one you had
+  if (prev && next && prev !== next) setFrom(prev)
+  else if (next && fromId.value === next) setFrom(null)
+  setActive(next)
+}
 function doImport () {
   try {
     const code = codeFromInput(importText.value)
@@ -265,10 +293,43 @@ const DEPTH = (() => {
   return d
 })()
 const buildSet = computed(() => new Set([...(spec.value?.nodes ?? []), ...ATLAS_START]))
-const haveSet = computed(() => spec.value ? takenNodes([...buildSet.value], DEPTH) : new Set<number>())
+// Deathloom fork: "Switching from" another atlas build. Its passives that aren't
+// in this one are to remove (red); the ones in both count as taken.
+const FROM_KEY = 'deathloom.atlas-from.v1'
+const fromId = ref<string | null>((() => { try { return localStorage.getItem(FROM_KEY) } catch { return null } })())
+function setFrom (id: string | null) {
+  fromId.value = id
+  try { if (id) localStorage.setItem(FROM_KEY, id); else localStorage.removeItem(FROM_KEY) } catch {}
+}
+const fromSpec = computed(() => {
+  const b = store.value.builds.find(x => x.id === fromId.value)
+  if (!b || b.id === store.value.active) return null
+  try { return decodeAtlas(b.code) } catch { return null }
+})
+const refundListOpen = ref(false)
+const refundSet = computed(() => {
+  const out = new Set<number>()
+  if (!fromSpec.value) return out
+  for (const id of fromSpec.value.nodes) {
+    if (!buildSet.value.has(id) && !ATLAS_START.has(id) && ATLAS_BY_ID.get(id)?.[3] !== 3) out.add(id)
+  }
+  return out
+})
+// outermost first: a passive can only be removed when nothing hangs off it
+const refundIds = computed(() => [...refundSet.value].sort((a, b) => (DEPTH.get(b) ?? 0) - (DEPTH.get(a) ?? 0)))
+const refundTitle = computed(() => 'Passives of the build you switch from that this one doesn\'t have. Remove them in game (one Orb of Unmaking each), outermost first. Click for the list.')
+const haveSet = computed(() => {
+  if (!spec.value) return new Set<number>()
+  if (fromSpec.value) {
+    const from = new Set(fromSpec.value.nodes)
+    return new Set([...buildSet.value].filter(id => ATLAS_START.has(id) || from.has(id)))
+  }
+  return takenNodes([...buildSet.value], DEPTH)
+})
 const points = computed(() => pointsOf(spec.value?.nodes ?? []))
-type State = 'have' | 'todo' | 'none'
+type State = 'have' | 'todo' | 'none' | 'refund'
 function stateOf (id: number): State {
+  if (refundSet.value.has(id)) return 'refund'
   if (!buildSet.value.has(id)) return 'none'
   return haveSet.value.has(id) ? 'have' : 'todo'
 }
@@ -276,7 +337,7 @@ const counts = computed(() => {
   const c = { have: 0, todo: 0 }
   for (const id of buildSet.value) {
     if (ATLAS_START.has(id) || ATLAS_BY_ID.get(id)?.[3] === 3) continue
-    c[stateOf(id) === 'have' ? 'have' : 'todo']++
+    c[haveSet.value.has(id) ? 'have' : 'todo']++
   }
   return c
 })
@@ -322,7 +383,7 @@ const nextIndex = computed(() => new Map(nextIds.value.map((id, i) => [id, i + 1
 const nextTitle = computed(() => 'Next passives to take in game (numbered on the atlas): the path to the nearest notable, map sustain first. Click to zoom.\n' +
   nextIds.value.map((id, i) => `${i + 1}. ${ATLAS_BY_ID.get(id)?.[6] ?? id}`).join('\n'))
 function focusNext () { if (nextIds.value.length) zoomTo(nextIds.value, 1600, 0.3) }
-const COLORS: Record<State, string> = { have: '#22c55e', todo: '#fb923c', none: '#5b6b84' }
+const COLORS: Record<State, string> = { have: '#22c55e', todo: '#fb923c', none: '#5b6b84', refund: '#ef4444' }
 const search = ref('')
 const searchHits = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -334,6 +395,15 @@ const searchHits = computed(() => {
   }
   return hits
 })
+const hitIdx = ref(-1)
+watch(search, () => { hitIdx.value = -1 })
+const hitList = computed(() => [...(searchHits.value ?? [])].sort((a, b) => (DEPTH.get(a) ?? 0) - (DEPTH.get(b) ?? 0)))
+function nextHit () {
+  const list = hitList.value
+  if (!list.length) return
+  hitIdx.value = (hitIdx.value + 1) % list.length
+  zoomTo([list[hitIdx.value]], 1400, 0.35)
+}
 
 // ---- edit (take with path / refund with what hangs off it) ----
 const editMode = ref(false)
@@ -493,9 +563,10 @@ function onMove (e: MouseEvent) {
   const st = stateOf(n[0])
   const [status, statusClass] = ATLAS_START.has(n[0])
     ? ['Atlas start', 'text-gray-400']
-    : st === 'have' ? ['You have it', 'text-green-400']
-      : nextIndex.value.has(n[0]) ? [`Next: ${nextIndex.value.get(n[0])} of ${nextIds.value.length}`, 'text-cyan-300']
-        : st === 'todo' ? ['To take', 'text-orange-400'] : ['', '']
+    : st === 'refund' ? ['Remove: only in the build you switch from', 'text-red-400']
+      : st === 'have' ? [fromSpec.value ? 'In both builds: keep' : 'You have it', 'text-green-400']
+        : nextIndex.value.has(n[0]) ? [`Next: ${nextIndex.value.get(n[0])} of ${nextIds.value.length}`, 'text-cyan-300']
+          : st === 'todo' ? ['To take', 'text-orange-400'] : ['', '']
   hover.value = { name: n[6] || 'Atlas passive', stats: statsOf(n, spec.value?.choices ?? {}), status, statusClass, x: mx, y: my }
 }
 
@@ -507,6 +578,10 @@ function draw () {
 }
 function linkState (a: number, b: number): State {
   const sa = stateOf(a); const sb = stateOf(b)
+  if (sa === 'refund' || sb === 'refund') {
+    const from = fromSpec.value?.nodes
+    return from && (sa === 'refund' || ATLAS_START.has(a) || from.includes(a)) && (sb === 'refund' || ATLAS_START.has(b) || from.includes(b)) ? 'refund' : 'none'
+  }
   if (sa === 'none' || sb === 'none') return 'none'
   return sa === 'have' && sb === 'have' ? 'have' : 'todo'
 }
@@ -534,7 +609,7 @@ function paint () {
     ctx.moveTo(na[1], na[2])
     ctx.arc(cx, cy, r, a1, a1 + d, d < 0)
   }
-  for (const st of ['none', 'todo', 'have'] as State[]) {
+  for (const st of ['none', 'refund', 'todo', 'have'] as State[]) {
     ctx.beginPath()
     ctx.strokeStyle = COLORS[st]
     ctx.lineWidth = (st === 'none' ? 3 : 7) / Math.max(scale * 8, 1) * 4
@@ -573,10 +648,26 @@ function paint () {
       ctx.strokeStyle = st === 'none' ? '#a3b1c6' : '#f9fafb'
       ctx.stroke()
     }
-    if (hits?.has(n[0])) {
-      ctx.beginPath(); ctx.arc(n[1], n[2], r + 14, 0, Math.PI * 2)
-      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 6; ctx.stroke()
+  }
+  // search: dim the rest, then a bright ring that stays big at any zoom
+  if (hits) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.fillStyle = 'rgba(8, 12, 20, 0.6)'
+    ctx.fillRect(0, 0, w, h)
+    const current = hitIdx.value >= 0 ? hitList.value[hitIdx.value] : null
+    for (const id of hits) {
+      const n = ATLAS_BY_ID.get(id)
+      if (!n) continue
+      const x = n[1] * scale + offX; const y = n[2] * scale + offY
+      if (x < -20 || y < -20 || x > w + 20 || y > h + 20) continue
+      const rr = Math.max((KIND_RADIUS[n[3]] ?? 10) * scale + 4, 7)
+      ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2)
+      ctx.fillStyle = '#facc15'; ctx.fill()
+      ctx.beginPath(); ctx.arc(x, y, rr + 5, 0, Math.PI * 2)
+      ctx.strokeStyle = id === current ? '#ffffff' : 'rgba(250, 204, 21, 0.75)'
+      ctx.lineWidth = id === current ? 3 : 2; ctx.stroke()
     }
+    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offX, dpr * offY)
   }
   // names: keystones always when big enough, notables when zoomed in; mastery labels when zoomed out a bit
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -587,7 +678,7 @@ function paint () {
     const x = n[1] * scale + offX; const y = n[2] * scale + offY
     if (x < -60 || y < -20 || x > w + 60 || y > h + 20) continue
     ctx.font = n[3] === 3 ? 'italic 10px sans-serif' : '11px sans-serif'
-    ctx.fillStyle = n[3] === 3 ? '#7b8aa3' : stateOf(n[0]) === 'none' ? '#a3b1c6' : '#f3f4f6'
+    ctx.fillStyle = hits?.has(n[0]) ? '#fef08a' : n[3] === 3 ? '#7b8aa3' : stateOf(n[0]) === 'none' ? '#a3b1c6' : '#f3f4f6'
     ctx.fillText(n[6], x, y + (n[3] === 3 ? 0 : (KIND_RADIUS[n[3]] ?? 10) * scale + 12))
   }
   // next passives: numbers above them
@@ -607,7 +698,7 @@ function paint () {
   }
 }
 
-watch([searchHits, buildSet, haveSet, nextIds], () => draw())
+watch([searchHits, buildSet, haveSet, nextIds, refundSet, hitIdx], () => draw())
 watch(() => store.value.active, () => { if (spec.value?.nodes.length) zoomTo(spec.value.nodes, 1200, 0.3); else fit() })
 watch(taken, () => draw())
 let ro: ResizeObserver | null = null

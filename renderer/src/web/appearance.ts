@@ -27,6 +27,8 @@ export interface AppearanceConfig {
   holidays: boolean
   // our own CSS/SVG background decoration of the theme (Orbhoarder window, theme background only)
   decorations: boolean
+  // Deathloom fork (16 Nov 2026): small print a bit bigger, brighter and in a plain font
+  readableText: boolean
   // full: transitions, panels easing in, theme backgrounds that move; subtle: transitions only; off
   motion: 'full' | 'subtle' | 'off'
   // Orbhoarder window: panels are frosted glass over the background (blurred, see-through)
@@ -59,6 +61,7 @@ export const defaultAppearance = (): AppearanceConfig => ({
   hemisphere: 'south',
   holidays: true,
   decorations: true,
+  readableText: true,
   motion: 'full',
   glass: true,
   decorStrength: 180,
@@ -446,6 +449,7 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
   if (theme.style) cls.add(`lg-style-${theme.style}`)
   const motion = a.motion === 'off' || a.motion === 'subtle' ? a.motion : 'full'
   cls.add(`lg-motion-${motion}`)
+  cls.toggle('lg-readable', a.readableText !== false)
 
   const pct = (v: number) => String(Math.max(40, Math.min(100, v)) / 100)
   root.setProperty('--panel-alpha', surface === 'desktop' ? pct(a.windowOpacity) : surface === 'overlay' ? pct(a.overlayOpacity) : '1')
