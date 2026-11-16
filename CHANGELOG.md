@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#198)
+- **Orbhoarder window top bar** stays on one line: smaller tabs, the active tab in the accent colour, icons only on narrow windows (hover for the name), and it scrolls instead of wrapping.
+- **Clean look:** quieter borders on text fields and drop-downs (the focus ring stays).
+
 ### Changed (#196)
 - **New default look: Clean.** Flat panels, neutral greys with more contrast, the system font (Segoe UI), calmer top bar, slimmer scrollbars and clearer buttons, in the overlay, the in-game panels and the Orbhoarder window. If you were on the old default (Classic) you move to Clean once; any other theme you picked stays. Classic and the other themes are still in Settings → Appearance. First step of the look overhaul.
 
