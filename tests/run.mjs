@@ -32,7 +32,8 @@ const MODULES = {
   'taken-paths': 'renderer/src/web/pob/taken-paths.ts',
   'craft-plan': 'renderer/src/web/craft/craft-plan.ts',
   'timeless-find': 'renderer/src/web/craft/timeless-find.ts',
-  'item-regex': 'renderer/src/web/pob/item-regex.ts'
+  'item-regex': 'renderer/src/web/pob/item-regex.ts',
+  'layout-phase': 'renderer/src/web/desktop/layout-phase.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

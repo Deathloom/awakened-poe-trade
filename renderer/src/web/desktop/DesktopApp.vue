@@ -8,7 +8,14 @@
         :class="view === v.key ? 'bg-blue-600/25 text-blue-100 lg-tab-active' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         :title="v.title" @click="setView(v.key)">
         <i class="fas xl:mr-1.5" :class="v.icon" /><span class="hidden xl:inline">{{ v.label }}</span></button>
-      <button v-if="view === 'overview'" class="shrink-0 ml-auto px-2 py-1 rounded-md text-xs"
+      <select v-if="view === 'overview'" class="shrink-0 ml-auto rounded-md bg-transparent text-xs text-gray-400 hover:text-gray-100 px-1 py-1"
+        title="Which All tab layout shows. Auto: Mapping from your first atlas map, Levelling again when a new character starts (The Twilight Strand). Each layout is edited on its own."
+        :value="layoutPref" @change="setLayoutPref(($event.target as HTMLSelectElement).value as LayoutPref)">
+        <option value="auto">Auto ({{ layoutMode() === 'mapping' ? 'Mapping' : 'Levelling' }})</option>
+        <option value="levelling">Levelling layout</option>
+        <option value="mapping">Mapping layout</option>
+      </select>
+      <button v-if="view === 'overview'" class="shrink-0 ml-1 px-2 py-1 rounded-md text-xs"
         :class="editLayout ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         title="Add, remove, move and resize the panels on the All tab" @click="editLayout = !editLayout">
         <i class="fas fa-th mr-1" />{{ editLayout ? 'Done' : 'Edit layout' }}</button>
@@ -84,6 +91,8 @@ import HelpBody from '../help/HelpBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
+import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
+import type { LayoutPref } from './layout-phase'
 import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
 import CraftBody from '../craft/CraftBody.vue'
 
@@ -163,6 +172,8 @@ const playing = ref<boolean | null>(null)
 Host.onEvent('MAIN->CLIENT::hud-state', (e) => { playing.value = e.playing })
 // All tab: Edit layout mode (left when you switch tabs)
 const editLayout = ref(false)
+// All tab: Levelling / Mapping layout follows the game (Auto)
+onUnmounted(useLayoutPhase())
 watch(view, (v) => { if (v !== 'overview') editLayout.value = false })
 const marketEl = ref<HTMLElement>()
 const market = useSplit('market', [0.5, 0.5])

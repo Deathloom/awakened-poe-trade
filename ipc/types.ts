@@ -680,7 +680,7 @@ export interface RemoteInfo { enabled: boolean, listening: boolean, urls: string
 type IpcToolsRequest =
   Event<'CLIENT->MAIN::tools', {
     requestId: number
-    op: 'health' | 'remote-info' | 'remote-set' | 'remote-newkey' | 'backup-save' | 'backup-open'
+    op: 'health' | 'remote-info' | 'remote-set' | 'remote-newkey' | 'restart' | 'backup-save' | 'backup-open'
     enabled?: boolean
     // backup-save: the backup file's text
     text?: string
