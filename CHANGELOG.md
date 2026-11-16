@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#203)
+- **Price check on 3.30 Threads** (Blight Thread, Breach Thread …), Frayed Thread, Threaded Delirium Orb, Maven's Chisel of Threads and Soul Cores: the item list didn't have them, so the price check didn't know them. Also added currencies the trade site lists again (Engineer's Orb, Cartographer's Chisel, Orb of Horizons, Harbinger's Orb, the orb shards, Breach Blessings). English game client only for now.
+
 ### Added (#202)
 - **Atlas tree, switching builds:** pick **Switching from** (it fills in by itself when you change atlas build) to see what to respec: passives only in the old build are red (**to remove**, with the list outermost first and how many Orbs of Unmaking), passives in both are green (keep), new ones orange (to take). The next-5 steps start from what you keep.
 - **Easier-to-read small print** (Settings → Appearance, on by default): hints, notes and counts are a bit bigger and brighter and use a plain font even when the theme uses Fontin.
