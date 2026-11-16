@@ -118,6 +118,8 @@ export interface PobConfig {
   hotkeysV2?: boolean
   // Ctrl+T (PoE skill 13) default moved to Ctrl+B (16 Nov 2026)
   hotkeysV3?: boolean
+  // the Ctrl+T move again: V3 never ran on saved configs (16 Nov 2026)
+  hotkeysV4?: boolean
   // set once the Ctrl+G / Ctrl+H / Ctrl+T defaults were applied to an older config
   hotkeysV1?: boolean
   // Loadout picked in the build panel, per build file (path relative to the player folder).
