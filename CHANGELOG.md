@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#225)
+- **Settings → Tools → Phone or other devices:** the tickbox was missing and the line did nothing when clicked (the page never loaded the tickbox). It works now.
+
 ### Fixed (#224)
 - **Atlas tree "taken" count:** taking one passive could mark several as taken (many small atlas passives share a name, and it filled the path to a same-named one deeper in the build). Taken now grows out from the start through passives you've actually taken, like the game allows. If taken looks short after updating, use ✓✓ → "I have this build".
 
