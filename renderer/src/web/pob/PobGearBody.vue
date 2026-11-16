@@ -56,7 +56,8 @@
       <div class="px-1 pb-1 text-xs text-gray-500">
         <i class="far fa-copy" /> name for the in-game market (press <span class="bg-gray-700 rounded px-1">/</span> then Ctrl+V) ·
         <b>Trade</b> this exact item on the trade site ·
-        <i class="fas fa-arrow-up" /> find an upgrade (any base, at least these values)<template v-if="!desktop"> ·
+        <i class="fas fa-arrow-up" /> find an upgrade (any base, at least these values) ·
+        <i class="fas fa-flask" /> how to craft it<template v-if="!desktop"> ·
         <i class="fas fa-search-dollar" /> price check here (edit the filters, see what it does to your build)</template>.
       </div>
       <template v-for="group of groups" :key="group.key">
@@ -81,6 +82,9 @@
               <button v-if="item.rarity !== 'Unique'" class="bg-gray-700 text-gray-300 px-1.5" :class="{ 'rounded-r': desktop }"
                 title="Find an upgrade: any base of this kind with at least this item's values on its main stats (life, resistances, …)"
                 @click="openTrade(item, true)"><i class="fas fa-arrow-up" /></button>
+              <button v-if="item.rarity === 'Rare' || item.rarity === 'Magic'" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1"
+                title="Craft this: opens the Craft tab with this base and its mods filled in, and a step-by-step plan (cheapest method, what order)"
+                @click="requestCraft(item)"><i class="fas fa-flask" /></button>
               <!-- the price check window lives in the overlay; in the Orbhoarder window it would only repeat Trade -->
               <button v-if="!desktop" class="bg-gray-700 text-gray-300 rounded-r px-1.5"
                 title="Price check (edit stat filters, build impact)"
@@ -108,6 +112,7 @@ import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobBuildInfo, PobGearItem } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { openTradeSearch, openPriceCheck } from './gear-actions'
+import { requestCraft } from '../craft/craft-request'
 import { useCopyFeedback } from './market'
 import BuildPicker from './BuildPicker.vue'
 import BuildManager from './BuildManager.vue'

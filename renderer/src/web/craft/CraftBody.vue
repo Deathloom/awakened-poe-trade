@@ -13,7 +13,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
+import { CRAFT_REQUEST_EVENT, CRAFT_REQUEST_KEY } from './craft-request'
 import CraftSimulator from './CraftSimulator.vue'
 import TimelessExplorer from './TimelessExplorer.vue'
 
@@ -28,6 +29,12 @@ function setTab (t: Tab) {
   tab.value = t
   try { localStorage.setItem(KEY, t) } catch {}
 }
+// "Craft this" from the build gear: show the simulator
+const toCraft = () => { tab.value = 'craft' }
+const onStorage = (e: StorageEvent) => { if (e.key === CRAFT_REQUEST_KEY && e.newValue) toCraft() }
+window.addEventListener(CRAFT_REQUEST_EVENT, toCraft)
+window.addEventListener('storage', onStorage)
+onUnmounted(() => { window.removeEventListener(CRAFT_REQUEST_EVENT, toCraft); window.removeEventListener('storage', onStorage) })
 </script>
 
 <style>
