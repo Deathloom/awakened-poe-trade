@@ -35,7 +35,8 @@ const MODULES = {
   'item-regex': 'renderer/src/web/pob/item-regex.ts',
   'layout-phase': 'renderer/src/web/desktop/layout-phase.ts',
   'market-trends': 'renderer/src/web/market-history/market-trends.ts',
-  'atlas-value': 'renderer/src/web/atlas/atlas-value.ts'
+  'atlas-value': 'renderer/src/web/atlas/atlas-value.ts',
+  'atlas-taken': 'renderer/src/web/atlas/atlas-taken.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
