@@ -43,6 +43,7 @@ import SettingsMaps from '../map-check/settings-maps.vue'
 import SettingsPob from '../settings/pob.vue'
 import SettingsAppearance from '../settings/appearance.vue'
 import SettingsTools from '../settings/tools.vue'
+import SettingsPanels from '../settings/panels.vue'
 import { desktopSetupShown } from '../setup/setup-state'
 import { whatsNewRequested } from '../whats-new/whats-new-state'
 
@@ -52,7 +53,7 @@ const { t } = useI18n()
 const GROUPS: Component[][] = [
   [SettingsPob],
   [SettingsHotkeys, SettingsChat],
-  [SettingsGeneral, SettingsAppearance],
+  [SettingsGeneral, SettingsAppearance, SettingsPanels],
   [SettingsPricecheck, SettingsMaps, SettingsItemcheck],
   [SettingsTools, SettingsDebug, SettingsAbout]
 ]

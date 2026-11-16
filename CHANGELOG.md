@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#226)
+- **Settings → Panels in the Orbhoarder window:** it was only in the in-game overlay's settings (Shift+Space → Settings). Now under Appearance in both.
+
 ### Fixed (#225)
 - **Settings → Tools → Phone or other devices:** the tickbox was missing and the line did nothing when clicked (the page never loaded the tickbox). It works now.
 
