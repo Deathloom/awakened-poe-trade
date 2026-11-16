@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#202)
+- **Atlas tree, switching builds:** pick **Switching from** (it fills in by itself when you change atlas build) to see what to respec: passives only in the old build are red (**to remove**, with the list outermost first and how many Orbs of Unmaking), passives in both are green (keep), new ones orange (to take). The next-5 steps start from what you keep.
+- **Easier-to-read small print** (Settings → Appearance, on by default): hints, notes and counts are a bit bigger and brighter and use a plain font even when the theme uses Fontin.
+
+### Changed (#202)
+- **Atlas search** is much easier to spot: everything else dims, matches get a big yellow ring at any zoom, the box shows how many it found, and Enter (or clicking the count) zooms to each match in turn. Esc clears it.
+- **Build gear buttons:** in the Orbhoarder window the magnifier only repeated **Trade**, so it's gone there (it opens the price check in the overlay, where it's still shown). The line above the gear now says what each button does.
+
 ### Fixed (#201)
 - **Ctrl+T is free for skill 13 now.** The one-time move of the trade companion from Ctrl+T to Ctrl+B never ran on existing installs (it thought it had already run), so Ctrl+T still opened the trade companion. It runs on the next start; if you already use Ctrl+B for something else, Ctrl+T stays and its box is orange so you can pick another key.
 - **Hotkey boxes:** the orange "the game uses this key" warning and the red "Not Set" now actually show; a general field style hid them in every theme.

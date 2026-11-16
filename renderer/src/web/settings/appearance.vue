@@ -80,6 +80,11 @@
       <div class="text-gray-500 text-sm mt-1">Used for highlighted buttons, focused fields and links.</div>
     </div>
 
+    <div class="mb-4">
+      <ui-toggle v-model="a.readableText">Easier-to-read small print</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">Small text (hints, notes, counts) a bit bigger and brighter, in a plain font even when the theme uses Fontin. Turn off for the old look.</div>
+    </div>
+
     <div class="mb-4 flex gap-4">
       <div>
         <div class="mb-1">Font</div>
