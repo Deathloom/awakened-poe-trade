@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#220)
+- **Clean look:** Settings **Save** is now the accent-coloured main button, and the picked theme in Settings → Appearance is tinted with the accent (no more plain grey row).
+
 ### Added (#219)
 - **More poe.ninja prices:** Wombgifts, Scrying Orbs, Memories, Temples, Shrine Belts, Forbidden Jewels, Imbued Gems, Valdo Maps, Cluster Jewels and Flasks now load. Market gets a **League items** group (Threads, Viscera, Wombgifts, Scrying Orbs, Memories, Temples); Atlas value counts Wombgifts for Breach and Temples for Incursion. Price checks that worked before are unchanged.
 
