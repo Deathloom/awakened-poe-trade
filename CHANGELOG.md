@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#214)
+- **Timeless jewel: Find seeds.** Craft tab → Timeless jewel → Find seeds: pick the jewel and socket, then what you want (a passive or stat on a certain notable, or a stat on at least N notables anywhere in the radius). Orbhoarder lists the best seeds, what each one gives, a button to show all its passives and a trade search for that seed with any conqueror.
+
 ### Changed (#213)
 - **Test builds** now get their Path of Building version from the testing branch, so testers get a new PoB (like the 3.30 one) before everyone else. Stable builds are unchanged.
 
