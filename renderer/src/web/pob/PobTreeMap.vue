@@ -5,7 +5,13 @@
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1 text-xs shrink-0">
       <span v-if="alloc" class="text-gray-300">{{ alloc.ascendancy ?? alloc.className }}</span>
       <span v-if="alloc" class="text-gray-500">{{ alloc.points }} points · {{ alloc.ascendancyPoints }} ascendancy</span>
-      <template v-if="levellingOn && levelPlan">
+      <template v-if="fromOn">
+        <span><i class="fas fa-circle text-green-500" /> keep ({{ counts.both }})</span>
+        <span><i class="fas fa-circle text-orange-400" /> to take ({{ counts.build }})</span>
+        <button class="text-red-400 hover:text-red-200" title="Passives of the build you switch from that this one doesn't have. Refund them in game (one Orb of Regret each, or refund points), outermost first. Click for the list."
+          @click="refundListOpen = !refundListOpen"><i class="fas fa-circle" /> to remove ({{ refundIds.length }})</button>
+      </template>
+      <template v-else-if="levellingOn && levelPlan">
         <span class="text-gray-400">Levelling: {{ plan?.phases[plan.phase - 1]?.title }}</span>
         <span><i class="fas fa-circle text-green-500" /> taken by now</span>
         <span><i class="fas fa-circle text-cyan-300" /> next ({{ levelPlan.next.length }})</span>
@@ -31,6 +37,19 @@
     </div>
     <div v-if="error" class="px-2 text-gray-400">{{ error }}</div>
     <div v-else-if="liveError" class="px-2 pb-1 text-xs text-gray-500">{{ liveError }}</div>
+    <div v-if="!compact && alloc && otherBuilds.length" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 pb-1 text-xs shrink-0">
+      <span class="text-gray-400" title="Moving on from another build? Pick it: passives only in that one turn red (refund them: one Orb of Regret each), the ones in both stay green. Fills in by itself when you switch your active build.">Switching from</span>
+      <select class="rounded bg-gray-800 px-1 max-w-[16rem]" :value="fromPath ?? ''" @change="setFrom(($event.target as HTMLSelectElement).value || null)">
+        <option value="">nothing</option>
+        <option v-for="b of otherBuilds" :key="b" :value="b">{{ b.replace(/\.xml$/i, '').replace(/\\/g, '/') }}</option>
+      </select>
+      <span v-if="fromOn" class="text-gray-500">{{ refundIds.length }} to remove ({{ refundIds.length }} Orb{{ refundIds.length === 1 ? '' : 's' }} of Regret), {{ counts.build }} to take</span>
+      <span v-else-if="fromError" class="text-red-400">{{ fromError }}</span>
+    </div>
+    <div v-if="fromOn && refundListOpen && refundIds.length" class="px-2 pb-1 text-xs shrink-0 max-h-24 overflow-y-auto">
+      <span class="text-gray-400">Refund, outermost first (click to show): </span>
+      <button v-for="(id, i) of refundIds" :key="id" class="mr-2 text-red-300 hover:text-red-100" @click="zoomTo([id])">{{ i + 1 }}. {{ byId.get(id)?.[6] || 'Passive' }}</button>
+    </div>
     <div v-if="!compact && alloc && (alloc.clusterNodes || live?.clusterNodes)" class="px-2 pb-1 text-xs text-gray-600">
       Cluster jewel nodes are not drawn ({{ alloc.clusterNodes }} in the build<template v-if="live">, {{ live.clusterNodes }} on the character</template>).
     </div>
@@ -54,6 +73,7 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobTreeAlloc, PobTreeMapLayout, PobTreeMapNode } from '@ipc/types'
 import { currentPlan as plan, currentTaken as takenSet, mapHave, treeLayout } from './plan-store'
+import { fillTakenPaths } from './taken-paths'
 
 const props = defineProps<{
   // levelling view: colours from the levelling plan (taken / next / later) and
@@ -94,6 +114,8 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-tree-map', (e) => {
   live.value = e.live
   character.value = e.character ?? 'Character'
   liveError.value = e.liveError ?? null
+  // the active build may have changed (Switching from fills in by itself)
+  if (!props.compact) requestBuilds()
   if (newVersion || !fitted) {
     if (levellingOn.value && levelPlan.value) focusNext()
     else fit()
@@ -120,10 +142,69 @@ const byId = computed(() => {
   for (const n of layout.value?.nodes ?? []) m.set(n[0], n)
   return m
 })
+// ---- Deathloom fork (Gerhard, 16 Nov 2026): "Switching from" another PoB build ----
+// Its passives this build doesn't have are to refund (red), the ones in both are
+// kept (green), the rest of this build is to take (orange). Read-only: the other
+// build file is read by main (pob-compare), nothing is changed.
+const FROM_KEY = 'deathloom.pob-tree-from.v1'
+const fromSaved = (() => { try { return JSON.parse(localStorage.getItem(FROM_KEY) ?? 'null') ?? {} } catch { return {} } })()
+const fromPath = ref<string | null>(typeof fromSaved.from === 'string' ? fromSaved.from : null)
+let lastActive: string | null = typeof fromSaved.lastActive === 'string' ? fromSaved.lastActive : null
+const buildPaths = ref<string[]>([])
+const activePath = ref<string | null>(null)
+const otherBuilds = computed(() => buildPaths.value.filter(b => b !== activePath.value))
+const fromIds = shallowRef<Set<number> | null>(null)
+const fromError = ref('')
+const refundListOpen = ref(false)
+const fromOn = computed(() => fromIds.value != null && fromPath.value != null && fromPath.value !== activePath.value && alloc.value != null)
+function saveFrom () {
+  try { localStorage.setItem(FROM_KEY, JSON.stringify({ from: fromPath.value, lastActive })) } catch {}
+}
+function setFrom (p: string | null) {
+  fromPath.value = p
+  fromIds.value = null
+  fromError.value = ''
+  saveFrom()
+  loadFrom()
+}
+let buildsReq = 0
+let fromReq = 0
+const lsBuilds = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => {
+  if (e.requestId !== buildsReq || !e.ok || !e.list) return
+  buildPaths.value = e.list.builds
+  const active = e.list.active
+  // switched the active build: what you had is what you switch from
+  if (active && lastActive && active !== lastActive && e.list.builds.includes(lastActive)) {
+    fromPath.value = lastActive
+    fromIds.value = null
+  }
+  if (active) lastActive = active
+  activePath.value = active
+  if (fromPath.value && !e.list.builds.includes(fromPath.value)) fromPath.value = null
+  saveFrom()
+  loadFrom()
+})
+const lsFrom = Host.onEvent('MAIN->CLIENT::pob-compare', (e) => {
+  if (e.requestId !== fromReq) return
+  if (!e.ok || !e.a) { fromError.value = e.error ?? 'Could not read that build'; fromIds.value = null; return }
+  fromError.value = ''
+  fromIds.value = new Set(e.a.tree.nodes)
+})
+function requestBuilds () {
+  buildsReq = ((Date.now() & 0x3ffffff) * 4 + 1) | 0
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: buildsReq } })
+}
+function loadFrom () {
+  if (!fromPath.value || fromPath.value === activePath.value || fromIds.value) return
+  fromReq = ((Date.now() & 0x3ffffff) * 4 + 3) | 0
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-compare', payload: { requestId: fromReq, a: fromPath.value, b: fromPath.value } })
+}
+if (!props.compact) requestBuilds()
+onUnmounted(() => { lsBuilds.abort(); lsFrom.abort() })
 // levelling view: "build" = the levelling tree, "live" = what should be taken by now
 const levelPlan = computed(() => {
   const p = plan.value
-  if (!levellingOn.value || !p) return null
+  if (!levellingOn.value || !p || fromOn.value) return null
   const kept = Array.isArray(p.keptIds) ? p.keptIds : []
   const order = p.order.map(n => n.id)
   // taken passives from the game log when known (moves only once you allocate),
@@ -131,40 +212,20 @@ const levelPlan = computed(() => {
   const taken = takenSet.value
   const done = (i: number) => taken ? taken.has(i) : i < p.taken
   const target = new Set([...kept, ...order])
-  const have = new Set([...kept, ...order.filter((_, i) => done(i))])
+  let have = new Set([...kept, ...order.filter((_, i) => done(i))])
   // Deathloom fork: the game log only names passives, so a same-named passive
-  // taken/refunded off the build can leave a hole. Anything on the build's path
-  // from the class start to a taken passive must be taken (unreachable otherwise)
+  // taken/refunded off the build can leave a hole. A taken passive cut off from
+  // the class start gets the shortest build path back to it (nothing else)
   const lay = layout.value
   if (lay) {
-    const adj = new Map<number, number[]>()
-    const add = (a: number, b: number) => { const l = adj.get(a); if (l) l.push(b); else adj.set(a, [b]) }
-    for (const [a, b] of lay.links) { add(a, b); add(b, a) }
     const starts = lay.nodes.filter(n => n[3] === 5 || n[3] === 6).map(n => n[0])
-    const parent = new Map<number, number>()
     // the tree data may not link the class start to its first passives: then the
     // plan's first passive (nearest the start) is where the build's paths begin
-    const startLinked = starts.some(id => (adj.get(id) ?? []).length > 0)
-    const q = startLinked ? starts.slice() : [...starts, ...(order.length ? [order[0]] : [])]
-    const seen = new Set(q)
-    for (let i = 0; i < q.length; i++) {
-      for (const nb of adj.get(q[i]) ?? []) {
-        if (seen.has(nb) || !target.has(nb)) continue
-        seen.add(nb); parent.set(nb, q[i]); q.push(nb)
-      }
-    }
-    for (const id of [...have]) {
-      for (let c = parent.get(id); c != null && target.has(c) && !have.has(c); c = parent.get(c)) have.add(c)
-    }
-    // a build passive between two taken ones (e.g. a same-named "Intelligence"
-    // whose count went to another node) is taken too: it joins them
-    for (let again = true; again;) {
-      again = false
-      for (const id of target) {
-        if (have.has(id)) continue
-        if ((adj.get(id) ?? []).filter(nb => have.has(nb)).length >= 2) { have.add(id); again = true }
-      }
-    }
+    const linked = new Set(lay.links.flat())
+    const startLinked = starts.some(id => linked.has(id))
+    const roots = startLinked ? starts : [...starts, ...(order.length ? [order[0]] : [])]
+    const floating = new Set(lay.nodes.filter(n => n[3] === 3).map(n => n[0]))
+    have = fillTakenPaths({ links: lay.links, roots, target, have: [...have], floating })
   }
   return {
     target,
@@ -173,7 +234,37 @@ const levelPlan = computed(() => {
   }
 })
 watch(levelPlan, (lp) => { mapHave.value = lp?.have ?? null }, { immediate: true })
-const hasLive = computed(() => levelPlan.value != null || live.value != null)
+const hasLive = computed(() => fromOn.value || levelPlan.value != null || live.value != null)
+
+const refundSet = computed(() => {
+  const out = new Set<number>()
+  const from = fromIds.value
+  if (!fromOn.value || !from) return out
+  for (const id of from) {
+    const n = byId.value.get(id)
+    if (!n || n[3] === 5 || n[3] === 6 || buildSet.value.has(id) || !visibleNode(n)) continue
+    out.add(id)
+  }
+  return out
+})
+// outermost first: a passive can only be refunded when nothing hangs off it
+const refundIds = computed(() => {
+  const lay = layout.value; const from = fromIds.value
+  if (!lay || !from || !refundSet.value.size) return []
+  const adj = new Map<number, number[]>()
+  const add = (a: number, b: number) => { const l = adj.get(a); if (l) l.push(b); else adj.set(a, [b]) }
+  for (const [a, b] of lay.links) { add(a, b); add(b, a) }
+  const starts = lay.nodes.filter(n => n[3] === 5 || n[3] === 6).map(n => n[0])
+  const depth = new Map(starts.map(id => [id, 0]))
+  const q = [...starts]
+  for (let i = 0; i < q.length; i++) {
+    for (const nb of adj.get(q[i]) ?? []) {
+      if (depth.has(nb) || !from.has(nb)) continue
+      depth.set(nb, depth.get(q[i])! + 1); q.push(nb)
+    }
+  }
+  return [...refundSet.value].sort((a, b) => (depth.get(b) ?? 999) - (depth.get(a) ?? 999))
+})
 // Deathloom fork: mastery effect picked by the build (levelling plan first, else the build's tree), shown on hover
 const masteryText = computed(() => {
   const out = new Map<number, string>()
@@ -188,8 +279,12 @@ const masteryText = computed(() => {
   }
   return out
 })
-const buildSet = computed(() => levelPlan.value?.target ?? new Set(alloc.value?.ids ?? []))
-const liveSet = computed(() => levelPlan.value?.have ?? new Set(live.value?.ids ?? []))
+const buildSet = computed(() => fromOn.value ? new Set(alloc.value?.ids ?? []) : levelPlan.value?.target ?? new Set(alloc.value?.ids ?? []))
+const liveSet = computed(() => {
+  const from = fromIds.value
+  if (fromOn.value && from) return new Set([...buildSet.value].filter(id => from.has(id)))
+  return levelPlan.value?.have ?? new Set(live.value?.ids ?? [])
+})
 const nextIndex = computed(() => new Map((levelPlan.value?.next ?? []).map((id, i) => [id, i + 1])))
 
 // Only the build's (and the character's) ascendancy is drawn
@@ -199,8 +294,9 @@ function visibleNode (n: PobTreeMapNode) {
   return asc === alloc.value?.ascendancy || asc === live.value?.ascendancy
 }
 
-type State = 'both' | 'build' | 'live' | 'none'
+type State = 'both' | 'build' | 'live' | 'none' | 'refund'
 function stateOf (id: number): State {
+  if (refundSet.value.has(id)) return 'refund'
   const b = buildSet.value.has(id)
   if (!hasLive.value) return b ? 'build' : 'none'
   const l = liveSet.value.has(id)
@@ -211,7 +307,7 @@ const counts = computed(() => {
   for (const n of layout.value?.nodes ?? []) {
     if (n[3] === 5 || n[3] === 6) continue // class / ascendancy starts are free
     const s = stateOf(n[0])
-    if (s !== 'none') c[s]++
+    if (s !== 'none' && s !== 'refund') c[s]++
   }
   return c
 })
@@ -219,7 +315,8 @@ const COLORS: Record<State, string> = {
   both: '#22c55e',
   build: '#fb923c',
   live: '#c084fc',
-  none: '#5b6b84'
+  none: '#5b6b84',
+  refund: '#ef4444'
 }
 function color (s: State) {
   return !hasLive.value && s === 'build' ? '#facc15' : COLORS[s]
@@ -267,9 +364,13 @@ function fit () {
 
 // zoom to the next passives of the levelling plan (with what's around them)
 function focusNext () {
-  const box = boxRef.value; const lp = levelPlan.value
-  if (!box || !layout.value || !lp) return
-  const ids = lp.next.length ? lp.next : [...lp.have].slice(-5)
+  const lp = levelPlan.value
+  if (!lp) return
+  zoomTo(lp.next.length ? lp.next : [...lp.have].slice(-5))
+}
+function zoomTo (ids: number[]) {
+  const box = boxRef.value
+  if (!box || !layout.value) return
   let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity
   for (const id of ids) {
     const n = byId.value.get(id)
@@ -359,7 +460,8 @@ const STATUS_TEXT: Record<State, [string, string]> = {
   both: ['You have it', 'text-green-400'],
   build: ['To take', 'text-orange-400'],
   live: ['Not in the build', 'text-purple-400'],
-  none: ['', '']
+  none: ['', ''],
+  refund: ['Refund: only in the build you switch from', 'text-red-400']
 }
 function onMove (e: MouseEvent) {
   if (dragFrom || !layout.value) return
@@ -377,13 +479,15 @@ function onMove (e: MouseEvent) {
   if (!best) { hover.value = null; return }
   const s = stateOf(best[0])
   const key = String(best[0])
-  const status = levelPlan.value && nextIndex.value.has(best[0])
-    ? [`Next: ${nextIndex.value.get(best[0])} of ${levelPlan.value.next.length}`, 'text-cyan-300']
-    : levelPlan.value
-      ? (s === 'both' ? ['Taken by now', 'text-green-400'] : s === 'build' ? ['Later in this tree', 'text-orange-400'] : ['', ''])
-      : !live.value
-          ? (s === 'build' ? ['In the build', 'text-yellow-400'] : ['', ''])
-          : STATUS_TEXT[s]
+  const status = fromOn.value
+    ? (s === 'refund' ? STATUS_TEXT.refund : s === 'both' ? ['In both builds: keep', 'text-green-400'] : s === 'build' ? ['To take', 'text-orange-400'] : ['', ''])
+    : levelPlan.value && nextIndex.value.has(best[0])
+      ? [`Next: ${nextIndex.value.get(best[0])} of ${levelPlan.value.next.length}`, 'text-cyan-300']
+      : levelPlan.value
+        ? (s === 'both' ? ['Taken by now', 'text-green-400'] : s === 'build' ? ['Later in this tree', 'text-orange-400'] : ['', ''])
+        : !live.value
+            ? (s === 'build' ? ['In the build', 'text-yellow-400'] : ['', ''])
+            : STATUS_TEXT[s]
   hover.value = {
     id: best[0],
     name: best[6],
@@ -405,6 +509,11 @@ function draw () {
 }
 function linkState (a: number, b: number): State {
   const sa = stateOf(a); const sb = stateOf(b)
+  if (sa === 'refund' || sb === 'refund') {
+    const from = fromIds.value
+    const inFrom = (id: number, st: State) => st === 'refund' || from?.has(id) === true || byId.value.get(id)?.[3] === 5
+    return inFrom(a, sa) && inFrom(b, sb) ? 'refund' : 'none'
+  }
   if (sa === sb) return sa
   // a link is "taken" by whoever has both ends
   const inBuild = buildSet.value.has(a) && buildSet.value.has(b)
@@ -429,7 +538,7 @@ function paint () {
   const nodes = byId.value
 
   // links: inactive first, allocated on top
-  const order: State[] = ['none', 'live', 'build', 'both']
+  const order: State[] = ['none', 'live', 'refund', 'build', 'both']
   for (const st of order) {
     ctx.beginPath()
     ctx.strokeStyle = color(st)
@@ -525,7 +634,7 @@ function paint () {
   }
 }
 
-watch([searchHits, buildSet, liveSet, nextIndex], () => draw())
+watch([searchHits, buildSet, liveSet, nextIndex, refundSet], () => draw())
 let ro: ResizeObserver | null = null
 onMounted(() => {
   ro = new ResizeObserver(() => { if (fitted) draw(); else fit() })

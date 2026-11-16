@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#205)
+- **Passive tree, switching builds:** pick **Switching from** above the tree (it fills in by itself when you change your active build in Path of Building) to see what to respec: passives only in the old build are red (**to remove**, with the list outermost first and how many Orbs of Regret), passives in both are green (keep), new ones orange (to take).
+
+### Fixed (#205)
+- **Passive tree showed small passives as taken that you hadn't taken** (e.g. a Strength or Intelligence node on a loop). The game log only names passives, so Orbhoarder guesses where each one is; a rule that filled in any build passive between two taken ones lit passives you had gone round. Now it only fills in the shortest path a taken passive needs to connect to your start.
+
 ### Fixed (#204)
 - **Campaign guide follows your character:** each character keeps its own step, so switching characters no longer shows another one's act. A character you haven't used with the guide yet starts at the act it was last in.
 - **Campaign done:** after Kitava in act 10 (or once the character has been in a map) the guide says the campaign is done instead of showing Act 1; **Show the route anyway** brings it back. The area level is only shown in campaign zones (a map's level next to "Act 1" was confusing).

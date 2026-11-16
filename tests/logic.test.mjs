@@ -315,3 +315,20 @@ test('campaign guide: per-character step, campaign done, endgame areas', async (
   assert.equal(Object.keys(all).length, 20)
   assert.equal(all.C24, 1)
 })
+
+test('passive tree: taken passives only get the path they need', async () => {
+  const { fillTakenPaths } = await import('./.build/taken-paths.mjs')
+  // start 0 - 1 - 2, and a loop 2 - 3 - 4 - 5 - 2 (3 and 5 both next to 4)
+  const links = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2], [4, 6]]
+  const target = new Set([1, 2, 3, 4, 5, 6])
+  // went round via 3: 5 sits between two taken passives but isn't taken
+  let got = fillTakenPaths({ links, roots: [0], target, have: [1, 2, 3, 4] })
+  assert.deepEqual([...got].sort(), [1, 2, 3, 4])
+  // 6 placed but cut off (its same-named count went elsewhere): shortest path back is filled
+  got = fillTakenPaths({ links, roots: [0], target, have: [1, 6] })
+  assert.ok(got.has(2) && got.has(6) && got.has(4))
+  assert.equal(got.has(3) && got.has(5), false)
+  // masteries never need a path
+  got = fillTakenPaths({ links, roots: [0], target: new Set([1, 9]), have: [1, 9], floating: new Set([9]) })
+  assert.deepEqual([...got].sort(), [1, 9])
+})
