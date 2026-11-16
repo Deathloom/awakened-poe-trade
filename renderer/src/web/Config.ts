@@ -503,7 +503,9 @@ function upgradeConfig (_config: Config): Config {
     if (config.pob.openPobKey === undefined) config.pob.openPobKey = 'Ctrl + P'
     config.pob.hotkeysV2 = true
   }
-  if (!config.pob.hotkeysV3) {
+  // hotkeysV4, not V3: V3 was in the defaults merged in above, so it was already
+  // true on every saved config and the move never ran (fixed 16 Nov 2026)
+  if (!config.pob.hotkeysV4) {
     // Deathloom fork (2026-11-16): Ctrl+T is PoE's skill 13 key (second skill bar), and
     // the overlay takes it before the game. Move the trade companion off it, unless the
     // player already chose Ctrl+B for something else.
@@ -512,7 +514,7 @@ function upgradeConfig (_config: Config): Config {
       ...config.commands.map(c => c.hotkey), ...(config.pob.searchStrings ?? []).map(s => s.hotkey)]
       .filter((k): k is string => typeof k === 'string'))
     if (config.pob.tradesKey === 'Ctrl + T' && !used.has('Ctrl + B')) config.pob.tradesKey = 'Ctrl + B'
-    config.pob.hotkeysV3 = true
+    config.pob.hotkeysV4 = true
   }
   // Deathloom fork (2026-11-14): stash tracker removed (GGG rules: no login cookie in shared apps)
   config.widgets = config.widgets.filter(w => w.wmType !== 'stash-tracker')

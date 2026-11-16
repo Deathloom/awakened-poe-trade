@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#201)
+- **Ctrl+T is free for skill 13 now.** The one-time move of the trade companion from Ctrl+T to Ctrl+B never ran on existing installs (it thought it had already run), so Ctrl+T still opened the trade companion. It runs on the next start; if you already use Ctrl+B for something else, Ctrl+T stays and its box is orange so you can pick another key.
+- **Hotkey boxes:** the orange "the game uses this key" warning and the red "Not Set" now actually show; a general field style hid them in every theme.
+
 ### Changed (#200)
 - **Clean look, step 3:** price check rows are calmer (lighter lines, a light band on hover), ticks use the accent colour, tags like *pseudo* and the min/max fields are easier to read, **Search** is the main (accent) button and **Collapse** is a quiet text button. Overlay menu bar: calmer icons, and open panels get an accent underline instead of a grey outline. Settings pages use the full window width and hotkey boxes use the normal font.
 - **Settings title** says Orbhoarder (was Awakened PoE Trade).
