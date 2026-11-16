@@ -145,6 +145,12 @@ export class PobImpact {
         b: await this.readBuildSummary(b)
       }))
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-timeless', (req) => {
+      this.reply('MAIN->CLIENT::pob-timeless', req.requestId, async () => await this.timeless(req))
+    })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-craft', (req) => {
+      this.reply('MAIN->CLIENT::pob-craft', req.requestId, async () => await this.craft(req))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints }) => {
       this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints))
     })
@@ -171,7 +177,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-edit' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan' | 'MAIN->CLIENT::pob-compare'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-edit' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan' | 'MAIN->CLIENT::pob-compare' | 'MAIN->CLIENT::pob-timeless' | 'MAIN->CLIENT::pob-craft'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -1064,6 +1070,57 @@ export class PobImpact {
       bandit: typeof reply.bandit === 'string' ? reply.bandit : undefined
     }
     return { build: reply.build as PobBuildInfo, plan }
+  }
+
+  // Deathloom fork: timeless jewel explorer (Craft tab). PoB works it out on a
+  // scratch tree; the active build is only read (which passives it allocates).
+  async timeless (req: { sockets?: boolean, jewel?: string, conqueror?: string, seed?: number, socket?: number }): Promise<Record<string, unknown>> {
+    await this.ensureBuild()
+    const params: Record<string, unknown> = {}
+    if (req.sockets === true) params.sockets = true
+    if (typeof req.jewel === 'string') {
+      params.jewel = req.jewel.slice(0, 40)
+      params.conqueror = String(req.conqueror ?? '').slice(0, 40)
+      params.seed = Number(req.seed)
+      params.socket = Number(req.socket)
+    }
+    const reply = await this.call('timeless', params)
+    const list = (v: unknown): any[] => Array.isArray(v) ? v : []
+    return {
+      jewels: list(reply.jewels).map((j: any) => ({ ...j, conquerors: list(j.conquerors) })),
+      sockets: reply.sockets ? list(reply.sockets).map((s: any) => ({ ...s, notables: list(s.notables) })) : undefined,
+      result: reply.result
+        ? {
+            ...reply.result,
+            nodes: list(reply.result.nodes).map((n: any) => ({ ...n, stats: list(n.stats), before: list(n.before) }))
+          }
+        : undefined
+    }
+  }
+
+  // Deathloom fork: crafting simulator (Craft tab): bases, or the mod pool of one
+  async craft (req: { base?: string, ilvl?: number, influences?: string[] }): Promise<Record<string, unknown>> {
+    const list = (v: unknown): any[] => Array.isArray(v) ? v : []
+    if (typeof req.base !== 'string' || !req.base) {
+      const reply = await this.call('craftBases')
+      return { bases: list(reply.bases) }
+    }
+    const reply = await this.call('craftMods', {
+      base: req.base.slice(0, 80),
+      ilvl: Number(req.ilvl) || 84,
+      influences: list(req.influences).filter((i): i is string => typeof i === 'string').slice(0, 2)
+    })
+    return {
+      pool: {
+        base: reply.base,
+        type: reply.type,
+        ilvl: reply.ilvl,
+        influences: list(reply.influences),
+        maxAffixes: reply.maxAffixes,
+        mods: list(reply.mods).map((m: any) => ({ ...m, text: list(m.text), tags: list(m.tags) })),
+        essences: list(reply.essences).map((e: any) => ({ ...e, text: list(e.text) }))
+      }
+    }
   }
 
   // Tree map (desktop window): whole tree layout (only when the window lacks this

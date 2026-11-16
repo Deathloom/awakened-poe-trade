@@ -213,3 +213,71 @@ test('game keys: PoE1 defaults that our hotkeys must not take', () => {
     assert.equal(gk.poe1KeyUse(k), undefined, String(k))
   }
 })
+
+const craft = await import('./.build/craft-sim.mjs')
+
+// small seeded random (mulberry32) so the numbers don't wobble between runs
+function seeded (seed) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed)
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+  }
+}
+
+test('crafting: tiers and wanted groups', () => {
+  const mods = [
+    { id: 'Life1', type: 'Prefix', group: 'Life', level: 1, weight: 1000 },
+    { id: 'Life3', type: 'Prefix', group: 'Life', level: 44, weight: 1000 },
+    { id: 'Life2', type: 'Prefix', group: 'Life', level: 11, weight: 1000 }
+  ]
+  assert.deepEqual(craft.tiersOf(mods, 'Life').map(m => m.id), ['Life3', 'Life2', 'Life1'])
+  assert.equal(craft.tierNumber(mods, mods[2]), 2)
+  assert.deepEqual(craft.wantGroup(mods, 'Life', 2).ids, ['Life3', 'Life2'])
+})
+
+test('crafting: Alteration odds match the hand-worked answer', () => {
+  // one roll from A/B/C (equal weight), then 50% a second mod on the free side;
+  // a lone C gets an Augmentation (A is a prefix): P(A) = 1/3 + 1/3 * 1/2 = 1/2
+  const pool = { maxAffixes: 3, mods: [
+    { id: 'A', type: 'Prefix', group: 'A', level: 1, weight: 100 },
+    { id: 'B', type: 'Prefix', group: 'B', level: 1, weight: 100 },
+    { id: 'C', type: 'Suffix', group: 'C', level: 1, weight: 100 }
+  ] }
+  const res = craft.simulate(pool, [{ group: 'A', ids: ['A'] }], { method: 'alt', trials: 100000, random: seeded(7) })
+  assert.ok(Math.abs(res.chance - 1 / 2) < 0.01, String(res.chance))
+  assert.equal(res.used['Orb of Alteration'], 100000)
+  assert.ok(Math.abs(res.used['Orb of Augmentation'] / 100000 - 1 / 6) < 0.01)
+  assert.ok(Math.abs(res.attempts - 2) < 0.05)
+})
+
+test('crafting: Chaos Orb always hits when every slot must take the wanted mod', () => {
+  const pool = { maxAffixes: 3, mods: [
+    { id: 'P1', type: 'Prefix', group: 'P1', level: 1, weight: 10 },
+    { id: 'P2', type: 'Prefix', group: 'P2', level: 1, weight: 10 },
+    { id: 'P3', type: 'Prefix', group: 'P3', level: 1, weight: 10 },
+    { id: 'S1', type: 'Suffix', group: 'S1', level: 1, weight: 10 }
+  ] }
+  // only 4 mods exist: a 4-mod rare has them all; 5/6-mod rolls stop at 4
+  const res = craft.simulate(pool, [{ group: 'S1', ids: ['S1'] }, { group: 'P2', ids: ['P2'] }], { method: 'chaos', trials: 2000, random: seeded(1) })
+  assert.equal(res.chance, 1)
+  assert.equal(craft.costPerHit(res, () => undefined), 1)
+})
+
+test('crafting: impossible asks are explained, essence mod always present', () => {
+  const pool = { maxAffixes: 3, mods: [
+    { id: 'A', type: 'Prefix', group: 'A', level: 1, weight: 100 },
+    { id: 'B', type: 'Prefix', group: 'B', level: 1, weight: 100 },
+    { id: 'E', type: 'Suffix', group: 'E', level: 1, weight: 0 },
+    { id: 'C', type: 'Suffix', group: 'C', level: 1, weight: 100 }
+  ] }
+  const two = [{ group: 'A', ids: ['A'] }, { group: 'B', ids: ['B'] }]
+  assert.match(craft.simulate(pool, two, { method: 'alt' }).impossible, /one prefix/)
+  assert.match(craft.simulate(pool, [], { method: 'chaos' }).impossible, /at least one/)
+  assert.match(craft.simulate(pool, [{ group: 'A', ids: ['A'] }, { group: 'A', ids: ['A'] }], { method: 'chaos' }).impossible, /same group/)
+  const ess = craft.simulate(pool, [{ group: 'E', ids: ['E'] }], { method: 'essence', essenceModId: 'E', trials: 500, random: seeded(3) })
+  assert.equal(ess.chance, 1)
+  assert.equal(craft.costPerHit(ess, n => n === 'Deafening Essence of Test' ? 3 : undefined, 'Deafening Essence of Test'), 3)
+  assert.match(craft.fmtChance(0.00002), /^1 in 50\D?000$/)
+})

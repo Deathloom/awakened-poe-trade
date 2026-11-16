@@ -542,6 +542,10 @@ export type IpcEvent =
   IpcPobPlanResult |
   IpcPobTreeMapResult |
   IpcPobCompareResult |
+  IpcPobTimelessRequest |
+  IpcPobTimelessResult |
+  IpcPobCraftRequest |
+  IpcPobCraftResult |
   IpcPobSyncRequest |
   IpcPobSyncState |
   IpcBoardRequest |
@@ -1322,6 +1326,117 @@ type IpcPobPlanResult =
   }>
 
 // Deathloom fork (idea 6): read two builds of the player folder for "Compare builds"
+// Deathloom fork (16 Nov 2026): timeless jewel explorer (PoB's conquest data)
+export interface TimelessJewelInfo {
+  name: string
+  conquerors: string[]
+  by: string
+  seedMin: number
+  seedMax: number
+  seedStep: number
+}
+export interface TimelessSocket {
+  id: number
+  keystone?: string
+  notables: string[]
+  // allocated in the active build
+  alloc: boolean
+  x: number
+  y: number
+}
+export interface TimelessNode {
+  id: number
+  type: 'Normal' | 'Notable' | 'Keystone'
+  name: string
+  // set when the conqueror replaces the passive
+  newName?: string
+  stats: string[]
+  before: string[]
+  alloc: boolean
+  attribute?: boolean
+}
+export interface TimelessResult {
+  jewel: string
+  conqueror: string
+  seed: number
+  socket: number
+  nodes: TimelessNode[]
+}
+
+type IpcPobTimelessRequest =
+  Event<'CLIENT->MAIN::pob-timeless', {
+    requestId: number
+    sockets?: boolean
+    jewel?: string
+    conqueror?: string
+    seed?: number
+    socket?: number
+  }>
+
+type IpcPobTimelessResult =
+  Event<'MAIN->CLIENT::pob-timeless', {
+    requestId: number
+    ok: boolean
+    error?: string
+    jewels?: TimelessJewelInfo[]
+    sockets?: TimelessSocket[]
+    result?: TimelessResult
+  }>
+
+// Deathloom fork (16 Nov 2026): crafting simulator (mod pool from PoB's data)
+export interface CraftBase {
+  name: string
+  type: string
+  subType?: string
+  level: number
+  influences: boolean
+}
+export interface CraftMod {
+  id: string
+  type: 'Prefix' | 'Suffix'
+  affix: string
+  group: string
+  level: number
+  weight: number
+  text: string[]
+  tags: string[]
+}
+export interface CraftEssence {
+  name: string
+  tier: number
+  modId: string
+  type: 'Prefix' | 'Suffix'
+  group: string
+  text: string[]
+}
+export interface CraftPool {
+  base: string
+  type: string
+  ilvl: number
+  influences: string[]
+  maxAffixes: number
+  mods: CraftMod[]
+  essences: CraftEssence[]
+}
+
+type IpcPobCraftRequest =
+  Event<'CLIENT->MAIN::pob-craft', {
+    requestId: number
+    // no base: the list of bases
+    base?: string
+    ilvl?: number
+    influences?: string[]
+  }>
+
+type IpcPobCraftResult =
+  Event<'MAIN->CLIENT::pob-craft', {
+    requestId: number
+    ok: boolean
+    error?: string
+    bases?: CraftBase[]
+    pool?: CraftPool
+  }>
+
 type IpcPobCompareRequest =
   Event<'CLIENT->MAIN::pob-compare', {
     requestId: number
