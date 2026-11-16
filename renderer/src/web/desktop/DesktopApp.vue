@@ -43,6 +43,7 @@
           <SplitGutter dir="x" @drag="d => market.drag(0, d, marketEl?.clientWidth ?? 0)" @end="market.save" @reset="market.reset" />
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[1]} 1 0` }"><MarketOverview /></div>
         </div>
+        <CraftBody v-else-if="view === 'craft'" />
         <DesktopSettings v-else-if="view === 'settings'" />
         <HelpBody v-else-if="view === 'help'" />
       </div>
@@ -84,6 +85,7 @@ import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
 import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
+import CraftBody from '../craft/CraftBody.vue'
 
 // Deathloom fork: moving backgrounds pause while you play (the window is drawn without
 // the GPU, so a constantly moving background under glass panels costs CPU the game wants)
@@ -107,6 +109,7 @@ const VIEWS = [
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
   { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
   { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, what you have taken (from the game log), edit and share' },
+  { key: 'craft', label: 'Craft', icon: 'fa-flask', title: 'Crafting simulator and timeless jewel explorer' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
