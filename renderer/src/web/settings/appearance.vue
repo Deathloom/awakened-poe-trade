@@ -56,6 +56,7 @@
         <input type="range" min="50" max="300" step="10" v-model.number="a.decorStrength" class="w-full" />
       </div>
       <ui-toggle v-model="a.glass" class="mt-1">Glass panels in the Orbhoarder window (see-through and blurred, so the theme shows)</ui-toggle>
+      <div v-if="THEMES[active.id].flat" class="text-gray-500 text-sm">{{ THEMES[active.id].name }} is flat: no glass panels.</div>
     </div>
 
     <div class="mb-4">

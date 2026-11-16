@@ -465,6 +465,13 @@ function upgradeConfig (_config: Config): Config {
   config.pob ??= defaultPobConfig()
   config.appearance = { ...defaultAppearance(), ...config.appearance }
   if (config.window2Appearance) config.window2Appearance = { ...defaultAppearance(), ...config.window2Appearance }
+  // Deathloom fork (2026-11-16): the Clean look is the new default. Configs still on
+  // the old default (Classic, picked, theme's own accent) move to it once.
+  for (const look of [config.appearance, config.window2Appearance]) {
+    if (!look || look.cleanV1) continue
+    if (look.theme === 'classic' && look.themeMode === 'fixed' && !look.accent) look.theme = 'clean'
+    look.cleanV1 = true
+  }
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
   config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }
