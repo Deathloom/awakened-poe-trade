@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#227)
+- **Tree map in the Mapping layout now follows what you allocate** (it only did when the Levelling guide panel was also on screen).
+
 ### Fixed (#226)
 - **Settings → Panels in the Orbhoarder window:** it was only in the in-game overlay's settings (Shift+Space → Settings). Now under Appearance in both.
 
