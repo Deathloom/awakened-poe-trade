@@ -16,15 +16,38 @@ export function parseChangelog (text: string = CHANGELOG, current = ''): Changel
     if (isTestVersion(current)) {
       const u = part.match(/^\[Unreleased\][^\n]*\n([\s\S]*)$/i)
       if (u) {
-        if (u[1].trim()) out.push({ version: current, date: 'test version', body: u[1].trim() })
+        if (u[1].trim()) out.push({ version: current, date: 'test version', body: mergeSections(u[1].trim()) })
         continue
       }
     }
     const m = part.match(/^\[(\d+\.\d+\.\d+)\](?:\s*-\s*(\S+))?[^\n]*\n([\s\S]*)$/)
     if (!m) continue
-    out.push({ version: m[1], date: m[2] ?? '', body: m[3].trim() })
+    out.push({ version: m[1], date: m[2] ?? '', body: mergeSections(m[3].trim()) })
   }
   return out
+}
+
+// Every PR adds its own "### Changed (#123)" heading, so one version can have
+// several Changed / Added sections. Merge them per kind, first seen first.
+export function mergeSections (body: string): string {
+  const order: string[] = []
+  const groups = new Map<string, string[]>()
+  let current = ''
+  const intro: string[] = []
+  for (const line of body.split('\n')) {
+    const head = line.match(/^###\s+(.*)$/)
+    if (head) {
+      current = head[1].replace(/\s*\(#\d+\)\s*/g, ' ').replace(/\s*:\s*$/, '').trim()
+      if (!groups.has(current)) { groups.set(current, []); order.push(current) }
+      continue
+    }
+    if (!current) { intro.push(line); continue }
+    if (line.trim()) groups.get(current)!.push(line)
+  }
+  if (!order.length) return body
+  const parts = intro.join('\n').trim() ? [intro.join('\n').trim()] : []
+  for (const name of order) parts.push(`### ${name}\n${groups.get(name)!.join('\n')}`)
+  return parts.join('\n\n')
 }
 
 // 1.0.89-beta.2 < 1.0.89-beta.3 < 1.0.89 < 1.0.90

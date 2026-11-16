@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="mb-2 bg-gray-700 rounded px-2 py-1 leading-none">
       <i class="fas fa-info-circle"></i> {{ t('settings.clear_hotkey') }}
     </div>

@@ -4,8 +4,8 @@
       <div class="p-1 flex gap-1 items-center text-base">
         <template v-for="widget in widgets" :key="widget.wmId">
           <button @click="toggle(widget)" :title="widget.hint"
-            :class="widget.wmWants === 'show' ? 'border-gray-500' : 'border-gray-800'"
-            class="bg-gray-800 rounded text-gray-100 p-2 leading-none whitespace-nowrap border"
+            :class="widget.wmWants === 'show' ? 'border-gray-500 wm-btn-on' : 'border-gray-800'"
+            class="wm-btn bg-gray-800 rounded text-gray-100 p-2 leading-none whitespace-nowrap border"
           >
             <i v-if="widget.icon" class="fas align-bottom" :class="widget.icon" />
             <template v-if="widget.title">{{ widget.title }}</template>

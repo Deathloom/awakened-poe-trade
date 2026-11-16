@@ -25,7 +25,8 @@ const MODULES = {
   game: 'ipc/game.ts',
   'vendor-regex': 'renderer/src/web/pob/vendor-regex.ts',
   'game-keys': 'ipc/game-keys.ts',
-  'craft-sim': 'renderer/src/web/craft/craft-sim.ts'
+  'craft-sim': 'renderer/src/web/craft/craft-sim.ts',
+  changelog: 'renderer/src/web/whats-new/changelog.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
@@ -35,11 +36,13 @@ const stubs = {
     b.onResolve({ filter: /^@\/assets\/data$/ }, () => ({ path: 'data', namespace: 'stub' }))
     b.onResolve({ filter: /^@\/web\/client-log\/client-log$/ }, () => ({ path: 'client-log', namespace: 'stub' }))
     b.onResolve({ filter: /^@\/web\/Config$/ }, () => ({ path: 'config', namespace: 'stub' }))
+    b.onResolve({ filter: /CHANGELOG\.md\?raw$/ }, () => ({ path: 'changelog-md', namespace: 'stub' }))
     b.onLoad({ filter: /.*/, namespace: 'stub' }, (a) => ({
       contents: {
         data: 'export const CLIENT_STRINGS = {}',
         'client-log': 'export const TRADE_WHISPER = []; export const TRADE_BULK_WHISPER = []',
-        config: 'export const AppConfig = () => ({})'
+        config: 'export const AppConfig = () => ({})',
+        'changelog-md': 'export default ""'
       }[a.path],
       loader: 'js'
     }))

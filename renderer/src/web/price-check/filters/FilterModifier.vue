@@ -1,5 +1,5 @@
 <template>
-  <div :class="[$style.filter, { [$style.grouped]: grouped }]">
+  <div :class="[$style.filter, 'pc-row', { [$style.grouped]: grouped }]">
     <div v-if="showSourceInfo" :class="$style['mods']">
       <div class="pl-5 py-1" v-for="(source, idx) of filter.sources" :key="idx">
         <source-info :source="source" :filter="filter" />
@@ -8,7 +8,7 @@
     <div class="flex flex-col min-w-0 flex-1">
       <div class="flex items-baseline">
         <div class="flex items-baseline min-w-0 mr-2">
-          <button :class="[$style.checkbox, { [$style.checked]: !isDisabled, [$style.uncheckedHint]: isDisabled && groupExpanded }]"
+          <button :class="[$style.checkbox, 'pc-check', { [$style.checked]: !isDisabled, 'pc-check-on': !isDisabled, [$style.uncheckedHint]: isDisabled && groupExpanded }]"
             @click="toggleFilter" type="submit">
             <i :class="isDisabled ? 'far fa-square' : 'fas fa-check-square'" />
           </button>
@@ -38,10 +38,10 @@
             <img v-for="img of rollTags"
               :class="$style.rollTag" :src="img">
             <div class="flex gap-x-px">
-              <input :class="$style['rollInput']" :placeholder="t('min')" :min="roll?.bounds?.min" :max="roll?.bounds?.max" :step="changeStep" type="number"
+              <input :class="[$style['rollInput'], 'pc-roll']" :placeholder="t('min')" :min="roll?.bounds?.min" :max="roll?.bounds?.max" :step="changeStep" type="number"
                 ref="inputMinEl"
                 v-model.number="inputMin" @focus="inputFocus($event, 'min')" @mousewheel.stop>
-              <input :class="$style['rollInput']" :placeholder="t('max')" :min="roll?.bounds?.min" :max="roll?.bounds?.max" :step="changeStep" type="number"
+              <input :class="[$style['rollInput'], 'pc-roll']" :placeholder="t('max')" :min="roll?.bounds?.min" :max="roll?.bounds?.max" :step="changeStep" type="number"
                 ref="inputMaxEl"
                 v-model.number="inputMax" @focus="inputFocus($event, 'max')" @mousewheel.stop>
             </div>
@@ -68,9 +68,9 @@
         </div>
         <div class="flex-1 min-w-0 flex items-start gap-x-2">
           <span v-if="filter.not"
-            :class="[$style['tag'], $style['tag-not']]">{{ t('filters.tag_not') }}</span>
+            :class="[$style['tag'], $style['tag-not'], 'pc-tag', 'pc-tag-not']">{{ t('filters.tag_not') }}</span>
           <span v-if="showTag"
-            :class="[$style['tag'], $style[`tag-${tag}`]]">{{ t(`filters.tag_${tag.replace('-', '_')}`) }}{{ (filter.sources.length > 1) ? ` x ${filter.sources.length}` : null }}</span>
+            :class="[$style['tag'], $style[`tag-${tag}`], 'pc-tag', `pc-tag-${tag}`]">{{ t(`filters.tag_${tag.replace('-', '_')}`) }}{{ (filter.sources.length > 1) ? ` x ${filter.sources.length}` : null }}</span>
           <filter-modifier-tiers v-if="!showBounds()"
             :filter="filter" :item="item" />
           <filter-modifier-options v-if="rollOptions"

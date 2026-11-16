@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: where the app's panels show (overlay, over the game, Orbhoarder window) -->
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="text-gray-500 text-sm mb-2">
       Panel hotkeys are in Settings → Hotkeys.
     </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <!-- Deathloom fork: PoE2 mode (phase 1: game switch). Hidden until PoE2 mode is usable;
          still shown if PoE2 is already selected so it can be switched back. -->
     <div class="mb-4" v-if="showGameSwitch">
