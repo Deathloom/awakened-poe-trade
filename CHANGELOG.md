@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#204)
+- **Campaign guide follows your character:** each character keeps its own step, so switching characters no longer shows another one's act. A character you haven't used with the guide yet starts at the act it was last in.
+- **Campaign done:** after Kitava in act 10 (or once the character has been in a map) the guide says the campaign is done instead of showing Act 1; **Show the route anyway** brings it back. The area level is only shown in campaign zones (a map's level next to "Act 1" was confusing).
 ### Fixed (#203)
 - **Price check on 3.30 Threads** (Blight Thread, Breach Thread …), Frayed Thread, Threaded Delirium Orb, Maven's Chisel of Threads and Soul Cores: the item list didn't have them, so the price check didn't know them. Also added currencies the trade site lists again (Engineer's Orb, Cartographer's Chisel, Orb of Horizons, Harbinger's Orb, the orb shards, Breach Blessings). English game client only for now.
 
