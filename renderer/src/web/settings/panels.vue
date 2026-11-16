@@ -53,13 +53,15 @@
       <template v-if="pob.hud.trades">
         <ui-toggle v-model="pob.hud.autoHideTrades" class="mb-1">Trade companion opens on a trade whisper and closes when no trades are left</ui-toggle>
       </template>
+      <!-- Deathloom fork (17 Nov): always shown, so it can be found before pinning anything -->
+      <ui-toggle :modelValue="pob.hud.sharedWindow === true" @update:modelValue="v => { pob.hud.sharedWindow = v }" class="mb-1">
+        One window for all pinned panels <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">test</span></ui-toggle>
+      <div class="text-gray-500 text-sm mb-2">
+        Uses less memory with several panels pinned. Clicks outside a panel go to the game; panels set to let clicks
+        through still do. Always see-through. If clicks stop reaching the game or a panel, turn this off.
+        <template v-if="!HUD_PANELS.some(p => pob.hud[p.key])">Pin a panel in the table above to use it.</template>
+      </div>
       <template v-if="HUD_PANELS.some(p => pob.hud[p.key])">
-        <ui-toggle :modelValue="pob.hud.sharedWindow === true" @update:modelValue="v => { pob.hud.sharedWindow = v }" class="mb-1">
-          One window for all pinned panels <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">test</span></ui-toggle>
-        <div class="text-gray-500 text-sm mb-2">
-          Uses less memory with several panels pinned. Clicks outside a panel go to the game; panels set to let clicks
-          through still do. Always see-through. If clicks stop reaching the game or a panel, turn this off.
-        </div>
         <ui-toggle v-if="!pob.hud.sharedWindow" v-model="pob.hud.opaque" class="mb-1">Solid background (no see-through window)</ui-toggle>
         <div class="flex items-center gap-2 mb-1">
           <span class="shrink-0">Opacity</span>
