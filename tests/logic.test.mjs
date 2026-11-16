@@ -463,3 +463,16 @@ test('All tab layout: auto switches to Mapping on maps, Levelling on a new chara
   assert.equal(lp.effectiveMode('auto', 'mapping'), 'mapping')
   assert.equal(lp.effectiveMode('levelling', 'mapping'), 'levelling')
 })
+
+test('poe.ninja categories: new slugs land in a Market group and atlas value', async () => {
+  const mt = await import('./.build/market-trends.mjs')
+  const av = await import('./.build/atlas-value.mjs')
+  const group = c => mt.MARKET_GROUPS.filter(g => g.id !== 'all' && g.match(c)).map(g => g.id)
+  for (const [c, id] of [['threads', 'league'], ['viscera', 'league'], ['wombgifts', 'league'], ['scrying-orbs', 'league'],
+    ['memories', 'league'], ['temples', 'league'], ['shrine-belts', 'uniques'], ['forbidden-jewels', 'uniques'],
+    ['imbued-gems', 'gems'], ['valdo-maps', 'maps'], ['flasks', 'bases'], ['cluster-jewels', 'bases'], ['scarabs', 'scarabs']]) {
+    assert.deepEqual(group(c), [id], c)
+  }
+  const v = av.contentValues([{ name: 'Mysterious Wombgift', chaos: 20, category: 'wombgifts' }])
+  assert.equal(v.breach.chaos, 20)
+})
