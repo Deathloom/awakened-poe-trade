@@ -24,7 +24,8 @@ const MODULES = {
   'build-compare': 'renderer/src/web/pob/compare.ts',
   game: 'ipc/game.ts',
   'vendor-regex': 'renderer/src/web/pob/vendor-regex.ts',
-  'game-keys': 'ipc/game-keys.ts'
+  'game-keys': 'ipc/game-keys.ts',
+  'craft-sim': 'renderer/src/web/craft/craft-sim.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
