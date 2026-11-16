@@ -10,6 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Changed (#196)
 - **New default look: Clean.** Flat panels, neutral greys with more contrast, the system font (Segoe UI), calmer top bar, slimmer scrollbars and clearer buttons, in the overlay, the in-game panels and the Orbhoarder window. If you were on the old default (Classic) you move to Clean once; any other theme you picked stays. Classic and the other themes are still in Settings → Appearance. First step of the look overhaul.
+
 ### Added (#195)
 - **Craft tab** in the Orbhoarder window:
   - **Crafting simulator:** pick a base, item level and up to two influences, tick the mods you want (and the lowest tier you'd accept). Simulate shows the chance per try, the average number of tries and the average cost in chaos (poe.ninja prices) for Chaos Orb spam, Alteration + Augmentation, Alteration then Regal, and essence spam; **Compare all** sorts them by cost. Mod pool and spawn weights come from Path of Building's game data. Fossils, harvest and metacrafts aren't covered yet.
