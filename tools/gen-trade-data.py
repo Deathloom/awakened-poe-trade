@@ -31,6 +31,10 @@ STAT_TYPES = {'explicit', 'implicit', 'fractured', 'enchant', 'pseudo', 'crafted
 # trade item groups whose base types are gear we can give a category
 GEAR_GROUPS = {'accessory', 'armour', 'weapon', 'jewel', 'flask'}
 
+# trade static groups: namespace for new rows, and groups whose entries are search options
+STATIC_NS = {'Cards': 'DIVINATION_CARD', 'Beasts': 'CAPTURED_BEAST'}
+STATIC_NO_NEW = {'MapKey', 'MapsUnique', 'MapsSpecial', 'Heist', 'Sanctum', 'Misc'}
+
 POB_TYPE = {
   'One Handed Axe': 'One-Handed Axe', 'One Handed Mace': 'One-Handed Mace', 'One Handed Sword': 'One-Handed Sword',
   'Two Handed Axe': 'Two-Handed Axe', 'Two Handed Mace': 'Two-Handed Mace', 'Two Handed Sword': 'Two-Handed Sword',
@@ -112,10 +116,10 @@ def iter_stats (rows):
 # ---------- items ----------
 
 def item_entries (groups):
-  """(group id, entry) in the trade site's order"""
+  """(group id, index in group, entry) in the trade site's order"""
   for g in groups:
-    for e in g.get('entries', []):
-      yield g.get('id'), e
+    for i, e in enumerate(g.get('entries', [])):
+      yield g.get('id'), i, e
 
 
 def refresh_items (dumps, cats, report):
@@ -131,14 +135,14 @@ def refresh_items (dumps, cats, report):
   new_rows = []  # (en row, key to find it in other languages)
 
   en_list = list(item_entries(en_groups))
-  for idx, (gid, e) in enumerate(en_list):
+  for gid, gi, e in en_list:
     flags = e.get('flags', {})
     if flags.get('unique'):
       if 'name' not in e or (e['name'], e['type']) in uniques:
         continue
       uniques.add((e['name'], e['type']))
       row = {'name': e['name'], 'refName': e['name'], 'namespace': 'UNIQUE', 'unique': {'base': e['type']}, 'icon': ''}
-      new_rows.append((row, ('pos', idx)))
+      new_rows.append((row, ('pos', gid, gi)))
       report['uniques'].append(f"{e['name']} ({e['type']})")
     elif gid in GEAR_GROUPS and 'name' not in e and e['type'] not in bases:
       cat = cats.get(e['type'])
@@ -147,7 +151,7 @@ def refresh_items (dumps, cats, report):
         continue
       bases.add(e['type'])
       row = {'name': e['type'], 'refName': e['type'], 'namespace': 'ITEM', 'craftable': {'category': cat}, 'icon': ''}
-      new_rows.append((row, ('pos', idx)))
+      new_rows.append((row, ('pos', gid, gi)))
       report['bases'].append(f"{e['type']} ({cat})")
 
   # exchange tags
@@ -155,7 +159,7 @@ def refresh_items (dumps, cats, report):
   for g in en_static:
     for e in g.get('entries', []):
       if e.get('id') and e.get('text'):
-        static_en[e['id']] = e
+        static_en[e['id']] = dict(e, group=g.get('id'))
   by_ref = {}
   for r in en_rows:
     by_ref.setdefault(r['refName'], []).append(r)
@@ -169,7 +173,10 @@ def refresh_items (dumps, cats, report):
       tag_fix[e['text']] = tid
       report['tags'].append(f"{e['text']} → {tid}")
     elif not cands and not any(r[0]['refName'] == e['text'] for r in new_rows):
-      row = {'name': e['text'], 'refName': e['text'], 'namespace': 'ITEM', 'tradeTag': tid, 'exchangeable': True,
+      if e['group'] in STATIC_NO_NEW or ' (' in e['text']:
+        continue  # map tiers, contract / tome levels, headers: search options, not item names
+      ns = STATIC_NS.get(e['group'], 'ITEM')
+      row = {'name': e['text'], 'refName': e['text'], 'namespace': ns, 'tradeTag': tid, 'exchangeable': True,
              'icon': ICON_HOST + e['image'] if e.get('image', '').startswith('/') else e.get('image', '')}
       new_rows.append((row, ('static', tid)))
       report['exchange'].append(f"{e['text']} ({tid})")
@@ -213,35 +220,49 @@ def insert_next_to (rows, row):
 
 
 def localiser (dumps, lang, en_list, lrows, report):
-  groups = read_dump(dumps, lang, 'items')
+  """Translated names: exchange items by trade id; uniques and bases by their
+  position in the same trade group, only for groups whose order checks out
+  against names we already have translated (>95% of at least 5)."""
+  groups = read_dump(dumps, lang, 'items') or []
   static = read_dump(dumps, lang, 'static') or []
   st = {e['id']: e['text'] for g in static for e in g.get('entries', []) if e.get('id') and e.get('text')}
-  pos_ok = False
-  lst = list(item_entries(groups)) if groups else []
-  if lst and len(lst) == len(en_list):
-    # check the order matches using names we already have translated
-    known = {}
-    for r in lrows:
-      if r['namespace'] in ('UNIQUE', 'ITEM'):
-        known.setdefault(r['refName'], r['name'])
+  known = {}
+  for r in lrows:
+    if r['namespace'] in ('UNIQUE', 'ITEM'):
+      known.setdefault(r['refName'], r['name'])
+  en_groups = {}
+  for gid, _, e in en_list:
+    en_groups.setdefault(gid, []).append(e)
+  ok = {}
+  notes = []
+  for g in groups:
+    gid, le = g.get('id'), g.get('entries', [])
+    ee = en_groups.get(gid)
+    if ee is None:
+      continue
+    if len(ee) != len(le):
+      notes.append(f'{gid} length {len(le)}/{len(ee)}')
+      continue
     hit = tot = 0
-    for (_, a), (_, b) in zip(en_list, lst):
+    for a, b in zip(ee, le):
       ref = a.get('name', a['type'])
       if ref in known:
         tot += 1
         hit += known[ref] == b.get('name', b['type'])
-    pos_ok = tot > 100 and hit / tot > 0.95
-    report['langs'][lang] = f'order check {hit}/{tot}; '
-  else:
-    report['langs'][lang] = 'items list missing or different length; '
+    if tot >= 5 and hit / tot > 0.95:
+      ok[gid] = le
+    else:
+      notes.append(f'{gid} order {hit}/{tot}')
+  report['langs'][lang] = f'item groups matched {len(ok)}/{len(en_groups)}' + (f' (not: {", ".join(notes)})' if notes else '') + '; '
 
   def local (key):
-    kind, v = key
-    if kind == 'static':
-      return st.get(v)
-    if not pos_ok:
+    if key[0] == 'static':
+      return st.get(key[1])
+    _, gid, gi = key
+    le = ok.get(gid)
+    if le is None:
       return None
-    e = lst[v][1]
+    e = le[gi]
     return e.get('name', e['type'])
   return local
 
@@ -268,6 +289,7 @@ def refresh_stats (dumps, report):
     else:
       plain.setdefault(r['ref'], i)
 
+  matchers = {lang: {m['string'] for s in iter_stats(rows[lang]) for m in s['matchers']} for lang in LANGS}
   adds = []  # ('id', ref, type, id) or ('new', stat dict, id)
   new_by_ref = {}
   for g in en:
@@ -289,6 +311,9 @@ def refresh_stats (dumps, report):
           continue
         adds.append(('id', ref, typ, sid))
         report['stat_ids'].append(f'{ref} + {sid}')
+      elif ref not in new_by_ref and matcher_text(text) in matchers['en']:
+        report['skipped'].append(f'stat {sid}: "{text}" (same wording as a line we have under another ref)')
+        continue
       elif ref in new_by_ref:
         new_by_ref[ref]['trade']['ids'].setdefault(typ, []).append(sid)
       else:
@@ -318,7 +343,11 @@ def refresh_stats (dumps, report):
           if t is None:
             report['skipped'].append(f'{lang}: no translation for stat "{stat["ref"]}"')
             continue
+          if matcher_text(t) in matchers[lang]:
+            report['skipped'].append(f'{lang}: stat "{stat["ref"]}" wording already used by another line')
+            continue
           s['matchers'] = [{'string': matcher_text(t)}]
+          matchers[lang].add(matcher_text(t))
         lrows.append(s)
         n_new += 1
     write_ndjson(os.path.join(DATA, lang, 'stats.ndjson'), lrows)
@@ -348,9 +377,9 @@ def main ():
                      ('skipped', 'Skipped (check by hand)')):
     v = report[key]
     lines += ['', f'<details><summary>{title}: {len(v)}</summary>', '']
-    lines += [f'- {x}' for x in v[:400]]
-    if len(v) > 400:
-      lines.append(f'- … and {len(v) - 400} more')
+    lines += [f"- {x}" for x in v[:120]]
+    if len(v) > 120:
+      lines.append(f"- … and {len(v) - 120} more (full list: run the tool with --report)")
     lines += ['', '</details>']
   text = '\n'.join(lines) + '\n'
   if out:
