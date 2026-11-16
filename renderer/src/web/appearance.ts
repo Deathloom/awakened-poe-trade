@@ -6,7 +6,7 @@ import { decorAt, splitLayers } from './theme-decor'
 import './theme-decor.css'
 import './motion.css'
 
-export type ThemeId = 'classic' | 'midnight' | 'ember' | 'abyss' | 'contrast' |
+export type ThemeId = 'clean' | 'classic' | 'midnight' | 'ember' | 'abyss' | 'contrast' |
   // seasons and holidays (also picked by date in Seasonal mode)
   'summer' | 'autumn' | 'winter' | 'spring' |
   'halloween' | 'festive' | 'newyear' | 'easter' | 'valentine' |
@@ -49,10 +49,12 @@ export interface AppearanceConfig {
   windowBgDim: number
   // 40–100 (%), panels in the window over the background
   windowOpacity: number
+  // Deathloom fork (16 Nov 2026): set once the Clean look became the default
+  cleanV1?: boolean
 }
 
 export const defaultAppearance = (): AppearanceConfig => ({
-  theme: 'classic',
+  theme: 'clean',
   themeMode: 'fixed',
   hemisphere: 'south',
   holidays: true,
@@ -90,11 +92,24 @@ interface Theme {
   accent: string
   // Orbhoarder window background
   windowBg: string
+  // flat look: no glass panels or accent glow, whatever the glass setting says
+  flat?: boolean
 }
 
 const CLASSIC_BLUE = ['#ebf8ff', '#bee3f8', '#90cdf4', '#63b3ed', '#4299e1', '#3182ce', '#2b6cb0', '#2c5282', '#2a4365']
 
 export const THEMES: Record<ThemeId, Theme> = {
+  // Deathloom fork (16 Nov 2026): the default look. Flat surfaces, neutral greys
+  // with more contrast between text and background, system font, one accent.
+  clean: {
+    name: 'Clean (flat, easy to read)',
+    gray: ['#f8f9fb', '#eceff3', '#dde1e7', '#c4cad3', '#a3abb8', '#7d8696', '#3d434f', '#22262e', '#14161b'],
+    accent: '#4f8cff',
+    windowBg: '#0e1014',
+    font: 'system',
+    style: 'clean',
+    flat: true
+  },
   classic: {
     name: 'Classic',
     gray: ['#f7fafc', '#edf2f7', '#e2e8f0', '#cbd5e0', '#a0aec0', '#718096', '#4a5568', '#2d3748', '#1a202c'],
@@ -336,7 +351,7 @@ export interface ActiveTheme {
 
 export function resolveTheme (cfg: Partial<AppearanceConfig> | undefined, leagueId?: string, now = new Date()): ActiveTheme {
   const a = { ...defaultAppearance(), ...cfg }
-  const picked: ThemeId = THEMES[a.theme] ? a.theme : 'classic'
+  const picked: ThemeId = THEMES[a.theme] ? a.theme : 'clean'
   if (a.themeMode === 'seasonal') {
     const id = seasonalTheme(now, a.hemisphere, a.holidays)
     let next: ActiveTheme['next']
@@ -357,7 +372,7 @@ export function resolveTheme (cfg: Partial<AppearanceConfig> | undefined, league
 }
 
 export const FONTS: Record<UiFont, { name: string, css: string }> = {
-  'poe-sc': { name: 'Fontin Small Caps (default)', css: 'FontinSmallCaps, FrizQuadrataC' },
+  'poe-sc': { name: 'Fontin Small Caps (PoE style; Clean uses the system font)', css: 'FontinSmallCaps, FrizQuadrataC' },
   'poe': { name: 'Fontin', css: 'Fontin, FrizQuadrataC' },
   'system': { name: 'System (Segoe UI)', css: '"Segoe UI", system-ui, sans-serif' }
 }
@@ -399,7 +414,7 @@ let timer: ReturnType<typeof setInterval> | null = null
 export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, surface: Surface, leagueId?: string): void {
   const a = { ...defaultAppearance(), ...cfg }
   const active = resolveTheme(a, leagueId)
-  const theme = THEMES[active.id] ?? THEMES.classic
+  const theme = THEMES[active.id] ?? THEMES.clean
   const root = document.documentElement.style
   lastApplied = { cfg, surface, leagueId, id: active.id }
   // Seasonal: switch at midnight while the app keeps running
@@ -438,8 +453,9 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
   if (surface === 'desktop') {
     const decor = decorAt(Math.max(25, Math.min(300, a.decorStrength ?? 100)) / 100)
     // glass panels: see-through (unless you set your own panel opacity) and blurred
-    cls.toggle('lg-glass', a.glass !== false)
-    if (a.glass !== false && a.windowOpacity >= 100) root.setProperty('--panel-alpha', '0.62')
+    const glass = a.glass !== false && !theme.flat
+    cls.toggle('lg-glass', glass)
+    if (glass && a.windowOpacity >= 100) root.setProperty('--panel-alpha', '0.62')
     // the theme's motif in the corner of each glass panel (its first pattern layer)
     const motifDecor = a.windowBg === 'theme' && a.decorations && theme.decor ? decor[theme.decor] : undefined
     const motifIdx = motifDecor ? splitLayers(motifDecor.image).findIndex(l => l.startsWith('url(')) : -1
