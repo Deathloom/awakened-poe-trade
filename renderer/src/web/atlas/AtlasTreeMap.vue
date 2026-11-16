@@ -52,6 +52,7 @@
         @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
       <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: what Orbhoarder saw you allocate in game. Set it here when you already have a tree."
         @click="trackOpen = !trackOpen"><i class="fas fa-check-double" /></button>
+      <button v-if="spec" class="text-gray-500 hover:text-gray-200" :title="nextIds.length ? 'Zoom to the next passives to take' : 'Zoom to this atlas build'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
       <button class="text-gray-500 hover:text-gray-200" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
       <button class="hover:text-gray-200" :class="statsOpen ? 'text-yellow-300' : 'text-gray-500'" title="Stats: everything the passives in this build add up to"
         @click="toggleStats"><i class="fas fa-list-ul" /></button>
@@ -383,6 +384,17 @@ const nextIndex = computed(() => new Map(nextIds.value.map((id, i) => [id, i + 1
 const nextTitle = computed(() => 'Next passives to take in game (numbered on the atlas): the path to the nearest notable, map sustain first. Click to zoom.\n' +
   nextIds.value.map((id, i) => `${i + 1}. ${ATLAS_BY_ID.get(id)?.[6] ?? id}`).join('\n'))
 function focusNext () { if (nextIds.value.length) zoomTo(nextIds.value, 1600, 0.3) }
+// Deathloom fork: target button (same as the passive tree's): the next passives,
+// or the whole build when nothing is left to take
+function focusTarget () {
+  if (nextIds.value.length) { focusNext(); return }
+  const ids = [...buildSet.value].filter(id => !ATLAS_START.has(id))
+  if (ids.length) zoomTo(ids, 1600, 0.3); else fit()
+}
+// follow the next passives as you take them in game (not while editing)
+watch(() => nextIds.value.join(','), (now, before) => {
+  if (now && now !== before && !editMode.value && fitted) focusNext()
+})
 const COLORS: Record<State, string> = { have: '#22c55e', todo: '#fb923c', none: '#5b6b84', refund: '#ef4444' }
 const search = ref('')
 const searchHits = computed(() => {

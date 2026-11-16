@@ -5,7 +5,7 @@ import { ref, watch } from 'vue'
 import type { PanelKey } from '@ipc/types'
 import { inWindow } from './panels'
 import { readWindowKey, windowKey } from '@/web/hud/is-hud'
-import { effectiveMode, phaseForArea, type LayoutMode, type LayoutPref } from './layout-phase'
+import { effectiveMode, phaseForArea, addTreeMapOnce, type LayoutMode, type LayoutPref } from './layout-phase'
 import { PLAY_SESSION_KEY, loadPlaySession } from '../companion/play-session'
 
 export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money'
@@ -47,6 +47,7 @@ const KEY = 'deathloom.all-layout.v1'
 const MAP_KEY = 'deathloom.all-layout.mapping.v1'
 const PREF_KEY = 'deathloom.all-layout.pref.v1'
 const PHASE_KEY = 'deathloom.all-layout.phase.v1'
+const MAP_TREE_KEY = 'deathloom.all-layout.mapping.tree.v1'
 
 export function defaultLayout (): AllLayout {
   return {
@@ -61,14 +62,15 @@ export function defaultLayout (): AllLayout {
 
 // Mapping (Gerhard 16 Nov 2026: the panels that help most while mapping):
 // This session (map timer, profit/h) / Trades / Market | Atlas tree / Cheat
-// sheets (map mechanics, bosses) | Build / Money tools
+// sheets (map mechanics, bosses) | Tree map / Build / Money tools (you still
+// level in maps, so the passive tree stays)
 export function defaultMappingLayout (): AllLayout {
   return {
     v: 1,
     cols: [
       { w: 0.3, items: [{ id: 'session', h: 0.45 }, { id: 'trades', h: 0.25 }, { id: 'market', h: 0.3 }] },
-      { w: 0.4, items: [{ id: 'atlas', h: 0.6 }, { id: 'cheats', h: 0.4 }] },
-      { w: 0.3, items: [{ id: 'gear', h: 0.6 }, { id: 'money', h: 0.4 }] }
+      { w: 0.38, items: [{ id: 'atlas', h: 0.6 }, { id: 'cheats', h: 0.4 }] },
+      { w: 0.32, items: [{ id: 'tree', h: 0.45 }, { id: 'gear', h: 0.35 }, { id: 'money', h: 0.2 }] }
     ]
   }
 }
@@ -126,7 +128,18 @@ export const layoutMode = () => effectiveMode(layoutPref.value, phase.value)
 function load (mode: LayoutMode): AllLayout {
   try {
     const saved = JSON.parse(readWindowKey(mode === 'mapping' ? MAP_KEY : KEY) ?? 'null')
-    if (valid(saved)) { normalise(saved); return saved }
+    if (valid(saved)) {
+      normalise(saved)
+      if (mode === 'mapping' && readStr(MAP_TREE_KEY) !== '1') {
+        addTreeMapOnce(saved)
+        normalise(saved)
+        try {
+          localStorage.setItem(windowKey(MAP_KEY), JSON.stringify(saved))
+          localStorage.setItem(windowKey(MAP_TREE_KEY), '1')
+        } catch {}
+      }
+      return saved
+    }
   } catch {}
   return mode === 'mapping' ? defaultMappingLayout() : fromOldSplits()
 }

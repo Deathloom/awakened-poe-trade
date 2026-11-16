@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#221)
+- **Mapping layout has the Tree map** (you still level in maps): Tree map / Build / Money tools in the right column. Mapping layouts saved in 1.0.91-beta.1 to beta.3 get it added once, above Build.
+- **Atlas tree: target button** (crosshairs, next to Fit) like the passive tree's: zooms to the next passives to take, or to the whole build when nothing is left. The atlas also follows the next passives as you take them in game (not while editing).
+- **Switches easier to see:** off switches are light grey instead of near-invisible, on switches use the theme's accent (e.g. Settings → Tools → Phone or other devices).
+
 ### Changed (#220)
 - **Clean look:** Settings **Save** is now the accent-coloured main button, and the picked theme in Settings → Appearance is tinted with the accent (no more plain grey row).
 
