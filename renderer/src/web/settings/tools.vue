@@ -65,9 +65,11 @@ import { Host } from '@/web/background/IPC'
 import type { Config } from '@/web/Config'
 import { configProp } from './utils'
 import { hotkeyClashes, makeBackup, readBackup } from './tools'
+import UiToggle from '@/web/ui/UiToggle.vue'
 
 export default defineComponent({
   name: 'Tools',
+  components: { UiToggle },
   props: configProp(),
   setup (props) {
     const busy = ref<'health' | 'backup' | null>(null)
