@@ -13,7 +13,7 @@ interface DropMatch { category: string, re?: RegExp }
 export const CONTENT_DROPS: Record<string, DropMatch[]> = {
   expedition: [{ category: 'artifacts' }],
   essence: [{ category: 'essences' }],
-  breach: [{ category: 'fragments', re: /^Splinter of |Breachstone/ }, { category: 'currency', re: /^Blessing of / }],
+  breach: [{ category: 'fragments', re: /^Splinter of |Breachstone/ }, { category: 'currency', re: /^Blessing of / }, { category: 'wombgifts' }],
   legion: [{ category: 'fragments', re: /^Timeless .*(Splinter|Emblem)/ }],
   ritual: [{ category: 'omens' }],
   harvest: [{ category: 'currency', re: /Crystallised Lifeforce/ }],
@@ -21,7 +21,7 @@ export const CONTENT_DROPS: Record<string, DropMatch[]> = {
   delirium: [{ category: 'delirium-orbs' }, { category: 'fragments', re: /Simulacrum/ }],
   beasts: [{ category: 'beasts' }],
   ultimatum: [{ category: 'currency', re: /Catalyst$/ }],
-  incursion: [{ category: 'vials' }],
+  incursion: [{ category: 'vials' }, { category: 'temples' }],
   ore: [{ category: 'runegrafts' }],
   eldritch: [{ category: 'currency', re: /^Eldritch |^Orb of Conflict/ }],
   divination: [{ category: 'divination-cards' }],

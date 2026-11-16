@@ -68,11 +68,12 @@ export const MARKET_GROUPS: MarketGroup[] = [
   { id: 'currency', label: 'Currency', match: c => c === 'currency' },
   { id: 'fragments', label: 'Fragments & invitations', match: c => ['fragments', 'invitations', 'vials'].includes(c) },
   { id: 'scarabs', label: 'Scarabs (Standard / before 3.30)', match: c => c === 'scarabs' },
+  { id: 'league', label: 'League items (Threads, Viscera, Wombgifts…)', match: c => ['threads', 'viscera', 'wombgifts', 'scrying-orbs', 'memories', 'temples'].includes(c) },
   { id: 'crafting', label: 'Crafting (essences, fossils, oils…)', match: c => ['essences', 'fossils', 'resonators', 'oils', 'delirium-orbs', 'omens', 'allflame-embers', 'tattoos', 'runegrafts', 'astrolabes', 'djinn-coins', 'coffins', 'corpses', 'enshrouding-crystals', 'artifacts', 'incubators', 'ducats'].includes(c) },
   { id: 'divination', label: 'Divination cards', match: c => c === 'divination-cards' },
-  { id: 'uniques', label: 'Uniques', match: c => c.startsWith('unique-') },
-  { id: 'gems', label: 'Skill gems', match: c => c === 'skill-gems' },
-  { id: 'maps', label: 'Maps', match: c => ['maps', 'blighted-maps', 'blight-ravaged-maps'].includes(c) },
+  { id: 'uniques', label: 'Uniques', match: c => c.startsWith('unique-') || ['shrine-belts', 'forbidden-jewels'].includes(c) },
+  { id: 'gems', label: 'Skill gems', match: c => ['skill-gems', 'imbued-gems'].includes(c) },
+  { id: 'maps', label: 'Maps', match: c => ['maps', 'blighted-maps', 'blight-ravaged-maps', 'valdo-maps'].includes(c) },
   { id: 'beasts', label: 'Beasts', match: c => c === 'beasts' },
-  { id: 'bases', label: 'Base types', match: c => c === 'base-types' }
+  { id: 'bases', label: 'Base types, flasks, cluster jewels', match: c => ['base-types', 'flasks', 'cluster-jewels'].includes(c) }
 ]

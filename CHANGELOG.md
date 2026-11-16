@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#219)
+- **More poe.ninja prices:** Wombgifts, Scrying Orbs, Memories, Temples, Shrine Belts, Forbidden Jewels, Imbued Gems, Valdo Maps, Cluster Jewels and Flasks now load. Market gets a **League items** group (Threads, Viscera, Wombgifts, Scrying Orbs, Memories, Temples); Atlas value counts Wombgifts for Breach and Temples for Incursion. Price checks that worked before are unchanged.
+
 ### Added (#218)
 - **All tab: Levelling and Mapping layouts.** Auto (default) switches to the Mapping layout when you enter your first atlas map, and back to Levelling when a new character starts in The Twilight Strand. Mapping layout: This session, Trade companion, Market | Atlas tree, Cheat sheets | Build, Money tools. Each layout has its own Edit layout; pick one by hand with the layout menu next to Edit layout.
 - **Phone or other devices:** QR code to scan with your phone, a **Restart now** button after switching it on (the link appears after the restart), and a note when the PC has no network address.

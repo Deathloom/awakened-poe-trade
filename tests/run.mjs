@@ -33,7 +33,9 @@ const MODULES = {
   'craft-plan': 'renderer/src/web/craft/craft-plan.ts',
   'timeless-find': 'renderer/src/web/craft/timeless-find.ts',
   'item-regex': 'renderer/src/web/pob/item-regex.ts',
-  'layout-phase': 'renderer/src/web/desktop/layout-phase.ts'
+  'layout-phase': 'renderer/src/web/desktop/layout-phase.ts',
+  'market-trends': 'renderer/src/web/market-history/market-trends.ts',
+  'atlas-value': 'renderer/src/web/atlas/atlas-value.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

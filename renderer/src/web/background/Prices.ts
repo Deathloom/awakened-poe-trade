@@ -240,7 +240,21 @@ function splitJsonBlob (jsonBlob: string): PriceDatabase {
     { ns: 'UNIQUE', url: 'unique-maps', type: 'UniqueMap' },
     { ns: 'UNIQUE', url: 'unique-relics', type: 'UniqueRelic' },
     { ns: 'UNIQUE', url: 'unique-tinctures', type: 'UniqueTincture' },
-    { ns: 'GEM', url: 'skill-gems', type: 'SkillGem' }
+    { ns: 'GEM', url: 'skill-gems', type: 'SkillGem' },
+    // Deathloom fork: categories poe.ninja added since upstream. Appended after the
+    // older ones so price-check lookups (first match per namespace) don't change.
+    { ns: 'ITEM', url: 'wombgifts', type: 'Wombgift' },
+    { ns: 'ITEM', url: 'scrying-orbs', type: 'ScryingOrb' },
+    { ns: 'ITEM', url: 'memories', type: 'Memory' },
+    { ns: 'UNIQUE', url: 'shrine-belts', type: 'ShrineBelt' },
+    { ns: 'UNIQUE', url: 'forbidden-jewels', type: 'ForbiddenJewel' },
+    { ns: 'GEM', url: 'imbued-gems', type: 'ImbuedGem' },
+    // own namespaces: listed in Market / atlas value only, never used by price check
+    // (their poe.ninja names and variants don't match how items are parsed)
+    { ns: 'TEMPLE', url: 'temples', type: 'IncursionTemple' },
+    { ns: 'VALDO_MAP', url: 'valdo-maps', type: 'ValdoMap' },
+    { ns: 'CLUSTER', url: 'cluster-jewels', type: 'ClusterJewel' },
+    { ns: 'FLASK', url: 'flasks', type: 'Flask' }
   ]
 
   const database: PriceDatabase = []
