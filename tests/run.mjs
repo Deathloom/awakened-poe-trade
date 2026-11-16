@@ -27,7 +27,8 @@ const MODULES = {
   'game-keys': 'ipc/game-keys.ts',
   'craft-sim': 'renderer/src/web/craft/craft-sim.ts',
   changelog: 'renderer/src/web/whats-new/changelog.ts',
-  'campaign-route': 'renderer/src/web/companion/campaign-route.ts'
+  'campaign-route': 'renderer/src/web/companion/campaign-route.ts',
+  'taken-paths': 'renderer/src/web/pob/taken-paths.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
