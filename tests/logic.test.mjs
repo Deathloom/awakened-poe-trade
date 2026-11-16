@@ -367,3 +367,12 @@ test('craft plan: match PoB gear mods to the pool and plan the steps', async () 
   assert.deepEqual(steps.map(s => s.kind), ['base', 'roll', 'bench', 'finish'])
   assert.ok(steps[1].result.hits > 0)
 })
+
+const pobPin = await import('./.build/pob-pin.mjs')
+test('PoB pin: test builds read dev, stable reads master', () => {
+  assert.equal(pobPin.pobPinUrl('1.0.90-beta.18'), pobPin.POB_PIN_URL_TESTING)
+  assert.match(pobPin.POB_PIN_URL_TESTING, /\/dev\//)
+  assert.equal(pobPin.pobPinUrl('1.0.90'), pobPin.POB_PIN_URL)
+  assert.match(pobPin.POB_PIN_URL, /\/master\//)
+  assert.equal(pobPin.parsePobPin("POB_PIN = '" + 'a'.repeat(40) + "'"), 'a'.repeat(40))
+})
