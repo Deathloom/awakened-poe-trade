@@ -711,11 +711,12 @@ function paint () {
 }
 
 watch([searchHits, buildSet, haveSet, nextIds, refundSet, hitIdx], () => draw())
-watch(() => store.value.active, () => { if (spec.value?.nodes.length) zoomTo(spec.value.nodes, 1200, 0.3); else fit() })
+// switching atlas build or opening the panel: zoom to its target (Gerhard 17 Nov)
+watch(() => store.value.active, () => focusTarget())
 watch(taken, () => draw())
 let ro: ResizeObserver | null = null
 onMounted(() => {
-  ro = new ResizeObserver(() => { if (fitted) draw(); else fit() })
+  ro = new ResizeObserver(() => { if (fitted) draw(); else focusTarget() })
   if (boxRef.value) ro.observe(boxRef.value)
 })
 onUnmounted(() => {

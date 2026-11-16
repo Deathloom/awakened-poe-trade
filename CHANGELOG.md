@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#223)
+- **Mapping layout default** (Gerhard's own arrangement): Build / Trades / Market | Atlas tree / Cheat sheets | Tree map / This session / Money tools. Edit layout → Reset gives you this one.
+- **Atlas tree opens zoomed on its target** (next passives, else the build), also when you switch atlas build, like the passive tree.
+
 ### Fixed (#222)
 - **Tickboxes instead of switch icons** everywhere in Settings: the switch icon didn't show on some PCs, so options looked like plain text.
 - **Tree map always opens zoomed in** and always has the **target** button: next passives of the levelling plan, else the build's passives you haven't taken yet, else the whole build (before, without a levelling plan it showed the whole tree and no target).

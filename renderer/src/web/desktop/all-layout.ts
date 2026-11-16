@@ -60,17 +60,16 @@ export function defaultLayout (): AllLayout {
   }
 }
 
-// Mapping (Gerhard 16 Nov 2026: the panels that help most while mapping):
-// This session (map timer, profit/h) / Trades / Market | Atlas tree / Cheat
-// sheets (map mechanics, bosses) | Tree map / Build / Money tools (you still
-// level in maps, so the passive tree stays)
+// Mapping (Gerhard 17 Nov 2026, his own arrangement): Build / Trades / Market |
+// Atlas tree / Cheat sheets | Tree map (you still level in maps) / This session /
+// Money tools
 export function defaultMappingLayout (): AllLayout {
   return {
     v: 1,
     cols: [
-      { w: 0.3, items: [{ id: 'session', h: 0.45 }, { id: 'trades', h: 0.25 }, { id: 'market', h: 0.3 }] },
-      { w: 0.38, items: [{ id: 'atlas', h: 0.6 }, { id: 'cheats', h: 0.4 }] },
-      { w: 0.32, items: [{ id: 'tree', h: 0.45 }, { id: 'gear', h: 0.35 }, { id: 'money', h: 0.2 }] }
+      { w: 0.33, items: [{ id: 'gear', h: 0.7 }, { id: 'trades', h: 0.15 }, { id: 'market', h: 0.15 }] },
+      { w: 0.33, items: [{ id: 'atlas', h: 0.5 }, { id: 'cheats', h: 0.5 }] },
+      { w: 0.34, items: [{ id: 'tree', h: 0.58 }, { id: 'session', h: 0.22 }, { id: 'money', h: 0.2 }] }
     ]
   }
 }
