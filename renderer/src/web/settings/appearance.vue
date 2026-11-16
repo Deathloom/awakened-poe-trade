@@ -37,14 +37,14 @@
         <div class="grid grid-cols-1 gap-1">
           <button v-for="id in g.themes" :key="id" type="button"
             class="flex items-center gap-2 px-2 py-1 rounded text-left"
-            :class="[a.theme === id ? 'bg-gray-600 text-gray-100' : 'bg-gray-800 text-gray-400 hover:bg-gray-700', active.id === id && a.theme !== id ? 'ring-1 ring-blue-500' : '']"
+            :class="[a.theme === id ? 'bg-accent/20 text-gray-100 ring-1 ring-accent/60' : 'bg-gray-800 text-gray-400 hover:bg-gray-700', active.id === id && a.theme !== id ? 'ring-1 ring-accent' : '']"
             @click="pick(id)">
             <span class="flex shrink-0 rounded overflow-hidden border border-gray-600">
               <span v-for="c in [THEMES[id].gray[8], THEMES[id].gray[6], THEMES[id].gray[4], THEMES[id].gray[1]]" :key="c" class="w-3 h-4" :style="{ background: c }" />
               <span class="w-3 h-4" :style="{ background: THEMES[id].accent }" />
             </span>
             <span>{{ THEMES[id].name }}</span>
-            <span v-if="active.id === id" class="ml-auto text-xs text-blue-400">active</span>
+            <span v-if="active.id === id" class="ml-auto text-xs text-accent">active</span>
           </button>
         </div>
       </div>
