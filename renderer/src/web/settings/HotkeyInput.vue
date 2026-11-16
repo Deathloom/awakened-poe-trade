@@ -3,14 +3,16 @@
     @keyup="handleKeyup"
     @keydown.prevent
     :placeholder="modelValue || t('settings.no_key')"
-    :class="{ 'placeholder-red-400': !modelValue }"
-    class="rounded bg-gray-900 px-1 text-center font-poe" />
+    :class="{ 'hk-unset': !modelValue, 'hk-game': gameUse }"
+    :title="gameUse ? `The game uses ${modelValue} for ${gameUse} by default; Orbhoarder would take it first. Pick another key unless you changed it in game.` : undefined"
+    class="hk-input rounded bg-gray-900 px-1 text-center font-poe" />
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
+import { computed, defineComponent, PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { KeyToCode, hotkeyToString } from '@ipc/KeyToCode'
+import { poe1KeyUse } from '@ipc/game-keys'
 
 export default defineComponent({
   emits: ['update:modelValue'],
@@ -31,8 +33,12 @@ export default defineComponent({
   setup (props, ctx) {
     const { t } = useI18n()
 
+    // Deathloom fork: warn about keys PoE1 uses by default
+    const gameUse = computed(() => poe1KeyUse(props.modelValue))
+
     return {
       t,
+      gameUse,
       handleKeyup (e: KeyboardEvent) {
         e.preventDefault()
         e.stopPropagation()

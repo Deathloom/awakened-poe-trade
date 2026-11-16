@@ -57,3 +57,122 @@ html.desktop .desktop-root > div:first-child {
   background-image: linear-gradient(90deg, rgb(var(--b-700) / .45), rgb(var(--b-900) / .15) 45%, transparent 75%);
   box-shadow: 0 1px 0 rgb(var(--accent) / .25);
 }
+
+/* Clean (the default look since 16 Nov 2026): flat, calm and easy to read.
+   No glass or glow (appearance.ts turns them off for flat themes), quieter
+   chrome, a bit more line height, slimmer scrollbars, clearer buttons. */
+html.lg-style-clean { --field-bg: #0b0c10; }
+html.lg-style-clean #app {
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+html.lg-style-clean .btn {
+  padding: 0.35rem 0.7rem;
+  line-height: 1.2;
+  color: rgb(var(--g-200));
+  background-color: rgb(var(--g-700));
+  transition: background-color .12s, color .12s;
+}
+html.lg-style-clean .btn:hover { background-color: rgb(var(--g-600)); color: rgb(var(--g-100)); }
+html.lg-style-clean .btn-icon { color: rgb(var(--g-500)); }
+html.desktop.lg-style-clean .desktop-root > div:first-child {
+  background-image: none;
+  background-color: rgb(var(--g-900));
+  box-shadow: 0 1px 0 rgb(var(--g-700) / .8);
+}
+html.lg-style-clean ::-webkit-scrollbar { width: 0.625rem; height: 0.625rem; }
+html.lg-style-clean ::-webkit-scrollbar-track { -webkit-box-shadow: none; background: transparent; }
+html.lg-style-clean ::-webkit-scrollbar-thumb {
+  -webkit-box-shadow: none;
+  background: rgb(var(--g-600) / .7);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+html.lg-style-clean ::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--g-500)); }
+html.lg-style-clean .border-gray-700 { border-color: rgb(var(--g-700) / .7); }
+/* Clean: quieter field borders (the default grey 600 line is loud on flat panels) */
+html.lg-style-clean :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"] {
+  box-shadow: inset 0 0 0 1px rgb(var(--g-700));
+}
+html.lg-style-clean :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"]:hover {
+  box-shadow: inset 0 0 0 1px rgb(var(--g-600));
+}
+html.lg-style-clean :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, select)[class~="rounded"]:focus {
+  box-shadow: inset 0 0 0 1px rgb(var(--accent)), 0 0 0 1px rgb(var(--accent));
+}
+/* Clean: price check filter chips. On = accent outline and tint instead of a bright grey line */
+html.lg-style-clean .pc-chip { border-color: rgb(var(--g-700) / .6); }
+html.lg-style-clean .pc-chip-on { border-color: rgb(var(--b-500) / .75); background-color: rgb(var(--b-600) / .18); }
+/* Clean step 3: price check window. Quieter row lines, a light hover band,
+   readable tags and min/max fields, accent ticks, Search as the main button,
+   Collapse as a quiet text button */
+html.lg-style-clean .pc-row { border-bottom-color: rgb(var(--g-700) / .55); }
+html.lg-style-clean .pc-row:hover { background-color: rgb(var(--g-800) / .45); }
+html.lg-style-clean .pc-check { color: rgb(var(--g-600)); }
+html.lg-style-clean .pc-check-on { color: rgb(var(--accent)); }
+html.lg-style-clean .pc-roll {
+  background-color: var(--field-bg);
+  box-shadow: inset 0 0 0 1px rgb(var(--g-700));
+  border-color: transparent;
+}
+html.lg-style-clean .pc-roll::placeholder { color: rgb(var(--g-500)); }
+html.lg-style-clean .pc-roll:focus { box-shadow: inset 0 0 0 1px rgb(var(--accent)); }
+html.lg-style-clean .pc-tag { padding: 0.125rem 0.3rem; border-radius: 0.25rem; }
+html.lg-style-clean :is(.pc-tag-pseudo, .pc-tag-not) {
+  background-color: rgb(var(--g-700) / .7);
+  color: rgb(var(--g-300));
+}
+html.lg-style-clean :is(.pc-tag-implicit, .pc-tag-explicit, .pc-tag-filter-group) {
+  color: rgb(var(--g-500));
+  text-shadow: none;
+}
+html.lg-style-clean .pc-collapse {
+  background-color: transparent;
+  color: rgb(var(--g-400));
+  width: auto;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.25rem;
+}
+html.lg-style-clean .pc-collapse:hover { background-color: rgb(var(--g-800)); color: rgb(var(--g-200)); }
+html.lg-style-clean .btn.pc-search {
+  background-color: rgb(var(--accent));
+  color: #fff;
+  font-weight: 600;
+}
+html.lg-style-clean .btn.pc-search:hover { filter: brightness(1.1); background-color: rgb(var(--accent)); }
+html.lg-style-clean .pc-link { padding-top: 0.2rem; padding-bottom: 0.2rem; color: rgb(var(--g-300)); }
+html.lg-style-clean .pc-link:hover { background-color: rgb(var(--g-600)); color: rgb(var(--g-100)); }
+/* Clean step 3: overlay menu bar. Calmer icons, hover band, open panels marked
+   with an accent tint and underline instead of a grey outline */
+html.lg-style-clean .wm-btn {
+  color: rgb(var(--g-300));
+  background-color: rgb(var(--g-800) / .7);
+  border-color: transparent;
+  transition: background-color .12s, color .12s;
+}
+html.lg-style-clean .wm-btn:hover { background-color: rgb(var(--g-700)); color: rgb(var(--g-100)); }
+html.lg-style-clean .wm-btn.wm-btn-on {
+  color: rgb(var(--g-100));
+  background-color: rgb(var(--b-600) / .22);
+  border-color: transparent;
+  box-shadow: inset 0 -2px 0 rgb(var(--accent));
+}
+/* Clean step 3: hotkey fields use the same font as everything else */
+html.lg-style-clean .hk-input { font-family: inherit; font-size: 0.875rem; }
+/* Hotkey boxes: "Not Set" in red, keys the game uses by default in orange with an
+   orange outline. Beats the general field rules (placeholder colour and outline),
+   in every theme */
+input.hk-input.hk-unset::placeholder { color: rgb(252 129 129) !important; }
+input.hk-input.hk-game::placeholder { color: rgb(246 173 85) !important; }
+input.hk-input.hk-game { box-shadow: inset 0 0 0 1px rgb(237 137 54), 0 0 0 1px rgb(237 137 54) !important; }
+/* Easier-to-read small print (Settings → Appearance, on by default): the small
+   hint text and greyed-out text were hard to read, Fontin Small Caps most of all */
+html.lg-readable .text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.15rem;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-variant-caps: normal;
+}
+html.lg-readable .text-gray-600 { color: rgb(var(--g-500)); }
+html.lg-readable .text-gray-500 { color: rgb(var(--g-400)); }

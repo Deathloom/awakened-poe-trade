@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <input class="bg-gray-900 rounded px-1 w-48 mb-2" :placeholder="t('widget.title')"
       v-model="title" />
     <dnd-container tag="div" class="flex flex-col gap-y-2"

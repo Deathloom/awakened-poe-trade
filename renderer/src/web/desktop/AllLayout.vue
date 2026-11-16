@@ -77,6 +77,7 @@ import PobTreeMap from '../pob/PobTreeMap.vue'
 import LevellingBody from './LevellingBody.vue'
 import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
+import MoneyToolsBody from '../money/MoneyToolsBody.vue'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import MarketOverview from '../market-history/MarketOverview.vue'
@@ -103,7 +104,8 @@ const BODIES: Record<AllPanelId, Component> = {
   search: MarketSearchBody,
   session: PlaySessionBody,
   board: TradeBoardBody,
-  cheats: CheatSheetsBody
+  cheats: CheatSheetsBody,
+  money: MoneyToolsBody
 }
 function body (id: AllPanelId) { return BODIES[id] }
 function props (id: AllPanelId): Record<string, unknown> {

@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import type { Config } from '@/web/Config'
 import { defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import type { HudPanel } from '@ipc/types'
-import { EXTRA_PANELS } from '@/web/desktop/panel-defs'
+import { OFFERED_EXTRA_PANELS } from '@/web/desktop/panel-defs'
 
 export function usePobConfig (config: () => Config) {
   return computed(() => {
@@ -27,5 +27,5 @@ export const HUD_PANELS: Array<{ key: HudPanel, label: string, hotkey: PanelHotk
   { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },
   { key: 'trades', label: 'Trade companion', hotkey: 'tradesKey' },
   { key: 'gear', label: 'Build gear', hotkey: 'gearPanelKey' },
-  ...EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: null }))
+  ...OFFERED_EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: null }))
 ]

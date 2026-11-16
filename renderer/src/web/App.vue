@@ -33,8 +33,8 @@ if (!IS_HUD && !IS_DESKTOP) {
   })
   // build gear panel pinned in the HUD window: Trade / price check / loadout choice
   Host.onEvent('MAIN->CLIENT::hud-gear-action', (e) => {
-    if (e.action === 'trade' && e.text) {
-      const err = openTradeSearch(e.text)
+    if ((e.action === 'trade' || e.action === 'upgrade') && e.text) {
+      const err = openTradeSearch(e.text, e.action === 'upgrade')
       if (err) console.warn('[HUD gear] ' + err)
     } else if (e.action === 'price-check' && e.text) {
       openPriceCheck(e.text, { x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight / 3) })

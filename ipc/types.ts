@@ -1,3 +1,5 @@
+import type { Game } from './game'
+
 export interface HostConfig {
   shortcuts: ShortcutAction[]
   restoreClipboard: boolean
@@ -8,17 +10,19 @@ export interface HostConfig {
   logKeys: boolean
   windowTitle: string
   language: string
+  // Deathloom fork: PoE2 mode (absent = poe1)
+  game?: Game
   // Deathloom fork: Path of Building build impact
   pob?: PobConfig
 }
 
 // Deathloom fork: panels pinned over the game while it has focus
-export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats'
+export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats' | 'money'
 // panels added after the first three (1.0.63): pinned flag and hotkey live in
 // hud.<panel> (optional) and pob.panelKeys
-export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview', 'cheats'] as const
+export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money'] as const
 
-export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats'
+export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats' | 'money'
 
 export interface PanelPlacement {
   overlay?: boolean
@@ -36,6 +40,7 @@ export interface PobHudConfig {
   market?: boolean
   overview?: boolean
   cheats?: boolean
+  money?: boolean
   // Per panel: mouse clicks go through to the game while playing (the panel is read-only then)
   clickThroughPanels: Record<HudPanel, boolean>
   // older single setting (moved into clickThroughPanels)
@@ -44,6 +49,9 @@ export interface PobHudConfig {
   autoHideTrades: boolean
   // Solid background instead of a see-through window (try this if the game crashes)
   opaque: boolean
+  // Deathloom fork (idea 16 step 2, test): all pinned panels in one see-through
+  // window over the game instead of one window each. Off/absent = one window each.
+  sharedWindow?: boolean
   // 30-100
   opacity: number
   // Top-left corner of each panel's window, in pixels from the game window's top-left corner
@@ -53,6 +61,13 @@ export interface PobHudConfig {
   // older single-window position (moved into pos.guide / pos.trades)
   x?: number
   y?: number
+}
+
+export interface SavedSearchString {
+  id: number
+  name: string
+  text: string
+  hotkey: string | null
 }
 
 // Deathloom fork: Path of Building build impact
@@ -90,6 +105,10 @@ export interface PobConfig {
   openPobKey?: string | null
   // Hotkey that copies the hovered item and opens the friends' trade board post form (none by default)
   boardPostKey?: string | null
+  // Deathloom fork: your saved stash / vendor searches (Build panel → Notes →
+  // Search strings), with an optional hotkey that types it into the game's search.
+  // Took over the upstream Stash search widget's entries (16 Nov 2026).
+  searchStrings?: SavedSearchString[]
   // Hotkeys that open market search / the friends' trade board in the overlay (none by default)
   marketSearchKey?: string | null
   boardKey?: string | null
@@ -97,6 +116,10 @@ export interface PobConfig {
   panelKeys?: Partial<Record<HudPanel, string | null>>
   // set once the Ctrl+P default was applied to an older config
   hotkeysV2?: boolean
+  // Ctrl+T (PoE skill 13) default moved to Ctrl+B (16 Nov 2026)
+  hotkeysV3?: boolean
+  // the Ctrl+T move again: V3 never ran on saved configs (16 Nov 2026)
+  hotkeysV4?: boolean
   // set once the Ctrl+G / Ctrl+H / Ctrl+T defaults were applied to an older config
   hotkeysV1?: boolean
   // Loadout picked in the build panel, per build file (path relative to the player folder).
@@ -388,6 +411,19 @@ export interface PobBuildInfo {
   stats: Record<string, number | undefined>
 }
 
+// Deathloom fork (idea 6): one build file read for "Compare builds"
+export interface PobBuildSummary {
+  className?: string
+  ascendancy?: string
+  level?: number
+  mainSkill?: string
+  // PoB's saved PlayerStat values (Life, CombinedDPS, FireResist, …)
+  stats: Record<string, number>
+  groups: Array<{ label?: string, slot?: string, enabled: boolean, gems: Array<{ name: string, level?: number, quality?: number, enabled: boolean }> }>
+  items: Array<{ slot: string, rarity: string, name: string, base: string, mods: string[] }>
+  tree: { version?: string, nodes: number[], masteries: Record<string, string> }
+}
+
 export interface PobImpactCompare {
   header: string
   summary: Array<{ stat: string, label: string, old: number, new: number, diff: number, pct?: number }>
@@ -501,11 +537,17 @@ export type IpcEvent =
   IpcPobTreeRequest |
   IpcPobTreeResult |
   IpcPobTreeMapRequest |
+  IpcPobCompareRequest |
   IpcPobPlanRequest |
   IpcReadGameLogRequest |
   IpcReadGameLogResult |
   IpcPobPlanResult |
   IpcPobTreeMapResult |
+  IpcPobCompareResult |
+  IpcPobTimelessRequest |
+  IpcPobTimelessResult |
+  IpcPobCraftRequest |
+  IpcPobCraftResult |
   IpcPobSyncRequest |
   IpcPobSyncState |
   IpcBoardRequest |
@@ -522,6 +564,8 @@ export type IpcEvent =
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
+  IpcHudHover |
+  IpcHudPos |
   IpcHudState |
   IpcOpenTradeTab |
   IpcPobManageBuild |
@@ -535,7 +579,11 @@ export type IpcEvent =
   IpcHudResize |
   IpcHudDims |
   IpcHudTyping |
-  IpcReportError
+  IpcReportError |
+  IpcUserReport |
+  IpcUserReportResult |
+  IpcToolsRequest |
+  IpcToolsResult
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -554,6 +602,21 @@ type IpcHudDrag =
     phase: 'start' | 'move' | 'end'
     screenX: number
     screenY: number
+  }>
+
+// Shared HUD window: the pointer is over this panel (null: over empty space).
+// Main makes the window clickable only there; elsewhere clicks reach the game.
+type IpcHudHover =
+  Event<'CLIENT->MAIN::hud-hover', {
+    panel: HudPanel | null
+  }>
+
+// Shared HUD window: a panel's position while it is being dragged
+type IpcHudPos =
+  Event<'MAIN->CLIENT::hud-pos', {
+    panel: HudPanel
+    x: number
+    y: number
   }>
 
 type IpcHudMoved =
@@ -589,6 +652,48 @@ type IpcReportError =
     where?: string
   }>
 
+// Deathloom fork: Report a bug / Suggest a feature (desktop window)
+type IpcUserReport =
+  Event<'CLIENT->MAIN::user-report', {
+    requestId: number
+    kind: 'bug' | 'idea'
+    title: string
+    text: string
+    includeLog: boolean
+    // true: open it as a new GitHub issue in the browser instead of sending it
+    viaBrowser?: boolean
+  }>
+
+type IpcUserReportResult =
+  Event<'MAIN->CLIENT::user-report', {
+    requestId: number
+    sent: boolean
+    // opened in the browser instead
+    opened?: boolean
+    reason?: string
+  }>
+
+// Deathloom fork: Settings → Tools (health check, backup, phone or other devices)
+export interface HealthItem { name: string, ok: boolean, warn?: boolean, detail: string }
+export interface RemoteInfo { enabled: boolean, listening: boolean, urls: string[] }
+
+type IpcToolsRequest =
+  Event<'CLIENT->MAIN::tools', {
+    requestId: number
+    op: 'health' | 'remote-info' | 'remote-set' | 'remote-newkey' | 'backup-save' | 'backup-open'
+    enabled?: boolean
+    // backup-save: the backup file's text
+    text?: string
+  }>
+
+type IpcToolsResult =
+  Event<'MAIN->CLIENT::tools', {
+    requestId: number
+    health?: HealthItem[]
+    remote?: RemoteInfo
+    backup?: { ok: boolean, path?: string, text?: string, error?: string }
+  }>
+
 type IpcHudDims =
   Event<'MAIN->CLIENT::hud-dims', {
     panel: HudPanel
@@ -615,7 +720,7 @@ type IpcHudPanel =
 // Build gear panel in the HUD: actions the overlay carries out
 type IpcHudGearAction =
   Event<'CLIENT->MAIN::hud-gear-action', {
-    action: 'trade' | 'price-check' | 'loadouts'
+    action: 'trade' | 'upgrade' | 'price-check' | 'loadouts'
     // item text (Ctrl+C format) for trade / price-check
     text?: string
     // new pob.loadouts for 'loadouts' (the overlay saves the settings)
@@ -624,7 +729,7 @@ type IpcHudGearAction =
 
 type IpcHudGearActionRelay =
   Event<'MAIN->CLIENT::hud-gear-action', {
-    action: 'trade' | 'price-check' | 'loadouts'
+    action: 'trade' | 'upgrade' | 'price-check' | 'loadouts'
     text?: string
     loadouts?: Record<string, PobLoadoutChoice>
   }>
@@ -1220,6 +1325,176 @@ type IpcPobPlanResult =
     error?: string
     build?: PobBuildInfo
     plan?: PobPlan
+  }>
+
+// Deathloom fork (idea 6): read two builds of the player folder for "Compare builds"
+// Deathloom fork (16 Nov 2026): timeless jewel explorer (PoB's conquest data)
+export interface TimelessJewelInfo {
+  name: string
+  conquerors: string[]
+  by: string
+  seedMin: number
+  seedMax: number
+  seedStep: number
+}
+export interface TimelessSocket {
+  id: number
+  keystone?: string
+  notables: string[]
+  // allocated in the active build
+  alloc: boolean
+  x: number
+  y: number
+}
+export interface TimelessNode {
+  id: number
+  type: 'Normal' | 'Notable' | 'Keystone'
+  name: string
+  // set when the conqueror replaces the passive
+  newName?: string
+  stats: string[]
+  before: string[]
+  alloc: boolean
+  attribute?: boolean
+}
+export interface TimelessResult {
+  jewel: string
+  conqueror: string
+  seed: number
+  socket: number
+  nodes: TimelessNode[]
+}
+
+// Deathloom fork (16 Nov 2026): timeless seed search ("Find seeds")
+export interface TimelessWant {
+  // outcome: legion passive name or added stat line, as in TimelessOptions
+  label: string
+  // that notable must get it; empty = count the notables in radius that get it
+  node?: number
+  // with no node: at least this many notables (default 1)
+  min?: number
+}
+export interface TimelessOption {
+  label: string
+  // how many seeds give it
+  seeds: number
+}
+export interface TimelessOptions {
+  jewel: string
+  socket: number
+  nodes: Array<{ id: number, name: string, alloc: boolean, options: TimelessOption[] }>
+  // every outcome in radius and how many notables can get it
+  labels: Array<{ label: string, nodes: number }>
+}
+export interface TimelessSeedHit {
+  node: number
+  name: string
+  label: string
+  alloc: boolean
+}
+export interface TimelessSearch {
+  jewel: string
+  socket: number
+  wants: number
+  // seeds that meet every want
+  complete: number
+  total: number
+  seeds: Array<{ seed: number, score: number, met: number, all: boolean, hits: TimelessSeedHit[] }>
+}
+
+type IpcPobTimelessRequest =
+  Event<'CLIENT->MAIN::pob-timeless', {
+    requestId: number
+    sockets?: boolean
+    jewel?: string
+    conqueror?: string
+    seed?: number
+    socket?: number
+    find?: 'options' | 'search'
+    wants?: TimelessWant[]
+  }>
+
+type IpcPobTimelessResult =
+  Event<'MAIN->CLIENT::pob-timeless', {
+    requestId: number
+    ok: boolean
+    error?: string
+    jewels?: TimelessJewelInfo[]
+    sockets?: TimelessSocket[]
+    result?: TimelessResult
+    options?: TimelessOptions
+    search?: TimelessSearch
+  }>
+
+// Deathloom fork (16 Nov 2026): crafting simulator (mod pool from PoB's data)
+export interface CraftBase {
+  name: string
+  type: string
+  subType?: string
+  level: number
+  influences: boolean
+}
+export interface CraftMod {
+  id: string
+  type: 'Prefix' | 'Suffix'
+  affix: string
+  group: string
+  level: number
+  weight: number
+  text: string[]
+  tags: string[]
+}
+export interface CraftEssence {
+  name: string
+  tier: number
+  modId: string
+  type: 'Prefix' | 'Suffix'
+  group: string
+  text: string[]
+}
+export interface CraftPool {
+  base: string
+  type: string
+  ilvl: number
+  influences: string[]
+  maxAffixes: number
+  mods: CraftMod[]
+  essences: CraftEssence[]
+}
+
+type IpcPobCraftRequest =
+  Event<'CLIENT->MAIN::pob-craft', {
+    requestId: number
+    // no base: the list of bases
+    base?: string
+    ilvl?: number
+    influences?: string[]
+  }>
+
+type IpcPobCraftResult =
+  Event<'MAIN->CLIENT::pob-craft', {
+    requestId: number
+    ok: boolean
+    error?: string
+    bases?: CraftBase[]
+    pool?: CraftPool
+  }>
+
+type IpcPobCompareRequest =
+  Event<'CLIENT->MAIN::pob-compare', {
+    requestId: number
+    // paths relative to the player folder (from pob-builds)
+    a: string
+    b: string
+  }>
+
+type IpcPobCompareResult =
+  Event<'MAIN->CLIENT::pob-compare', {
+    requestId: number
+    ok: boolean
+    error?: string
+    a?: PobBuildSummary
+    b?: PobBuildSummary
   }>
 
 type IpcPobTreeMapRequest =

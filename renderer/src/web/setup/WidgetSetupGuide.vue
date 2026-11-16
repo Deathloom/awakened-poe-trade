@@ -316,6 +316,32 @@ const priceKey = computed(() => {
   return pc?.hotkey ? `${pc.hotkeyHold} + ${pc.hotkey}` : 'the price check hotkey'
 })
 
+// What main found (set up before the watches below: they probe right away)
+// (Client.txt, PoB, builds, player; characters with an account name)
+type Probe = IpcEventPayload<'MAIN->CLIENT::pob-setup-probe'>
+const found = ref<Probe | null>(null)
+let nextId = 1
+const pending = new Map<number, (p: Probe) => void>()
+const listener = Host.onEvent('MAIN->CLIENT::pob-setup-probe', (e) => {
+  const done = pending.get(e.requestId)
+  if (!done) return
+  pending.delete(e.requestId)
+  done(e)
+})
+onUnmounted(() => { listener.abort() })
+
+function request (accountName?: string): Promise<Probe> {
+  const requestId = nextId++
+  return new Promise((resolve) => {
+    pending.set(requestId, resolve)
+    Host.sendEvent({ name: 'CLIENT->MAIN::pob-setup-probe', payload: { requestId, accountName } })
+  })
+}
+
+function probe () {
+  request().then((p) => { found.value = p }).catch(() => {})
+}
+
 // Shows once by itself: in the Orbhoarder window on a new install, else the
 // first time the overlay is opened
 if (props.desktop) {
@@ -365,31 +391,6 @@ function close () {
   } else {
     wm!.hide(props.config!.wmId)
   }
-}
-
-// What main found (Client.txt, PoB, builds, player; characters with an account name)
-type Probe = IpcEventPayload<'MAIN->CLIENT::pob-setup-probe'>
-const found = ref<Probe | null>(null)
-let nextId = 1
-const pending = new Map<number, (p: Probe) => void>()
-const listener = Host.onEvent('MAIN->CLIENT::pob-setup-probe', (e) => {
-  const done = pending.get(e.requestId)
-  if (!done) return
-  pending.delete(e.requestId)
-  done(e)
-})
-onUnmounted(() => { listener.abort() })
-
-function request (accountName?: string): Promise<Probe> {
-  const requestId = nextId++
-  return new Promise((resolve) => {
-    pending.set(requestId, resolve)
-    Host.sendEvent({ name: 'CLIENT->MAIN::pob-setup-probe', payload: { requestId, accountName } })
-  })
-}
-
-function probe () {
-  request().then((p) => { found.value = p }).catch(() => {})
 }
 
 // Builds of an earlier PoB install -> player folder (main picks the source folder itself)

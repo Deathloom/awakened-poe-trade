@@ -10,19 +10,27 @@ import { ConfigStore } from './host-files/ConfigStore'
 import { addFileUploadRoutes } from './host-files/file-uploads'
 import type { AppUpdater } from './AppUpdater'
 import type { Logger } from './RemoteLogger'
-import { isAllowedRequest, safeJoin } from './request-guard'
+import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE } from './request-guard'
+import { remoteKey } from './remote-key'
+import { remoteAccessOn } from './remote-access'
+
+// Deathloom fork: where the server listens (Settings → Tools)
+let listening: { host: string, port: number } | undefined
+export function listenInfo () { return listening }
 
 export const server = createServer()
 
 // Deathloom fork: refuse requests and WebSocket upgrades from other web pages
 // (see request-guard.ts). Checked before any route or the WebSocket server sees them.
-const listenHost = process.argv.find(arg => arg.startsWith('--listen='))?.split('=')[1]?.split(':')[0] || undefined
+// set in startServer: --listen, or "Phone or other devices" (remote-access.ts)
+let listenHost: string | undefined = process.argv.find(arg => arg.startsWith('--listen='))?.split('=')[1]?.split(':')[0] || undefined
 let rejectedCount = 0
 const serverEmit = server.emit.bind(server)
 server.emit = ((event: string, ...args: any[]) => {
   if (event === 'request' || event === 'upgrade') {
     const req = args[0]
-    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined }, { listenHost })) {
+    const key = listenHost ? requestKey(req.url, req.headers.cookie) : undefined
+    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined, key }, { listenHost, remoteKey: listenHost ? remoteKey() : undefined })) {
       if (rejectedCount++ < 20) {
         console.warn(`[server] refused ${event} ${String(req.url).slice(0, 80)} from origin=${String(req.headers.origin)} host=${String(req.headers.host)}`)
       }
@@ -34,6 +42,11 @@ server.emit = ((event: string, ...args: any[]) => {
         args[1].destroy()
       }
       return true
+    }
+    // Deathloom fork: a device that opened ?key=… keeps the key as a cookie, so the
+    // page's own scripts and WebSocket get in without it in every URL
+    if (event === 'request' && key && /[?&]key=/.test(String(req.url))) {
+      args[1].setHeader('set-cookie', `${REMOTE_KEY_COOKIE}=${key}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000`)
     }
   }
   return serverEmit(event, ...args)
@@ -196,16 +209,22 @@ export async function startServer (
   // --listen=[host][:port]
   const listenOpt = process.argv.find(arg => arg.startsWith('--listen'))
   if (listenOpt) {
-    const [hostArg, portArg] = listenOpt.split('=')[1].split(':')
+    const [hostArg, portArg] = (listenOpt.split('=')[1] ?? '').split(':')
     if (hostArg) host = hostArg
     if (portArg) port = parseInt(portArg, 10)
+  } else if (!process.env.VITE_DEV_SERVER_URL && remoteAccessOn()) {
+    // Deathloom fork: Settings → Tools → Phone or other devices
+    host = '0.0.0.0'
+    listenHost = host
   }
+  listening = { host, port }
 
   const listen = (p: number) => new Promise<number>((resolve, reject) => {
     server.listen({ port: p, host })
       .once('error', reject)
       .once('listening', () => {
-        resolve((server.address() as AddressInfo).port)
+        listening = { host, port: (server.address() as AddressInfo).port }
+        resolve(listening.port)
       })
   })
   try {

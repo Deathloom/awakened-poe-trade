@@ -21,6 +21,8 @@
           :class="{ 'text-gray-200': showEdit }" @click="showEdit = !showEdit"><i class="fas fa-pen" /></button>
         <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Manage builds: rename, move to a folder, duplicate, delete"
           :class="{ 'text-gray-200': showManage }" @click="showManage = !showManage"><i class="fas fa-folder-open" /></button>
+        <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Compare two builds: stats, gear, gems, passive tree"
+          :class="{ 'text-gray-200': showCompare }" @click="showCompare = !showCompare"><i class="fas fa-balance-scale" /></button>
         <button class="text-gray-500 hover:text-gray-200 text-sm" title="Pick the build and loadout"
           :class="{ 'text-gray-200': showPicker }" @click="showPicker = !showPicker"><i class="fas fa-exchange-alt" /></button>
         <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200" title="Reload from Path of Building"
@@ -34,6 +36,7 @@
       @imported="pickerRef?.request()" />
     <loadout-editor v-if="desktop && showEdit" class="shrink-0 border-b border-gray-700" @changed="pickerRef?.request()" />
     <build-manager v-if="desktop && showManage" class="shrink-0 border-b border-gray-700" @changed="pickerRef?.request()" />
+    <build-compare v-if="desktop && showCompare" class="shrink-0 border-b border-gray-700" />
     <build-picker v-show="showPicker" ref="pickerRef" class="shrink-0" @changed="onBuildChanged" />
     <div v-if="filterReminder" class="shrink-0 px-2 py-1 text-xs text-gray-400 bg-gray-900 border-b border-gray-700">
       <i class="fas fa-filter mr-1" />Loot filter for {{ filterReminder.build }}: <span class="text-gray-200">{{ filterReminder.name }}</span>
@@ -51,8 +54,11 @@
 
     <div v-else-if="items" class="overflow-y-auto min-h-0 p-1">
       <div class="px-1 pb-1 text-xs text-gray-500">
-        Copy = name for the in-game market (press <span class="bg-gray-700 rounded px-1">/</span> then Ctrl+V).
-        Trade = exact stat search on the trade site.
+        <i class="far fa-copy" /> name for the in-game market (press <span class="bg-gray-700 rounded px-1">/</span> then Ctrl+V) ·
+        <b>Trade</b> this exact item on the trade site ·
+        <i class="fas fa-arrow-up" /> find an upgrade (any base, at least these values) ·
+        <i class="fas fa-flask" /> how to craft it<template v-if="!desktop"> ·
+        <i class="fas fa-search-dollar" /> price check here (edit the filters, see what it does to your build)</template>.
       </div>
       <template v-for="group of groups" :key="group.key">
         <div class="px-1 pt-2 pb-px text-xs uppercase tracking-wide text-gray-500">{{ group.label }}</div>
@@ -71,10 +77,17 @@
                 @click="copy(item.searchText, item.slot)">
                 <i v-if="copiedKey === item.slot" class="fas fa-check text-green-400" />
                 <i v-else class="far fa-copy" /></button>
-              <button class="bg-gray-700 text-gray-300 px-1.5" title="Exact stat search on the official trade site"
+              <button class="bg-gray-700 text-gray-300 px-1.5" :class="{ 'rounded-r': desktop && item.rarity === 'Unique' }" title="This exact item (all its stats) on the official trade site"
                 @click="openTrade(item)">Trade</button>
-              <button class="bg-gray-700 text-gray-300 rounded-r px-1.5"
-                :title="desktop ? 'Prices for this item: its exact search in the Trade site tab, cheapest first' : 'Price check (edit stat filters, build impact)'"
+              <button v-if="item.rarity !== 'Unique'" class="bg-gray-700 text-gray-300 px-1.5" :class="{ 'rounded-r': desktop }"
+                title="Find an upgrade: any base of this kind with at least this item's values on its main stats (life, resistances, …)"
+                @click="openTrade(item, true)"><i class="fas fa-arrow-up" /></button>
+              <button v-if="item.rarity === 'Rare' || item.rarity === 'Magic'" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1"
+                title="Craft this: opens the Craft tab with this base and its mods filled in, and a step-by-step plan (cheapest method, what order)"
+                @click="requestCraft(item)"><i class="fas fa-flask" /></button>
+              <!-- the price check window lives in the overlay; in the Orbhoarder window it would only repeat Trade -->
+              <button v-if="!desktop" class="bg-gray-700 text-gray-300 rounded-r px-1.5"
+                title="Price check (edit stat filters, build impact)"
                 @click="priceCheck(item, $event)"><i class="fas fa-search-dollar" /></button>
             </div>
           </div>
@@ -99,9 +112,11 @@ import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobBuildInfo, PobGearItem } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { openTradeSearch, openPriceCheck } from './gear-actions'
+import { requestCraft } from '../craft/craft-request'
 import { useCopyFeedback } from './market'
 import BuildPicker from './BuildPicker.vue'
 import BuildManager from './BuildManager.vue'
+import BuildCompare from './BuildCompare.vue'
 import LoadoutEditor from './LoadoutEditor.vue'
 import BuildSync from './BuildSync.vue'
 import BuildImport from './BuildImport.vue'
@@ -134,6 +149,7 @@ const tabs = computed(() => props.desktop ? [...TABS, { key: 'map' as Tab, label
 const tab = ref<Tab>('gear')
 const showPicker = ref(true)
 const showManage = ref(false)
+const showCompare = ref(false)
 const showEdit = ref(false)
 const showSync = ref(false)
 const showImport = ref(false)
@@ -265,27 +281,19 @@ function itemTitle (item: PobGearItem) {
   return parts.join(' · ')
 }
 
-function openTrade (item: PobGearItem) {
+function openTrade (item: PobGearItem, upgrade = false) {
   tradeError.value = { ...tradeError.value, [item.slot]: '' }
   if (props.hud) {
     // the overlay owns the league list; it opens the trade site
-    Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'trade', text: item.text } })
+    Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: upgrade ? 'upgrade' : 'trade', text: item.text } })
     return
   }
-  const err = openTradeSearch(item.text)
+  const err = openTradeSearch(item.text, upgrade)
   if (err) tradeError.value[item.slot] = err
 }
 
 // Open the normal price check window for this item (stat filters, prices, build impact)
 function priceCheck (item: PobGearItem, e: MouseEvent) {
-  // Orbhoarder window: the price check window lives in the overlay over the game,
-  // so here it's the item's exact search in the Trade site tab (cheapest first)
-  if (props.desktop) {
-    tradeError.value = { ...tradeError.value, [item.slot]: '' }
-    const err = openTradeSearch(item.text)
-    if (err) tradeError.value = { ...tradeError.value, [item.slot]: err }
-    return
-  }
   if (props.hud) {
     // main opens it in the overlay and activates the overlay
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'price-check', text: item.text } })

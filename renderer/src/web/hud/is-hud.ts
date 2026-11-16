@@ -5,6 +5,8 @@ import type { HudPanel } from '@ipc/types'
 const params = new URLSearchParams(window.location.search)
 export const IS_HUD = params.has('hud')
 export const HUD_PANEL = (params.get('hud') || 'guide') as HudPanel
+// Deathloom fork (idea 16 step 2): ?hud=all is one window with every pinned panel
+export const IS_HUD_SHARED = params.get('hud') === 'all'
 
 // Deathloom fork: the desktop window (all panels, for a second screen) loads
 // the same page with ?desktop. It connects like the HUD (never the "last

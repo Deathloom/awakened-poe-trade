@@ -10,9 +10,10 @@ import * as fs from 'fs/promises'
 import { readFileSync } from 'fs'
 import * as path from 'path'
 import { applyBuildOp, type BuildFileOp } from './BuildFiles'
+import { parseBuildXml } from './build-xml'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobEditOp, PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan } from '../../../ipc/types'
+import type { PobEditOp, PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan, PobBuildSummary } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -138,6 +139,18 @@ export class PobImpact {
       this.reply('MAIN->CLIENT::pob-tree-map', requestId, async () =>
         await this.treeMap(refreshGear === true, typeof haveVersion === 'string' ? haveVersion.slice(0, 32) : undefined))
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-compare', ({ requestId, a, b }) => {
+      this.reply('MAIN->CLIENT::pob-compare', requestId, async () => ({
+        a: await this.readBuildSummary(a),
+        b: await this.readBuildSummary(b)
+      }))
+    })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-timeless', (req) => {
+      this.reply('MAIN->CLIENT::pob-timeless', req.requestId, async () => await this.timeless(req))
+    })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-craft', (req) => {
+      this.reply('MAIN->CLIENT::pob-craft', req.requestId, async () => await this.craft(req))
+    })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints }) => {
       this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints))
     })
@@ -164,7 +177,7 @@ export class PobImpact {
     })
   }
 
-  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-edit' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan'> (
+  private reply<N extends 'MAIN->CLIENT::pob-builds' | 'MAIN->CLIENT::pob-manage-build' | 'MAIN->CLIENT::pob-edit' | 'MAIN->CLIENT::pob-gems' | 'MAIN->CLIENT::pob-tree' | 'MAIN->CLIENT::pob-tree-map' | 'MAIN->CLIENT::pob-plan' | 'MAIN->CLIENT::pob-compare' | 'MAIN->CLIENT::pob-timeless' | 'MAIN->CLIENT::pob-craft'> (
     name: N, requestId: number, work: () => Promise<Record<string, unknown>>
   ) {
     const send = this.server.replyTo()
@@ -227,10 +240,10 @@ export class PobImpact {
     if (raw?.pobDir && isLegacyPobSetting(raw.pobDir)) raw = { ...raw, pobDir: '' }
     this.rawCfg = raw
     const cfg = raw && withDefaults(raw, this.defaults())
-    this.logger.write(`info [PoB] settings: ${JSON.stringify(raw ?? null)}`)
-    if (cfg && raw && (cfg.pobDir !== raw.pobDir || cfg.buildsDir !== raw.buildsDir || cfg.player !== raw.player)) {
-      this.logger.write(`info [PoB] with defaults: pobDir=${cfg.pobDir} buildsDir=${cfg.buildsDir} player=${cfg.player}`)
-    }
+    // Deathloom fork: the log goes into problem reports, so only say what kind of
+    // setting is used, never folder paths, the player name or other values
+    const kind = (v: unknown) => v ? 'custom' : 'default'
+    this.logger.write(`info [PoB] settings: ${raw ? `enabled=${String(raw.enabled)} pobDir=${kind(raw.pobDir)} buildsDir=${kind(raw.buildsDir)} player=${raw.player ? 'set' : 'not set'} (${Object.keys(raw).length} settings)` : 'none'}`)
     // Live-gear settings don't need a PoB restart
     const procKey = (c: PobConfig | undefined) => JSON.stringify(c && [c.enabled, c.pobDir, c.buildsDir, c.player])
     const same = procKey(cfg) === procKey(this.cfg)
@@ -505,7 +518,7 @@ export class PobImpact {
     return this.ready
   }
 
-  private async call (cmd: string, params: Record<string, unknown> = {}): Promise<any> {
+  private async call (cmd: string, params: Record<string, unknown> = {}, timeout = REQUEST_TIMEOUT): Promise<any> {
     await this.start()
     const proc = this.proc
     if (!proc) throw new Error('Path of Building is not running')
@@ -514,7 +527,7 @@ export class PobImpact {
       const timer = setTimeout(() => {
         this.pending.delete(id)
         reject(new Error(`Path of Building did not answer '${cmd}' in time`))
-      }, REQUEST_TIMEOUT)
+      }, timeout)
       this.pending.set(id, { resolve, reject, timer })
       proc.stdin.write(JSON.stringify({ id, cmd, ...params }) + '\n')
     })
@@ -864,6 +877,19 @@ export class PobImpact {
     return { playerDir, rel, own, player: own ? (this.cfg?.player ?? '') : this.viewPlayer }
   }
 
+  // Deathloom fork (idea 6): one build of the player folder, read from the file
+  // (no PoB needed). Only .xml files inside the player folder, at most 8 MB.
+  private async readBuildSummary (rel: unknown): Promise<PobBuildSummary> {
+    if (typeof rel !== 'string' || !rel.toLowerCase().endsWith('.xml')) throw new Error('Pick two builds')
+    const root = path.resolve(this.playerDir())
+    const full = path.resolve(root, rel)
+    if (!full.startsWith(root + path.sep)) throw new Error('Not in your builds folder')
+    const st = await fs.stat(full).catch(() => null)
+    if (!st?.isFile()) throw new Error(`Build not found: ${path.basename(rel)}`)
+    if (st.size > 8 * 1024 * 1024) throw new Error(`Build file too big: ${path.basename(rel)}`)
+    return parseBuildXml(await fs.readFile(full, 'utf8'))
+  }
+
   // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them
   async listBuilds (): Promise<PobBuildList> {
     const root = this.playerDir()
@@ -1046,6 +1072,77 @@ export class PobImpact {
     return { build: reply.build as PobBuildInfo, plan }
   }
 
+  // Deathloom fork: timeless jewel explorer (Craft tab). PoB works it out on a
+  // scratch tree; the active build is only read (which passives it allocates).
+  async timeless (req: { sockets?: boolean, jewel?: string, conqueror?: string, seed?: number, socket?: number, find?: string, wants?: unknown }): Promise<Record<string, unknown>> {
+    await this.ensureBuild()
+    const params: Record<string, unknown> = {}
+    if (req.sockets === true) params.sockets = true
+    const find = req.find === 'options' || req.find === 'search' ? req.find : undefined
+    if (typeof req.jewel === 'string') {
+      params.jewel = req.jewel.slice(0, 40)
+      params.socket = Number(req.socket)
+      if (find) {
+        params.find = find
+        if (find === 'search') params.wants = timelessWants(req.wants)
+      } else {
+        params.conqueror = String(req.conqueror ?? '').slice(0, 40)
+        params.seed = Number(req.seed)
+      }
+    }
+    // a seed search reads every seed of the jewel (up to ~8000), give it longer
+    const reply = await this.call('timeless', params, find ? 120_000 : undefined)
+    const list = (v: unknown): any[] => Array.isArray(v) ? v : []
+    return {
+      jewels: list(reply.jewels).map((j: any) => ({ ...j, conquerors: list(j.conquerors) })),
+      sockets: reply.sockets ? list(reply.sockets).map((s: any) => ({ ...s, notables: list(s.notables) })) : undefined,
+      result: reply.result
+        ? {
+            ...reply.result,
+            nodes: list(reply.result.nodes).map((n: any) => ({ ...n, stats: list(n.stats), before: list(n.before) }))
+          }
+        : undefined,
+      options: reply.options
+        ? {
+            ...reply.options,
+            nodes: list(reply.options.nodes).map((n: any) => ({ ...n, options: list(n.options) })),
+            labels: list(reply.options.labels)
+          }
+        : undefined,
+      search: reply.search
+        ? {
+            ...reply.search,
+            seeds: list(reply.search.seeds).map((s: any) => ({ ...s, hits: list(s.hits) }))
+          }
+        : undefined
+    }
+  }
+
+  // Deathloom fork: crafting simulator (Craft tab): bases, or the mod pool of one
+  async craft (req: { base?: string, ilvl?: number, influences?: string[] }): Promise<Record<string, unknown>> {
+    const list = (v: unknown): any[] => Array.isArray(v) ? v : []
+    if (typeof req.base !== 'string' || !req.base) {
+      const reply = await this.call('craftBases')
+      return { bases: list(reply.bases) }
+    }
+    const reply = await this.call('craftMods', {
+      base: req.base.slice(0, 80),
+      ilvl: Number(req.ilvl) || 84,
+      influences: list(req.influences).filter((i): i is string => typeof i === 'string').slice(0, 2)
+    })
+    return {
+      pool: {
+        base: reply.base,
+        type: reply.type,
+        ilvl: reply.ilvl,
+        influences: list(reply.influences),
+        maxAffixes: reply.maxAffixes,
+        mods: list(reply.mods).map((m: any) => ({ ...m, text: list(m.text), tags: list(m.tags) })),
+        essences: list(reply.essences).map((e: any) => ({ ...e, text: list(e.text) }))
+      }
+    }
+  }
+
   // Tree map (desktop window): whole tree layout (only when the window lacks this
   // version) + allocated node ids of the build's loadout and the character
   async treeMap (refreshGear: boolean, haveVersion?: string): Promise<Record<string, unknown>> {
@@ -1143,4 +1240,23 @@ export class PobImpact {
     }
     return { build: this.loadedBuild!, result }
   }
+}
+
+// Deathloom fork: wanted outcomes for the timeless seed search, from the
+// renderer. Kept small and typed before they reach PoB.
+function timelessWants (v: unknown): Array<{ label: string, node?: number, min?: number }> {
+  if (!Array.isArray(v)) return []
+  const out: Array<{ label: string, node?: number, min?: number }> = []
+  for (const w of v.slice(0, 10)) {
+    if (!w || typeof w !== 'object') continue
+    const label = (w as any).label
+    if (typeof label !== 'string' || !label.trim()) continue
+    const want: { label: string, node?: number, min?: number } = { label: label.slice(0, 300) }
+    const node = Number((w as any).node)
+    if (Number.isInteger(node) && node > 0) want.node = node
+    const min = Number((w as any).min)
+    if (Number.isInteger(min) && min > 1) want.min = Math.min(min, 20)
+    out.push(want)
+  }
+  return out
 }

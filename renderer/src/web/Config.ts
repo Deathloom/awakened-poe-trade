@@ -2,10 +2,12 @@ import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
 import { HostConfig, ShortcutAction, PobConfig, PobHudConfig } from '@ipc/types'
+import { asGame, type Game } from '@ipc/game'
 import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from './hud/is-hud'
 import { applyAppearance, defaultAppearance, type AppearanceConfig } from './appearance'
 import type * as widget from './overlay/widgets'
 import type { StashSearchWidget } from './stash-search/widget'
+import type { SavedSearchString } from '@ipc/types'
 import type { ItemCheckWidget } from './item-check/widget'
 import type { ItemSearchWidget } from './item-search/widget'
 import { registry as widgetRegistry } from './overlay/widget-registry.js'
@@ -113,6 +115,9 @@ export function poeWebApi () {
 export interface Config {
   configVersion: number
   leagueId?: string
+  // Deathloom fork: PoE2 mode. Which game, and the league last picked in each
+  game: Game
+  leagueIdByGame?: Partial<Record<Game, string>>
   overlayKey: string
   overlayBackground: string
   overlayBackgroundClose: boolean
@@ -146,6 +151,7 @@ export interface Config {
 
 export const defaultConfig = (): Config => ({
   configVersion: 18,
+  game: 'poe1',
   overlayKey: 'Shift + Space',
   overlayBackground: 'rgba(129, 139, 149, 0.15)',
   overlayBackgroundClose: true,
@@ -455,9 +461,17 @@ function upgradeConfig (_config: Config): Config {
   }
 
   // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
+  config.game = asGame(config.game)
   config.pob ??= defaultPobConfig()
   config.appearance = { ...defaultAppearance(), ...config.appearance }
   if (config.window2Appearance) config.window2Appearance = { ...defaultAppearance(), ...config.window2Appearance }
+  // Deathloom fork (2026-11-16): the Clean look is the new default. Configs still on
+  // the old default (Classic, picked, theme's own accent) move to it once.
+  for (const look of [config.appearance, config.window2Appearance]) {
+    if (!look || look.cleanV1) continue
+    if (look.theme === 'classic' && look.themeMode === 'fixed' && !look.accent) look.theme = 'clean'
+    look.cleanV1 = true
+  }
   config.pob = { ...defaultPobConfig(), ...config.pob }
   config.pob.stash = { ...defaultPobConfig().stash, ...config.pob.stash }
   config.pob.hud = { ...defaultHudConfig(), ...config.pob.hud }
@@ -481,7 +495,7 @@ function upgradeConfig (_config: Config): Config {
     // one-time defaults for configs saved before these hotkeys existed
     config.pob.gearPanelKey ||= 'Ctrl + G'
     config.pob.guideKey ||= 'Ctrl + H'
-    config.pob.tradesKey ||= 'Ctrl + T'
+    config.pob.tradesKey ||= 'Ctrl + B'
     config.pob.hotkeysV1 = true
   }
   if (!config.pob.hotkeysV2) {
@@ -489,8 +503,63 @@ function upgradeConfig (_config: Config): Config {
     if (config.pob.openPobKey === undefined) config.pob.openPobKey = 'Ctrl + P'
     config.pob.hotkeysV2 = true
   }
+  // hotkeysV4, not V3: V3 was in the defaults merged in above, so it was already
+  // true on every saved config and the move never ran (fixed 16 Nov 2026)
+  if (!config.pob.hotkeysV4) {
+    // Deathloom fork (2026-11-16): Ctrl+T is PoE's skill 13 key (second skill bar), and
+    // the overlay takes it before the game. Move the trade companion off it, unless the
+    // player already chose Ctrl+B for something else.
+    const used = new Set<string>([config.overlayKey, config.pob.gearPanelKey, config.pob.guideKey, config.pob.openPobKey,
+      config.pob.boardKey, config.pob.boardPostKey, ...Object.values(config.pob.panelKeys ?? {}),
+      ...config.commands.map(c => c.hotkey), ...(config.pob.searchStrings ?? []).map(s => s.hotkey)]
+      .filter((k): k is string => typeof k === 'string'))
+    if (config.pob.tradesKey === 'Ctrl + T' && !used.has('Ctrl + B')) config.pob.tradesKey = 'Ctrl + B'
+    config.pob.hotkeysV4 = true
+  }
   // Deathloom fork (2026-11-14): stash tracker removed (GGG rules: no login cookie in shared apps)
   config.widgets = config.widgets.filter(w => w.wmType !== 'stash-tracker')
+  // Deathloom fork (2026-11-16): Stopwatch widget removed (This session has a stopwatch)
+  // Deathloom fork (2026-11-16): Stash search widget replaced by the saved search
+  // strings in Build panel → Notes. Its entries move there once (the upstream
+  // example entries are left out unless they had a hotkey).
+  if (!config.pob.searchStrings) {
+    const examples = new Set(['"Pack Size: +3"', 'Reflect', '"Cannot Leech Life"', '"Cannot Leech Mana"',
+      'Currency', '"Divination Card"', 'Fossil', '"Map Tier"', '"Map Device" "Rarity: Normal"', 'Tane Laboratory'])
+    const moved: SavedSearchString[] = []
+    for (const w of config.widgets) {
+      if (w.wmType !== 'stash-search') continue
+      const ss = w as StashSearchWidget
+      for (const e of ss.entries ?? []) {
+        if (!e.text || (examples.has(e.text) && !e.hotkey)) continue
+        moved.push({ id: moved.length + 1, name: e.name || (w.wmTitle ? `${w.wmTitle}: ${e.text}` : e.text), text: e.text, hotkey: ss.enableHotkeys ? e.hotkey : null })
+      }
+    }
+    config.pob.searchStrings = moved
+  }
+  config.widgets = config.widgets.filter(w => w.wmType !== 'stash-search')
+  config.widgets = config.widgets.filter(w => w.wmType !== 'timer')
+  // Deathloom fork (2026-11-16): Market overview is a tab of Market history. Its pin
+  // and hotkey move to Market history; its overlay widget leaves the menu.
+  if (config.pob.hud.overview) {
+    config.pob.hud.market = true
+    config.pob.hud.overview = false
+  }
+  if (config.pob.panelKeys?.overview) {
+    if (!config.pob.panelKeys.market) config.pob.panelKeys = { ...config.pob.panelKeys, market: config.pob.panelKeys.overview }
+    config.pob.panelKeys = { ...config.pob.panelKeys, overview: null }
+  }
+  for (const w of config.widgets) {
+    if (w.wmType !== 'market-overview') continue
+    w.wmWants = 'hide'
+    if (!w.wmFlags.includes('menu::skip')) w.wmFlags = [...w.wmFlags, 'menu::skip']
+  }
+  // Deathloom fork (2026-11-16): Item search hidden from the menu (Market search shows
+  // the same poe.ninja prices and who sells it). Kept in the settings for upstream merges.
+  for (const w of config.widgets) {
+    if (w.wmType !== 'item-search') continue
+    w.wmWants = 'hide'
+    if (!w.wmFlags.includes('menu::skip')) w.wmFlags = [...w.wmFlags, 'menu::skip']
+  }
   if (config.pob.stash) config.pob.stash.enabled = false
   // live character data off (character-window endpoints are outside GGG's official API)
   config.pob.liveGear = false
@@ -638,6 +707,12 @@ function getConfigForHost (): HostConfig {
       })
     }
   }
+  // Deathloom fork: saved search strings with a hotkey (type it into the stash / vendor search)
+  for (const ss of config.pob?.searchStrings ?? []) {
+    if (ss.hotkey && ss.text) {
+      actions.push({ shortcut: ss.hotkey, action: { type: 'stash-search', text: ss.text } })
+    }
+  }
   for (const command of config.commands) {
     if (command.hotkey) {
       actions.push({
@@ -703,6 +778,7 @@ function getConfigForHost (): HostConfig {
     logKeys: config.logKeys,
     windowTitle: config.windowTitle,
     language: config.language,
+    game: config.game,
     pob: config.pob
   }
 }
@@ -712,7 +788,7 @@ export function defaultHudConfig (): PobHudConfig {
     guide: false,
     trades: false,
     gear: false,
-    clickThroughPanels: { guide: false, trades: false, gear: false, tree: false, atlas: false, session: false, market: false, overview: false, cheats: false },
+    clickThroughPanels: { guide: false, trades: false, gear: false, tree: false, atlas: false, session: false, market: false, overview: false, cheats: false, money: false },
     autoHideTrades: true,
     opaque: false,
     opacity: 90,
@@ -725,7 +801,8 @@ export function defaultHudConfig (): PobHudConfig {
       session: { x: 880, y: 440 },
       market: { x: 440, y: 440 },
       overview: { x: 440, y: 440 },
-      cheats: { x: 880, y: 90 }
+      cheats: { x: 880, y: 90 },
+      money: { x: 880, y: 440 }
     }
   }
 }
@@ -744,7 +821,8 @@ export function defaultPobConfig (): PobConfig {
     liveTreeAndGems: true,
     gearPanelKey: 'Ctrl + G',
     guideKey: 'Ctrl + H',
-    tradesKey: 'Ctrl + T',
+    tradesKey: 'Ctrl + B',
+    hotkeysV3: true,
     hotkeysV1: true,
     openPobKey: 'Ctrl + P',
     panelKeys: {},

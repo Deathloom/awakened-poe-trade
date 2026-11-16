@@ -1,6 +1,7 @@
 import path from 'path'
 import { existsSync } from 'fs'
 import { spawn } from 'child_process'
+import { issueUrl } from './ErrorReporter'
 import { app, Tray, Menu, shell, nativeImage, dialog } from 'electron'
 import type { ServerEvents } from './server'
 
@@ -104,19 +105,7 @@ export class AppTray {
 
   // Deathloom fork: new issue in POE-Builds/poe-builds with the version filled in
   private reportProblem () {
-    const body = [
-      `Orbhoarder ${app.getVersion()} · ${process.platform}`,
-      '',
-      '**What happened?**',
-      '',
-      '',
-      '**What did you expect?**',
-      '',
-      '',
-      '_Log: tray → Open config folder → apt-data (or attach a screenshot)._'
-    ].join('\n')
-    const url = 'https://github.com/POE-Builds/poe-builds/issues/new?labels=report&body=' + encodeURIComponent(body)
-    void shell.openExternal(url)
+    void shell.openExternal(issueUrl('bug', '', ''))
   }
 
   // Deathloom fork: starts the PoB window (same as runtime\Path of Building.exe from the PoB folder)

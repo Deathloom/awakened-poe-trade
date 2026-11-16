@@ -2,10 +2,16 @@
   <!-- Deathloom fork (body, used by the overlay widget and the desktop window): price trends for watched items (poe.ninja 7 days + points recorded by the overlay) -->
   <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm" :style="fill ? { width: '100%', height: '100%' } : { width: '26rem', maxHeight: '80vh' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
-      <span class="text-gray-500"><i class="fas fa-chart-line mr-1" />Market history</span>
-      <span class="text-xs text-gray-500">{{ league ?? 'no league' }}</span>
+      <span class="text-gray-500"><i class="fas fa-chart-line mr-1" />Market</span>
+      <!-- Deathloom fork: Market overview is a tab here (was its own panel) -->
+      <template v-if="tabs !== false">
+        <button class="px-2 rounded text-xs" :class="tab === 'watched' ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab('watched')">Watched</button>
+        <button class="px-2 rounded text-xs" :class="tab === 'all' ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab('all')">All prices</button>
+      </template>
+      <span class="text-xs text-gray-500 ml-auto">{{ league ?? 'no league' }}</span>
     </div>
-    <div class="overflow-y-auto min-h-0 p-1">
+    <div v-if="tabs !== false && tab === 'all'" class="flex-1 min-h-0" :style="fill ? {} : { height: '26rem' }"><MarketOverview /></div>
+    <div v-else class="overflow-y-auto min-h-0 p-1">
       <div v-if="!items.length" class="p-1 text-gray-500">
         Nothing watched yet. Press the <i class="far fa-star" /> next to an item in the market list, or next to its poe.ninja price in a price check.
       </div>
@@ -17,6 +23,9 @@
           <span v-else class="text-gray-600 shrink-0 text-xs">no price</span>
           <span v-if="w.change != null" class="text-xs shrink-0 w-12 text-right" :class="w.change >= 0 ? 'text-green-500' : 'text-red-400'">
             {{ w.change >= 0 ? '+' : '' }}{{ Math.round(w.change) }}%</span>
+          <button class="btn-mini shrink-0" :class="w.alert ? 'text-yellow-300' : ''" :disabled="!w.now"
+            :title="w.alert ? `Alert when the price moves ${w.alert.pct}% from ${fmt(w.alert.base)} c (click to change)` : 'Price alert: tell me when the price moves (click: 10%, 20%, 50%, off)'"
+            @click="cycleAlert(w)"><i class="fas fa-bell mr-1" />{{ w.alert ? w.alert.pct + '%' : 'Alert' }}</button>
           <button class="btn-mini shrink-0" title="Open this item on poe.ninja (full history)" :disabled="!w.now" @click="w.now && open(w.now.url)">
             <i class="fas fa-external-link-alt mr-1" />Open on poe.ninja</button>
           <button class="btn-mini shrink-0 hover:text-red-300" title="Stop watching this item" @click="removeWatch(w.key)">
@@ -45,14 +54,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, watch } from 'vue'
+import MarketOverview from './MarketOverview.vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import VueApexcharts from 'vue3-apexcharts'
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
-import { watchlist, removeWatch, record } from './watchlist'
+import { watchlist, removeWatch, record, setAlert, checkAlert, ALERT_STEPS, type WatchedItem } from './watchlist'
 
 // active: the panel is on screen; fill: take the whole space (desktop window)
-const props = defineProps<{ active?: boolean, fill?: boolean }>()
+const props = defineProps<{ active?: boolean, fill?: boolean, tabs?: boolean }>()
+const TAB_KEY = 'deathloom.market.tab.v1'
+const tab = ref<'watched' | 'all'>((() => { try { return localStorage.getItem(TAB_KEY) === 'all' ? 'all' : 'watched' } catch { return 'watched' } })())
+function setTab (t: 'watched' | 'all') {
+  tab.value = t
+  try { localStorage.setItem(TAB_KEY, t) } catch {}
+}
 const { findPriceByQuery, queuePricesFetch } = usePoeninja()
 const leagues = useLeagues()
 const league = computed(() => leagues.selectedId.value)
@@ -74,8 +90,26 @@ const items = computed(() => watchlist.value
 
 function recordAll () {
   for (const w of items.value) {
-    if (w.now) record(w.key, w.now.chaos)
+    if (!w.now) continue
+    record(w.key, w.now.chaos)
+    if (w.alert) {
+      const change = checkAlert(w.key, w.now.chaos)
+      if (change != null) notify(w.label, change, w.now.chaos)
+    }
   }
+}
+
+// Deathloom fork (idea 4): price alerts
+function cycleAlert (w: WatchedItem & { now: { chaos: number } | null }) {
+  const i = ALERT_STEPS.indexOf(w.alert?.pct ?? 0)
+  setAlert(w.key, ALERT_STEPS[(i + 1) % ALERT_STEPS.length], w.now?.chaos)
+}
+function notify (label: string, change: number, chaos: number) {
+  const text = `${label}: ${change >= 0 ? 'up' : 'down'} ${Math.abs(Math.round(change))}% to ${fmt(chaos)} c`
+  try {
+    // eslint-disable-next-line no-new
+    new Notification('Orbhoarder price alert', { body: text, silent: false })
+  } catch {}
 }
 
 // Keep prices fresh and record a point now and then while something is watched

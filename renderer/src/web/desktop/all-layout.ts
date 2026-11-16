@@ -6,7 +6,7 @@ import type { PanelKey } from '@ipc/types'
 import { inWindow } from './panels'
 import { readWindowKey, windowKey } from '@/web/hud/is-hud'
 
-export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats'
+export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money'
 
 export interface AllPanelDef {
   id: AllPanelId
@@ -25,12 +25,12 @@ export const ALL_PANELS: AllPanelDef[] = [
   { id: 'tree', label: 'Tree map', icon: 'fa-project-diagram', settingsKey: 'tree' },
   { id: 'atlas', label: 'Atlas tree', icon: 'fa-globe', settingsKey: 'atlas' },
   { id: 'trades', label: 'Trade companion', icon: 'fa-handshake', settingsKey: 'trades' },
-  { id: 'market', label: 'Market history', icon: 'fa-chart-line', settingsKey: 'market' },
-  { id: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins', settingsKey: 'overview' },
+  { id: 'market', label: 'Market', icon: 'fa-chart-line', settingsKey: 'market' },
   { id: 'search', label: 'Market search', icon: 'fa-search' },
   { id: 'board', label: "Friends' trade board", icon: 'fa-people-carry', settingsKey: 'board' },
   { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' },
-  { id: 'cheats', label: 'Cheat sheets', icon: 'fa-book', settingsKey: 'cheats' }
+  { id: 'cheats', label: 'Cheat sheets', icon: 'fa-book', settingsKey: 'cheats' },
+  { id: 'money', label: 'Money tools', icon: 'fa-piggy-bank', settingsKey: 'money' }
 ]
 const IDS = new Set(ALL_PANELS.map(p => p.id))
 

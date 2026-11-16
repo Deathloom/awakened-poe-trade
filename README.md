@@ -30,10 +30,10 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Import builds** | Import button in the build panel: paste a PoB code or a pobb.in / poe.ninja / pastebin / maxroll link and save it to your folder, without opening PoB. |
 | **Open PoB** (Ctrl+P) | Opens Orbhoarder's own Path of Building. |
 | **Campaign guide** (Ctrl+H) | Route for acts 1–10. It moves forward as you enter zones. |
-| **Trade companion** (Ctrl+T) | Opens on an incoming trade whisper, with Invite / Trade / Thanks / Kick buttons. They copy the command to the clipboard, or send it if you turn that on. |
+| **Trade companion** (Ctrl+B) | Opens on an incoming trade whisper, with Invite / Trade / Thanks / Kick buttons. They copy the command to the clipboard, or send it if you turn that on. |
 | **Ledger** | What you sold and bought per currency, per league. |
 | **Market history** | 7-day poe.ninja trend, plus prices recorded while the app runs. |
-| **Show while playing** | Any panel (guide, trade companion, build, tree map, atlas tree, this session, market history, market overview) can be pinned over the game as a small window you can drag and resize, or shown in the overlay, each with its own hotkey. You choose per panel whether clicks go through to the game. |
+| **Show while playing** | Any panel (guide, trade companion, build, tree map, atlas tree, this session, market history, market overview) can be pinned over the game as a small window you can drag and resize, or shown in the overlay, each with its own hotkey. You choose per panel whether clicks go through to the game. Test option: all pinned panels in one window (Settings → Panels). |
 | **Orbhoarder window** | A normal window for a second screen with everything in one place: All (arrange it yourself: add, remove, move and resize panels), Build, Levelling, Atlas (atlas tree builds synced with friends, ready-made trees per content, what you have taken, edit and share), Trades, Board (friends' trade board), Market, Trade site, Help and Settings tabs. Opens from the tray or when the game starts. |
 | **Levelling planner** | Campaign guide with quest gems to take or buy for your build, optional quests, gem swaps per level, the next passives to take and a tree map, all from your PoB build and the game log. |
 | **Market search** | Find an item by name and see who sells it, cheapest first. **Whisper** (GGG's buy message) and **Hideout** buttons, one chat message per click. |
@@ -41,7 +41,11 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Trade site tab** | GGG's official trade site inside the Orbhoarder window, signed in separately (on GGG's own page; Orbhoarder never sees your login). Trade buttons open there. |
 | **Edit loadouts** | In the window: new loadouts, rename / copy / delete trees, item sets and skill sets, gem levels and quality, take or refund passives on the tree map. The old file is kept in `Build backups`. |
 | **Manage builds** | Rename, move to folders, duplicate and delete builds. Deletions sync; deleted builds are kept in `Deleted builds`. |
+| **Search strings** | Build panel → Notes: ready-made stash and vendor searches for your build (gems, links, map mods you can't run), plus **Make your own**: pick links and socket colours, movement speed, life, resistances and more, see it fit the game's 50 characters, save it, and give it a hotkey. |
+| **Craft tab** | In the Orbhoarder window. **Crafting simulator**: pick a base, item level and influence, tick the mods you want, and see the chance per try, average tries and cost for Chaos Orbs, Alteration/Augmentation, Alteration + Regal and essences (spawn weights from Path of Building's game data, prices from poe.ninja). **Timeless jewels**: pick a jewel, conqueror, seed and socket to see every passive it changes (Path of Building's own data), and find that seed on the trade site; or **Find seeds**: pick what you want (a passive on one notable, or a stat on N notables in the radius) and get the seeds that give it. |
+| **Compare builds** | Pick two builds (yours or a friend's) and see the differences: stats, gear mods per slot, gems and passive tree. Read-only. |
 | **Where panels show** | Per panel: in game, in the overlay and/or in the Orbhoarder window. |
+| **PoE2 mode** (early) | Settings → General → Game: switch to Path of Exile 2. So far it finds the PoE2 window, log and config and lists PoE2 trade leagues; price check, PoB and prices for PoE2 come in later updates. |
 
 Shift+Space opens the full overlay. Hover the menu icons to see their names and hotkeys, or press **?** for a quick how-to. The Orbhoarder window's **Help** tab has the full help, an FAQ and links to build guides.
 

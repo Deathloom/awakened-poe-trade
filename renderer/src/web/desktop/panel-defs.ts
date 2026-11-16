@@ -19,7 +19,13 @@ export const EXTRA_PANELS: ExtraPanelDef[] = [
   { panel: 'session', label: 'This session', icon: 'fa-stopwatch', widget: 'play-session', view: 'overview' },
   { panel: 'market', label: 'Market history', icon: 'fa-chart-line', widget: '', view: 'market' },
   { panel: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins', widget: 'market-overview', view: 'market' },
-  { panel: 'cheats', label: 'Cheat sheets', icon: 'fa-book', widget: 'cheat-sheets', view: 'overview' }
+  { panel: 'cheats', label: 'Cheat sheets', icon: 'fa-book', widget: 'cheat-sheets', view: 'overview' },
+  { panel: 'money', label: 'Money tools', icon: 'fa-piggy-bank', widget: 'money-tools', view: 'market' }
 ]
+
+// Deathloom fork (16 Nov 2026): Market overview is a tab of Market history now.
+// Still defined (old settings, HUD and widget code know it) but not offered.
+export const MERGED_PANELS: ReadonlySet<string> = new Set(['overview'])
+export const OFFERED_EXTRA_PANELS = EXTRA_PANELS.filter(p => !MERGED_PANELS.has(p.panel))
 
 export const PANEL_WIDGET_TYPES = EXTRA_PANELS.filter(p => p.widget).map(p => p.widget)

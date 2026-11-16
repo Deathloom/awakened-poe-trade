@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: where the app's panels show (overlay, over the game, Orbhoarder window) -->
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="text-gray-500 text-sm mb-2">
       Panel hotkeys are in Settings → Hotkeys.
     </div>
@@ -54,7 +54,13 @@
         <ui-toggle v-model="pob.hud.autoHideTrades" class="mb-1">Trade companion opens on a trade whisper and closes when no trades are left</ui-toggle>
       </template>
       <template v-if="HUD_PANELS.some(p => pob.hud[p.key])">
-        <ui-toggle v-model="pob.hud.opaque" class="mb-1">Solid background (no see-through window)</ui-toggle>
+        <ui-toggle :modelValue="pob.hud.sharedWindow === true" @update:modelValue="v => { pob.hud.sharedWindow = v }" class="mb-1">
+          One window for all pinned panels <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">test</span></ui-toggle>
+        <div class="text-gray-500 text-sm mb-2">
+          Uses less memory with several panels pinned. Clicks outside a panel go to the game; panels set to let clicks
+          through still do. Always see-through. If clicks stop reaching the game or a panel, turn this off.
+        </div>
+        <ui-toggle v-if="!pob.hud.sharedWindow" v-model="pob.hud.opaque" class="mb-1">Solid background (no see-through window)</ui-toggle>
         <div class="flex items-center gap-2 mb-1">
           <span class="shrink-0">Opacity</span>
           <input v-model.number="pob.hud.opacity" type="range" min="30" max="100" step="5" class="flex-1">

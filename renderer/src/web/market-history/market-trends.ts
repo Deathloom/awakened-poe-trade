@@ -67,7 +67,7 @@ export const MARKET_GROUPS: MarketGroup[] = [
   { id: 'all', label: 'Everything', match: () => true },
   { id: 'currency', label: 'Currency', match: c => c === 'currency' },
   { id: 'fragments', label: 'Fragments & invitations', match: c => ['fragments', 'invitations', 'vials'].includes(c) },
-  { id: 'scarabs', label: 'Scarabs', match: c => c === 'scarabs' },
+  { id: 'scarabs', label: 'Scarabs (Standard / before 3.30)', match: c => c === 'scarabs' },
   { id: 'crafting', label: 'Crafting (essences, fossils, oils…)', match: c => ['essences', 'fossils', 'resonators', 'oils', 'delirium-orbs', 'omens', 'allflame-embers', 'tattoos', 'runegrafts', 'astrolabes', 'djinn-coins', 'coffins', 'corpses', 'enshrouding-crystals', 'artifacts', 'incubators', 'ducats'].includes(c) },
   { id: 'divination', label: 'Divination cards', match: c => c === 'divination-cards' },
   { id: 'uniques', label: 'Uniques', match: c => c.startsWith('unique-') },

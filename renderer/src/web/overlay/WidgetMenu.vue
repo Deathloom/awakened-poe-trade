@@ -4,8 +4,8 @@
       <div class="p-1 flex gap-1 items-center text-base">
         <template v-for="widget in widgets" :key="widget.wmId">
           <button @click="toggle(widget)" :title="widget.hint"
-            :class="widget.wmWants === 'show' ? 'border-gray-500' : 'border-gray-800'"
-            class="bg-gray-800 rounded text-gray-100 p-2 leading-none whitespace-nowrap border"
+            :class="widget.wmWants === 'show' ? 'border-gray-500 wm-btn-on' : 'border-gray-800'"
+            class="wm-btn bg-gray-800 rounded text-gray-100 p-2 leading-none whitespace-nowrap border"
           >
             <i v-if="widget.icon" class="fas align-bottom" :class="widget.icon" />
             <template v-if="widget.title">{{ widget.title }}</template>
@@ -36,18 +36,8 @@
           <li><b>{{ help.overlayKey }}</b>: open / close the overlay (this bar). Esc closes it too.</li>
           <li><b>{{ help.priceKey }}</b> over an item in game: price check, with what it does to your PoB build.</li>
           <li><b>{{ help.gearKey }}</b> build gear, <b>{{ help.guideKey }}</b> campaign guide, <b>{{ help.tradesKey }}</b> trade companion: show / hide.</li>
-          <li><b>{{ help.openPobKey }}</b> opens Path of Building. In the build panel, <i class="fas fa-cloud" /> shares builds (GitHub sign-in, Pull / Push) and <i class="fas fa-file-import" /> imports a PoB code or link.</li>
-          <li>Pinned panels (Settings <i class="fas fa-cog"></i> → Path of Building → Show while playing) stay on screen while you play.
-            Drag them by the top bar or any empty spot.</li>
-          <li>Build gear: <i class="far fa-copy"></i> copies the name for the in-game market (press <b>/</b>, then Ctrl+V),
-            <b>Trade</b> opens an exact search on the trade site, <i class="fas fa-search-dollar"></i> opens the price check.
-            <i class="fas fa-exchange-alt"></i> picks the build and loadout.</li>
-          <li>Trade companion: buttons copy the chat command (or send it, see settings). Ledger tab = your sales and buys.</li>
-          <li><i class="fas fa-search-dollar"></i> Market search: find an item by name, then <b>Whisper</b> (GGG's buy message) or <b>Hideout</b> the seller, one click = one chat message.</li>
-          <li>Trade buttons open GGG's trade site in the Orbhoarder window's <b>Trade site</b> tab (or your browser, see settings).</li>
-          <li>Which panels show in game, in the overlay or in the Orbhoarder window: Settings → Path of Building → Where panels show.</li>
-          <li>Campaign guide: moves on by itself when you reach the next zone on the route; arrows to fix it by hand.</li>
-          <li>The buttons on this bar open or close a panel; hover one to see its name. <i class="fas fa-magic"></i> runs the setup guide again.</li>
+          <li><b>{{ help.openPobKey }}</b> opens Path of Building. The buttons on this bar open or close a panel; hover one to see its name.</li>
+          <li>Everything else (build sharing, pinned panels, trade buttons, search strings, FAQ) is in the full help below.</li>
         </ul>
         <button class="mt-2 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="openFullHelp">
           <i class="fas fa-book mr-1"></i>Full help, FAQ and where to get a build (Orbhoarder window)</button>
@@ -69,7 +59,7 @@ import { defineComponent, PropType, computed, inject, ref } from 'vue'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import UiPopover from '@/web/ui/Popover.vue'
 import { Widget as IWidget, WidgetManager, WidgetMenu, WidgetSpec } from './interfaces'
-import { registry } from './widget-registry'
+import { registry, REMOVED_WIDGETS } from './widget-registry'
 import { Host } from '@/web/background/IPC'
 import Widget from './Widget.vue'
 import { useI18nNs } from '@/web/i18n'
@@ -92,7 +82,8 @@ function hintFor (type: string): string | undefined {
     case 'tree-map': return 'Tree map' + key(pob?.panelKeys?.tree)
     case 'atlas-tree': return 'Atlas tree' + key(pob?.panelKeys?.atlas)
     case 'play-session': return 'This session' + key(pob?.panelKeys?.session)
-    case 'cheat-sheets': return 'Cheat sheets (Betrayal, Heist, Delve, Sanctum, vendor recipes)' + key(pob?.panelKeys?.cheats)
+    case 'cheat-sheets': return 'Cheat sheets (Covens, Betrayal, Heist, Delve, Sanctum, vendor recipes)' + key(pob?.panelKeys?.cheats)
+    case 'money-tools': return 'Money tools (gem levelling profit, currency counter)' + key(pob?.panelKeys?.money)
     case 'market-overview': return 'Market overview (poe.ninja)' + key(pob?.panelKeys?.overview)
     case 'stash-search': return 'Stash search'
     case 'image-strip': return 'Image strip'
@@ -179,6 +170,8 @@ export default defineComponent({
       instantiableWidgets: computed(() => {
         return registry.widgets
           .filter(({ widget }) => widget.instances === 'multi')
+          // Deathloom fork: replaced by other panels (see REMOVED_WIDGETS)
+          .filter(({ widget }) => !REMOVED_WIDGETS.has(widget.type))
           .map(({ widget }) => widget)
       }),
       openSetup () {

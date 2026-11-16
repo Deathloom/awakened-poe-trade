@@ -36,7 +36,7 @@
       <!-- map mods to avoid (idea 2) -->
       <div class="mb-3">
         <div class="text-gray-300 mb-1"><i class="fas fa-skull-crossbones mr-1 text-gray-500" />Map mods this build can't run</div>
-        <div class="text-gray-500 mb-1">The map check (price check a map) warns about these.</div>
+        <div class="text-gray-500 mb-1">The map check (price check a map) warns about these. Mods to avoid with <b>every</b> build: Settings → Maps.</div>
         <div v-if="state.own" class="grid grid-cols-2 gap-x-2">
           <ui-checkbox v-for="p of MAP_MOD_PRESETS" :key="p.text"
             :modelValue="draft.mapMods.includes(p.text)" @update:modelValue="toggleMod(p.text, $event)">{{ p.label }}</ui-checkbox>
@@ -76,6 +76,9 @@
         </div>
       </div>
     </div>
+
+    <!-- your own saved searches + vendor search maker (replaces the Stash search widget) -->
+    <my-search-strings />
   </div>
 </template>
 
@@ -87,6 +90,7 @@ import UiCheckbox from '@/web/ui/UiCheckbox.vue'
 import { notesState, notesError, notesBusy, loadNotes, saveNotes, buildLabel, filterLink } from './build-notes'
 import { MAP_MOD_PRESETS, presetLabel } from './map-mods'
 import { buildSearchStrings } from './search-strings'
+import MySearchStrings from './MySearchStrings.vue'
 import { useCopyFeedback } from './market'
 import type { PobSocketGroup } from '@ipc/types'
 

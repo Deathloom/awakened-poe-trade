@@ -54,7 +54,7 @@ watch(inHud, (pinned) => {
   wm.setFlag(props.config.wmId, 'menu::skip', pinned)
   if (pinned && props.config.wmWants === 'show') wm.hide(props.config.wmId)
 }, { immediate: true })
-// Hotkey (Ctrl+H / Ctrl+T by default). Pinned panels are toggled in the HUD window by main.
+// Hotkey (Ctrl+H / Ctrl+B by default). Pinned panels are toggled in the HUD window by main.
 const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
   if (e.target !== 'campaign-guide' || inHud.value) return
   // from in game (overlay not active yet) it always opens; main focuses the overlay

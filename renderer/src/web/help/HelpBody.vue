@@ -89,9 +89,6 @@
       </template>
 
       <!-- ===== Get a build ===== -->
-      <template v-else-if="section === 'league'">
-        <league-start-checklist />
-      </template>
 
       <template v-else-if="section === 'builds'">
         <section>
@@ -139,16 +136,14 @@ import { AppConfig } from '@/web/Config'
 import type { PriceCheckWidget } from '@/web/overlay/widgets'
 import { Host } from '@/web/background/IPC'
 import { BUILD_SITES, ATLAS_SITES } from './build-sites'
-import LeagueStartChecklist from './LeagueStartChecklist.vue'
 
 const props = defineProps<{ start?: 'use' | 'builds' | 'faq' }>()
 const SECTIONS = [
   { id: 'use', label: 'How to use it' },
   { id: 'builds', label: 'Get a build' },
-  { id: 'league', label: 'League start' },
   { id: 'faq', label: 'FAQ' }
 ] as const
-const section = ref<'use' | 'builds' | 'league' | 'faq'>(props.start ?? 'use')
+const section = ref<'use' | 'builds' | 'faq'>(props.start ?? 'use')
 
 const version = computed(() => Host.version.value && !Host.version.value.startsWith('0.0.0') ? `version ${Host.version.value}` : '')
 

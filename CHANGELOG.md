@@ -8,6 +8,159 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.90] - 2026-11-16
+
+### Added (#214)
+- **Timeless jewel: Find seeds.** Craft tab → Timeless jewel → Find seeds: pick the jewel and socket, then what you want (a passive or stat on a certain notable, or a stat on at least N notables anywhere in the radius). Orbhoarder lists the best seeds, what each one gives, a button to show all its passives and a trade search for that seed with any conqueror.
+
+### Changed (#213)
+- **Test builds** now get their Path of Building version from the testing branch, so testers get a new PoB (like the 3.30 one) before everyone else. Stable builds are unchanged.
+
+### Fixed (#212)
+- **Map price check (3.30):** Atlas Drops now searches the trade site's own Atlas Drops filter instead of the old Item Quantity one, so 3.30 maps find matching listings.
+- The weekly data refresh now opens its pull requests against dev.
+- **Prices (3.30):** Threads and Viscera now show poe.ninja prices (price check, market overview, profit tools).
+
+### Added (#209)
+- **Price check data for new leagues:** a new once-per-league job adds the trade site's new items, uniques, mod lines and bulk-exchange tags to the price check data in all four languages, without changing what's already there.
+
+### Changed (#208)
+Path of Building updated for league 3.30 (Covens): the 3.30 passive tree, new uniques, Wickerman gear and Viscera mods, Polaric Devastation and the new flask mods. It arrives the next time you start Orbhoarder.
+
+### Added (#206)
+- **Craft this** (flask button on rare and magic items in Build gear): opens the Craft tab with that base and item level, ticks its mods at the tier your item has, and shows **How to craft** in order: the base and item level to get, the cheapest way to roll the random mods (Chaos, Alteration/Regal or an Essence, compared on poe.ninja prices), the rarest mods first and Exalted Orbs (or bench) for the rest, bench crafts last, then Divine Orb. Mods it can't roll on that base (fractured, veiled, Eldritch, influence) are listed. Fossils and Harvest aren't covered yet.
+
+### Added (#205)
+- **Passive tree, switching builds:** pick **Switching from** above the tree (it fills in by itself when you change your active build in Path of Building) to see what to respec: passives only in the old build are red (**to remove**, with the list outermost first and how many Orbs of Regret), passives in both are green (keep), new ones orange (to take).
+
+### Fixed (#205)
+- **Passive tree showed small passives as taken that you hadn't taken** (e.g. a Strength or Intelligence node on a loop). The game log only names passives, so Orbhoarder guesses where each one is; a rule that filled in any build passive between two taken ones lit passives you had gone round. Now it only fills in the shortest path a taken passive needs to connect to your start.
+
+### Fixed (#204)
+- **Campaign guide follows your character:** each character keeps its own step, so switching characters no longer shows another one's act. A character you haven't used with the guide yet starts at the act it was last in.
+- **Campaign done:** after Kitava in act 10 (or once the character has been in a map) the guide says the campaign is done instead of showing Act 1; **Show the route anyway** brings it back. The area level is only shown in campaign zones (a map's level next to "Act 1" was confusing).
+
+### Fixed (#207)
+- **Price check on 3.30 Threads** (Blight Thread, Breach Thread …), Frayed Thread, Threaded Delirium Orb, Maven's Chisel of Threads and Soul Cores: the item list didn't have them, so the price check didn't know them. Also added currencies the trade site lists again (Engineer's Orb, Cartographer's Chisel, Orb of Horizons, Harbinger's Orb, the orb shards, Breach Blessings). English game client only for now.
+
+### Added (#202)
+- **Atlas tree, switching builds:** pick **Switching from** (it fills in by itself when you change atlas build) to see what to respec: passives only in the old build are red (**to remove**, with the list outermost first and how many Orbs of Unmaking), passives in both are green (keep), new ones orange (to take). The next-5 steps start from what you keep.
+- **Easier-to-read small print** (Settings → Appearance, on by default): hints, notes and counts are a bit bigger and brighter and use a plain font even when the theme uses Fontin.
+
+### Changed (#202)
+- **Atlas search** is much easier to spot: everything else dims, matches get a big yellow ring at any zoom, the box shows how many it found, and Enter (or clicking the count) zooms to each match in turn. Esc clears it.
+- **Build gear buttons:** in the Orbhoarder window the magnifier only repeated **Trade**, so it's gone there (it opens the price check in the overlay, where it's still shown). The line above the gear now says what each button does.
+
+### Fixed (#201)
+- **Ctrl+T is free for skill 13 now.** The one-time move of the trade companion from Ctrl+T to Ctrl+B never ran on existing installs (it thought it had already run), so Ctrl+T still opened the trade companion. It runs on the next start; if you already use Ctrl+B for something else, Ctrl+T stays and its box is orange so you can pick another key.
+- **Hotkey boxes:** the orange "the game uses this key" warning and the red "Not Set" now actually show; a general field style hid them in every theme.
+
+### Changed (#200)
+- **Clean look, step 3:** price check rows are calmer (lighter lines, a light band on hover), ticks use the accent colour, tags like *pseudo* and the min/max fields are easier to read, **Search** is the main (accent) button and **Collapse** is a quiet text button. Overlay menu bar: calmer icons, and open panels get an accent underline instead of a grey outline. Settings pages use the full window width and hotkey boxes use the normal font.
+- **Settings title** says Orbhoarder (was Awakened PoE Trade).
+- **What's new** shows one Changed / Added / Fixed heading per version instead of one per change.
+
+### Fixed (#200)
+- **Setup guide:** on a new install it no longer stops at "Checking build sharing…"; its first check ran before it was ready.
+- A start-up error in the league list while the settings were still loading.
+
+### Changed (#198)
+- **Orbhoarder window top bar** stays on one line: smaller tabs, the active tab in the accent colour, icons only on narrow windows (hover for the name), and it scrolls instead of wrapping.
+- **Clean look:** quieter borders on text fields and drop-downs (the focus ring stays); price check filter buttons that are on get an accent outline and tint instead of a bright grey line.
+
+### Changed (#196)
+- **New default look: Clean.** Flat panels, neutral greys with more contrast, the system font (Segoe UI), calmer top bar, slimmer scrollbars and clearer buttons, in the overlay, the in-game panels and the Orbhoarder window. If you were on the old default (Classic) you move to Clean once; any other theme you picked stays. Classic and the other themes are still in Settings → Appearance. First step of the look overhaul.
+
+### Added (#195)
+- **Craft tab** in the Orbhoarder window:
+  - **Crafting simulator:** pick a base, item level and up to two influences, tick the mods you want (and the lowest tier you'd accept). Simulate shows the chance per try, the average number of tries and the average cost in chaos (poe.ninja prices) for Chaos Orb spam, Alteration + Augmentation, Alteration then Regal, and essence spam; **Compare all** sorts them by cost. Mod pool and spawn weights come from Path of Building's game data. Fossils, harvest and metacrafts aren't covered yet.
+  - **Timeless jewels:** pick the jewel, its conqueror, the seed and a socket (your build's sockets first) to see every passive it changes, with new stats highlighted and the passives your build takes marked. **Find on trade** searches the trade site for that seed. Needs the updated Path of Building (it updates by itself).
+
+### Changed (#194)
+- **Trade companion hotkey is now Ctrl+B** (was Ctrl+T, which is PoE's key for skill 13 on the second skill bar; Orbhoarder caught it first so the skill never fired). If you still had Ctrl+T it moves to Ctrl+B, unless you already use Ctrl+B for something.
+- **Game-key warning:** a hotkey box turns orange when the key is one PoE uses by default (skills, flasks, Ctrl+C, Ctrl+F and so on), with what the game uses it for.
+
+### Changed (#193)
+- **One Market panel:** Market overview (all poe.ninja prices) is now the **All prices** tab of the Market panel, next to **Watched** (your watched items and alerts). If you had Market overview pinned or on a hotkey, Market gets the pin and the hotkey. The Orbhoarder window's Market tab still shows both side by side.
+- **Map mods:** Settings → Maps (every build, this PC) and Build panel → Notes (this build, shared) now say which is which; the map check uses both, as before.
+- **Shorter ? help** on the overlay bar: the hotkeys, then a button to the full help.
+- This session's Trades count points to the Trade companion's Ledger for the details.
+
+### Added (#192)
+- **Make your own vendor search:** Build panel → Notes → Search strings → **Make your own**: pick linked sockets and colours, movement speed, life, resistances, +1 gems, added physical damage or your own text, choose any / all, and Orbhoarder writes the search (checks the game's 50-character limit). Save it with a name and give it a hotkey that types it into the stash or vendor search.
+
+### Changed (#192)
+- **Stash search widget merged into Search strings:** your Stash search entries (and their hotkeys) moved to Build panel → Notes → **My search strings**; the separate Stash search widget is gone. Its example entries were left out.
+
+### Changed (#191)
+- **Item search folded into Market search:** the Item search icon is gone from the overlay menu; Market search now shows the poe.ninja price next to each suggestion as you type, and still finds who sells it.
+
+### Changed (#190)
+- **One checklist:** Help → League start is gone; its list is now the top part of Cheat sheets → **Checklist** (was Progress), followed by the endgame goals. Ticks you already made in either list are kept, per league.
+
+### Changed (#189)
+- **Stopwatch moved into This session:** the separate Stopwatch widget is gone (it did the same as part of This session). This session now has a stopwatch you start, pause and reset yourself, next to its automatic map timer. Existing Stopwatch widgets and their hotkeys are removed.
+
+### Added (#188)
+- **One window for all pinned panels (test):** Settings → Panels → Show while playing → "One window for all pinned panels". All pinned panels share one see-through window over the game instead of one window each (less memory with several pinned). Clicks outside a panel go to the game; per-panel "clicks go through" still works; drag, resize, hotkeys and Alt-to-hide work as before. Off by default while it is tested on Windows.
+
+### Changed (#187)
+- **Game switch hidden for now:** the PoE2 switch from #186 is not shown in Settings until PoE2 mode does more (the code stays). If PoE2 was already picked, the switch still shows so you can go back to PoE1.
+
+### Added (#186)
+- **Game switch (PoE2 mode, part 1):** Settings → General → Game: Path of Exile 1 or 2. In PoE2 mode Orbhoarder looks for the PoE2 window, Client.txt (from the running game too) and `poe2_production_Config.ini`, and lists PoE2 trade leagues; each game remembers its own league, and the default window title follows the switch. Price check, Path of Building and poe.ninja prices stay PoE1 only for now (the price check says so in PoE2 mode). PoE1 is unchanged.
+
+### Fixed (#185)
+- **Map price check in 3.30:** maps now show **Atlas Drops** instead of Item Quantity; the price check reads it again and uses it as the quantity filter (same values, GGG renamed it).
+
+### Changed (#184)
+- **Lighter pinned panels:** a pinned panel's window is now only made when you first open the panel, and is closed again 2 minutes after you close the panel with its hotkey (less memory and CPU when many panels are pinned). Trade companion, Market history (price alerts) and This session stay loaded so they keep working in the background.
+
+### Added (#183)
+- **Compare builds** (Orbhoarder window → Build gear → scales button): pick two builds from your folder or a friend's and see what's different: stats (DPS, life, EHP, resistances…), gear mods per slot, gems added, removed or levelled, and passives only in one of them. Reads the build files; nothing is changed.
+
+### Added (#182)
+- **Covens (3.30) cheat sheet** with a switch for **Levelling**, **Mapping profit** and **Bosses**: rituals and Fates, the Wickerman and Viscera, Grim Fates and the road to the Coven Queen, and what to do in each case. The choice is remembered.
+
+### Changed (#181)
+- **Up to date for 3.30 Covens of Umbra:** the Map mechanics cheat sheet now covers Threads of Creation (Scarabs are gone), Shaped Regions, the new atlas tree and the 3.30 changes to Delirium, Legion, Essence, Ritual, Expedition, Ultimatum, Harvest, Incursion and Mirage. Endgame bosses lists the new atlas points, Thread drops from altars and the Coven Queen; Progress gets the Coven Queen and Shaped Regions. Cost per map now says threads instead of scarabs and sextants, and the currency counter shows Cartographer's Chisel instead of Awakened Sextant.
+
+### Changed (#180)
+- **Automatic tests before releases:** every change is now tested (map profit, money tools, backups, search strings, the phone key) and type-checked and built before it can reach a test build.
+
+### Added (#179)
+- **Settings → Tools** (overlay settings and the Orbhoarder window's Settings):
+  - **Health check:** one button checks the game log and game settings files, Path of Building, your GitHub sign-in, whether poe.ninja and GitHub can be reached, the app's port, updates, and hotkeys used twice, with what to do for each problem.
+  - **Settings backup:** save all settings, hotkeys, panel layouts, notes, ticks and session data to one file, and restore it on a new PC or a friend's (no sign-ins or passwords in it).
+  - **Phone or other devices:** turn it on, restart, and open the Orbhoarder window in your phone's browser on the same Wi-Fi with the link shown (it has a key; **New key** makes old links stop working).
+
+### Added (#178)
+- **Find an upgrade** (Build panel, gear: the ↑ button next to **Trade**): searches the trade site for any base of the same kind with at least your item's values on its main stats (life, resistances, …).
+- **More search strings** (Build panel → Notes): flasks that remove bleed/freeze/shock/ignite/poison, flasks with quality, rings/amulets/belts with life, all elemental resistances, jewels with life.
+- **Cheat sheets:** **Endgame bosses** (how to reach each pinnacle boss and what usually kills you) and **Map mechanics** (Breach, Legion, Delirium, Essence, Ritual, Expedition, Ultimatum, Blight, Harvest in one line each).
+- **Progress** (Cheat sheets → Progress): tick off labs, voidstones, pinnacle bosses and character goals; saved per league.
+
+### Added (#177)
+- **Money tools** panel (overlay, in game, Orbhoarder window and the All tab; its own hotkey in Settings → Hotkeys):
+  - **Gem levelling:** what a gem costs at level 1 and sells for at level 20 on poe.ninja, best profit first (tick **20% quality** for 1/20 → 20/20). Corrupted gems are left out.
+  - **Currency counter:** type how many of each currency you have and see the total in chaos and divine at today's prices. Add other items (scarabs, fossils, essences…) by name.
+- **Price alerts** in Market history: the **Alert** button on a starred item tells you (a Windows notification) when its price moves 10%, 20% or 50%.
+
+### Added (#176)
+- **Map profit:** the **This session** panel has **Loot** buttons (+5c, +20c, +50c, +1 div, or type an amount) for the map you're in (or the last one), and a **Cost/map** box. It shows profit per hour of map time, and each map's loot in **Last maps**.
+- **Last session summary:** when a new session starts (after 2 hours without playing, or **New session**), the old one is kept as a short summary in the panel: time played, maps, deaths, trades, profit, levels gained, where the time went and league mechanics.
+- **Deaths per act** in the act splits (Levelling → Next steps → **Campaign time**).
+
+### Added (#175)
+- **Bug / Idea button** at the top right of the Orbhoarder window: report a bug or suggest a feature in a few lines. It's sent to the group's builds repo on GitHub with your build-sync sign-in (bug reports can include the last log lines, without your Windows user name or passwords). Not signed in? **Open on GitHub** opens it as a new issue in your browser.
+
+### Security (#174)
+- **Other devices need a key with --listen:** when Orbhoarder is started with `--listen` (so another device on your network can open it), that device must now open the link with its key once (`?key=…`); without it, it's refused. Your own PC isn't affected.
+- **Problem reports no longer contain your Path of Building settings** (folder paths, player name): the log only says whether each setting is the default or your own.
+
+### Security (#173)
+- **Every installer comes with a signed build record** showing it was built by this project's release workflow from this repo, so a download can be checked. Stable releases can only be built from the master branch; work goes to a dev branch and test builds first.
+
 ## [1.0.89] - 2026-11-15
 
 ### Security (#171)

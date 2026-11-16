@@ -1,5 +1,18 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
+    <!-- Deathloom fork: PoE2 mode (phase 1: game switch). Hidden until PoE2 mode is usable;
+         still shown if PoE2 is already selected so it can be switched back. -->
+    <div class="mb-4" v-if="showGameSwitch">
+      <div class="flex-1 mb-1">Game</div>
+      <div class="flex gap-x-4">
+        <ui-radio v-model="game" value="poe1">Path of Exile 1</ui-radio>
+        <ui-radio v-model="game" value="poe2">Path of Exile 2 <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">early</span></ui-radio>
+      </div>
+      <div class="text-gray-500 text-sm mt-1" v-if="game === 'poe2'">
+        Finds the PoE2 window, Client.txt and config file, and lists PoE2 trade leagues. Price check,
+        Path of Building and poe.ninja prices are still PoE1 only. Restart Orbhoarder after switching.
+      </div>
+    </div>
     <div class="mb-2">
       <div class="flex-1 mb-1">{{ t(':language') }}</div>
       <select v-model="language" class="p-1 rounded bg-gray-700 w-24">
@@ -111,6 +124,10 @@ import { Host } from '@/web/background/IPC'
 import { usePobConfig } from './pob-config'
 import { configModelValue, configProp } from './utils'
 import { AppConfig } from '@/web/Config'
+import { windowTitleOnSwitch, type Game } from '@ipc/game'
+
+// Deathloom fork: PoE2 mode is deferred until the PoE1 app is done. Set true to show the switch.
+const GAME_SWITCH_ENABLED = false
 
 export default defineComponent({
   name: 'settings.general',
@@ -150,7 +167,22 @@ export default defineComponent({
       forcedIntlSite: computed(() => props.config.realm === 'pc-ggg' && props.config.language === 'cmn-Hant'),
       restoreClipboard: configModelValue(() => props.config, 'restoreClipboard'),
       showAttachNotification: configModelValue(() => props.config, 'showAttachNotification'),
-      windowTitle: configModelValue(() => props.config, 'windowTitle')
+      windowTitle: configModelValue(() => props.config, 'windowTitle'),
+      showGameSwitch: computed(() => GAME_SWITCH_ENABLED || props.config.game !== 'poe1'),
+      game: computed<Game>({
+        get () { return props.config.game },
+        set (value) {
+          const from = props.config.game
+          if (value === from) return
+          // each game keeps its own league; a custom window title is kept
+          const byGame = { ...props.config.leagueIdByGame }
+          if (props.config.leagueId) byGame[from] = props.config.leagueId
+          props.config.leagueIdByGame = byGame
+          props.config.leagueId = byGame[value]
+          props.config.windowTitle = windowTitleOnSwitch(value, props.config.windowTitle)
+          props.config.game = value
+        }
+      })
     }
   }
 })

@@ -5,7 +5,7 @@
 // - Existing installs: the installer moves the old resources\PathOfBuilding
 //   there (build/installer.nsh); then only changed files download.
 // - Each app start, while the PoB window is closed: one manifest check at the
-//   pinned PoB commit (pob-pin.ts, read from this repo's master), so the overlay's
+//   pinned PoB commit (pob-pin.ts, read from this repo's master; test builds: dev), so the overlay's
 //   headless PoB stays current even for people who never open PoB. PoB's own
 //   updater stays on the same commit (the installed manifest names it).
 
@@ -18,12 +18,12 @@ import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { syncPob, isInstalled, readLocalManifest, type FetchFn } from './PobDownload'
 import { managedPobDir, legacyPobDir } from './defaults'
-import { POB_PIN, POB_PIN_URL, parsePobPin } from './pob-pin'
+import { POB_PIN, pobPinUrl, parsePobPin } from './pob-pin'
 
-// the pinned PoB commit: master's pob-pin.ts when reachable, else the one built in
+// the pinned PoB commit: pob-pin.ts on master (test builds: dev) when reachable, else the one built in
 async function pobPin (logger: Logger): Promise<string> {
   try {
-    const res = await net.fetch(POB_PIN_URL, { cache: 'no-store' })
+    const res = await net.fetch(pobPinUrl(app.getVersion()), { cache: 'no-store' })
     if (res.ok) {
       const pin = parsePobPin(await res.text())
       if (pin) return pin

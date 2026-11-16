@@ -1,7 +1,8 @@
-import { computed, shallowRef, readonly } from 'vue'
+import { computed, shallowRef, readonly, watch } from 'vue'
 import { createGlobalState } from '@vueuse/core'
-import { AppConfig, poeWebApi } from '@/web/Config'
+import { AppConfig, poeWebApi, type Config } from '@/web/Config'
 import { Host } from './IPC'
+import { pickDefaultLeague } from '@ipc/game'
 
 // pc-ggg, pc-garena
 export const PERMANENT_SC = ['Standard', '標準模式']
@@ -50,6 +51,19 @@ export const useLeagues = createGlobalState(() => {
     error.value = null
 
     try {
+      if (AppConfig().game === 'poe2') {
+        // Deathloom fork: PoE2 mode. The trade2 list has no rules, so pick by name
+        // (same endpoint Exiled Exchange 2 uses)
+        const response = await Host.proxy(`${poeWebApi()}/api/trade2/data/leagues`)
+        if (!response.ok) throw new Error(JSON.stringify(Object.fromEntries(response.headers)))
+        const leagues: { result: Array<{ id: string }> } = await response.json()
+        tradeLeagues.value = leagues.result.map(league => ({ id: league.id, isPopular: true }))
+        if (!tradeLeagues.value.some(league => league.id === selectedId.value)) {
+          selectedId.value = pickDefaultLeague(tradeLeagues.value.map(league => league.id))
+        }
+        return
+      }
+
       const response = await Host.proxy(`${poeWebApi()}/api/leagues?type=main&realm=pc`)
       if (!response.ok) throw new Error(JSON.stringify(Object.fromEntries(response.headers)))
       const leagues: ApiLeague[] = await response.json()
@@ -79,6 +93,15 @@ export const useLeagues = createGlobalState(() => {
       isLoading.value = false
     }
   }
+
+  // Deathloom fork: PoE2 mode. Switching game swaps the league list; each game
+  // keeps the league picked last time (Settings → General sets leagueId)
+  // config can still be empty while the app starts
+  watch(() => (AppConfig() as Config | null)?.game, (game, prev) => {
+    if (!prev || game === prev) return
+    tradeLeagues.value = []
+    load()
+  })
 
   return {
     isLoading,

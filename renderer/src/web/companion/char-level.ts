@@ -8,7 +8,7 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { applySessionLines, loadPlaySession, savePlaySession } from './play-session'
-import { STEPS, loadCampaignStep, actFromAreaCode, findStep, onlyActive } from './campaign-route'
+import { STEPS, loadCampaignStep, actFromAreaCode, findStep, onlyActive, isEndgameArea } from './campaign-route'
 
 export interface CharLevel { name: string, cls: string, level: number, at: number }
 // Campaign progress from Client.txt, per character: quest rewards received and
@@ -38,6 +38,8 @@ export interface CharProgress {
   // campaign time (sum of actMs, acts 1-10) when the act was first entered: the act splits
   splits?: Record<string, number>
   kitava?: Array<'cruel' | 'merciless'>
+  // has been in an atlas map (campaign done, for the guide)
+  endgame?: boolean
   // where the character was and since when (for the act timer)
   lastAct?: number
   lastAt?: number
@@ -276,6 +278,7 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
       if (act && act >= 1 && act <= 10 && p.splits?.[act] == null) {
         p.splits = { ...p.splits, [act]: campaignMs(p) }
       }
+      if (isEndgameArea(ev.code)) p.endgame = true
       p.lastAct = act ?? undefined
       p.lastAt = ts
     } else if (session && ev.type === 'afk') {

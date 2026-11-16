@@ -3,11 +3,12 @@
   <div class="widget-default-style text-gray-200 leading-tight text-sm flex flex-col"
     :style="tall ? { width: 'var(--hud-w, 20rem)', height: 'var(--hud-h)' } : { width: 'var(--hud-w, 20rem)' }">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t">
-      <span class="text-gray-500"><i class="fas fa-route mr-1" />Act {{ step.act }}</span>
-      <span v-if="areaLevel" class="text-gray-500 text-xs">area level {{ areaLevel }}</span>
-      <span v-if="step.act === 2" class="text-xs px-1 rounded bg-gray-800 text-yellow-300"
+      <span v-if="hideRoute" class="text-gray-500"><i class="fas fa-flag-checkered mr-1" />Campaign done</span>
+      <span v-else class="text-gray-500"><i class="fas fa-route mr-1" />Act {{ step.act }}</span>
+      <span v-if="areaLevel && !hideRoute" class="text-gray-500 text-xs" title="Level of the campaign zone you're in">area level {{ areaLevel }}</span>
+      <span v-if="!hideRoute && step.act === 2" class="text-xs px-1 rounded bg-gray-800 text-yellow-300"
         :title="'Bandit choice from your Path of Building build (Configuration tab). Kill all three if the build says Kill all.'">Bandits: {{ BANDIT_LABEL[bandit] }}</span>
-      <div class="ml-auto flex gap-x-2 text-gray-500">
+      <div v-if="!hideRoute" class="ml-auto flex gap-x-2 text-gray-500">
         <button class="hover:text-gray-200" title="Previous step" @click="move(-1)"><i class="fas fa-chevron-left" /></button>
         <button class="hover:text-gray-200" title="Next step" @click="move(1)"><i class="fas fa-chevron-right" /></button>
         <button class="hover:text-gray-200" :title="showAll ? 'Show fewer steps' : 'Show the whole act'" @click="showAll = !showAll">
@@ -27,7 +28,14 @@
         @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
       <button class="text-gray-500 hover:text-gray-200" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
     </div>
-    <div ref="listEl" class="p-1 min-h-0" :class="{ 'overflow-y-auto flex-1': tall }">
+    <!-- Campaign finished for this character (Kitava in act 10, or it has been in a map) -->
+    <div v-if="hideRoute" class="p-2 text-xs text-gray-400 leading-snug">
+      <div class="text-gray-200"><span class="font-bold">{{ charName }}</span><template v-if="charLevel"> (level {{ charLevel }})</template> has finished the campaign.</div>
+      <div class="mt-1">The guide starts again on its own when you make a new character (it keeps a step per character).</div>
+      <button class="mt-2 px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="showRouteAnyway = true">
+        <i class="fas fa-list mr-1" />Show the route anyway</button>
+    </div>
+    <div v-else ref="listEl" class="p-1 min-h-0" :class="{ 'overflow-y-auto flex-1': tall }">
       <div v-for="s of visible" :key="s.i" class="flex gap-x-2 px-1 rounded" :data-current="s.i === index ? '1' : undefined"
         :class="s.i === index ? 'bg-gray-800' : (s.i < index ? 'opacity-50' : '')">
         <span class="w-4 shrink-0 text-center">
@@ -120,7 +128,7 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
-import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore } from './campaign-route'
+import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore, loadStepByChar, saveStepForChar, firstStepOfAct, campaignDone } from './campaign-route'
 import { planQuestGems, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
@@ -140,6 +148,7 @@ let areaAct: number | null = null
 function setIndex (i: number) {
   index.value = Math.min(STEPS.length - 1, Math.max(0, i))
   try { localStorage.setItem(KEY, String(index.value)) } catch {}
+  saveStepForChar(charName.value, index.value)
 }
 
 const step = computed(() => STEPS[index.value])
@@ -165,6 +174,32 @@ onUnmounted(() => { window.removeEventListener('storage', onLevels) })
 const progress = computed(() => progressOf(levels.value, currentChar(levels.value)?.name ?? ''))
 const doneQuests = computed(() => new Set(progress.value?.quests ?? []))
 const doneBosses = computed(() => new Set(progress.value?.bosses ?? []))
+
+// Deathloom fork (Gerhard, 16 Nov 2026): follow the character. Each one keeps its
+// own step; one seen for the first time starts at the act it was last in
+// (act 1 for a new character). Campaign done (Kitava in act 10 or a map) hides the route.
+const charName = computed(() => currentChar(levels.value)?.name ?? '')
+const charLevel = computed(() => currentChar(levels.value)?.level ?? 0)
+const showRouteAnyway = ref(false)
+const hideRoute = computed(() => !showRouteAnyway.value && !!charName.value && campaignDone(progress.value))
+watch(charName, (name, old) => {
+  if (!name) return
+  showRouteAnyway.value = false
+  const saved = loadStepByChar()[name]
+  if (saved != null) {
+    if (saved !== index.value) setIndex(saved)
+    return
+  }
+  const p = progress.value
+  if (p && p.firstLevel <= 2 && old) {
+    setIndex(0) // a new character, followed from level 1
+  } else if (p?.lastAct && p.lastAct !== step.value.act) {
+    const i = firstStepOfAct(p.lastAct)
+    if (i >= 0) setIndex(i)
+  } else {
+    saveStepForChar(name, index.value)
+  }
+}, { immediate: true })
 
 // tasks of the current and the next two steps (all with "show the whole act")
 function showTasks (i: number) {
@@ -236,7 +271,7 @@ function move (d: number) {
   while (i > 0 && i < STEPS.length - 1 && !onlyActive(STEPS[i].only, bandit.value, optional.value)) i += d
   setIndex(i)
 }
-function reset () { setIndex(0); lastZone.value = ''; matched.value = true }
+function reset () { setIndex(0); lastZone.value = ''; matched.value = true; showRouteAnyway.value = true }
 
 const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
   const lang = AppConfig().language
@@ -244,8 +279,9 @@ const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
     const ev = parseLogLine(line, lang)
     if (!ev) continue
     if (ev.type === 'area') {
-      areaLevel.value = ev.level
       areaAct = actFromAreaCode(ev.code)
+      // only campaign zones: a map's level next to "Act 1" read as the guide's
+      areaLevel.value = areaAct != null ? ev.level : null
       // Labyrinth areas: "Labyrinth_Airlock" (plaza), "1_Labyrinth_…"
       if (/Labyrinth/i.test(ev.code)) {
         if (!lab.value || lab.value.done) lab.value = { name: labName(ev.level), level: ev.level, done: false }

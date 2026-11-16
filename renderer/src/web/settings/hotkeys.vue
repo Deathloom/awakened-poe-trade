@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="mb-2 bg-gray-700 rounded px-2 py-1 leading-none">
       <i class="fas fa-info-circle"></i> {{ t('settings.clear_hotkey') }}
     </div>
@@ -33,7 +33,7 @@
         <span class="flex-1">Post hovered item to the friends' trade board <span class="text-gray-500 text-sm">(optional)</span></span>
         <hotkey-input :modelValue="pob.boardPostKey ?? null" class="w-48" @update:modelValue="v => { pob.boardPostKey = v }" />
       </div>
-      <div v-for="p of EXTRA_PANELS" :key="p.panel" class="flex items-center gap-x-2 mb-1">
+      <div v-for="p of OFFERED_EXTRA_PANELS" :key="p.panel" class="flex items-center gap-x-2 mb-1">
         <span class="flex-1">{{ p.label }} <span class="text-gray-500 text-sm">(optional)</span></span>
         <hotkey-input :modelValue="pob.panelKeys?.[p.panel] ?? null" class="w-48" @update:modelValue="v => setPanelKey(p.panel, v)" />
       </div>
@@ -43,7 +43,7 @@
       </div>
       <div class="text-gray-500 text-sm mb-1">
         Each hotkey shows or hides its panel. A panel pinned over the game (Settings → Panels) toggles over
-        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+T; Ctrl+P opens Path of Building.
+        the game without opening the overlay. Defaults: Ctrl+G, Ctrl+H, Ctrl+B; Ctrl+P opens Path of Building. Keys the game uses by default are marked in orange.
         The other panels have no hotkey until you set one (pick keys the game doesn't use).
       </div>
       <div class="text-gray-500 text-sm">Chat command hotkeys are with their commands in Settings → Chat.</div>
@@ -73,7 +73,7 @@ import { ItemCheckWidget } from '../item-check/widget.js'
 
 import UiRadio from '@/web/ui/UiRadio.vue'
 import HotkeyInput from './HotkeyInput.vue'
-import { EXTRA_PANELS } from '@/web/desktop/panel-defs'
+import { OFFERED_EXTRA_PANELS } from '@/web/desktop/panel-defs'
 import type { HudPanel } from '@ipc/types'
 import { usePobConfig } from './pob-config'
 import HotkeysGeneric, { HotkeySchema } from '../settings/HotkeysGeneric.vue'

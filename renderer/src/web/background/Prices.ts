@@ -2,6 +2,7 @@ import { shallowRef, watch, readonly } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 import { Host } from '@/web/background/IPC'
 import { useLeagues } from './Leagues'
+import { AppConfig } from '@/web/Config'
 
 interface NinjaDenseInfo {
   chaos: number
@@ -51,6 +52,8 @@ export const usePoeninja = createGlobalState(() => {
   async function load (force: boolean = false) {
     const league = leagues.selected.value
     if (!league || !league.isPopular || league.realm !== 'pc-ggg') return
+    // Deathloom fork: PoE2 prices come in a later phase (poe.ninja/poe2)
+    if (AppConfig().game === 'poe2') return
 
     if (!force && (
       (Date.now() - lastUpdateTime) < UPDATE_INTERVAL_MS ||
@@ -202,6 +205,9 @@ function splitJsonBlob (jsonBlob: string): PriceDatabase {
     { ns: 'ITEM', url: 'fragments', type: 'Fragment' },
     { ns: 'ITEM', url: 'delirium-orbs', type: 'DeliriumOrb' },
     { ns: 'ITEM', url: 'scarabs', type: 'Scarab' },
+    // Deathloom fork: 3.30 Covens (Threads of Creation replace Scarabs; Viscera)
+    { ns: 'ITEM', url: 'threads', type: 'Thread' },
+    { ns: 'ITEM', url: 'viscera', type: 'Viscera' },
     { ns: 'ITEM', url: 'artifacts', type: 'Artifact' },
     { ns: 'ITEM', url: 'base-types', type: 'BaseType' },
     { ns: 'ITEM', url: 'fossils', type: 'Fossil' },

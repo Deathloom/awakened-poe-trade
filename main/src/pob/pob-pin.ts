@@ -1,11 +1,17 @@
 // Deathloom fork: the Path of Building fork commit Orbhoarder installs and updates to.
 // Pinned so a push to the PoB fork's master doesn't reach every player by itself:
 // a PR here moves the pin (the "PoB pin" workflow opens one when PoB's master
-// changes). Running apps read this file from this repo's master
-// (POB_PIN_URL) and fall back to the value built in.
-export const POB_PIN = '1fc7a0812c014239b6fb183ab63b1bd20d7948c0'
+// changes). Running apps read this file from this repo (stable builds: master,
+// test builds x.y.z-beta.N: dev, see pobPinUrl) and fall back to the value built in.
+export const POB_PIN = '5c6c3e8419c3cb1cddf902acf883e8a5bed8d233'
 
 export const POB_PIN_URL = 'https://raw.githubusercontent.com/Deathloom/awakened-poe-trade/master/main/src/pob/pob-pin.ts'
+export const POB_PIN_URL_TESTING = 'https://raw.githubusercontent.com/Deathloom/awakened-poe-trade/dev/main/src/pob/pob-pin.ts'
+
+// test builds follow dev's pin so testers get a new PoB before everyone else
+export function pobPinUrl (appVersion: string): string {
+  return /-beta\.\d+$/.test(appVersion) ? POB_PIN_URL_TESTING : POB_PIN_URL
+}
 
 export function isPobCommit (ref: unknown): ref is string {
   return typeof ref === 'string' && /^[0-9a-f]{40}$/.test(ref)

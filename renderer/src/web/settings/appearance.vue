@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: themes and look settings (src/web/appearance.ts) -->
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="text-gray-500 text-sm mb-4">
       Changes show straight away in this window; Save applies them to the overlay, the in-game panels and the Orbhoarder window.
     </div>
@@ -56,6 +56,7 @@
         <input type="range" min="50" max="300" step="10" v-model.number="a.decorStrength" class="w-full" />
       </div>
       <ui-toggle v-model="a.glass" class="mt-1">Glass panels in the Orbhoarder window (see-through and blurred, so the theme shows)</ui-toggle>
+      <div v-if="THEMES[active.id].flat" class="text-gray-500 text-sm">{{ THEMES[active.id].name }} is flat: no glass panels.</div>
     </div>
 
     <div class="mb-4">
@@ -77,6 +78,11 @@
         <span v-else class="text-gray-500 text-sm">theme's accent</span>
       </div>
       <div class="text-gray-500 text-sm mt-1">Used for highlighted buttons, focused fields and links.</div>
+    </div>
+
+    <div class="mb-4">
+      <ui-toggle v-model="a.readableText">Easier-to-read small print</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">Small text (hints, notes, counts) a bit bigger and brighter, in a plain font even when the theme uses Fontin. Turn off for the old look.</div>
     </div>
 
     <div class="mb-4 flex gap-4">
