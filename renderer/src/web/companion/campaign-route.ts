@@ -163,6 +163,42 @@ export function loadCampaignStep (): number {
   try { return Math.min(STEPS.length - 1, Math.max(0, Number(localStorage.getItem(CAMPAIGN_STEP_KEY)) || 0)) } catch { return 0 }
 }
 
+// Deathloom fork (Gerhard, 16 Nov 2026): the guide's step per character, so
+// switching characters (or a level 69 in maps) doesn't show another one's act
+export const CAMPAIGN_STEP_BY_CHAR_KEY = 'deathloom.campaign-step.by-char.v1'
+export function loadStepByChar (): Record<string, number> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CAMPAIGN_STEP_BY_CHAR_KEY) ?? 'null')
+    if (!raw || typeof raw !== 'object') return {}
+    return Object.fromEntries(Object.entries(raw).filter(([, i]) => Number.isInteger(i) && (i as number) >= 0 && (i as number) < STEPS.length)) as Record<string, number>
+  } catch { return {} }
+}
+export function saveStepForChar (name: string, index: number) {
+  if (!name) return
+  try {
+    const all = loadStepByChar()
+    if (all[name] === index) return
+    // keep it small: the 20 most recently saved (this one last)
+    const kept = Object.entries(all).filter(([k]) => k !== name).slice(-19)
+    localStorage.setItem(CAMPAIGN_STEP_BY_CHAR_KEY, JSON.stringify(Object.fromEntries([...kept, [name, index]])))
+  } catch {}
+}
+
+// First step of an act (-1 if none)
+export function firstStepOfAct (act: number, steps: RouteStep[] = STEPS): number {
+  return steps.findIndex(s => s.act === act)
+}
+
+// Endgame area ids in Client.txt: atlas maps ("MapWorldsStrand", "MapAtlas…")
+export function isEndgameArea (code: string | undefined): boolean {
+  return !!code && /^Map/i.test(code)
+}
+
+// Campaign over for this character: Kitava's act 10 affliction, or it has been in a map
+export function campaignDone (p: { kitava?: Array<'cruel' | 'merciless'>, endgame?: boolean } | null | undefined): boolean {
+  return !!p && (p.kitava?.includes('merciless') === true || p.endgame === true)
+}
+
 // Quest passive points from the steps before this one (optional quests counted
 // as done; /passives in game is exact)
 export function questPassivesBefore (index: number, bandit: BanditFlag = loadBandit()): number {
