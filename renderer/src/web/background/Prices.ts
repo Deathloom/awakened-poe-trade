@@ -205,6 +205,9 @@ function splitJsonBlob (jsonBlob: string): PriceDatabase {
     { ns: 'ITEM', url: 'fragments', type: 'Fragment' },
     { ns: 'ITEM', url: 'delirium-orbs', type: 'DeliriumOrb' },
     { ns: 'ITEM', url: 'scarabs', type: 'Scarab' },
+    // Deathloom fork: 3.30 Covens (Threads of Creation replace Scarabs; Viscera)
+    { ns: 'ITEM', url: 'threads', type: 'Thread' },
+    { ns: 'ITEM', url: 'viscera', type: 'Viscera' },
     { ns: 'ITEM', url: 'artifacts', type: 'Artifact' },
     { ns: 'ITEM', url: 'base-types', type: 'BaseType' },
     { ns: 'ITEM', url: 'fossils', type: 'Fossil' },
