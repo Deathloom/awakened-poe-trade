@@ -5,7 +5,7 @@
     :placeholder="modelValue || t('settings.no_key')"
     :class="{ 'placeholder-red-400': !modelValue, 'placeholder-orange-400 ring-1 ring-orange-500': gameUse }"
     :title="gameUse ? `The game uses ${modelValue} for ${gameUse} by default; Orbhoarder would take it first. Pick another key unless you changed it in game.` : undefined"
-    class="rounded bg-gray-900 px-1 text-center font-poe" />
+    class="hk-input rounded bg-gray-900 px-1 text-center font-poe" />
 </template>
 
 <script lang="ts">

@@ -32,7 +32,7 @@
       @reset="resetTradeResults" />
     <div v-if="!doSearch" class="flex justify-between items-center">
       <div class="flex w-40" @mouseenter="handleSearchMouseenter">
-        <button class="btn" @click="doSearch = true" style="min-width: 5rem;">{{ t('Search') }}</button>
+        <button class="btn pc-search" @click="doSearch = true" style="min-width: 5rem;">{{ t('Search') }}</button>
       </div>
       <trade-links v-if="tradeAPI === 'trade'"
         :get-link="makeTradeLink" />

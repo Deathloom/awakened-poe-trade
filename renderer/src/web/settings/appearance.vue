@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: themes and look settings (src/web/appearance.ts) -->
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="text-gray-500 text-sm mb-4">
       Changes show straight away in this window; Save applies them to the overlay, the in-game panels and the Orbhoarder window.
     </div>

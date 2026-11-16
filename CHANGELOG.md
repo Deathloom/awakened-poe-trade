@@ -8,6 +8,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#200)
+- **Clean look, step 3:** price check rows are calmer (lighter lines, a light band on hover), ticks use the accent colour, tags like *pseudo* and the min/max fields are easier to read, **Search** is the main (accent) button and **Collapse** is a quiet text button. Overlay menu bar: calmer icons, and open panels get an accent underline instead of a grey outline. Settings pages use the full window width and hotkey boxes use the normal font.
+- **Settings title** says Orbhoarder (was Awakened PoE Trade).
+- **What's new** shows one Changed / Added / Fixed heading per version instead of one per change.
+
+### Fixed (#200)
+- **Setup guide:** on a new install it no longer stops at "Checking build sharing…"; its first check ran before it was ready.
+- A start-up error in the league list while the settings were still loading.
+
 ### Changed (#198)
 - **Orbhoarder window top bar** stays on one line: smaller tabs, the active tab in the accent colour, icons only on narrow windows (hover for the name), and it scrolls instead of wrapping.
 - **Clean look:** quieter borders on text fields and drop-downs (the focus ring stays); price check filter buttons that are on get an accent outline and tint instead of a bright grey line.

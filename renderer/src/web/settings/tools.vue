@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: health check (idea 13), settings backup (idea 14), phone or other devices (idea 7) -->
-  <div class="max-w-md p-2 text-sm">
+  <div class="max-w-2xl p-2 text-sm">
     <!-- Health check -->
     <div class="mb-4">
       <div class="flex items-center mb-1">

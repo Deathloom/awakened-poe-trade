@@ -1,6 +1,6 @@
 import { computed, shallowRef, readonly, watch } from 'vue'
 import { createGlobalState } from '@vueuse/core'
-import { AppConfig, poeWebApi } from '@/web/Config'
+import { AppConfig, poeWebApi, type Config } from '@/web/Config'
 import { Host } from './IPC'
 import { pickDefaultLeague } from '@ipc/game'
 
@@ -96,7 +96,8 @@ export const useLeagues = createGlobalState(() => {
 
   // Deathloom fork: PoE2 mode. Switching game swaps the league list; each game
   // keeps the league picked last time (Settings → General sets leagueId)
-  watch(() => AppConfig().game, (game, prev) => {
+  // config can still be empty while the app starts
+  watch(() => (AppConfig() as Config | null)?.game, (game, prev) => {
     if (!prev || game === prev) return
     tradeLeagues.value = []
     load()

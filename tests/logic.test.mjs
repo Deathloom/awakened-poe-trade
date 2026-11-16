@@ -281,3 +281,14 @@ test('crafting: impossible asks are explained, essence mod always present', () =
   assert.equal(craft.costPerHit(ess, n => n === 'Deafening Essence of Test' ? 3 : undefined, 'Deafening Essence of Test'), 3)
   assert.match(craft.fmtChance(0.00002), /^1 in 50\D?000$/)
 })
+
+const changelog = await import('./.build/changelog.mjs')
+
+test('changelog: one heading per kind in What\'s new', () => {
+  const md = '## [Unreleased]\n\n### Changed (#198)\n- a\n\n### Added (#195)\n- b\n\n### Changed (#196)\n- c\n  - c2\n\n## [1.0.89] - 2026-11-15\n### Fixed\n- d\n'
+  const v = changelog.parseChangelog(md, '1.0.90-beta.9')
+  assert.equal(v.length, 2)
+  assert.equal(v[0].body, '### Changed\n- a\n- c\n  - c2\n\n### Added\n- b')
+  assert.equal(v[1].body, '### Fixed\n- d')
+  assert.equal(changelog.mergeSections('just text'), 'just text')
+})

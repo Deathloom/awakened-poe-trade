@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="mb-2" v-if="!leagues.error.value">
       <div class="flex-1 mb-1">{{ t('league') }}
         <button class="btn" @click="leagues.load()" :disabled="leagues.isLoading.value">{{ t('Refresh') }}</button>

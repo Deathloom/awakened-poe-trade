@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="flex flex-col gap-y-4 mb-4">
       <div class="flex flex-col gap-y-1" v-for="(command, idx) in commands" :key="idx">
         <input v-model.trim="command.text" class="rounded bg-gray-900 px-1 block w-full font-poe" />

@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: Path of Building settings (build impact, folders, player).
        Hotkeys are in Hotkeys, panel placement in Panels, startup and updates in General. -->
-  <div class="max-w-md p-2">
+  <div class="max-w-2xl p-2">
     <div class="mb-4">
       <ui-toggle v-model="pob.enabled">Show build impact when price-checking</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">

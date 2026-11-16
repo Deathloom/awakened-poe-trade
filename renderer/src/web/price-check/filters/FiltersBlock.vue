@@ -78,7 +78,7 @@
         <input type="submit" class="hidden" />
       </form>
       <div class="flex gap-x-4">
-        <button @click="statsVisibility.disabled = !statsVisibility.disabled" class="bg-gray-700 px-2 py-1 text-gray-400 leading-none rounded-b w-40"
+        <button @click="statsVisibility.disabled = !statsVisibility.disabled" class="pc-collapse bg-gray-700 px-2 py-1 text-gray-400 leading-none rounded-b w-40"
           >{{ t('filters.collapse') }} <i class="fas fa-chevron-up pl-1 text-xs text-gray-600"></i></button>
         <ui-toggle v-if="filteredStats.length !== stats.length"
           v-model="showHidden" class="text-gray-400 pt-2">{{ t('filters.hidden_toggle') }}</ui-toggle>
