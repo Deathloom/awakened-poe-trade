@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#208)
+Path of Building updated for league 3.30 (Covens): the 3.30 passive tree, new uniques, Wickerman gear and Viscera mods, Polaric Devastation and the new flask mods. It arrives the next time you start Orbhoarder.
+
 ### Added (#206)
 - **Craft this** (flask button on rare and magic items in Build gear): opens the Craft tab with that base and item level, ticks its mods at the tier your item has, and shows **How to craft** in order: the base and item level to get, the cheapest way to roll the random mods (Chaos, Alteration/Regal or an Essence, compared on poe.ninja prices), the rarest mods first and Exalted Orbs (or bench) for the rest, bench crafts last, then Divine Orb. Mods it can't roll on that base (fractured, veiled, Eldritch, influence) are listed. Fossils and Harvest aren't covered yet.
 
