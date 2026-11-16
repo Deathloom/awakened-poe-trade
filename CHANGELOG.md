@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#208)
+Path of Building updated for league 3.30 (Covens): the 3.30 passive tree, new uniques, Wickerman gear and Viscera mods, Polaric Devastation and the new flask mods. It arrives the next time you start Orbhoarder.
+
 ## [1.0.89] - 2026-11-15
 
 ### Security (#171)
