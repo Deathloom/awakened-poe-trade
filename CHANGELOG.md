@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#212)
+- **Map price check (3.30):** Atlas Drops now searches the trade site's own Atlas Drops filter instead of the old Item Quantity one, so 3.30 maps find matching listings.
+- The weekly data refresh now opens its pull requests against dev.
+
 ### Added (#209)
 - **Price check data for new leagues:** a new once-per-league job adds the trade site's new items, uniques, mod lines and bulk-exchange tags to the price check data in all four languages, without changing what's already there.
 
