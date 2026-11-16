@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        ref: dev   # dev-first: data PRs go to dev, not master
     - name: Fetch sources
       run: |
         mkdir -p "$RUNNER_TEMP/src"
@@ -61,7 +63,7 @@ jobs:
         if gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; then
           echo "PR already open for $BRANCH (updated)."
         else
-          gh pr create --base master --head "$BRANCH" \
+          gh pr create --base dev --head "$BRANCH" \
             --title "Data refresh: atlas tree $ATLAS_TAG, Exile Leveling $EL_SHA" \
             --body "Weekly data refresh found changes. Check the diff (zone names, quest rewards, atlas nodes), test the levelling guide and Atlas tab, then merge and release."
         fi
