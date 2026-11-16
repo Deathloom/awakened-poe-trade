@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#213)
+- **Test builds** now get their Path of Building version from the testing branch, so testers get a new PoB (like the 3.30 one) before everyone else. Stable builds are unchanged.
+
 ### Fixed (#212)
 - **Map price check (3.30):** Atlas Drops now searches the trade site's own Atlas Drops filter instead of the old Item Quantity one, so 3.30 maps find matching listings.
 - The weekly data refresh now opens its pull requests against dev.
