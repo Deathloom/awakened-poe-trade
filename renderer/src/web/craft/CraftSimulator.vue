@@ -64,6 +64,27 @@
 
       <!-- method + result -->
       <div class="flex-[2] min-w-[18rem] min-h-0 overflow-y-auto flex flex-col gap-3">
+        <!-- "Craft this" from the build gear: the plan, in order -->
+        <div v-if="planFor" class="craft-panel">
+          <div class="flex items-baseline gap-2">
+            <h3 class="text-sm font-semibold text-gray-100 flex-1 min-w-0 truncate"><i class="fas fa-flask mr-1.5" />How to craft {{ planFor.name }}</h3>
+            <button class="text-xs text-gray-500 hover:text-gray-200" title="Close the plan" @click="closePlan"><i class="fas fa-times" /></button>
+          </div>
+          <p v-if="planBusy" class="text-xs text-gray-400 mt-1">Working out the cheapest way…</p>
+          <ol v-else class="mt-2 space-y-1.5 text-sm list-decimal pl-5">
+            <li v-for="(st, i) of planSteps" :key="i" :class="st.kind === 'note' ? 'text-yellow-300 list-none -ml-5' : 'text-gray-200'">
+              {{ st.text }}
+              <span v-if="st.result" class="block text-xs text-gray-400">
+                {{ fmtChance(st.result.chance) }} per try · about {{ fmtNum(st.result.attempts) }} tries · {{ costText(st.result) }} on average
+              </span>
+            </li>
+          </ol>
+          <div v-if="planMatch && (planMatch.unmatched.length || planMatch.other.length)" class="mt-2 text-xs text-gray-500 space-y-0.5">
+            <p v-if="planMatch.unmatched.length"><span class="text-yellow-300">Not from normal rolls on this base</span> (fractured, veiled, Eldritch, influence or a different base): {{ planMatch.unmatched.join('; ') }}</p>
+            <p v-if="planMatch.other.length">Implicits / enchants (not crafted here): {{ planMatch.other.join('; ') }}</p>
+          </div>
+          <p class="mt-2 text-xs text-gray-500">The mods are ticked on the left at the tier the item has (or better); change them and press Compare all to check other options.</p>
+        </div>
         <div class="craft-panel">
           <h3 class="craft-heading">How to craft</h3>
           <label v-for="m of METHODS" :key="m.key" class="flex items-start gap-2 py-1 cursor-pointer">
@@ -116,6 +137,8 @@ import type { CraftBase, CraftPool, CraftMod } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { usePoeninja } from '@/web/background/Prices'
 import { simulate, tiersOf, costPerHit, fmtChance, type Method, type SimResult, type Want } from './craft-sim'
+import { matchItemMods, buildPlan, type Matched, type PlanStep } from './craft-plan'
+import { CRAFT_REQUEST_EVENT, CRAFT_REQUEST_KEY, loadCraftRequest, clearCraftRequest, type CraftRequest } from './craft-request'
 import { pobError } from './pob-error'
 
 const TRIALS = 50_000
@@ -169,6 +192,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-craft', (e) => {
     bases.value = e.bases
     const b = e.bases.find(x => x.name === base.value) ?? e.bases.find(x => x.name === 'Vaal Regalia') ?? e.bases[0]
     if (b) { type.value = b.type; base.value = b.name }
+    takeRequest()
   }
   if (e.pool) {
     pool.value = e.pool
@@ -176,6 +200,7 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-craft', (e) => {
       if (!e.pool.mods.some(m => m.group === g)) wanted[g] = 0
     }
     results.value = []
+    if (pending && e.pool.base === pending.baseName) applyRequest(pending)
   }
 })
 onUnmounted(() => { listener.abort() })
@@ -303,4 +328,68 @@ function run (all: boolean) {
     running.value = false
   }, 20)
 }
+
+// ---- "Craft this" from the build gear (Deathloom fork, 16 Nov 2026) ----
+let pending: CraftRequest | null = null
+const planFor = shallowRef<CraftRequest | null>(null)
+const planMatch = shallowRef<Matched | null>(null)
+const planSteps = shallowRef<PlanStep[]>([])
+const planBusy = ref(false)
+function takeRequest () {
+  const r = loadCraftRequest()
+  if (!r || !bases.value.length) return
+  clearCraftRequest()
+  const b = bases.value.find(x => x.name === r.baseName)
+  planFor.value = r
+  planSteps.value = []
+  planMatch.value = null
+  if (!b) {
+    planSteps.value = [{ kind: 'note', text: `${r.baseName} isn't a base the simulator knows (uniques, flasks and some special bases can't be crafted here).` }]
+    return
+  }
+  pending = r
+  influence1.value = ''
+  influence2.value = ''
+  type.value = b.type
+  base.value = b.name
+  ilvl.value = r.itemLevel && r.itemLevel > 0 ? r.itemLevel : 86
+  // same base and level already loaded: no new pool comes
+  if (pool.value?.base === b.name && pool.value.ilvl === ilvl.value) applyRequest(r)
+}
+function applyRequest (r: CraftRequest) {
+  pending = null
+  const p = pool.value
+  if (!p) return
+  const m = matchItemMods(p.mods, r.mods)
+  planMatch.value = m
+  for (const g of Object.keys(wanted)) wanted[g] = 0
+  for (const w of m.wants) wanted[w.group] = w.tier
+  results.value = []
+  planBusy.value = true
+  setTimeout(() => {
+    const wants = m.wants.map(w => {
+      const tiers = groups.value.find(g => g.group === w.group)?.tiers ?? []
+      return { group: w.group, ids: tiers.slice(0, w.tier).map(t => t.id), type: w.type, label: `${w.text.join(' / ')} (T${w.tier}+)` }
+    })
+    const ess = essences.value
+      .filter(e => m.wants.some(w => w.group === e.group))
+      .map(e => ({ modId: e.modId, group: e.group, name: e.name, type: e.type }))
+    planSteps.value = buildPlan({
+      pool: { mods: p.mods.map(x => ({ id: x.id, type: x.type, group: x.group, level: x.level, weight: x.weight })), maxAffixes: p.maxAffixes },
+      wants,
+      essences: ess,
+      baseName: r.baseName,
+      ilvl: m.ilvl,
+      crafted: m.crafted,
+      cost: (res, essName) => costPerHit(res, price, essName)
+    })
+    planBusy.value = false
+  }, 20)
+}
+function closePlan () { planFor.value = null; planSteps.value = []; planMatch.value = null }
+const onRequestEvent = () => { takeRequest() }
+const onRequestStorage = (e: StorageEvent) => { if (e.key === CRAFT_REQUEST_KEY && e.newValue) takeRequest() }
+window.addEventListener(CRAFT_REQUEST_EVENT, onRequestEvent)
+window.addEventListener('storage', onRequestStorage)
+onUnmounted(() => { window.removeEventListener(CRAFT_REQUEST_EVENT, onRequestEvent); window.removeEventListener('storage', onRequestStorage) })
 </script>

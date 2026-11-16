@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#206)
+- **Craft this** (flask button on rare and magic items in Build gear): opens the Craft tab with that base and item level, ticks its mods at the tier your item has, and shows **How to craft** in order: the base and item level to get, the cheapest way to roll the random mods (Chaos, Alteration/Regal or an Essence, compared on poe.ninja prices), the rarest mods first and Exalted Orbs (or bench) for the rest, bench crafts last, then Divine Orb. Mods it can't roll on that base (fractured, veiled, Eldritch, influence) are listed. Fossils and Harvest aren't covered yet.
+
 ### Added (#205)
 - **Passive tree, switching builds:** pick **Switching from** above the tree (it fills in by itself when you change your active build in Path of Building) to see what to respec: passives only in the old build are red (**to remove**, with the list outermost first and how many Orbs of Regret), passives in both are green (keep), new ones orange (to take).
 

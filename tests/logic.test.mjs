@@ -332,3 +332,38 @@ test('passive tree: taken passives only get the path they need', async () => {
   got = fillTakenPaths({ links, roots: [0], target: new Set([1, 9]), have: [1, 9], floating: new Set([9]) })
   assert.deepEqual([...got].sort(), [1, 9])
 })
+
+test('craft plan: match PoB gear mods to the pool and plan the steps', async () => {
+  const plan = await import('./.build/craft-plan.mjs')
+  assert.equal(plan.skeleton('+(80-89) to maximum Life'), plan.skeleton('+85 to maximum Life'))
+  const mods = [
+    { id: 'L1', type: 'Prefix', group: 'Life', level: 82, weight: 1000, text: ['+(100-109) to maximum Life'] },
+    { id: 'L2', type: 'Prefix', group: 'Life', level: 64, weight: 1000, text: ['+(80-89) to maximum Life'] },
+    { id: 'F1', type: 'Suffix', group: 'Fire', level: 84, weight: 1000, text: ['+(46-48)% to Fire Resistance'] },
+    { id: 'F2', type: 'Suffix', group: 'Fire', level: 60, weight: 1000, text: ['+(36-41)% to Fire Resistance'] },
+    { id: 'H1', type: 'Prefix', group: 'Hybrid', level: 30, weight: 500, text: ['+(10-20) to Armour', '+(5-10) to maximum Life'] },
+    { id: 'C1', type: 'Suffix', group: 'Cold', level: 1, weight: 1000, text: ['+(6-11)% to Cold Resistance'] }
+  ]
+  const m = plan.matchItemMods(mods, [
+    { text: '+85 to maximum Life', kind: 'explicit' },
+    { text: '+47% to Fire Resistance', kind: 'explicit' },
+    { text: '+15 to Armour', kind: 'explicit' },
+    { text: '+7 to maximum Life', kind: 'explicit' },
+    { text: '+30% to Cold Resistance', kind: 'explicit', crafted: true },
+    { text: '10% increased Movement Speed', kind: 'explicit' },
+    { text: '+20 to Strength', kind: 'implicit' }
+  ])
+  const by = Object.fromEntries(m.wants.map(w => [w.group, w.tier]))
+  assert.deepEqual(by, { Hybrid: 1, Life: 2, Fire: 1 })
+  assert.equal(m.ilvl, 84)
+  assert.deepEqual(m.crafted, ['+30% to Cold Resistance'])
+  assert.deepEqual(m.unmatched, ['10% increased Movement Speed'])
+  assert.deepEqual(m.other, ['+20 to Strength'])
+  let seed = 7
+  const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
+  const pool = { mods: mods.map(({ text, ...x }) => x), maxAffixes: 6 }
+  const wants = [{ group: 'Fire', ids: ['F1'], type: 'Suffix', label: 'Fire T1' }, { group: 'Life', ids: ['L1', 'L2'], type: 'Prefix', label: 'Life T2+' }]
+  const steps = plan.buildPlan({ pool, wants, essences: [], baseName: 'Vaal Regalia', ilvl: 84, crafted: m.crafted, trials: 2000, random })
+  assert.deepEqual(steps.map(s => s.kind), ['base', 'roll', 'bench', 'finish'])
+  assert.ok(steps[1].result.hits > 0)
+})
