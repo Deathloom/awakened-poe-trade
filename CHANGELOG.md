@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.91] - 2026-11-17
+
 ### Added (#230)
 - **Build → Gear shows defences:** Armour, Evasion, Energy Shield, Ward and Block next to each item (e.g. "AR 520 · ES 80"), and as the first lines when you open the item's mods.
 
