@@ -832,6 +832,9 @@ type IpcUserAction =
   Event<'CLIENT->MAIN::user-action', {
     action: 'check-for-update' | 'update-and-restart' | 'quit'
   } | {
+    // Deathloom fork: start the Path of Building window (tray's Open Path of Building)
+    action: 'open-pob'
+  } | {
     action: 'stash-search'
     text: string
   } | {

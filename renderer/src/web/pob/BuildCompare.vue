@@ -17,6 +17,22 @@
       <button class="px-2 rounded bg-gray-600 hover:bg-gray-500 disabled:opacity-50" :disabled="busy || !pathA || !pathB || pathA === pathB" @click="run">
         <i v-if="busy" class="fas fa-spinner fa-spin mr-1" />Compare</button>
     </div>
+    <!-- Deathloom fork (Gerhard 17 Nov 2026): your character's gear vs this build.
+         Path of Building does the import (you click Import in PoB); Orbhoarder only
+         reads the saved build file, so it stays within GGG's rules. -->
+    <div v-if="active" class="rounded bg-gray-900 px-2 py-1 text-xs text-gray-400">
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span class="text-gray-200"><i class="fas fa-user-check mr-1" />Your character vs this build</span>
+        <button v-if="!mineExists" class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="busy"
+          :title="`Copies '${label(active)}' to '${label(minePath)}' in your folder`" @click="makeMine">1. Make the copy</button>
+        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="openPob">{{ mineExists ? 'Update gear in' : '2.' }} Path of Building</button>
+        <button v-if="mineExists" class="px-2 rounded bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50" :disabled="busy" @click="compareMine">Compare gear</button>
+      </div>
+      <div class="mt-0.5">
+        In Path of Building: open <b class="text-gray-300">{{ label(minePath) }}</b> → Import/Export Build → Import character → pick your character →
+        <b class="text-gray-300">Items and Skills</b> → Save (Ctrl+S). Then Compare gear. Do it again whenever your gear changes.
+      </div>
+    </div>
     <div v-if="error" class="text-red-400">{{ error }}</div>
     <div v-if="!error && !result" class="text-xs text-gray-500">Pick two builds from your folder (or a friend's, via Player). Uses what Path of Building last saved in each file.</div>
     <template v-if="result && sumA && sumB">
@@ -82,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobBuildSummary, PobTreeMapNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { compareBuilds, fmtStat, type BuildCompare } from './compare'
@@ -106,8 +122,7 @@ const sec = ref<typeof sections[number]['id']>('stats')
 let lastId = 0
 const lsBuilds = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => {
   if (e.requestId !== lastId) return
-  if (e.ok) builds.value = e.list?.builds ?? []
-  else error.value = e.error ?? 'Unknown error'
+  if (e.ok) { builds.value = e.list?.builds ?? []; active.value = e.list?.active ?? null } else error.value = e.error ?? 'Unknown error'
 })
 const lsCompare = Host.onEvent('MAIN->CLIENT::pob-compare', (e) => {
   if (e.requestId !== lastId) return
@@ -131,10 +146,49 @@ function requestNames () {
   namesId = (Date.now() & 0x3fffffff) | 1
   Host.sendEvent({ name: 'CLIENT->MAIN::pob-tree-map', payload: { requestId: namesId } })
 }
-onUnmounted(() => { lsBuilds.abort(); lsCompare.abort(); lsTree.abort() })
+onUnmounted(() => { lsBuilds.abort(); lsCompare.abort(); lsTree.abort(); lsManage.abort() })
 
 function next () { lastId = (lastId + 1000) | 0; return lastId }
 Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: next() } })
+
+// your character's copy of the active build: "<build> (my character).xml"
+const active = ref<string | null>(null)
+const MINE = ' (my character)'
+const minePath = computed(() => {
+  const a = active.value ?? ''
+  return a.toLowerCase().endsWith(MINE.toLowerCase() + '.xml') ? a : a.replace(/\.xml$/i, `${MINE}.xml`)
+})
+const planPath = computed(() => {
+  const a = active.value ?? ''
+  const plan = a.replace(new RegExp(`${MINE.replace(/[()]/g, '\\$&')}\\.xml$`, 'i'), '.xml')
+  return builds.value.includes(plan) ? plan : a
+})
+const mineExists = computed(() => builds.value.some(b => b.toLowerCase() === minePath.value.toLowerCase()))
+let manageId = 0
+const lsManage = Host.onEvent('MAIN->CLIENT::pob-manage-build', (e) => {
+  if (e.requestId !== manageId) return
+  busy.value = false
+  if (!e.ok) { error.value = e.error ?? 'Unknown error'; return }
+  if (e.list) builds.value = e.list.builds
+  openPob()
+})
+function makeMine () {
+  if (!active.value) return
+  busy.value = true
+  error.value = ''
+  manageId = next()
+  const name = minePath.value.split(/[\\/]/).pop()!.replace(/\.xml$/i, '')
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-manage-build', payload: { requestId: manageId, op: 'duplicate', path: active.value, name } })
+}
+function openPob () {
+  Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob' } })
+}
+function compareMine () {
+  pathA.value = planPath.value
+  pathB.value = minePath.value
+  sec.value = 'gear'
+  run()
+}
 
 function run () {
   busy.value = true
