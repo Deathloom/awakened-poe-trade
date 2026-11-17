@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#233)
+- **Your character vs your build:** Build → Gear → ⚖ Compare has a "Your character vs this build" helper. Make a copy of the build ("… (my character)"), open Path of Building, import your character's Items and Skills into that copy and save, then Compare gear shows each slot side by side. Path of Building does the import when you click it (within GGG's rules); Orbhoarder only reads the saved file. Redo it whenever your gear changes.
+
 ## [1.0.91] - 2026-11-17
 
 ### Added (#230)
