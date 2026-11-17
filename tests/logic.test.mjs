@@ -504,3 +504,15 @@ test('atlas taken: grows from the start, never fills a path to a far same-named 
   // the whole line taken
   assert.deepEqual(pick([0, 1, 2, 3, 4], { Drop: 2, Small: 2 }), [0, 1, 2, 3, 4])
 })
+
+test('tree steps: clamp, stable key, first position from old tracking', async () => {
+  const t = await import('./.build/tree-step-logic.mjs')
+  assert.equal(t.clampStep(3, 5, 6), 6)
+  assert.equal(t.clampStep(3, -5, 6), 0)
+  assert.equal(t.clampStep(2, 1, 6), 3)
+  assert.equal(t.orderKey('tree', [1, 2, 3]), t.orderKey('tree', [1, 2, 3]))
+  assert.notEqual(t.orderKey('tree', [1, 2, 3]), t.orderKey('tree', [1, 3, 2]))
+  assert.notEqual(t.orderKey('tree', [1]), t.orderKey('atlas', [1]))
+  assert.equal(t.leadingTaken(5, i => [0, 1, 3].includes(i)), 2)
+  assert.equal(t.leadingTaken(3, () => true), 3)
+})

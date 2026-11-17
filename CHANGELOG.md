@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#229)
+- **Passive tree and atlas tree: step with arrows instead of automatic following** (Gerhard: much less complicated). « ‹ step/total › » next to "next": forward or back 1 or 5 passives along the build's order. Taken, next 5 and the zoom follow your step; the Levelling guide's passive list agrees with it. The same step shows in every panel and window. First time per build it starts where the old automatic tracking had you. Atlas ✓✓ jumps to the whole build or to nothing.
+
 ### Changed (#228): 3.30 patch notes and hotfixes check
 - **Covens cheat sheet:** same Fate 3 times now triples the 1st and 3rd copy's reward (2 copies is a waste) (3.30.0b Hotfix 3).
 - **Map mechanics sheet:** the strongest Thread effects need 2+ Threads and area level 73+/80+ (3.30.0b Hotfix 3).

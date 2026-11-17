@@ -39,6 +39,7 @@
           <i class="fas fa-circle" /> to remove ({{ refundIds.length }})</button>
         <button v-if="nextIds.length" class="text-cyan-300 hover:text-cyan-100" :title="nextTitle" @click="focusNext">
           <i class="fas fa-crosshairs" /> next {{ nextIds.length }}</button>
+        <tree-stepper v-if="atlasStep && !fromSpec" :pos="atlasStep.pos" :len="atlasStep.len" @step="stepAtlas" />
       </template>
       <span class="flex-1" />
       <span v-if="searchHits" class="text-yellow-300" :title="searchHits.size ? 'Enter (or click) zooms to the next one' : undefined">
@@ -50,7 +51,7 @@
       <button v-if="activeBuild?.own" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
         @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
-      <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: what Orbhoarder saw you allocate in game. Set it here when you already have a tree."
+      <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: jump to the whole build or to nothing"
         @click="trackOpen = !trackOpen"><i class="fas fa-check-double" /></button>
       <button v-if="spec" class="text-gray-500 hover:text-gray-200" :title="nextIds.length ? 'Zoom to the next passives to take' : 'Zoom to this atlas build'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
       <button class="text-gray-500 hover:text-gray-200" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
@@ -106,9 +107,9 @@
       <button v-for="(id, i) of refundIds" :key="id" class="mr-2 text-red-300 hover:text-red-100" @click="zoomTo([id], 1600, 0.35)">{{ i + 1 }}. {{ ATLAS_BY_ID.get(id)?.[6] || 'Atlas passive' }}</button>
     </div>
     <div v-if="trackOpen" class="px-2 pb-1 text-xs text-gray-400 shrink-0">
-      Orbhoarder ticks atlas passives as you allocate them in game (Client.txt). It can't see what you took before, so:
-      <button v-if="spec" class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setTakenFrom(spec.nodes)">I have this whole build</button>
-      <button class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setTakenFrom(null)">I have nothing (respecced / new league)</button>
+      Step along the build with the arrows as you take passives in game. Or jump:
+      <button v-if="spec" class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setAtlasStep(true)">I have this whole build</button>
+      <button class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setAtlasStep(false)">I have nothing (respecced / new league)</button>
     </div>
     <div v-if="spec?.unknown" class="px-2 pb-1 text-xs text-gray-500">{{ spec.unknown }} passives in this code aren't on the {{ ATLAS.version }} atlas tree (older or newer tree).</div>
     <div v-if="!store.builds.length && !importOpen && !genOpen" class="px-2 pb-1 text-xs text-gray-500">
@@ -155,9 +156,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, decodeAtlas, pointsOf, statsOf, type AtlasNode } from './atlas-tree'
-import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, setTakenFrom, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
+import { orderKey, leadingTaken } from '../pob/tree-step-logic'
+import { getStep, moveStep } from '../pob/tree-steps'
+import TreeStepper from '../ui/TreeStepper.vue'
+import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
 import { sumStats, cleanStat } from './atlas-stats'
 import { CONTENTS, CONTENT_NOTABLES, SUSTAIN, generateAtlas, type GenResult } from './atlas-generator'
 import { contentValues, NINJA_ATLAS_URL } from './atlas-value'
@@ -325,7 +329,8 @@ const haveSet = computed(() => {
     const from = new Set(fromSpec.value.nodes)
     return new Set([...buildSet.value].filter(id => ATLAS_START.has(id) || from.has(id)))
   }
-  return takenNodes([...buildSet.value], DEPTH)
+  const st = atlasStep.value
+  return new Set([...ATLAS_START, ...(st ? atlasOrder.value.slice(0, st.pos) : [])])
 })
 const points = computed(() => pointsOf(spec.value?.nodes ?? []))
 type State = 'have' | 'todo' | 'none' | 'refund'
@@ -342,14 +347,14 @@ const counts = computed(() => {
   }
   return c
 })
-// Deathloom fork: next passives to take in game (up to 5): the path to the
-// nearest notable of the build (map sustain wins a tie), then the next one
-const nextIds = computed<number[]>(() => {
+// Deathloom fork: the order to take the build in: from the start, the path to
+// the nearest notable of the build (map sustain wins a tie), then the next one
+const atlasOrder = computed<number[]>(() => {
   if (!spec.value) return []
-  const have = new Set(haveSet.value)
+  const have = new Set(ATLAS_START)
   const todo = new Set([...buildSet.value].filter(id => !have.has(id) && ATLAS_BY_ID.get(id)?.[3] !== 3))
   const out: number[] = []
-  while (out.length < 5 && todo.size) {
+  while (todo.size) {
     // BFS from what's taken, through the build's untaken passives
     const prev = new Map<number, number>()
     const dist = new Map<number, number>()
@@ -373,12 +378,39 @@ const nextIds = computed<number[]>(() => {
     if (target == null) break
     const path: number[] = []
     for (let c: number | undefined = target; c != null && !have.has(c); c = prev.get(c)) path.unshift(c)
-    for (const id of path) {
-      if (out.length >= 5) break
-      out.push(id); have.add(id); todo.delete(id)
-    }
+    for (const id of path) { out.push(id); have.add(id); todo.delete(id) }
   }
   return out
+})
+// Deathloom fork (Gerhard 17 Nov 2026): no automatic following; back / forward
+// buttons step along atlasOrder (1 or 5 passives)
+const atlasStep = computed(() => {
+  const order = atlasOrder.value
+  if (!spec.value || !order.length) return null
+  const key = orderKey('atlas', order)
+  let pos = getStep(key)
+  if (pos == null) {
+    // first time: start where the old automatic tracking had you
+    const was = takenNodes([...buildSet.value], DEPTH)
+    pos = leadingTaken(order.length, i => was.has(order[i]))
+  }
+  return { key, len: order.length, pos: Math.min(pos, order.length) }
+})
+function stepAtlas (delta: number) {
+  const st = atlasStep.value
+  if (!st) return
+  moveStep(st.key, st.pos, delta, st.len)
+  nextTick(() => focusTarget()).catch(() => {})
+}
+function setAtlasStep (all: boolean) {
+  const st = atlasStep.value
+  if (st) moveStep(st.key, 0, all ? st.len : 0, st.len)
+  trackOpen.value = false
+}
+const nextIds = computed<number[]>(() => {
+  const st = atlasStep.value
+  if (!st || fromSpec.value) return []
+  return atlasOrder.value.slice(st.pos, st.pos + 5)
 })
 const nextIndex = computed(() => new Map(nextIds.value.map((id, i) => [id, i + 1])))
 const nextTitle = computed(() => 'Next passives to take in game (numbered on the atlas): the path to the nearest notable, map sustain first. Click to zoom.\n' +
@@ -391,10 +423,6 @@ function focusTarget () {
   const ids = [...buildSet.value].filter(id => !ATLAS_START.has(id))
   if (ids.length) zoomTo(ids, 1600, 0.3); else fit()
 }
-// follow the next passives as you take them in game (not while editing)
-watch(() => nextIds.value.join(','), (now, before) => {
-  if (now && now !== before && !editMode.value && fitted) focusNext()
-})
 const COLORS: Record<State, string> = { have: '#22c55e', todo: '#fb923c', none: '#5b6b84', refund: '#ef4444' }
 const search = ref('')
 const searchHits = computed(() => {

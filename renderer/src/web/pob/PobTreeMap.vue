@@ -15,6 +15,7 @@
         <span class="text-gray-400">Levelling: {{ plan?.phases[plan.phase - 1]?.title }}</span>
         <span><i class="fas fa-circle text-green-500" /> taken by now</span>
         <span><i class="fas fa-circle text-cyan-300" /> next ({{ levelPlan.next.length }})</span>
+        <tree-stepper v-if="planStep" :pos="planStep.pos" :len="planStep.len" @step="stepPlan" />
         <span><i class="fas fa-circle text-orange-400" /> later</span>
       </template>
       <template v-else-if="live">
@@ -70,10 +71,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobTreeAlloc, PobTreeMapLayout, PobTreeMapNode } from '@ipc/types'
 import { currentPlan as plan, currentTaken as takenSet, mapHave, treeLayout } from './plan-store'
-import { fillTakenPaths } from './taken-paths'
+import { orderKey, leadingTaken } from './tree-step-logic'
+import { getStep, moveStep } from './tree-steps'
+import TreeStepper from '../ui/TreeStepper.vue'
 
 const props = defineProps<{
   // levelling view: colours from the levelling plan (taken / next / later) and
@@ -200,38 +203,42 @@ function loadFrom () {
 }
 if (!props.compact) requestBuilds()
 onUnmounted(() => { lsBuilds.abort(); lsFrom.abort() })
-// levelling view: "build" = the levelling tree, "live" = what should be taken by now
-const levelPlan = computed(() => {
+// levelling view: "build" = the levelling tree, "have" = the passives you've
+// stepped past. Deathloom fork (Gerhard 17 Nov 2026): no automatic following;
+// the back / forward buttons move along the plan's order (1 or 5 passives).
+const planStepKey = computed(() => {
   const p = plan.value
-  if (!levellingOn.value || !p || fromOn.value) return null
+  return p ? orderKey('tree', [...(Array.isArray(p.keptIds) ? p.keptIds : []), -1, ...p.order.map(n => n.id)]) : null
+})
+const planStep = computed(() => {
+  const p = plan.value; const key = planStepKey.value
+  if (!p || !key) return null
+  const len = p.order.length
+  let pos = getStep(key)
+  if (pos == null) {
+    // first time: start where the old automatic tracking had you
+    const taken = takenSet.value
+    pos = leadingTaken(len, i => taken ? taken.has(i) : i < p.taken)
+  }
+  return { key, len, pos: Math.min(pos, len) }
+})
+const levelPlan = computed(() => {
+  const p = plan.value; const st = planStep.value
+  if (!levellingOn.value || !p || !st || fromOn.value) return null
   const kept = Array.isArray(p.keptIds) ? p.keptIds : []
   const order = p.order.map(n => n.id)
-  // taken passives from the game log when known (moves only once you allocate),
-  // otherwise the plan's guess from your level
-  const taken = takenSet.value
-  const done = (i: number) => taken ? taken.has(i) : i < p.taken
-  const target = new Set([...kept, ...order])
-  let have = new Set([...kept, ...order.filter((_, i) => done(i))])
-  // Deathloom fork: the game log only names passives, so a same-named passive
-  // taken/refunded off the build can leave a hole. A taken passive cut off from
-  // the class start gets the shortest build path back to it (nothing else)
-  const lay = layout.value
-  if (lay) {
-    const starts = lay.nodes.filter(n => n[3] === 5 || n[3] === 6).map(n => n[0])
-    // the tree data may not link the class start to its first passives: then the
-    // plan's first passive (nearest the start) is where the build's paths begin
-    const linked = new Set(lay.links.flat())
-    const startLinked = starts.some(id => linked.has(id))
-    const roots = startLinked ? starts : [...starts, ...(order.length ? [order[0]] : [])]
-    const floating = new Set(lay.nodes.filter(n => n[3] === 3).map(n => n[0]))
-    have = fillTakenPaths({ links: lay.links, roots, target, have: [...have], floating })
-  }
   return {
-    target,
-    have,
-    next: order.filter(id => !have.has(id)).slice(0, 5)
+    target: new Set([...kept, ...order]),
+    have: new Set([...kept, ...order.slice(0, st.pos)]),
+    next: order.slice(st.pos, st.pos + 5)
   }
 })
+function stepPlan (delta: number) {
+  const st = planStep.value
+  if (!st) return
+  moveStep(st.key, st.pos, delta, st.len)
+  nextTick(() => focusNext()).catch(() => {})
+}
 watch(levelPlan, (lp) => { mapHave.value = lp?.have ?? null }, { immediate: true })
 const hasLive = computed(() => fromOn.value || levelPlan.value != null || live.value != null)
 
@@ -397,9 +404,6 @@ function zoomTo (ids: number[]) {
   fitted = true
   draw()
 }
-watch(() => levelPlan.value?.next.join(','), (now, before) => {
-  if (now != null && now !== before && layout.value) focusNext()
-})
 
 function onWheel (e: WheelEvent) {
   const rect = boxRef.value!.getBoundingClientRect()
