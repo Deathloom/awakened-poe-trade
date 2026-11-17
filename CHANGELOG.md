@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#236)
+- **Compare:** your character is always on the left (blue) and the build you follow on the right (yellow), even if the pickers were the other way round.
+
 ### Fixed (#235)
 - **"Failed to load leagues" / price check not working:** Orbhoarder now talks to pathofexile.com with exactly the same browser string as its Browser window, so passing GGG's Cloudflare check there works for the price check too (before, the check you passed never applied). The error now says why (browser check, maintenance, too many requests) instead of a list of headers.
 
