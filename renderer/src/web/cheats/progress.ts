@@ -58,12 +58,12 @@ export const PROGRESS: ProgressGroup[] = [
   {
     title: 'Pinnacle bosses',
     items: [
-      { id: 'exarch', label: 'The Searing Exarch' },
-      { id: 'eater', label: 'The Eater of Worlds' },
-      { id: 'maven', label: 'The Maven' },
+      { id: 'exarch', label: 'The Searing Exarch', hint: '+2 atlas points, +2 respec' },
+      { id: 'eater', label: 'The Eater of Worlds', hint: '+2 atlas points, +2 respec' },
+      { id: 'maven', label: 'The Maven', hint: '+2 atlas points; each Maven Invitation also +2' },
       { id: 'shaper', label: 'The Shaper' },
       { id: 'elder', label: 'The Elder' },
-      { id: 'uelder', label: 'The Uber Elder' },
+      { id: 'uelder', label: 'The Uber Elder', hint: '+4 atlas points, +2 respec' },
       { id: 'sirus', label: 'Sirus' },
       { id: 'covenqueen', label: 'The Coven Queen', hint: 'Covens league boss' },
       { id: 'ubers', label: 'Any uber boss', hint: 'the hardest versions' }

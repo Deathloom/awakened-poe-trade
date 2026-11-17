@@ -25,7 +25,7 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | Feature | What you get |
 |---|---|
 | **Build impact** | Price-checking an item shows what it does to your active PoB build: DPS, eHP, life, ES, resistances and attributes. It compares against the build's gear. |
-| **Build panel** (Ctrl+G) | Gear, Gems and Tree tabs for the active build. Every item has Copy / Trade / Price check buttons. Gems are shown per gear piece, with socket colours and links. Pick the build, loadout and character from the panel. |
+| **Build panel** (Ctrl+G) | Gear, Gems and Tree tabs for the active build. Every item has Copy / Trade / Price check buttons, plus a **regex** button: a stash / vendor search for items like it (tick its lines, at least these values). Gems are shown per gear piece, with socket colours and links. Pick the build, loadout and character from the panel. |
 | **Build sharing** | Cloud button in the build panel: sign in with GitHub, Pull / Push / Sync now. Builds sync automatically when Orbhoarder starts and after you change them. Same sign-in as the PoB window. |
 | **Import builds** | Import button in the build panel: paste a PoB code or a pobb.in / poe.ninja / pastebin / maxroll link and save it to your folder, without opening PoB. |
 | **Open PoB** (Ctrl+P) | Opens Orbhoarder's own Path of Building. |

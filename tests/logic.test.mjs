@@ -402,3 +402,125 @@ test('timeless find: wants replace per notable / per stat, trade query for any c
   assert.equal(any.query.stats[0].filters.length, 3)
   assert.deepEqual(any.query.stats[0].filters[2].value, { min: 12345, max: 12345 })
 })
+
+test('item regex: mods to short stash search parts', async () => {
+  const ir = await import('./.build/item-regex.mjs')
+  const life = new RegExp(ir.modRegex('+85 to maximum Life'), 'i')
+  assert.ok(life.test('+85 to maximum Life')); assert.ok(life.test('+112 to maximum Life'))
+  assert.ok(!life.test('+70 to maximum Life'))
+  const anyLife = new RegExp(ir.modRegex('+85 to maximum Life', false), 'i')
+  assert.ok(anyLife.test('+70 to maximum Life'))
+  const res = new RegExp(ir.modRegex('+45% to Fire Resistance'), 'i')
+  assert.ok(res.test('+46% to Fire Resistance')); assert.ok(!res.test('+40% to Fire Resistance'))
+  assert.ok(!res.test('+46% to Cold Resistance'))
+  const adds = new RegExp(ir.modRegex('Adds 12 to 24 Physical Damage to Attacks'), 'i')
+  assert.ok(adds.test('Adds 15 to 30 Physical Damage to Attacks')); assert.ok(!adds.test('Adds 5 to 9 Physical Damage to Attacks'))
+  const dec = new RegExp(ir.modRegex('1.5% of Physical Attack Damage Leeched as Life'), 'i')
+  assert.ok(dec.test('0.8% of Physical Attack Damage Leeched as Life'))
+  const deep = new RegExp(ir.modRegex('Socketed Gems are Supported by Level 20 Elemental Damage with Attacks'), 'i')
+  assert.ok(deep.test('Socketed Gems are Supported by Level 21 Elemental Damage with Attacks'))
+  assert.ok(!deep.test('Socketed Gems are Supported by Level 18 Elemental Damage with Attacks'))
+  const plain = ir.modRegex('Cannot be Frozen')
+  assert.ok(new RegExp(plain, 'i').test('Cannot be Frozen'))
+  for (const t of ['+85 to maximum Life', '+45% to Fire Resistance', 'Adds 12 to 24 Physical Damage to Attacks', '30% increased Movement Speed']) {
+    assert.ok(ir.modRegex(t).length <= 45, `${t}: ${ir.modRegex(t)}`)
+  }
+  const item = { name: 'Doom Stride', baseName: 'Two-Toned Boots', rarity: 'Rare', mods: [{ text: '+85 to maximum Life', kind: 'explicit' }, { text: '30% increased Movement Speed', kind: 'explicit' }] }
+  const parts = ir.itemRegexParts(item)
+  assert.equal(parts[0].kind, 'base')
+  const r = ir.itemRegex(parts.slice(1), 'all')
+  assert.equal(r.text.split('" "').length, 2)
+  assert.equal(r.tooLong, true)
+  // any value on life: fits the game's 50 characters
+  const loose = ir.itemRegex(ir.itemRegexParts(item, { mod0: false }).slice(1), 'all')
+  assert.equal(loose.tooLong, false, loose.text)
+  assert.ok(ir.itemRegex(parts.slice(1), 'any').text.includes('|'))
+  assert.equal(ir.itemRegexParts({ ...item, rarity: 'Unique' })[0].kind, 'name')
+  // defences and links come from the item text
+  const chest = { name: 'Doom Shell', baseName: 'Vaal Regalia', rarity: 'Rare', text: 'Rarity: Rare\nDoom Shell\nVaal Regalia\n--------\nQuality: +20% (augmented)\nEnergy Shield: 412\nWard: 0\n--------\nSockets: B-B-B-B-R G\n--------\nItem Level: 84', mods: [] }
+  const cp = ir.itemRegexParts(chest)
+  const es = cp.find(p => p.label === 'Energy Shield: 412')
+  assert.ok(es)
+  const esRe = new RegExp(es.regex, 'i')
+  assert.ok(esRe.test('Energy Shield: 412')); assert.ok(esRe.test('Energy Shield: 1050')); assert.ok(!esRe.test('Energy Shield: 390'))
+  assert.ok(new RegExp(ir.itemRegexParts(chest, { 'def-shield:': false }).find(p => p.kind === 'defence').regex, 'i').test('Energy Shield: 100'))
+  const link = cp.find(p => p.kind === 'links')
+  assert.equal(link.label, '5-link (any colours)')
+  assert.ok(new RegExp(link.regex, 'i').test('Sockets: B-B-B-B-R G'))
+  const arm = new RegExp(ir.itemRegexParts({ ...chest, text: 'Armour: 950\nEvasion Rating: 320' }).find(p => p.label === 'Armour: 950').regex, 'i')
+  assert.ok(arm.test('Armour: 1200')); assert.ok(!arm.test('Armour: 900')); assert.ok(!arm.test('Evasion Rating: 990'))
+})
+
+test('All tab layout: auto switches to Mapping on maps, Levelling on a new character', async () => {
+  const lp = await import('./.build/layout-phase.mjs')
+  assert.equal(lp.phaseForArea('MapWorldsStrand'), 'mapping')
+  assert.equal(lp.phaseForArea('MapWorldsHideout'), null)
+  assert.equal(lp.phaseForArea('HideoutCoven'), null)
+  assert.equal(lp.phaseForArea('1_1_1'), 'levelling')
+  assert.equal(lp.phaseForArea('1_2_1'), null)
+  assert.equal(lp.phaseForArea('2_6_town'), null)
+  assert.equal(lp.phaseForArea(undefined), null)
+  assert.equal(lp.effectiveMode('auto', 'mapping'), 'mapping')
+  assert.equal(lp.effectiveMode('levelling', 'mapping'), 'levelling')
+})
+
+test('poe.ninja categories: new slugs land in a Market group and atlas value', async () => {
+  const mt = await import('./.build/market-trends.mjs')
+  const av = await import('./.build/atlas-value.mjs')
+  const group = c => mt.MARKET_GROUPS.filter(g => g.id !== 'all' && g.match(c)).map(g => g.id)
+  for (const [c, id] of [['threads', 'league'], ['viscera', 'league'], ['wombgifts', 'league'], ['scrying-orbs', 'league'],
+    ['memories', 'league'], ['temples', 'league'], ['shrine-belts', 'uniques'], ['forbidden-jewels', 'uniques'],
+    ['imbued-gems', 'gems'], ['valdo-maps', 'maps'], ['flasks', 'bases'], ['cluster-jewels', 'bases'], ['scarabs', 'scarabs']]) {
+    assert.deepEqual(group(c), [id], c)
+  }
+  const v = av.contentValues([{ name: 'Mysterious Wombgift', chaos: 20, category: 'wombgifts' }])
+  assert.equal(v.breach.chaos, 20)
+})
+
+test('Mapping layout: tree map added once to saved layouts, above Build', async () => {
+  const lp = await import('./.build/layout-phase.mjs')
+  const l = { cols: [{ items: [{ id: 'session', h: 1 }] }, { items: [{ id: 'gear', h: 0.6 }, { id: 'money', h: 0.4 }] }] }
+  lp.addTreeMapOnce(l)
+  assert.deepEqual(l.cols[1].items.map(i => i.id), ['tree', 'gear', 'money'])
+  lp.addTreeMapOnce(l)
+  assert.equal(l.cols[1].items.filter(i => i.id === 'tree').length, 1)
+  const noGear = { cols: [{ items: [{ id: 'atlas', h: 1 }] }] }
+  assert.deepEqual(lp.addTreeMapOnce(noGear).cols[0].items.map(i => i.id), ['atlas', 'tree'])
+})
+
+test('atlas taken: grows from the start, never fills a path to a far same-named passive', async () => {
+  const { pickTaken } = await import('./.build/atlas-taken.mjs')
+  // start 0 - 1(Drop) - 2(Small) - 3(Small) - 4(Drop) ; 0 - 5(Drop) off the build
+  const names = { 1: 'Drop', 2: 'Small', 3: 'Small', 4: 'Drop', 5: 'Drop' }
+  const edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5]]
+  const adj = id => edges.flatMap(([a, b]) => a === id ? [b] : b === id ? [a] : [])
+  const depth = { 0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 1 }
+  const pick = (build, counts) => [...pickTaken(build, counts, id => names[id], adj, id => id === 0, id => depth[id])].sort()
+  // one Drop taken: only the one next to the start
+  assert.deepEqual(pick([0, 1, 2, 3, 4], { Drop: 1 }), [0, 1])
+  // build goes the other way: its first Drop is far away -> nothing shown, no path filled
+  assert.deepEqual(pick([0, 5, 2, 3, 4], { Drop: 1 }), [0, 5])
+  assert.deepEqual(pick([0, 2, 3, 4], { Drop: 1 }), [0])
+  // the whole line taken
+  assert.deepEqual(pick([0, 1, 2, 3, 4], { Drop: 2, Small: 2 }), [0, 1, 2, 3, 4])
+})
+
+test('tree steps: clamp, stable key, first position from old tracking', async () => {
+  const t = await import('./.build/tree-step-logic.mjs')
+  assert.equal(t.clampStep(3, 5, 6), 6)
+  assert.equal(t.clampStep(3, -5, 6), 0)
+  assert.equal(t.clampStep(2, 1, 6), 3)
+  assert.equal(t.orderKey('tree', [1, 2, 3]), t.orderKey('tree', [1, 2, 3]))
+  assert.notEqual(t.orderKey('tree', [1, 2, 3]), t.orderKey('tree', [1, 3, 2]))
+  assert.notEqual(t.orderKey('tree', [1]), t.orderKey('atlas', [1]))
+  assert.equal(t.leadingTaken(5, i => [0, 1, 3].includes(i)), 2)
+  assert.equal(t.leadingTaken(3, () => true), 3)
+})
+
+test('gear defences read from item text', async () => {
+  const { itemDefences } = await import('./.build/item-defences.mjs')
+  const t = 'Item Class: Shields\nRarity: Rare\nX\nTitanium Spirit Shield\n--------\nChance to Block: 24%\nEnergy Shield: 132 (augmented)\n--------\nItem Level: 80'
+  assert.deepEqual(itemDefences(t).map(d => `${d.short} ${d.value}`), ['Block 24%', 'ES 132'])
+  assert.deepEqual(itemDefences('Rarity: Rare\nArmour: 500\nEvasion Rating: 480'), [{ name: 'Armour', short: 'AR', value: '500' }, { name: 'Evasion Rating', short: 'EV', value: '480' }])
+  assert.deepEqual(itemDefences(undefined), [])
+})

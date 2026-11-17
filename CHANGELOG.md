@@ -8,6 +8,61 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.91] - 2026-11-17
+
+### Added (#230)
+- **Build → Gear shows defences:** Armour, Evasion, Energy Shield, Ward and Block next to each item (e.g. "AR 520 · ES 80"), and as the first lines when you open the item's mods.
+
+### Changed (#229)
+- **Passive tree and atlas tree: step with arrows instead of automatic following** (Gerhard: much less complicated). « ‹ step/total › » next to "next": forward or back 1 or 5 passives along the build's order. Taken, next 5 and the zoom follow your step; the Levelling guide's passive list agrees with it. The same step shows in every panel and window. First time per build it starts where the old automatic tracking had you. Atlas ✓✓ jumps to the whole build or to nothing.
+
+### Changed (#228): 3.30 patch notes and hotfixes check
+- **Covens cheat sheet:** same Fate 3 times now triples the 1st and 3rd copy's reward (2 copies is a waste) (3.30.0b Hotfix 3).
+- **Map mechanics sheet:** the strongest Thread effects need 2+ Threads and area level 73+/80+ (3.30.0b Hotfix 3).
+- **Progress checklist:** atlas points per pinnacle boss (Exarch / Eater / Maven +2, each Maven Invitation +2, Uber Elder +4).
+- **Vendor recipes:** 2 same-name rares → Chaos Orb, 3 → Exalted Orb; Vaal Orb from 5 Vaal gems.
+- **Price check:** Twice Corrupted items count as corrupted; Chronicle of Atzoatl reads the renamed temple rooms (Cradle of Creation, Royal Forge, Grand Reactor).
+
+### Fixed (#227)
+- **Tree map in the Mapping layout now follows what you allocate** (it only did when the Levelling guide panel was also on screen).
+
+### Fixed (#226)
+- **Settings → Panels in the Orbhoarder window:** it was only in the in-game overlay's settings (Shift+Space → Settings). Now under Appearance in both.
+
+### Fixed (#225)
+- **Settings → Tools → Phone or other devices:** the tickbox was missing and the line did nothing when clicked (the page never loaded the tickbox). It works now.
+
+### Fixed (#224)
+- **Atlas tree "taken" count:** taking one passive could mark several as taken (many small atlas passives share a name, and it filled the path to a same-named one deeper in the build). Taken now grows out from the start through passives you've actually taken, like the game allows. If taken looks short after updating, use ✓✓ → "I have this build".
+
+### Changed (#223)
+- **Mapping layout default** (Gerhard's own arrangement): Build / Trades / Market | Atlas tree / Cheat sheets | Tree map / This session / Money tools. Edit layout → Reset gives you this one.
+- **Atlas tree opens zoomed on its target** (next passives, else the build), also when you switch atlas build, like the passive tree.
+
+### Fixed (#222)
+- **Tickboxes instead of switch icons** everywhere in Settings: the switch icon didn't show on some PCs, so options looked like plain text.
+- **Tree map always opens zoomed in** and always has the **target** button: next passives of the levelling plan, else the build's passives you haven't taken yet, else the whole build (before, without a levelling plan it showed the whole tree and no target).
+- **Settings → Panels: "One window for all pinned panels"** is always listed (it only showed once a panel was pinned).
+
+### Changed (#221)
+- **Mapping layout has the Tree map** (you still level in maps): Tree map / Build / Money tools in the right column. Mapping layouts saved in 1.0.91-beta.1 to beta.3 get it added once, above Build.
+- **Atlas tree: target button** (crosshairs, next to Fit) like the passive tree's: zooms to the next passives to take, or to the whole build when nothing is left. The atlas also follows the next passives as you take them in game (not while editing).
+- **Switches easier to see:** off switches are light grey instead of near-invisible, on switches use the theme's accent (e.g. Settings → Tools → Phone or other devices).
+
+### Changed (#220)
+- **Clean look:** Settings **Save** is now the accent-coloured main button, and the picked theme in Settings → Appearance is tinted with the accent (no more plain grey row).
+
+### Added (#219)
+- **More poe.ninja prices:** Wombgifts, Scrying Orbs, Memories, Temples, Shrine Belts, Forbidden Jewels, Imbued Gems, Valdo Maps, Cluster Jewels and Flasks now load. Market gets a **League items** group (Threads, Viscera, Wombgifts, Scrying Orbs, Memories, Temples); Atlas value counts Wombgifts for Breach and Temples for Incursion. Price checks that worked before are unchanged.
+
+### Added (#218)
+- **All tab: Levelling and Mapping layouts.** Auto (default) switches to the Mapping layout when you enter your first atlas map, and back to Levelling when a new character starts in The Twilight Strand. Mapping layout: This session, Trade companion, Market | Atlas tree, Cheat sheets | Build, Money tools. Each layout has its own Edit layout; pick one by hand with the layout menu next to Edit layout.
+- **Phone or other devices:** QR code to scan with your phone, a **Restart now** button after switching it on (the link appears after the restart), and a note when the PC has no network address.
+- **Gear regex:** armour, evasion, energy shield, ward (at least this value) and the item's link count can be ticked too.
+
+### Added (#217)
+- **Build → Gear: regex button** next to each item. Tick the item's lines (base type or unique name, each mod with "at least this value" or any value) and get a stash / vendor search for items like it, with the 50-character count, Copy and Save (to Notes → Search strings, where it can get a hotkey).
+
 ## [1.0.90] - 2026-11-16
 
 ### Added (#214)

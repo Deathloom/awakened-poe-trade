@@ -19,7 +19,8 @@
             :is="selectedComponent" :config="configClone" :configWidget="configWidget" />
         </div>
         <div class="border-t bg-gray-900 border-gray-600 p-2 flex justify-end gap-x-2">
-          <button @click="save" class="px-3 bg-gray-800 rounded">{{ t('Save') }}</button>
+          <!-- Deathloom fork: Save is the main action, tinted with the accent (readable with any theme) -->
+          <button @click="save" class="px-3 rounded text-gray-100 bg-accent/25 ring-1 ring-accent/70 hover:bg-accent/40">{{ t('Save') }}</button>
           <button @click="cancel" class="px-3">{{ t('Cancel') }}</button>
         </div>
       </div>

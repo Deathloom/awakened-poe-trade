@@ -37,7 +37,7 @@ export const SHEETS: Sheet[] = [
         title: 'The loop',
         lines: [
           'Ritual → Fate: beating a coven ritual lets you choose a Fate for the area boss. Up to 3 Fates on one boss; you can hold more and choose which 3.',
-          'Fates make the boss harder and its loot better (currency, uniques, maps). Matching Fates unlock rarer rewards (Exceptional supports, new uniques); doubling a Fate boosts the first one\'s reward.',
+          'Fates make the boss harder and its loot better (currency, uniques, maps). Matching Fates unlock rarer rewards (Exceptional supports, new uniques). Same Fate more than once (3.30.0b): the 1st and 3rd copy triple their reward, the 2nd does nothing, so use 1 or 3 copies, never 2.',
           'Wickerman: 4 slots (head, arm, body, leg), so up to 4 Viscera active. Each Viscera is a boss-specific buff (life, regen, poison and more).',
           'Viscera come in 3 tiers; the top tier only from endgame versions of bosses.'
         ]
@@ -229,6 +229,7 @@ export const SHEETS: Sheet[] = [
           'Scarabs are gone. Old ones turned into a matching Thread, or a Frayed Thread (Veiled Scarabs too). A Frayed Thread gives a random Thread when used or vendored.',
           'Ten Threads: Abyss, Bestiary, Betrayal, Blight, Breach, Expedition, Incursion, Legion, Ritual, Ultimatum.',
           'Put Threads in the map device: each adds its mechanic to the map; up to 8 of one kind, and each extra one makes random powerful effects on that mechanic more likely.',
+          'The strongest Thread effects need 2+ Threads and a high area level (3.30.0b): area 73+ for the Blight Pantheon god, Double Down Ultimatum and the extra Breach mod; area 80+ for the extra Abyss mod, wisp beasts, Catarina joining Betrayal and rare Syndicate members.',
           'Map Item Quantity is now Atlas Drops (more maps and Threads). Monster rarity now decides which loot can drop: higher rarity, better currency.'
         ]
       },

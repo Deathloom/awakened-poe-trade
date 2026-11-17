@@ -1,5 +1,6 @@
 // Deathloom fork: the player's atlas builds (saved on this PC) and what's
 // taken on the atlas (from Client.txt, by name, like the passive tree).
+import { pickTaken } from './atlas-taken'
 import { ref, computed } from 'vue'
 import type { AtlasFileBuild } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
@@ -221,29 +222,6 @@ export function setTakenFrom (nodes: number[] | null) {
 // which of the build's nodes count as taken: names are shared by many small
 // nodes, so the counts go to the build's nodes nearest the start first
 export function takenNodes (buildNodes: number[], order: Map<number, number>): Set<number> {
-  const left = { ...taken.value }
-  const out = new Set<number>()
-  const sorted = [...buildNodes].sort((a, b) => (order.get(a) ?? 1e9) - (order.get(b) ?? 1e9))
-  for (const id of sorted) {
-    if (ATLAS_START.has(id)) { out.add(id); continue }
-    const name = ATLAS_BY_ID.get(id)?.[6]
-    if (name && (left[name] ?? 0) > 0) { out.add(id); left[name]-- }
-  }
-  // Deathloom fork: names only, so taking/refunding a same-named small passive off
-  // the build leaves holes. Everything on the build's path from the start to a
-  // taken passive must be taken too (you can't reach it otherwise)
-  const build = new Set(buildNodes)
-  const parent = new Map<number, number>()
-  const q = [...ATLAS_START].filter(id => build.has(id))
-  const seen = new Set(q)
-  for (let i = 0; i < q.length; i++) {
-    for (const nb of ATLAS_ADJ.get(q[i]) ?? []) {
-      if (!build.has(nb) || seen.has(nb)) continue
-      seen.add(nb); parent.set(nb, q[i]); q.push(nb)
-    }
-  }
-  for (const id of [...out]) {
-    for (let c = parent.get(id); c != null && !out.has(c); c = parent.get(c)) out.add(c)
-  }
-  return out
+  return pickTaken(buildNodes, taken.value, id => ATLAS_BY_ID.get(id)?.[6], id => ATLAS_ADJ.get(id) ?? [],
+    id => ATLAS_START.has(id), id => order.get(id) ?? 1e9)
 }
