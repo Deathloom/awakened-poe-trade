@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#234)
+- **Compare builds is clearer:** names instead of A / B ("Your character", "Build you follow", or the build's name), left (blue) / right (yellow) pickers, "Difference" column. Your character is now on the left and the build you follow on the right, so green + lines are the upgrades you still need. Step-by-step how-to and tooltips for the character import; Help → FAQ explains it and the tree arrows.
+
 ### Added (#233)
 - **Your character vs your build:** Build → Gear → ⚖ Compare has a "Your character vs this build" helper. Make a copy of the build ("… (my character)"), open Path of Building, import your character's Items and Skills into that copy and save, then Compare gear shows each slot side by side. Path of Building does the import when you click it (within GGG's rules); Orbhoarder only reads the saved file. Redo it whenever your gear changes.
 
