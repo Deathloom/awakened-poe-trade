@@ -71,6 +71,8 @@
               <span class="truncate" :style="{ color: rarityColour(item.rarity) }" :title="itemTitle(item)">
                 {{ item.title || item.name }}</span>
               <span v-if="item.title && item.rarity !== 'Unique'" class="text-gray-500 text-sm truncate shrink">{{ item.baseName }}</span>
+              <span v-if="defencesOf(item).length" class="ml-auto pl-1 text-gray-400 text-xs whitespace-nowrap shrink-0 tabular-nums"
+                :title="defencesOf(item).map(d => `${d.name}: ${d.value}`).join('\n')">{{ defencesOf(item).map(d => `${d.short} ${d.value}`).join(' · ') }}</span>
             </button>
             <div class="flex gap-px shrink-0 text-sm">
               <button class="bg-gray-700 text-gray-300 rounded-l px-1.5"
@@ -124,7 +126,9 @@
             <div v-if="regexResult.tooLong" class="text-xs text-red-400 mt-0.5">Too long for the game (50 characters). Untick a line, untick "at least", or match any.</div>
           </div>
           <div v-if="tradeError[item.slot]" class="text-xs text-red-400" style="padding-left: 6.5rem;">{{ tradeError[item.slot] }}</div>
-          <div v-if="isOpen(item.slot) && item.mods.length" class="pb-1 text-sm" style="padding-left: 6.5rem;">
+          <div v-if="isOpen(item.slot) && (item.mods.length || defencesOf(item).length)" class="pb-1 text-sm" style="padding-left: 6.5rem;">
+            <div v-for="d of defencesOf(item)" :key="d.name" class="text-gray-300">{{ d.name }}: <span class="text-gray-100">{{ d.value }}</span></div>
+            <div v-if="defencesOf(item).length && item.mods.length" class="border-t border-gray-700 my-0.5" />
             <div v-for="(mod, idx) of item.mods" :key="idx" :class="modClass(mod, item.mods, idx)">
               {{ mod.text }}<span v-if="mod.crafted" class="text-gray-500 text-xs"> (crafted)</span><span
                 v-if="mod.fractured" class="text-gray-500 text-xs"> (fractured)</span>
@@ -159,6 +163,7 @@ import PobNotes from './PobNotes.vue'
 import { notesState, loadNotes, buildLabel } from './build-notes'
 import { pobText } from './labels'
 import { itemRegexParts, itemRegex, MAX_LEN } from './item-regex'
+import { itemDefences, type ItemDefence } from './item-defences'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
@@ -294,6 +299,13 @@ function rarityColour (rarity: string) {
   }
 }
 
+// defences per item text (cached: the template asks several times per row)
+const defCache = new Map<string, ItemDefence[]>()
+function defencesOf (item: PobGearItem): ItemDefence[] {
+  let d = defCache.get(item.text)
+  if (!d) { d = itemDefences(item.text); if (defCache.size > 200) defCache.clear(); defCache.set(item.text, d) }
+  return d
+}
 function modClass (mod: PobGearItem['mods'][number], mods: PobGearItem['mods'], idx: number) {
   const classes: string[] = []
   // A thin line between implicits/enchants and explicits, like the game tooltip

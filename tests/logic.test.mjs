@@ -516,3 +516,11 @@ test('tree steps: clamp, stable key, first position from old tracking', async ()
   assert.equal(t.leadingTaken(5, i => [0, 1, 3].includes(i)), 2)
   assert.equal(t.leadingTaken(3, () => true), 3)
 })
+
+test('gear defences read from item text', async () => {
+  const { itemDefences } = await import('./.build/item-defences.mjs')
+  const t = 'Item Class: Shields\nRarity: Rare\nX\nTitanium Spirit Shield\n--------\nChance to Block: 24%\nEnergy Shield: 132 (augmented)\n--------\nItem Level: 80'
+  assert.deepEqual(itemDefences(t).map(d => `${d.short} ${d.value}`), ['Block 24%', 'ES 132'])
+  assert.deepEqual(itemDefences('Rarity: Rare\nArmour: 500\nEvasion Rating: 480'), [{ name: 'Armour', short: 'AR', value: '500' }, { name: 'Evasion Rating', short: 'EV', value: '480' }])
+  assert.deepEqual(itemDefences(undefined), [])
+})

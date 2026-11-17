@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#230)
+- **Build → Gear shows defences:** Armour, Evasion, Energy Shield, Ward and Block next to each item (e.g. "AR 520 · ES 80"), and as the first lines when you open the item's mods.
+
 ### Changed (#229)
 - **Passive tree and atlas tree: step with arrows instead of automatic following** (Gerhard: much less complicated). « ‹ step/total › » next to "next": forward or back 1 or 5 passives along the build's order. Taken, next 5 and the zoom follow your step; the Levelling guide's passive list agrees with it. The same step shows in every panel and window. First time per build it starts where the old automatic tracking had you. Atlas ✓✓ jumps to the whole build or to nothing.
 
