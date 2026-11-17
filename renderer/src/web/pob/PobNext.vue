@@ -394,9 +394,11 @@ const takenByLog = computed(() => {
   return taken
 })
 watch(takenByLog, (t) => { currentTaken.value = t }, { immediate: true })
+// Deathloom fork (17 Nov): when a tree map is open, its back / forward step is
+// what counts as taken, so this list and the map always agree
 function isTaken (i: number) {
   const id = plan.value?.order[i]?.id
-  if (id != null && mapHave.value?.has(id)) return true
+  if (mapHave.value) return id != null && mapHave.value.has(id)
   return takenByLog.value ? takenByLog.value.has(i) : i < (plan.value?.taken ?? 0)
 }
 const passiveRows = computed(() => {
@@ -404,6 +406,7 @@ const passiveRows = computed(() => {
   if (!p) return []
   const rows = p.order.map((node, i) => ({ node, i }))
   if (showAll.value) return rows
+  if (mapHave.value) return rows.filter(r => !isTaken(r.i)).slice(0, 5)
   if (takenByLog.value) return rows.filter(r => !takenByLog.value!.has(r.i)).slice(0, 5)
   return rows.slice(p.taken, p.taken + 5)
 })
