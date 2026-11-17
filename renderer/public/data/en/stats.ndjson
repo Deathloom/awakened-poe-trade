@@ -5185,8 +5185,8 @@
 {"ref":"Has Room: Locus of Corruption (Tier 3)","better":0,"matchers":[{"string":"Locus of Corruption (Tier 3)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_corruption_room_3"]},"option":true}}
 {"ref":"Has Room: Museum of Artefacts (Tier 3)","better":0,"matchers":[{"string":"Museum of Artefacts (Tier 3)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_chests_3"]},"option":true}}
 {"ref":"Has Room: Office of Cartography (Tier 2)","better":0,"matchers":[{"string":"Office of Cartography (Tier 2)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_cartography_room_2"]},"option":true}}
-{"ref":"Has Room: Omnitect Forge (Tier 2)","better":0,"matchers":[{"string":"Omnitect Forge (Tier 2)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_boss_fire_2"]},"option":true}}
-{"ref":"Has Room: Omnitect Reactor Plant (Tier 2)","better":0,"matchers":[{"string":"Omnitect Reactor Plant (Tier 2)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_boss_lightning_2"]},"option":true}}
+{"ref":"Has Room: Omnitect Forge (Tier 2)","better":0,"matchers":[{"string":"Omnitect Forge (Tier 2)"},{"string":"Royal Forge (Tier 2)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_boss_fire_2"]},"option":true}}
+{"ref":"Has Room: Omnitect Reactor Plant (Tier 2)","better":0,"matchers":[{"string":"Omnitect Reactor Plant (Tier 2)"},{"string":"Grand Reactor (Tier 2)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_boss_lightning_2"]},"option":true}}
 {"ref":"Has Room: Passageways","better":0,"matchers":[{"string":"Passageways"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_passageways"]},"option":true}}
 {"ref":"Has Room: Pits","better":0,"matchers":[{"string":"Pits"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_the_pits"]},"option":true}}
 {"ref":"Has Room: Poison Garden (Tier 1)","better":0,"matchers":[{"string":"Poison Garden (Tier 1)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_poison_room_1"]},"option":true}}
@@ -5208,7 +5208,7 @@
 {"ref":"Has Room: Tempest Generator (Tier 1)","better":0,"matchers":[{"string":"Tempest Generator (Tier 1)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_storm_room_1"]},"option":true}}
 {"ref":"Has Room: Temple Defense Workshop (Tier 2)","better":0,"matchers":[{"string":"Temple Defense Workshop (Tier 2)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_trap_room_2"]},"option":true}}
 {"ref":"Has Room: Temple Nexus (Tier 3)","better":0,"matchers":[{"string":"Temple Nexus (Tier 3)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_empowering_room_3"]},"option":true}}
-{"ref":"Has Room: Throne of Atziri (Tier 3)","better":0,"matchers":[{"string":"Throne of Atziri (Tier 3)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_queens_chambers_3"]},"option":true}}
+{"ref":"Has Room: Throne of Atziri (Tier 3)","better":0,"matchers":[{"string":"Throne of Atziri (Tier 3)"},{"string":"Cradle of Creation (Tier 3)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_queens_chambers_3"]},"option":true}}
 {"ref":"Has Room: Tombs","better":0,"matchers":[{"string":"Tombs"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_tombs"]},"option":true}}
 {"ref":"Has Room: Torment Cells (Tier 1)","better":0,"matchers":[{"string":"Torment Cells (Tier 1)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_torment_1"]},"option":true}}
 {"ref":"Has Room: Torture Cages (Tier 2)","better":0,"matchers":[{"string":"Torture Cages (Tier 2)"}],"trade":{"ids":{"pseudo":["pseudo.pseudo_temple_torment_2"]},"option":true}}

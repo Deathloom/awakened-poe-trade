@@ -448,7 +448,8 @@ function parseInfluence (section: string[], item: ParsedItem) {
 }
 
 function parseCorrupted (section: string[], item: ParsedItem) {
-  if (section[0] === _$.CORRUPTED) {
+  // Deathloom fork: 3.30 Altar of Corruption / Lapidary Lens / Djinn-Touched Vaal Orb make items Twice Corrupted
+  if (section[0] === _$.CORRUPTED || section[0] === 'Twice ' + _$.CORRUPTED) {
     item.isCorrupted = true
     return 'SECTION_PARSED'
   } else if (section[0] === _$.UNMODIFIABLE) {

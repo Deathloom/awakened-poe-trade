@@ -103,6 +103,21 @@ export const VENDOR_RECIPES: VendorRecipe[] = [
     note: 'Gems: 40% total quality for a Gemcutter\'s Prism.'
   },
   {
+    name: 'Same-name rares (3.30)',
+    give: '2 rare items with the same name (3 for the Exalted)',
+    get: 'Chaos Orb (Exalted Orb for 3)',
+    fromAct: 1,
+    tags: ['currency'],
+    note: 'New in 3.30: worth checking your rares for matching names before vendoring them.'
+  },
+  {
+    name: 'Vaal Orb',
+    give: '5 Vaal skill gems (3.30: was 7)',
+    get: 'Vaal Orb',
+    fromAct: 1,
+    tags: ['currency']
+  },
+  {
     name: 'Chaos Orb (full rare set)',
     give: 'Unidentified rare set: helmet, body, gloves, boots, belt, 2 rings, amulet, weapon(s), item level 60–74',
     get: 'Chaos Orb (Regal Orb for item level 75+)',

@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#228): 3.30 patch notes and hotfixes check
+- **Covens cheat sheet:** same Fate 3 times now triples the 1st and 3rd copy's reward (2 copies is a waste) (3.30.0b Hotfix 3).
+- **Map mechanics sheet:** the strongest Thread effects need 2+ Threads and area level 73+/80+ (3.30.0b Hotfix 3).
+- **Progress checklist:** atlas points per pinnacle boss (Exarch / Eater / Maven +2, each Maven Invitation +2, Uber Elder +4).
+- **Vendor recipes:** 2 same-name rares → Chaos Orb, 3 → Exalted Orb; Vaal Orb from 5 Vaal gems.
+- **Price check:** Twice Corrupted items count as corrupted; Chronicle of Atzoatl reads the renamed temple rooms (Cradle of Creation, Royal Forge, Grand Reactor).
+
 ### Fixed (#227)
 - **Tree map in the Mapping layout now follows what you allocate** (it only did when the Levelling guide panel was also on screen).
 
