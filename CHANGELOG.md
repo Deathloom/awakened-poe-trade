@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#237)
+- **Build → Gear → Trade** searches that item's base type (e.g. Profane Wand) with all its mods ticked (at least these values); before, the mods came through unticked and it searched any wand. **↑ upgrade** does the same for any base of that kind.
+
 ### Fixed (#236)
 - **Compare:** your character is always on the left (blue) and the build you follow on the right (yellow), even if the pickers were the other way round.
 
