@@ -4,16 +4,16 @@
   <div class="px-2 py-1 bg-gray-800 text-sm flex flex-col gap-y-1 max-h-[32rem] overflow-y-auto">
     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
       <span class="text-gray-400">Compare builds</span>
-      <select v-model="pathA" class="bg-gray-900 rounded px-1 max-w-[14rem]" title="Build A">
-        <option value="">Build A…</option>
+      <select v-model="pathA" class="bg-gray-900 rounded px-1 max-w-[14rem] border-l-2 border-blue-400" title="Left build (blue): what you compare from, e.g. your character">
+        <option value="">Left build…</option>
         <option v-for="p of builds" :key="p" :value="p">{{ label(p) }}</option>
       </select>
       <span class="text-gray-500">vs</span>
-      <select v-model="pathB" class="bg-gray-900 rounded px-1 max-w-[14rem]" title="Build B">
-        <option value="">Build B…</option>
+      <select v-model="pathB" class="bg-gray-900 rounded px-1 max-w-[14rem] border-l-2 border-yellow-400" title="Right build (yellow): what you compare to, e.g. the build you follow">
+        <option value="">Right build…</option>
         <option v-for="p of builds" :key="p" :value="p">{{ label(p) }}</option>
       </select>
-      <button class="text-gray-500 hover:text-gray-200" title="Swap A and B" @click="[pathA, pathB] = [pathB, pathA]"><i class="fas fa-exchange-alt" /></button>
+      <button class="text-gray-500 hover:text-gray-200" title="Swap left and right" @click="[pathA, pathB] = [pathB, pathA]"><i class="fas fa-exchange-alt" /></button>
       <button class="px-2 rounded bg-gray-600 hover:bg-gray-500 disabled:opacity-50" :disabled="busy || !pathA || !pathB || pathA === pathB" @click="run">
         <i v-if="busy" class="fas fa-spinner fa-spin mr-1" />Compare</button>
     </div>
@@ -24,20 +24,23 @@
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span class="text-gray-200"><i class="fas fa-user-check mr-1" />Your character vs this build</span>
         <button v-if="!mineExists" class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="busy"
-          :title="`Copies '${label(active)}' to '${label(minePath)}' in your folder`" @click="makeMine">1. Make the copy</button>
-        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="openPob">{{ mineExists ? 'Update gear in' : '2.' }} Path of Building</button>
-        <button v-if="mineExists" class="px-2 rounded bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50" :disabled="busy" @click="compareMine">Compare gear</button>
+          :title="`Copies '${label(active)}' to '${label(minePath)}' in your folder`" @click="makeMine">Make the copy</button>
+        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" :title="`Opens Path of Building. There: open '${label(minePath)}', Import/Export Build → Import character → Items and Skills, then save.`" @click="openPob">{{ mineExists ? 'Update gear in Path of Building' : 'Open Path of Building' }}</button>
+        <button v-if="mineExists" class="px-2 rounded bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50" :disabled="busy" :title="`Your character (left, blue) vs the build you follow (right, yellow), gear first. Uses what Path of Building last saved.`" @click="compareMine">Compare gear</button>
       </div>
-      <div class="mt-0.5">
-        In Path of Building: open <b class="text-gray-300">{{ label(minePath) }}</b> → Import/Export Build → Import character → pick your character →
-        <b class="text-gray-300">Items and Skills</b> → Save (Ctrl+S). Then Compare gear. Do it again whenever your gear changes.
-      </div>
+      <ol class="mt-0.5 list-decimal pl-4 space-y-px">
+        <li v-if="!mineExists"><b class="text-gray-300">Make the copy</b>: a copy of the build you follow, named <b class="text-gray-300">{{ label(minePath) }}</b>, to hold your character's gear. Path of Building opens.</li>
+        <li>In Path of Building, open <b class="text-gray-300">{{ label(minePath) }}</b> from the build list.</li>
+        <li><b class="text-gray-300">Import/Export Build</b> tab → <b class="text-gray-300">Import character</b> → your account → your character → <b class="text-gray-300">Items and Skills</b>. Leave the passive tree alone.</li>
+        <li>Save in Path of Building (<b class="text-gray-300">Ctrl+S</b>), then come back here and click <b class="text-gray-300">Compare gear</b>.</li>
+      </ol>
+      <div class="mt-0.5 text-gray-500">Left (blue) = your character, right (yellow) = the build you follow. Green <b>+</b> lines are what the build has that you don't yet: your upgrades. Gear changed? Do steps 2–4 again. Path of Building does the import when you click it; Orbhoarder only reads the saved file.</div>
     </div>
     <div v-if="error" class="text-red-400">{{ error }}</div>
-    <div v-if="!error && !result" class="text-xs text-gray-500">Pick two builds from your folder (or a friend's, via Player). Uses what Path of Building last saved in each file.</div>
+    <div v-if="!error && !result" class="text-xs text-gray-500">Or pick any two builds from your folder (or a friend's, via Player): left (blue) and right (yellow). Green shows what the right one has more of. Uses what Path of Building last saved in each file.</div>
     <template v-if="result && sumA && sumB">
       <div class="text-xs text-gray-400">
-        <span class="text-blue-300">A</span> {{ who(sumA) }} · <span class="text-yellow-300">B</span> {{ who(sumB) }}
+        <span class="text-blue-300">{{ nameA }}</span> {{ who(sumA) }} · <span class="text-yellow-300">{{ nameB }}</span> {{ who(sumB) }}
       </div>
       <div class="flex gap-1">
         <button v-for="s of sections" :key="s.id" class="px-2 rounded text-xs"
@@ -45,7 +48,7 @@
       </div>
 
       <table v-if="sec === 'stats'" class="text-xs">
-        <tr class="text-gray-500"><th class="text-left font-normal pr-3">Stat</th><th class="text-right font-normal px-2 text-blue-300">A</th><th class="text-right font-normal px-2 text-yellow-300">B</th><th class="text-right font-normal pl-2">B − A</th></tr>
+        <tr class="text-gray-500"><th class="text-left font-normal pr-3">Stat</th><th class="text-right font-normal px-2 text-blue-300">{{ nameA }}</th><th class="text-right font-normal px-2 text-yellow-300">{{ nameB }}</th><th class="text-right font-normal pl-2" :title="`How much ${nameB} has more (+) or less (−) than ${nameA}`">Difference</th></tr>
         <tr v-for="r of result.stats" :key="r.stat">
           <td class="pr-3 text-gray-300">{{ r.label }}</td>
           <td class="px-2 text-right" :class="r.better === 'a' ? 'text-green-300' : 'text-gray-300'">{{ fmtStat(r.a, r.pct) }}</td>
@@ -60,10 +63,10 @@
         <label class="flex items-center gap-x-1 text-gray-500"><input v-model="gearAll" type="checkbox">Show slots that are the same</label>
         <div v-for="g of result.gear.filter(g => gearAll || !g.same)" :key="g.slot" class="border-t border-gray-700 pt-1">
           <div class="text-gray-100">{{ g.slot }} <span v-if="g.same" class="text-gray-500">· same</span></div>
-          <div class="text-blue-300 truncate">A: {{ g.a ?? '(empty)' }}</div>
-          <div class="text-yellow-300 truncate">B: {{ g.b ?? '(empty)' }}</div>
-          <div v-for="m of g.onlyA" :key="'a' + m" class="pl-2 text-red-300">− {{ m }}</div>
-          <div v-for="m of g.onlyB" :key="'b' + m" class="pl-2 text-green-300">+ {{ m }}</div>
+          <div class="text-blue-300 truncate">{{ nameA }}: {{ g.a ?? '(empty)' }}</div>
+          <div class="text-yellow-300 truncate">{{ nameB }}: {{ g.b ?? '(empty)' }}</div>
+          <div v-for="m of g.onlyB" :key="'b' + m" class="pl-2 text-green-300" :title="`${nameB} has this, ${nameA} doesn't`">+ {{ m }}</div>
+          <div v-for="m of g.onlyA" :key="'a' + m" class="pl-2 text-red-300" :title="`${nameA} has this, ${nameB} doesn't`">− {{ m }}</div>
         </div>
         <div v-if="!result.gear.some(g => !g.same) && !gearAll" class="text-gray-500">Same gear in every slot.</div>
       </div>
@@ -71,20 +74,20 @@
       <div v-else-if="sec === 'gems'" class="text-xs">
         <div v-if="!result.gems.length" class="text-gray-500">Same gems and levels (enabled gems of the active skill sets).</div>
         <div v-for="g of result.gems" :key="g.change + g.name" class="flex gap-x-2">
-          <span v-if="g.change === 'removed'" class="text-red-300">− {{ g.name }} <span class="text-gray-500">(A only, lvl {{ g.a }})</span></span>
-          <span v-else-if="g.change === 'added'" class="text-green-300">+ {{ g.name }} <span class="text-gray-500">(B only, lvl {{ g.b }})</span></span>
+          <span v-if="g.change === 'removed'" class="text-red-300">− {{ g.name }} <span class="text-gray-500">(only {{ nameA }}, lvl {{ g.a }})</span></span>
+          <span v-else-if="g.change === 'added'" class="text-green-300">+ {{ g.name }} <span class="text-gray-500">(only {{ nameB }}, lvl {{ g.b }})</span></span>
           <span v-else class="text-gray-300">{{ g.name }} <span class="text-gray-500">lvl {{ g.a }} → {{ g.b }}</span></span>
         </div>
       </div>
 
       <div v-else class="text-xs space-y-1">
         <div class="text-gray-400">
-          {{ result.tree.same }} passives in both · <span class="text-blue-300">{{ result.tree.onlyA.length }} only in A</span> · <span class="text-yellow-300">{{ result.tree.onlyB.length }} only in B</span>
+          {{ result.tree.same }} passives in both · <span class="text-blue-300">{{ result.tree.onlyA.length }} only in {{ nameA }}</span> · <span class="text-yellow-300">{{ result.tree.onlyB.length }} only in {{ nameB }}</span>
           <span v-if="result.tree.masteriesChanged.length"> · {{ result.tree.masteriesChanged.length }} mastery choices differ</span>
         </div>
         <div v-if="result.tree.versionA !== result.tree.versionB" class="text-yellow-500">Different tree versions ({{ result.tree.versionA }} / {{ result.tree.versionB }}): some differences may only be renamed nodes.</div>
         <div v-for="side of (['A', 'B'] as const)" :key="side">
-          <div :class="side === 'A' ? 'text-blue-300' : 'text-yellow-300'">Only in {{ side }}</div>
+          <div :class="side === 'A' ? 'text-blue-300' : 'text-yellow-300'">Only in {{ side === 'A' ? nameA : nameB }}</div>
           <div class="pl-2 text-gray-300">
             <span v-for="n of named(side === 'A' ? result.tree.onlyA : result.tree.onlyB).big" :key="n.id" class="inline-block mr-2"
               :class="n.kind === 2 ? 'text-orange-300' : ''">{{ n.name }}</span>
@@ -184,18 +187,32 @@ function openPob () {
   Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob' } })
 }
 function compareMine () {
-  pathA.value = planPath.value
-  pathB.value = minePath.value
+  // left = your character, right = the build you follow: green + = your upgrades
+  pathA.value = minePath.value
+  pathB.value = planPath.value
   sec.value = 'gear'
   run()
 }
 
+const ranA = ref('')
+const ranB = ref('')
 function run () {
+  ranA.value = pathA.value
+  ranB.value = pathB.value
   busy.value = true
   error.value = ''
   Host.sendEvent({ name: 'CLIENT->MAIN::pob-compare', payload: { requestId: next(), a: pathA.value, b: pathB.value } })
 }
 
+// names instead of A / B: "Your character", "Build you follow", or the file name
+function sideName (p: string) {
+  if (!p) return ''
+  if (p.toLowerCase() === minePath.value.toLowerCase() && mineExists.value) return 'Your character'
+  if (p === planPath.value && mineExists.value) return 'Build you follow'
+  return label(p).split('/').pop() ?? p
+}
+const nameA = computed(() => sideName(ranA.value))
+const nameB = computed(() => sideName(ranB.value))
 const label = (p: string) => p.replace(/\.xml$/i, '').replace(/\\/g, '/')
 function who (s: PobBuildSummary) {
   return [s.ascendancy ?? s.className, s.level ? `lvl ${s.level}` : '', s.mainSkill].filter(Boolean).join(' · ')
