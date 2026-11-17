@@ -40,7 +40,11 @@ export class HttpProxy {
         method: req.method,
         headers: {
           ...req.headers,
-          'user-agent': lootGoblinUserAgent()
+          // Deathloom fork (17 Nov 2026): GGG's sites get exactly the same browser
+          // string as the "Browser" window. Cloudflare ties its check (cf_clearance)
+          // to that string: a different one meant passing the check in the Browser
+          // window never helped, and leagues / price checks kept failing.
+          'user-agent': official ? app.userAgentFallback : lootGoblinUserAgent()
         },
         useSessionCookies: true,
         referrerPolicy: 'no-referrer-when-downgrade'

@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#235)
+- **"Failed to load leagues" / price check not working:** Orbhoarder now talks to pathofexile.com with exactly the same browser string as its Browser window, so passing GGG's Cloudflare check there works for the price check too (before, the check you passed never applied). The error now says why (browser check, maintenance, too many requests) instead of a list of headers.
+
 ### Changed (#234)
 - **Compare builds is clearer:** names instead of A / B ("Your character", "Build you follow", or the build's name), left (blue) / right (yellow) pickers, "Difference" column. Your character is now on the left and the build you follow on the right, so green + lines are the upgrades you still need. Step-by-step how-to and tooltips for the character import; Help → FAQ explains it and the tree arrows.
 

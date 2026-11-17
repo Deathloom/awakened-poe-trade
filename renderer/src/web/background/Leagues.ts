@@ -55,7 +55,7 @@ export const useLeagues = createGlobalState(() => {
         // Deathloom fork: PoE2 mode. The trade2 list has no rules, so pick by name
         // (same endpoint Exiled Exchange 2 uses)
         const response = await Host.proxy(`${poeWebApi()}/api/trade2/data/leagues`)
-        if (!response.ok) throw new Error(JSON.stringify(Object.fromEntries(response.headers)))
+        if (!response.ok) throw new Error(httpError(response))
         const leagues: { result: Array<{ id: string }> } = await response.json()
         tradeLeagues.value = leagues.result.map(league => ({ id: league.id, isPopular: true }))
         if (!tradeLeagues.value.some(league => league.id === selectedId.value)) {
@@ -65,7 +65,7 @@ export const useLeagues = createGlobalState(() => {
       }
 
       const response = await Host.proxy(`${poeWebApi()}/api/leagues?type=main&realm=pc`)
-      if (!response.ok) throw new Error(JSON.stringify(Object.fromEntries(response.headers)))
+      if (!response.ok) throw new Error(httpError(response))
       const leagues: ApiLeague[] = await response.json()
 
       tradeLeagues.value = leagues
@@ -112,6 +112,15 @@ export const useLeagues = createGlobalState(() => {
     load
   }
 })
+
+// Deathloom fork: a readable reason instead of a dump of response headers
+function httpError (response: Response): string {
+  const cf = response.headers.get('cf-mitigated')
+  if (cf === 'challenge' || response.status === 403) return `HTTP ${response.status}: GGG's site wants a browser check (Cloudflare). Click Browser, let the page load (tick the check if shown), close it, then Retry.`
+  if (response.status === 503) return 'HTTP 503: pathofexile.com is down for maintenance. Retry in a few minutes.'
+  if (response.status === 429) return 'HTTP 429: too many requests to pathofexile.com. Wait a minute, then Retry.'
+  return `HTTP ${response.status} from pathofexile.com`
+}
 
 function isPrivateLeague (id: string) {
   if (id.includes('Ruthless')) {
