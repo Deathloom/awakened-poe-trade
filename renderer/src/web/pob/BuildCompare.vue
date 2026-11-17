@@ -197,6 +197,10 @@ function compareMine () {
 const ranA = ref('')
 const ranB = ref('')
 function run () {
+  // your character always on the left (blue), whatever order the pickers are in,
+  // so green + is always what the build has that you don't (Gerhard 17 Nov)
+  const isMine = (p: string) => mineExists.value && p.toLowerCase() === minePath.value.toLowerCase()
+  if (isMine(pathB.value) && !isMine(pathA.value)) [pathA.value, pathB.value] = [pathB.value, pathA.value]
   ranA.value = pathA.value
   ranB.value = pathB.value
   busy.value = true
