@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#248): calmer Build panel (first step of the UI clean-up)
+- Header: the tabs, the build name, one **Build** button (pick build / loadout), reload, and one **⋯** menu with labelled entries (import, sharing, what changes, compare, edit loadouts, manage builds) instead of 8 loose icons.
+- Gear rows: tick, item, defences, then **Trade** and **Upgrade** as labelled buttons and a **⋯** menu (copy name for the market, craft it, stash / vendor search, price check).
+- The button legend moved behind a **?** (remembered); Show mods moved next to it.
+- New shared button look (ui-btn) and menu (UiMenu) for the rest of the app to follow.
+
 ### Changed (#247)
 - **Build → Gear:** a "got it" tickbox on every item (ticked items fade, per build and item set); uniques get ↑ too (the same unique with at least these rolls); the buttons line up in the same columns on every row.
 - **Compare gear is clearer:** mods are matched by wording, so per slot you see ○ still need, ◐ have it but lower (your value → the build's), ✓ already have, and extras on yours, instead of a list of + and − lines.

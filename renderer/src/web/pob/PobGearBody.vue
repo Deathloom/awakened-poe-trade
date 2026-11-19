@@ -10,25 +10,13 @@
           @click="setTab(t.key)">{{ t.label }}</button>
       </div>
       <span v-if="build" class="text-gray-400 truncate text-sm" :title="buildTitle">{{ buildTitle }}</span>
-      <div class="ml-auto flex items-center gap-x-2 shrink-0">
-        <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200 text-sm" @click="allMods = !allMods">
-          {{ allMods ? 'Hide mods' : 'Show mods' }}</button>
-        <button class="text-gray-500 hover:text-gray-200 text-sm" title="Build sharing: sign in with GitHub, Pull / Push"
-          :class="{ 'text-gray-200': showSync }" @click="showSync = !showSync"><i class="fas fa-cloud" /></button>
-        <button class="text-gray-500 hover:text-gray-200 text-sm" title="Import a PoB code or build link"
-          :class="{ 'text-gray-200': showImport }" @click="showImport = !showImport"><i class="fas fa-file-import" /></button>
-        <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Edit loadouts: trees, item sets, skill sets, gems"
-          :class="{ 'text-gray-200': showEdit }" @click="showEdit = !showEdit"><i class="fas fa-pen" /></button>
-        <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Manage builds: rename, move to a folder, duplicate, delete"
-          :class="{ 'text-gray-200': showManage }" @click="showManage = !showManage"><i class="fas fa-folder-open" /></button>
-        <button class="text-gray-500 hover:text-gray-200 text-sm" title="What changes: compare the loadout you play with another stage of this build (gems, passives, gear, Wickerman)"
-          :class="{ 'text-gray-200': showSteps }" @click="showSteps = !showSteps"><i class="fas fa-route" /></button>
-        <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Compare two builds: stats, gear, gems, passive tree"
-          :class="{ 'text-gray-200': showCompare }" @click="showCompare = !showCompare"><i class="fas fa-balance-scale" /></button>
-        <button class="text-gray-500 hover:text-gray-200 text-sm" title="Pick the build and loadout"
-          :class="{ 'text-gray-200': showPicker }" @click="showPicker = !showPicker"><i class="fas fa-exchange-alt" /></button>
-        <button v-if="tab === 'gear'" class="text-gray-500 hover:text-gray-200" title="Reload from Path of Building"
-          :disabled="loading" @click="request"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
+      <!-- Deathloom fork (19 Nov, calmer UI): one labelled button + one menu instead of 8 loose icons -->
+      <div class="ml-auto flex items-center gap-x-1 shrink-0">
+        <button class="ui-btn" :class="{ 'ui-btn-on': showPicker }" title="Pick the build and loadout" @click="showPicker = !showPicker">
+          <i class="fas fa-exchange-alt" />Build</button>
+        <button v-if="tab === 'gear'" class="ui-btn ui-btn-quiet" :disabled="loading" title="Reload from Path of Building" @click="request">
+          <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
+        <ui-menu :items="headerMenu" align-right title="More: import, sync, compare, stages, edit, manage" />
       </div>
     </div>
 
@@ -56,13 +44,15 @@
     <div v-else-if="items && !items.length" class="p-2 text-gray-500 text-sm">This build's item set is empty.</div>
 
     <div v-else-if="items" class="overflow-y-auto min-h-0 p-1">
-      <div class="px-1 pb-1 text-xs text-gray-500">
-        <i class="far fa-copy" /> name for the in-game market (press <span class="bg-gray-700 rounded px-1">/</span> then Ctrl+V) ·
-        <b>Trade</b> this exact item on the trade site ·
-        <i class="fas fa-arrow-up" /> find an upgrade (any base, at least these values) ·
-        <i class="fas fa-flask" /> how to craft it ·
-        <i class="fas fa-code" /> stash / vendor search for items like it<template v-if="!desktop"> ·
-        <i class="fas fa-search-dollar" /> price check here (edit the filters, see what it does to your build)</template>.
+      <div class="flex items-center gap-x-2 px-1 pb-1 text-xs">
+        <span class="text-gray-500">Tick the items you have.</span>
+        <button class="ml-auto ui-btn ui-btn-quiet" @click="allMods = !allMods">{{ allMods ? 'Hide mods' : 'Show mods' }}</button>
+        <button class="ui-btn ui-btn-quiet" :class="{ 'ui-btn-on': showHelp }" title="What the buttons do" @click="toggleHelp"><i class="fas fa-question" /></button>
+      </div>
+      <div v-if="showHelp" class="mx-1 mb-1 rounded bg-gray-900 px-2 py-1 text-xs text-gray-400">
+        <b class="text-gray-300">Trade</b>: this item on the trade site (uniques: any copy) ·
+        <b class="text-gray-300">Upgrade</b>: any base of this kind with at least these values (uniques: better rolls) ·
+        <b class="text-gray-300">⋯</b>: copy the name for the in-game market, craft it, stash / vendor search<template v-if="!desktop">, price check</template>.
       </div>
       <template v-for="group of groups" :key="group.key">
         <div class="px-1 pt-2 pb-px text-xs uppercase tracking-wide text-gray-500">{{ group.label }}</div>
@@ -81,29 +71,13 @@
               <span v-if="defencesOf(item).length" class="ml-auto pl-1 text-gray-400 text-xs whitespace-nowrap shrink-0 tabular-nums"
                 :title="defencesOf(item).map(d => `${d.name}: ${d.value}`).join('\n')">{{ defencesOf(item).map(d => `${d.short} ${d.value}`).join(' · ') }}</span>
             </button>
-            <div class="flex gap-px shrink-0 text-sm">
-              <button class="bg-gray-700 text-gray-300 rounded-l px-1.5"
-                :title="`Copy '${item.searchText}' for the in-game market`"
-                @click="copy(item.searchText, item.slot)">
-                <i v-if="copiedKey === item.slot" class="fas fa-check text-green-400" />
-                <i v-else class="far fa-copy" /></button>
-              <button class="bg-gray-700 text-gray-300 px-1.5" :title="item.rarity === 'Unique' ? 'This unique on the official trade site (any rolls)' : 'This item (its base, all its mods at least these values) on the official trade site'"
+            <div class="flex items-center gap-x-1 shrink-0">
+              <span v-if="copiedKey === item.slot" class="text-xs text-green-400">Copied</span>
+              <button class="ui-btn" :title="item.rarity === 'Unique' ? 'This unique on the official trade site (any rolls)' : 'This item (its base, all its mods at least these values) on the official trade site'"
                 @click="openTrade(item)">Trade</button>
-              <button class="bg-gray-700 text-gray-300 px-1.5 rounded-r"
-                :title="item.rarity === 'Unique' ? 'Find better rolls: this unique with at least these values' : 'Find an upgrade: any base of this kind with at least these values'"
-                @click="openTrade(item, true)"><i class="fas fa-arrow-up" /></button>
-              <!-- same columns on every row: an empty slot where a button doesn't apply -->
-              <button v-if="item.rarity === 'Rare' || item.rarity === 'Magic'" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1 w-7"
-                title="Craft this: opens the Craft tab with this base and its mods filled in, and a step-by-step plan (cheapest method, what order)"
-                @click="requestCraft(item)"><i class="fas fa-flask" /></button>
-              <span v-else class="ml-1 w-7" aria-hidden="true" />
-              <button class="bg-gray-700 rounded px-1.5 ml-1" :class="regexSlot === item.slot ? 'text-gray-100 bg-gray-600' : 'text-gray-300'"
-                title="Regex: make a stash / vendor search for items like this (pick the lines, at least these values)"
-                @click="toggleRegex(item.slot)"><i class="fas fa-code" /></button>
-              <!-- the price check window lives in the overlay; in the Orbhoarder window it would only repeat Trade -->
-              <button v-if="!desktop" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1"
-                title="Price check (edit stat filters, build impact)"
-                @click="priceCheck(item, $event)"><i class="fas fa-search-dollar" /></button>
+              <button class="ui-btn" :title="item.rarity === 'Unique' ? 'Better rolls: this unique with at least these values' : 'An upgrade: any base of this kind with at least these values'"
+                @click="openTrade(item, true)">Upgrade</button>
+              <ui-menu :items="rowMenu(item)" align-right title="More for this item" />
             </div>
           </div>
           <div v-if="regexSlot === item.slot" class="my-1 p-1.5 rounded bg-gray-900 text-sm" style="margin-left: 6.5rem;">
@@ -166,6 +140,7 @@ import BuildCompare from './BuildCompare.vue'
 import LoadoutEditor from './LoadoutEditor.vue'
 import LoadoutChanges from './LoadoutChanges.vue'
 import WickermanCard from './WickermanCard.vue'
+import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import BuildSync from './BuildSync.vue'
 import BuildImport from './BuildImport.vue'
 import PobGems from './PobGems.vue'
@@ -205,6 +180,24 @@ const showSteps = ref(false)
 const stepsRef = ref<InstanceType<typeof LoadoutChanges> | null>(null)
 const wickRef = ref<InstanceType<typeof WickermanCard> | null>(null)
 const showEdit = ref(false)
+const HELP_KEY = 'deathloom.gear-help.v1'
+const showHelp = ref((() => { try { return localStorage.getItem(HELP_KEY) !== '0' } catch { return true } })())
+function toggleHelp () { showHelp.value = !showHelp.value; try { localStorage.setItem(HELP_KEY, showHelp.value ? '1' : '0') } catch {} }
+// one menu with labels for everything that used to be a row of icons
+const headerMenu = computed<UiMenuItem[]>(() => [
+  { label: 'Import a build (PoB code or link)', icon: 'fas fa-file-import', checked: showImport.value, action: () => { showImport.value = !showImport.value } },
+  { label: 'Build sharing (GitHub sync)', icon: 'fas fa-cloud', checked: showSync.value, action: () => { showSync.value = !showSync.value } },
+  { divider: true },
+  { label: 'What changes between stages', icon: 'fas fa-route', checked: showSteps.value, action: () => { showSteps.value = !showSteps.value } },
+  ...(props.desktop
+    ? [
+        { label: 'Compare builds / your character', icon: 'fas fa-balance-scale', checked: showCompare.value, action: () => { showCompare.value = !showCompare.value } },
+        { divider: true },
+        { label: 'Edit loadouts and gems', icon: 'fas fa-pen', checked: showEdit.value, action: () => { showEdit.value = !showEdit.value } },
+        { label: 'Manage builds (rename, delete…)', icon: 'fas fa-folder-open', checked: showManage.value, action: () => { showManage.value = !showManage.value } }
+      ]
+    : [])
+])
 const showSync = ref(false)
 const showImport = ref(false)
 const pickerRef = ref<InstanceType<typeof BuildPicker> | null>(null)
@@ -318,6 +311,16 @@ function toggleOwned (item: PobGearItem) {
   owned.value = all
   try { localStorage.setItem(OWNED_KEY, JSON.stringify(all)) } catch {}
 }
+function rowMenu (item: PobGearItem): UiMenuItem[] {
+  return [
+    { label: 'Copy name for the in-game market', icon: 'far fa-copy', hint: `Copies '${item.searchText}': press / in game, then Ctrl+V`, action: () => copy(item.searchText, item.slot) },
+    ...(item.rarity === 'Rare' || item.rarity === 'Magic'
+      ? [{ label: 'Craft it', icon: 'fas fa-flask', hint: 'Craft tab with this base and mods, and a step-by-step plan', action: () => requestCraft(item) }]
+      : []),
+    { label: 'Stash / vendor search (regex)', icon: 'fas fa-code', checked: regexSlot.value === item.slot, action: () => toggleRegex(item.slot) },
+    ...(!props.desktop ? [{ label: 'Price check here', icon: 'fas fa-search-dollar', action: () => priceCheck(item, null) }] : [])
+  ]
+}
 function toggle (slot: string) {
   opened.value[slot] = !isOpen(slot)
 }
@@ -406,12 +409,12 @@ function saveRegex (item: PobGearItem) {
 }
 
 // Open the normal price check window for this item (stat filters, prices, build impact)
-function priceCheck (item: PobGearItem, e: MouseEvent) {
+function priceCheck (item: PobGearItem, e: MouseEvent | null) {
   if (props.hud) {
     // main opens it in the overlay and activates the overlay
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'price-check', text: item.text } })
     return
   }
-  openPriceCheck(item.text, { x: e.clientX, y: e.clientY })
+  openPriceCheck(item.text, e ? { x: e.clientX, y: e.clientY } : { x: Math.round(window.innerWidth / 2), y: 120 })
 }
 </script>
