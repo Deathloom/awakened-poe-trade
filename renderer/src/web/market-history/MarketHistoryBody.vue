@@ -1,16 +1,24 @@
 <template>
   <!-- Deathloom fork (body, used by the overlay widget and the desktop window): price trends for watched items (poe.ninja 7 days + points recorded by the overlay) -->
-  <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm" :style="fill ? { width: '100%', height: '100%' } : { width: '26rem', maxHeight: '80vh' }">
-    <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
+  <div class="widget-default-style flex flex-col text-gray-200 leading-tight text-sm" :style="fill ? { width: '100%', height: '100%' } : { width: '30rem', maxHeight: '80vh' }">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500"><i class="fas fa-chart-line mr-1" />Market</span>
-      <!-- Deathloom fork: Market overview is a tab here (was its own panel) -->
-      <template v-if="tabs !== false">
-        <button class="ui-tab" :class="{ 'ui-tab-on': tab === 'watched' }" @click="setTab('watched')">Watched</button>
-        <button class="ui-tab" :class="{ 'ui-tab-on': tab === 'all' }" @click="setTab('all')">All prices</button>
-      </template>
-      <span class="text-xs text-gray-500 ml-auto">{{ league ?? 'no league' }}</span>
+      <!-- Deathloom fork: Market overview is a tab here (was its own panel); 20 Nov: market tools tabs -->
+      <div class="flex flex-wrap gap-px">
+        <button v-for="t of shownTabs" :key="t.id" class="ui-tab" :class="{ 'ui-tab-on': curTab === t.id }" :title="t.tip" @click="setTab(t.id)">{{ t.label }}</button>
+      </div>
+      <div class="ml-auto flex items-center gap-x-2">
+        <span class="text-xs text-gray-500">{{ league ?? 'no league' }}</span>
+        <divine-chip />
+      </div>
     </div>
-    <div v-if="tabs !== false && tab === 'all'" class="flex-1 min-h-0" :style="fill ? {} : { height: '26rem' }"><MarketOverview /></div>
+    <div v-if="curTab === 'all'" class="flex-1 min-h-0" :style="fill ? {} : { height: '26rem' }"><MarketOverview /></div>
+    <div v-else-if="curTab !== 'watched'" class="flex-1 min-h-0" :style="fill ? {} : { height: '26rem' }">
+      <market-shopping v-if="curTab === 'shop'" />
+      <market-sell v-else-if="curTab === 'sell'" />
+      <market-farming v-else-if="curTab === 'farm'" />
+      <market-crafting v-else />
+    </div>
     <div v-else class="overflow-y-auto min-h-0 p-1">
       <div v-if="!items.length" class="p-1 text-gray-500">
         Nothing watched yet. Press the <i class="far fa-star" /> next to an item in the market list, or next to its poe.ninja price in a price check.
@@ -52,6 +60,11 @@
 
 <script setup lang="ts">
 import MarketOverview from './MarketOverview.vue'
+import MarketShopping from './MarketShopping.vue'
+import MarketSell from './MarketSell.vue'
+import MarketFarming from './MarketFarming.vue'
+import MarketCrafting from './MarketCrafting.vue'
+import DivineChip from './DivineChip.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import VueApexcharts from 'vue3-apexcharts'
@@ -62,8 +75,20 @@ import { watchlist, removeWatch, record, setAlert, checkAlert, ALERT_STEPS, type
 // active: the panel is on screen; fill: take the whole space (desktop window)
 const props = defineProps<{ active?: boolean, fill?: boolean, tabs?: boolean }>()
 const TAB_KEY = 'deathloom.market.tab.v1'
-const tab = ref<'watched' | 'all'>((() => { try { return localStorage.getItem(TAB_KEY) === 'all' ? 'all' : 'watched' } catch { return 'watched' } })())
-function setTab (t: 'watched' | 'all') {
+const TABS = [
+  { id: 'watched', label: 'Watched', tip: 'Items you watch: a week of prices and price alerts' },
+  { id: 'all', label: 'All prices', tip: 'Every poe.ninja price: risers, fallers, outlook' },
+  { id: 'shop', label: 'Shopping', tip: 'What your build still needs (uniques and gems) and what it costs' },
+  { id: 'sell', label: 'Sell list', tip: 'What you plan to sell: value now and whether to wait' },
+  { id: 'farm', label: 'Farming', tip: 'Profit per hour per strategy or league mechanic' },
+  { id: 'craft', label: 'Crafting', tip: 'Crafting currency prices and what your craft costs' }
+] as const
+type Tab = typeof TABS[number]['id']
+const tab = ref<Tab>((() => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(t => t.id === v) ? v as Tab : 'watched' } catch { return 'watched' } })())
+// the window's Market view shows All prices on the right, so that tab isn't listed there
+const shownTabs = computed(() => TABS.filter(t => props.tabs !== false || t.id !== 'all'))
+const curTab = computed<Tab>(() => props.tabs === false && tab.value === 'all' ? 'watched' : tab.value)
+function setTab (t: Tab) {
   tab.value = t
   try { localStorage.setItem(TAB_KEY, t) } catch {}
 }

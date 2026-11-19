@@ -697,3 +697,64 @@ test('gems merged view: status, change now, locked', async () => {
   assert.deepEqual(gm.changeNow(input, { now: [], drop: [], charGems: new Set() }).socket.map(g => g.name), ['Flame Dash'])
   assert.deepEqual(gm.countStatus(gm.mergedRows(input)), { have: 1, low: 1, missing: 1, locked: 1, unknown: 0 })
 })
+
+test('market tools: shopping list, sell list, farming, crafting, divine', async () => {
+  const mt = await import('./.build/market-tools.mjs')
+  const L = (ns, name, chaos, variant, graph = [0, 0, 0, 0, 0, 0, 0]) => ({ ns, name, chaos, variant, graph, category: 'x', url: 'u' })
+  const items = [
+    L('UNIQUE', 'Wickerman', 50), L('UNIQUE', 'Wickerman', 80, '6L'),
+    L('GEM', 'Arc', 5, '20/20'), L('GEM', 'Arc', 1, '1'), L('GEM', 'Arc', 0.5, '21/20c'),
+    L('GEM', 'Only Corrupt', 9, '21c'),
+    L('ITEM', 'Divine Orb', 150), L('ITEM', 'Orb of Alteration', 0.2)
+  ]
+  // cheapest: lowest price, corrupted gems only when nothing else
+  assert.equal(mt.cheapestByName(items, 'GEM', 'arc').chaos, 1)
+  assert.equal(mt.cheapestByName(items, 'GEM', 'Only Corrupt').chaos, 9)
+  assert.equal(mt.cheapestByName(items, 'UNIQUE', 'Wickerman').chaos, 50)
+
+  const shop = mt.shoppingList(
+    [{ slot: 'Ring 1', name: 'Wickerman', unique: true, owned: false }, { slot: 'Ring 2', name: 'Wickerman', unique: true, owned: true },
+      { slot: 'Helmet', name: 'Rare thing', unique: false, owned: false }, { slot: 'Boots', name: 'Unknown Unique', unique: true, owned: false }],
+    [{ name: 'Arc', enabled: true }, { name: 'Arc', enabled: true }, { name: 'Off Gem', enabled: false }],
+    items, new Set())
+  assert.equal(shop.rows.length, 3) // Wickerman (merged slots), Unknown Unique, Arc
+  assert.deepEqual(shop.rows.find(r => r.label === 'Wickerman').slots, ['Ring 1', 'Ring 2'])
+  assert.equal(shop.rows.find(r => r.label === 'Wickerman').owned, false) // one slot still missing
+  assert.equal(shop.total, 51)
+  assert.equal(shop.missing, 1)
+  assert.equal(shop.rares, 1)
+  assert.equal(mt.shoppingList([], [{ name: 'Arc', enabled: true }], items, new Set(['arc'])).total, 0)
+
+  assert.equal(mt.priceNote(300, 150), '~price 2 divine')
+  assert.equal(mt.priceNote(44.6, 150, '~b/o'), '~b/o 45 chaos')
+  assert.equal(mt.priceNote(0.2, 150), '~price 1 chaos')
+  assert.deepEqual(mt.sellTotal([{ qty: 2 }, { qty: 1 }], e => e.qty === 2 ? 10 : null), { chaos: 20, missing: 1 })
+  assert.equal(mt.sellHint(L('ITEM', 'x', 80, undefined, [0, -5, -10, -15, -20])).tone, 'sell')
+  assert.equal(mt.sellHint(L('ITEM', 'x', 120, undefined, [0, 5, 10, 15, 20])).tone, 'wait')
+  assert.equal(mt.sellHint(L('ITEM', 'x', 100, undefined, [0, 1])), null) // too few days
+
+  const runs = mt.runsFromSession([
+    { seed: 'a', code: 'MapX', start: 1, ms: 6 * 60_000, mechanics: ['Breach'], loot: 60, strategy: 'Breach' },
+    { seed: 'b', code: 'MapX', start: 2, ms: 6 * 60_000, mechanics: [], loot: 20 },
+    { seed: 'c', code: 'MapX', start: 3, ms: 6 * 60_000, mechanics: ['Breach'] }, // no loot typed: left out
+    { seed: 'd', code: 'MapX', start: 4, ms: 0, mechanics: [], loot: 5 } // not finished
+  ], 10, 'Covens')
+  assert.equal(runs.length, 2)
+  assert.equal(runs[1].strategy, 'No strategy set')
+  assert.equal(runs[0].league, 'Covens')
+  const st = mt.farmingStats(runs, 'strategy')
+  assert.equal(st[0].name, 'Breach')
+  assert.equal(st[0].perMap, 50)
+  assert.equal(Math.round(st[0].perHour), 500)
+  assert.equal(mt.farmingStats(runs, 'mechanic').find(s => s.name === 'No mechanic seen').maps, 1)
+  assert.equal(mt.mergeRuns(runs, [{ ...runs[0], loot: 99 }]).length, 2)
+  assert.equal(mt.mergeRuns(runs, [{ ...runs[0], loot: 99 }])[0].loot, 99)
+
+  const price = n => ({ 'Orb of Alteration': 0.2 })[n] ?? null
+  assert.deepEqual(mt.craftTotal([{ name: 'Orb of Alteration', count: 100 }, { name: 'Chaos Orb', count: 5 }, { name: 'Mystery', count: 1 }, { name: 'Zero', count: 0 }], price),
+    { chaos: 25, missing: ['Mystery'] })
+  assert.equal(mt.convert(300, 'chaos', 150), 2)
+  assert.equal(mt.convert(2, 'div', 150), 300)
+  assert.equal(mt.convert(2, 'div', undefined), null)
+  assert.equal(mt.divineSeries(items[6]).length, 7)
+})

@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#259): Market tools
+- **Shopping**: your followed build's uniques and gems with the cheapest poe.ninja price, a total of what's still to buy, and got-it ticks (uniques share the Build panel's tick).
+- **Sell list**: add what you plan to sell; today's value, a week of prices, a sell-soon / can-wait hint, and a copy button for a `~price` note.
+- **Farming**: name your strategy; maps with loot added in This session show profit per map and per hour by strategy or league mechanic (kept on this PC).
+- **Crafting**: crafting currency prices with a week's trend, how many per divine, and a sum of what your craft costs.
+- **Divine ratio and wallet**: the Market bar shows 1 div = … c with its trend; click for a chaos ↔ divine converter and your wallet total from the currency counter.
+
 ### Changed (#258): calmer Market, Trades, Board, Market search, Money and Cheat sheets
 - Same tab look in every panel header as the Build panel (Market, Trades, Friends' board, Money tools, Cheat sheets).
 - Market → Watched: each item keeps its Alert button; Open on poe.ninja and Stop watching moved into a ⋯ menu.

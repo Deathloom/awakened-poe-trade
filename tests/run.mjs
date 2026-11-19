@@ -42,7 +42,8 @@ const MODULES = {
   'gems-merged': 'renderer/src/web/pob/gems-merged.ts',
   'tree-step-logic': 'renderer/src/web/pob/tree-step-logic.ts',
   'item-defences': 'renderer/src/web/pob/item-defences.ts',
-  'loadout-steps': 'renderer/src/web/pob/loadout-steps.ts'
+  'loadout-steps': 'renderer/src/web/pob/loadout-steps.ts',
+  'market-tools': 'renderer/src/web/market-history/market-tools.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

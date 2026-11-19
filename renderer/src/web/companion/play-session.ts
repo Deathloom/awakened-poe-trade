@@ -5,6 +5,8 @@
 // shown in the Orbhoarder window.
 
 import { parseLogLine } from './game-log'
+import { AppConfig } from '@/web/Config'
+import { archiveRuns, loadStrategy, runsFromSession } from '../market-history/market-tools'
 
 export interface MapRun {
   code: string
@@ -18,6 +20,9 @@ export interface MapRun {
   mechanics: string[]
   // loot value in chaos, added by the player (Map profit)
   loot?: number
+  // Deathloom fork (20 Nov): farming strategy the player had set when the map started
+  strategy?: string
+  league?: string
 }
 
 export interface PlaySession {
@@ -72,6 +77,10 @@ const MECHANIC_SPEAKERS: Record<string, string> = {
   'gwennen': 'Expedition',
   'dannig': 'Expedition',
   'the trialmaster': 'Ultimatum'
+}
+
+function currentLeague (): string | undefined {
+  try { return AppConfig().leagueId || undefined } catch { return undefined }
 }
 
 export function mechanicOf (speaker: string): string | null {
@@ -144,6 +153,8 @@ export function loadLastSession (): SessionSummary | null {
 
 // keep a summary of a finished session (skipped when nothing happened in it)
 export function keepLastSession (s: PlaySession) {
+  // Deathloom fork (20 Nov): finished maps with loot go to the farming history (Market → Farming)
+  archiveRuns(runsFromSession(s.maps, loadMapCost()))
   if (!s.maps.length && !s.deaths && !Object.keys(s.levels).length && s.lastAt - s.start < 10 * 60_000) return
   try { localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(summarize(s))) } catch {}
 }
@@ -233,7 +244,7 @@ export function applySessionLines (start: PlaySession, lines: string[], lang: st
       v.here = { seed, code: ev.code, at: ts, mechanics: back ? v.here!.mechanics : [] }
       // a new map, or back into one opened earlier (portal from hideout)
       if (isMapArea(ev.code) && !v.maps.some(m => m.seed === seed && m.code === ev.code)) {
-        v.maps.push({ code: ev.code, name: '', level: ev.level, seed, start: ts, ms: 0, deaths: 0, mechanics: [] })
+        v.maps.push({ code: ev.code, name: '', level: ev.level, seed, start: ts, ms: 0, deaths: 0, mechanics: [], strategy: loadStrategy() || undefined, league: currentLeague() })
         if (v.maps.length > 60) v.maps.shift()
       } else if (isMapArea(ev.code)) {
         // returning to an earlier map: move it to the end so it's the current one
