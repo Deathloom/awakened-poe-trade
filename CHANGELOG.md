@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.92] - 2026-11-19
+
 ### Fixed (#237)
 - **Build → Gear → Trade** searches that item's base type (e.g. Profane Wand) with all its mods ticked (at least these values); before, the mods came through unticked and it searched any wand. **↑ upgrade** does the same for any base of that kind.
 
