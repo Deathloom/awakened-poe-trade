@@ -1,7 +1,14 @@
 <template>
   <div @mousedown="handleMouseDown">
     <div :class="[$style.widget, { 'opacity-75': isMoving }]" :style="widgetPosition">
-      <slot :isEditing="isEditing" :isMoving="isMoving" />
+      <!-- Deathloom fork: drag bar on top (same as the pinned panels); offset kept, no jump -->
+      <div v-if="grip" class="flex flex-col min-h-0">
+        <div :class="$style.grip" title="Drag to move" @mousedown.left.prevent="startGripDrag">
+          <i class="fas fa-grip-lines" /><span v-if="gripLabel" class="truncate">{{ gripLabel }}</span>
+        </div>
+        <slot :isEditing="isEditing" :isMoving="isMoving" />
+      </div>
+      <slot v-else :isEditing="isEditing" :isMoving="isMoving" />
       <div class="absolute px-1" :style="actionsPosition" style="background: rgba(0,0,0,0.01);">
         <div :class="$style.actionsPanel">
           <button v-if="hideable" @click="hide"
@@ -79,6 +86,14 @@ export default defineComponent({
     inlineEdit: {
       type: Boolean,
       default: true
+    },
+    grip: {
+      type: Boolean,
+      default: false
+    },
+    gripLabel: {
+      type: String,
+      default: ''
     }
   },
   setup (props) {
@@ -210,6 +225,21 @@ export default defineComponent({
     const isEditing = ref(false)
     const isMoving = ref(false)
 
+    function startGripDrag (e: MouseEvent) {
+      const start = { cx: e.clientX, cy: e.clientY, x: props.config.anchor.x, y: props.config.anchor.y }
+      const clamp = (v: number) => Math.min(Math.max(v, 0), 100)
+      function onMove (ev: MouseEvent) {
+        props.config.anchor.x = clamp(start.x + (ev.clientX - start.cx) / window.innerWidth * 100)
+        props.config.anchor.y = clamp(start.y + (ev.clientY - start.cy) / window.innerHeight * 100)
+      }
+      function onUp () {
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onUp)
+      }
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onUp)
+    }
+
     const { t } = useI18n()
 
     return {
@@ -224,6 +254,7 @@ export default defineComponent({
         }
       },
       startMove,
+      startGripDrag,
       isMoving,
       isEditing,
       isHandleShown (pos: string) {
@@ -299,6 +330,17 @@ export default defineComponent({
     background-size: 200% 100%;
     transition: background-position 1s ease-out;
     background-position: left bottom;
+  }
+}
+
+.grip {
+  @apply flex items-center justify-center gap-x-2 px-2 rounded-t bg-gray-900 text-gray-600 text-xs;
+  cursor: move;
+  user-select: none;
+  min-height: 1rem;
+
+  &:hover {
+    @apply text-gray-400;
   }
 }
 

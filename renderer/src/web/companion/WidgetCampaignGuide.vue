@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: campaign guide; follows the current zone from Client.txt -->
-  <Widget :config="config" move-handles="corners" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :grip="!inHud" :removable="false" :inline-edit="false">
     <CampaignGuideBody v-if="!inHud" />
   </Widget>
 </template>

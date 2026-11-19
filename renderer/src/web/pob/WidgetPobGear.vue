@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: the active PoB build's gear, with Copy / Trade / Check per item -->
-  <Widget :config="config" move-handles="corners" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :grip="!inHud" :removable="false" :inline-edit="false">
     <PobGearBody v-if="!inHud" :active="config.wmWants === 'show' && wm.active.value" />
   </Widget>
 </template>

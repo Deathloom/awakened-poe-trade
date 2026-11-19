@@ -2,11 +2,8 @@
   <!-- Deathloom fork: overlay widget for a panel that used to be only in the
        Orbhoarder window (tree map, atlas tree, this session, market overview).
        Same body as the window; one widget type per panel (panel-widgets.ts). -->
-  <Widget :config="config" move-handles="corners" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :grip="!inHud" :grip-label="def.label" :removable="false" :inline-edit="false">
     <div v-if="!inHud" class="widget-default-style p-1 flex flex-col" :style="{ width: def.w, height: def.h, maxHeight: '85vh' }">
-      <div class="flex items-center gap-x-2 px-1 pb-1 text-xs text-gray-400 shrink-0">
-        <i class="fas" :class="def.icon" /><span>{{ def.label }}</span>
-      </div>
       <div class="flex-1 min-h-0 flex flex-col rounded" :class="{ 'bg-gray-800': def.boxed }">
         <component :is="def.body" v-bind="def.props" />
       </div>
@@ -36,7 +33,7 @@ watch(inHud, (off) => {
   wm.setFlag(props.config.wmId, 'menu::skip', off)
   if (off && props.config.wmWants === 'show') wm.hide(props.config.wmId)
 }, { immediate: true })
-// hotkey (Settings → Path of Building → Where panels show); pinned ones toggle in the HUD window (main)
+// hotkey (Settings → Panels → Where panels show); pinned ones toggle in the HUD window (main)
 const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
   if (e.target !== `panel:${panel.value}` || inHud.value) return
   toggleFromHotkey(wm, props.config.wmId, props.config.wmWants)

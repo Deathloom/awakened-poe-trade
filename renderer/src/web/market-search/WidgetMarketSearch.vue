@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: market search (by name, no price check needed) -->
-  <Widget :config="config" move-handles="corners" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" grip :removable="false" :inline-edit="false">
     <div class="widget-default-style p-1 flex flex-col" style="height: 32rem; max-height: 80vh;">
       <MarketSearchBody ref="body" />
     </div>
@@ -53,7 +53,7 @@ watch(shown, (on) => {
   wmPlace.setFlag(props.config.wmId, 'menu::skip', !on)
   if (!on && props.config.wmWants === 'show') wmPlace.hide(props.config.wmId)
 }, { immediate: true })
-// hotkey (Settings → Path of Building): toggles it in the overlay (focused, so you can type)
+// hotkey (Settings → Hotkeys): toggles it in the overlay (focused, so you can type)
 const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
   if (e.target !== 'market-search' || !shown.value) return
   toggleFromHotkey(wmPlace, props.config.wmId, props.config.wmWants)

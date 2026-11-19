@@ -1,4 +1,4 @@
-// Deathloom fork: where each panel shows (Settings → Path of Building →
+// Deathloom fork: where each panel shows (Settings → Panels →
 // Where panels show). In game (HUD) is pob.hud.<panel>; this covers the
 // Shift+Space overlay and the Orbhoarder window's All tab.
 
