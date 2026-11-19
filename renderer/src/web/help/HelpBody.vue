@@ -46,7 +46,12 @@
               <b>Wanted</b>: what someone needs, press <b>I have one</b> and whisper them. <b>Post</b> adds your own: paste the item text (Ctrl+C on the item in game)
               or type a name. Mark yours <b>Sold</b> / <b>Given</b> / <b>Got it</b> when done. Also in the overlay menu (<i class="fas fa-people-carry" />)
               and on the All tab (Edit layout → Add panel).</li>
-            <li><b>Market</b>: your watchlist and a poe.ninja market overview.</li>
+            <li><b>Market</b>: your watchlist and a poe.ninja market overview, plus tools (tabs on the left):
+              <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, rares are left to the Build panel's Trade button),
+              <b>Sell list</b> (what you plan to sell: value now, a week of prices, "Falling: sell soon" or "Rising: can wait", and a copy button for a <code>~price</code> note),
+              <b>Farming</b> (name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
+              <b>Crafting</b> (crafting currency prices with a week's trend, and a sum of what your craft costs).
+              The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Money tools → Currency counter).</li>
             <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
             <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide and What's new.</li>
           </ul>
