@@ -102,7 +102,11 @@ export const usePoeninja = createGlobalState(() => {
 
   function queuePricesFetch () {
     lastInterestTime = Date.now()
-    load()
+    // Deathloom fork: a newer download cancels the older one (AbortError); that
+    // isn't a problem worth an automatic report
+    load().catch((e: unknown) => {
+      if ((e as Error)?.name !== 'AbortError') console.warn('[prices]', e)
+    })
   }
 
   function selectedLeagueToUrl (): string {
