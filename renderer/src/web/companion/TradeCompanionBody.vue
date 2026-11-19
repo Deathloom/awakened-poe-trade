@@ -25,7 +25,7 @@
           <span class="font-semibold truncate" :title="t.char">{{ t.char }}</span>
           <span v-if="inArea.has(t.char)" class="text-green-400 text-xs shrink-0">in your area</span>
           <span class="ml-auto text-gray-500 text-xs shrink-0">{{ ago(t.at) }}</span>
-          <button class="text-gray-500 hover:text-gray-200 shrink-0" title="Remove" @click="dismiss(t.id)"><i class="fas fa-times" /></button>
+          <button class="ui-btn ui-btn-quiet shrink-0" title="Remove" @click="dismiss(t.id)"><i class="fas fa-times" /></button>
         </div>
         <div class="truncate" :title="t.item">{{ t.item }}</div>
         <div class="flex gap-x-2 text-xs text-gray-400">
@@ -62,7 +62,7 @@
             <option value="buy">buying</option>
             <option value="both">both</option>
           </select>
-          <button class="text-gray-500 hover:text-gray-200" title="Remove" @click="quick.splice(i, 1)"><i class="fas fa-times" /></button>
+          <button class="ui-btn ui-btn-quiet" title="Remove" @click="quick.splice(i, 1)"><i class="fas fa-times" /></button>
         </div>
         <div class="flex gap-2 mt-1">
           <button class="btn" :disabled="quick.length >= MAX_QUICK" @click="quick.push({ label: '', text: '@{name} ', for: 'sell' })">Add</button>

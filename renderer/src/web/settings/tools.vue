@@ -51,7 +51,7 @@
           <div v-if="qrFor === u" class="mt-2 inline-block bg-white p-2 rounded" style="width: 14rem;" v-html="qrSvg(u)" />
         </div>
         <div class="text-gray-500 mt-1">The key is like a password: don't share the link outside your home. The connection isn't encrypted, so only use it on your own Wi-Fi.
-          <button class="underline hover:text-gray-200" @click="newKey">New key</button> (old links stop working).</div>
+          <button class="ui-btn ui-btn-quiet underline" @click="newKey">New key</button> (old links stop working).</div>
       </template>
     </div>
   </div>

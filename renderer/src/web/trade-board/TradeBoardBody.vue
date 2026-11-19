@@ -77,7 +77,7 @@
           <span :title="`GitHub: ${l.author}`"><i class="fab fa-github mr-0.5" />{{ l.author }}</span>
           <span v-if="l.character" class="text-gray-300">@{{ l.character }}</span>
           <span v-if="l.league" :class="l.league === league ? 'text-gray-500' : 'text-orange-400'" :title="l.league === league ? 'Your league' : 'Another league than yours'">{{ l.league }}</span>
-          <button v-if="l.item" class="text-gray-500 hover:text-gray-200" @click="toggle(l.number)">{{ open.has(l.number) ? 'hide item' : 'item text' }}</button>
+          <button v-if="l.item" class="ui-btn ui-btn-quiet" @click="toggle(l.number)">{{ open.has(l.number) ? 'hide item' : 'item text' }}</button>
         </div>
         <div v-if="l.note" class="text-xs text-gray-300 break-words">"{{ l.note }}"</div>
         <pre v-if="l.item && open.has(l.number)" class="text-xs text-gray-300 bg-gray-950 rounded p-1 mt-1 whitespace-pre-wrap break-words">{{ l.item }}</pre>

@@ -7,11 +7,11 @@
       <!-- stopwatch you start yourself (replaces the old Stopwatch widget) -->
       <span class="ml-auto flex items-center gap-x-1 text-gray-300" title="Stopwatch: start and pause it yourself">
         <i class="fas fa-hourglass-half text-gray-500" />{{ dur(watchMs) }}
-        <button class="text-gray-500 hover:text-gray-200 px-0.5" :title="watch.startedAt ? 'Pause' : 'Start'" @click="toggleWatch">
+        <button class="ui-btn ui-btn-quiet px-0.5" :title="watch.startedAt ? 'Pause' : 'Start'" @click="toggleWatch">
           <i class="fas" :class="watch.startedAt ? 'fa-pause' : 'fa-play'" /></button>
-        <button class="text-gray-500 hover:text-gray-200 px-0.5" title="Reset the stopwatch" @click="resetWatch"><i class="fas fa-undo" /></button>
+        <button class="ui-btn ui-btn-quiet px-0.5" title="Reset the stopwatch" @click="resetWatch"><i class="fas fa-undo" /></button>
       </span>
-      <button class="ml-3 text-gray-500 hover:text-gray-200" title="Start a new session (a new one also starts after 2 hours without playing)"
+      <button class="ui-btn ui-btn-quiet ml-3" title="Start a new session (a new one also starts after 2 hours without playing)"
         @click="reset"><i class="fas fa-redo mr-1" />New session</button>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2 py-1 space-y-1">

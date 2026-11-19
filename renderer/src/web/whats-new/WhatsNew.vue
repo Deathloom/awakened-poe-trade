@@ -6,7 +6,7 @@
       style="width: 40rem; max-width: 92%; max-height: 80%;">
       <div class="flex items-center px-3 py-2 bg-gray-900 rounded-t">
         <span class="text-lg"><i class="fas fa-gift mr-2 text-yellow-500" />What's new in Orbhoarder {{ current }}</span>
-        <button class="ml-auto text-gray-500 hover:text-gray-200" @click="close"><i class="fas fa-times" /></button>
+        <button class="ui-btn ui-btn-quiet ml-auto" @click="close"><i class="fas fa-times" /></button>
       </div>
       <div class="overflow-y-auto px-4 py-2 leading-snug">
         <div v-for="v of versions" :key="v.version" class="mb-3">

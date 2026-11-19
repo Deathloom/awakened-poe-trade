@@ -8,15 +8,11 @@
       <span v-if="areaLevel && !hideRoute" class="text-gray-500 text-xs" title="Level of the campaign zone you're in">area level {{ areaLevel }}</span>
       <span v-if="!hideRoute && step.act === 2" class="text-xs px-1 rounded bg-gray-800 text-yellow-300"
         :title="'Bandit choice from your Path of Building build (Configuration tab). Kill all three if the build says Kill all.'">Bandits: {{ BANDIT_LABEL[bandit] }}</span>
-      <div v-if="!hideRoute" class="ml-auto flex gap-x-2 text-gray-500">
-        <button class="hover:text-gray-200" title="Previous step" @click="move(-1)"><i class="fas fa-chevron-left" /></button>
-        <button class="hover:text-gray-200" title="Next step" @click="move(1)"><i class="fas fa-chevron-right" /></button>
-        <button class="hover:text-gray-200" :title="showAll ? 'Show fewer steps' : 'Show the whole act'" @click="showAll = !showAll">
-          <i class="fas" :class="showAll ? 'fa-compress-alt' : 'fa-list'" /></button>
-        <button class="hover:text-gray-200" :class="{ 'text-indigo-300': optional }"
-          :title="optional ? 'Optional quests shown (A Fixture of Fate, A Dirty Job, Bestel\'s Epic …). Click to hide them.' : 'Optional quests hidden. Click to show them.'"
-          @click="toggleOptional"><i class="fas fa-plus-square" /></button>
-        <button class="hover:text-gray-200" title="Start over (new character)" @click="reset"><i class="fas fa-undo" /></button>
+      <!-- Deathloom fork (19 Nov, calmer UI): step arrows + one ⋯ menu instead of five loose icons -->
+      <div v-if="!hideRoute" class="ml-auto flex items-center gap-x-1 shrink-0">
+        <button class="ui-btn ui-btn-quiet" title="Previous step" @click="move(-1)"><i class="fas fa-chevron-left" /></button>
+        <button class="ui-btn ui-btn-quiet" title="Next step" @click="move(1)"><i class="fas fa-chevron-right" /></button>
+        <ui-menu :items="guideMenu" align-right title="More: whole act, optional quests, start over" />
       </div>
     </div>
     <!-- Labyrinth: shown while in the lab, closes after Izaro or on leaving -->
@@ -26,7 +22,7 @@
       <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
       <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Orbhoarder window)"
         @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
-      <button class="text-gray-500 hover:text-gray-200" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
+      <button class="ui-btn ui-btn-quiet" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
     </div>
     <!-- Campaign finished for this character (Kitava in act 10, or it has been in a map) -->
     <div v-if="hideRoute" class="p-2 text-xs text-gray-400 leading-snug">
@@ -126,6 +122,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
+import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore, loadStepByChar, saveStepForChar, firstStepOfAct, campaignDone } from './campaign-route'
@@ -271,6 +268,12 @@ function move (d: number) {
   while (i > 0 && i < STEPS.length - 1 && !onlyActive(STEPS[i].only, bandit.value, optional.value)) i += d
   setIndex(i)
 }
+const guideMenu = computed<UiMenuItem[]>(() => [
+  { label: 'Show the whole act', icon: 'fas fa-list', checked: showAll.value, action: () => { showAll.value = !showAll.value } },
+  { label: 'Show optional quests', icon: 'fas fa-plus-square', checked: optional.value, hint: 'A Fixture of Fate, A Dirty Job, Bestel\'s Epic …', action: toggleOptional },
+  { divider: true },
+  { label: 'Start over (new character)', icon: 'fas fa-undo', action: reset }
+])
 function reset () { setIndex(0); lastZone.value = ''; matched.value = true; showRouteAnyway.value = true }
 
 const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {

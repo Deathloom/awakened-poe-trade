@@ -27,13 +27,13 @@
       <span v-else-if="alloc"><i class="fas fa-circle text-yellow-400" /> in the build</span>
       <span class="flex-1" />
       <input v-if="!compact" v-model="search" class="px-1 rounded bg-gray-800 text-gray-200 w-40" placeholder="Search nodes / stats" spellcheck="false">
-      <button v-if="alloc || live || levelPlan" class="text-gray-500 hover:text-gray-200" :title="levelPlan ? 'Zoom to the next passives' : 'Zoom to the passives still to take (or the build)'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
+      <button v-if="alloc || live || levelPlan" class="ui-btn ui-btn-quiet" :title="levelPlan ? 'Zoom to the next passives' : 'Zoom to the passives still to take (or the build)'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
       <button v-if="!compact" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it). Saved to the build file; masteries are picked in Path of Building."
         :disabled="editBusy" @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
       <span v-if="editError" class="text-red-400">{{ editError }}</span>
-      <button class="text-gray-500 hover:text-gray-200" title="Fit the tree in the window" @click="fit"><i class="fas fa-expand" /></button>
-      <button class="text-gray-500 hover:text-gray-200" title="Reload (and fetch the character again, rate-limited)"
+      <button class="ui-btn ui-btn-quiet" title="Fit the tree in the window" @click="fit"><i class="fas fa-expand" /></button>
+      <button class="ui-btn ui-btn-quiet" title="Reload (and fetch the character again, rate-limited)"
         :disabled="loading" @click="request(true)"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
     </div>
     <div v-if="error" class="px-2 text-gray-400">{{ error }}</div>

@@ -32,7 +32,7 @@
     <div v-if="filterReminder" class="shrink-0 px-2 py-1 text-xs text-gray-400 bg-gray-900 border-b border-gray-700">
       <i class="fas fa-filter mr-1" />Loot filter for {{ filterReminder.build }}: <span class="text-gray-200">{{ filterReminder.name }}</span>
       <button class="ml-1 text-blue-400 hover:underline" @click="setTab('notes')">Notes</button>
-      <button class="ml-1 text-gray-500 hover:text-gray-200" title="Hide until the build changes" @click="hiddenFilterFor = notesState?.build ?? ''"><i class="fas fa-times" /></button>
+      <button class="ui-btn ui-btn-quiet ml-1" title="Hide until the build changes" @click="hiddenFilterFor = notesState?.build ?? ''"><i class="fas fa-times" /></button>
     </div>
     <pob-gems v-if="tab === 'gems'" ref="gemsRef" />
     <pob-tree v-else-if="tab === 'tree'" ref="treeRef" />

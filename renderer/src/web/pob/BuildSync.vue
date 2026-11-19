@@ -34,7 +34,7 @@
         <span class="text-gray-400 truncate">
           <i class="fab fa-github mr-1" />{{ status.signedIn ? status.login ?? 'GitHub user' : 'Pasted token (from PoB)' }}
         </span>
-        <button v-if="status.signedIn" class="ml-auto text-gray-500 hover:text-gray-200 shrink-0" title="Sign out on this PC (PoB too)"
+        <button v-if="status.signedIn" class="ui-btn ui-btn-quiet ml-auto shrink-0" title="Sign out on this PC (PoB too)"
           :disabled="Boolean(state.busy)" @click="send({ op: 'signOut' })">Sign out</button>
       </div>
       <div class="flex items-center gap-x-2" title="Your own folder in the builds folder. Only this folder is uploaded. Letters, numbers, _ - . only.">

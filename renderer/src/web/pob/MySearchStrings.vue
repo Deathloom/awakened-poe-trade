@@ -14,7 +14,7 @@
         <template v-if="!readOnly">
           <hotkey-input class="w-24 text-xs" :model-value="s.hotkey" title="Hotkey: types it into the stash or vendor search"
             @update:model-value="setHotkey(s.id, $event)" />
-          <button class="text-gray-500 hover:text-gray-200 px-1" title="Delete" @click="remove(s.id)"><i class="fas fa-trash" /></button>
+          <button class="ui-btn ui-btn-quiet px-1" title="Delete" @click="remove(s.id)"><i class="fas fa-trash" /></button>
         </template>
         <span v-else-if="s.hotkey" class="text-xs text-gray-500">{{ s.hotkey }}</span>
       </div>

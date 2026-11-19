@@ -6,7 +6,7 @@
     <div class="flex items-center gap-x-2">
       <span class="text-gray-400">Manage builds</span>
       <input v-model="filter" type="text" placeholder="Filter…" class="bg-gray-900 rounded px-1 w-40">
-      <button class="ml-auto text-gray-500 hover:text-gray-200" title="Reload" :disabled="busy" @click="load"><i class="fas fa-sync-alt" :class="{ 'fa-spin': busy }" /></button>
+      <button class="ui-btn ui-btn-quiet ml-auto" title="Reload" :disabled="busy" @click="load"><i class="fas fa-sync-alt" :class="{ 'fa-spin': busy }" /></button>
     </div>
     <div v-if="error" class="text-red-400">{{ error }}</div>
     <div v-if="notOwn" class="text-gray-500">You're looking at {{ list?.player }}'s builds. Switch Player back to yourself to manage your own.</div>
@@ -17,26 +17,26 @@
           <template v-if="editing === b.path && mode === 'rename'">
             <input ref="editEl" v-model="editText" class="flex-1 bg-gray-900 rounded px-1" @keydown.enter="apply(b.path)" @keydown.esc="editing = null">
             <button class="px-2 rounded bg-gray-600 hover:bg-gray-500" @click="apply(b.path)">Rename</button>
-            <button class="text-gray-500 hover:text-gray-200" @click="editing = null">Cancel</button>
+            <button class="ui-btn ui-btn-quiet" @click="editing = null">Cancel</button>
           </template>
           <template v-else-if="editing === b.path && mode === 'move'">
             <span class="truncate">{{ b.label }} →</span>
             <input v-model="editText" list="lg-build-folders" placeholder="Folder, e.g. 3.30/Witch (empty = top)"
               class="flex-1 bg-gray-900 rounded px-1" @keydown.enter="apply(b.path)" @keydown.esc="editing = null">
             <button class="px-2 rounded bg-gray-600 hover:bg-gray-500" @click="apply(b.path)">Move</button>
-            <button class="text-gray-500 hover:text-gray-200" @click="editing = null">Cancel</button>
+            <button class="ui-btn ui-btn-quiet" @click="editing = null">Cancel</button>
           </template>
           <template v-else-if="editing === b.path && mode === 'delete'">
             <span class="flex-1 truncate text-red-300">Delete {{ b.label }}? It's deleted on GitHub too; a copy stays in "Deleted builds".</span>
             <button class="px-2 rounded bg-red-700 hover:bg-red-600" @click="apply(b.path)">Delete</button>
-            <button class="text-gray-500 hover:text-gray-200" @click="editing = null">Cancel</button>
+            <button class="ui-btn ui-btn-quiet" @click="editing = null">Cancel</button>
           </template>
           <template v-else>
             <span class="flex-1 truncate" :class="b.path === list?.active ? 'text-yellow-300' : 'text-gray-200'"
               :title="b.path === list?.active ? 'Active build' : b.path">{{ b.label }}</span>
-            <button class="text-gray-500 hover:text-gray-200" title="Rename" :disabled="busy" @click="start(b, 'rename')"><i class="fas fa-i-cursor" /></button>
-            <button class="text-gray-500 hover:text-gray-200" title="Move to a folder" :disabled="busy" @click="start(b, 'move')"><i class="fas fa-folder-open" /></button>
-            <button class="text-gray-500 hover:text-gray-200" title="Duplicate" :disabled="busy" @click="run('duplicate', b.path)"><i class="fas fa-clone" /></button>
+            <button class="ui-btn ui-btn-quiet" title="Rename" :disabled="busy" @click="start(b, 'rename')"><i class="fas fa-i-cursor" /></button>
+            <button class="ui-btn ui-btn-quiet" title="Move to a folder" :disabled="busy" @click="start(b, 'move')"><i class="fas fa-folder-open" /></button>
+            <button class="ui-btn ui-btn-quiet" title="Duplicate" :disabled="busy" @click="run('duplicate', b.path)"><i class="fas fa-clone" /></button>
             <button class="text-gray-500 hover:text-red-400" title="Delete" :disabled="busy" @click="start(b, 'delete')"><i class="fas fa-trash" /></button>
           </template>
         </div>

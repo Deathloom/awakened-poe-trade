@@ -142,7 +142,7 @@
 
       <!-- Coming up: collapsed -->
       <div v-if="later.length || swap" class="rounded px-1 py-1 mb-1 bg-gray-900">
-        <button class="lg-head text-gray-400 hover:text-gray-200 w-full text-left" @click="setUpOpen(!upOpen)">
+        <button class="ui-btn ui-btn-quiet lg-head w-full text-left" @click="setUpOpen(!upOpen)">
           <i class="fas mr-1" :class="upOpen ? 'fa-caret-down' : 'fa-caret-right'" />Coming up
           <span class="normal-case tracking-normal text-gray-500">{{ swap ? `· next stage at level ${swap.level}` : `· ${later.length} gem${later.length > 1 ? 's' : ''} later` }}</span>
         </button>
@@ -164,7 +164,7 @@
       </div>
 
       <div v-if="view.hidden.length" class="px-1 pb-1 text-xs text-gray-500">
-        <button class="hover:text-gray-200" @click="showHidden = !showHidden">
+        <button class="ui-btn ui-btn-quiet" @click="showHidden = !showHidden">
           <i class="fas" :class="showHidden ? 'fa-caret-down' : 'fa-caret-right'" />
           {{ view.hidden.length }} group{{ view.hidden.length > 1 ? 's' : '' }} switched off in PoB
         </button>

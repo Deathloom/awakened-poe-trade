@@ -13,7 +13,7 @@
         <option value="">Right build…</option>
         <option v-for="p of builds" :key="p" :value="p">{{ label(p) }}</option>
       </select>
-      <button class="text-gray-500 hover:text-gray-200" title="Swap left and right" @click="[pathA, pathB] = [pathB, pathA]"><i class="fas fa-exchange-alt" /></button>
+      <button class="ui-btn ui-btn-quiet" title="Swap left and right" @click="[pathA, pathB] = [pathB, pathA]"><i class="fas fa-exchange-alt" /></button>
       <button class="px-2 rounded bg-gray-600 hover:bg-gray-500 disabled:opacity-50" :disabled="busy || !pathA || !pathB || pathA === pathB" @click="run">
         <i v-if="busy" class="fas fa-spinner fa-spin mr-1" />Compare</button>
     </div>
@@ -50,7 +50,7 @@
         </select>
       </div>
       <div v-if="me.manageError.value" class="mt-0.5 text-red-400">{{ me.manageError.value }}</div>
-      <button class="mt-0.5 text-gray-400 hover:text-gray-200" @click="toggleSetup">
+      <button class="ui-btn ui-btn-quiet mt-0.5" @click="toggleSetup">
         <i class="fas" :class="setupOpen ? 'fa-caret-down' : 'fa-caret-right'" /> {{ mineExists ? 'How to update it, or set it up again' : 'How to set it up (first time)' }}</button>
       <div v-if="setupOpen" class="pl-2">
         <ol class="mt-0.5 list-decimal pl-4 space-y-0.5">
