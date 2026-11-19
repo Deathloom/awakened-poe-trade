@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#250): one Gems view, and your character's file belongs to the character
+- **Gems** is one view instead of "For my level" and "Whole build": a top bar (level, the build's stage, **Equipped from: my ticks / my character**), a **Change now** box only when there's something to do (take out, socket, level up, with counts), the gear pieces with each link group's gems marked ✓ have / ◐ lower / ○ missing / 🔒 at level X plus build and your sockets, and **Coming up** (next stage) collapsed at the bottom. With stages, only the current stage's groups show.
+- **Your character's file** is now "My characters/<character name>.xml" (name from the game log, or typed in once), not "<build> (my character)". Any build you follow compares against it, so renaming or updating the build doesn't break it. Pick or change the file per character; an older "(my character)" copy is offered with **Use it**. Compare, the Gems tab and Help are updated.
+
 ### Added (#249): Gems tab compares with your character (optional)
 - Gems → Whole build has a **Compare with my character** tickbox (off by default). It reads the "(my character)" copy that Path of Building imported and marks each gem ok / lower level or quality / missing, with your sockets per slot. Re-read after saving in PoB.
 - Compare (Build → ⋯): shows whether it's set up, a clearer first-time guide (which file to open, account name with #1234, tick Delete equipment/skills, Items and Skills only), what to do when gear changes, and how to open Path of Building yourself (button, tray icon, Settings → Hotkeys).

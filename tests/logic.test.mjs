@@ -611,11 +611,8 @@ test('compare: mods matched by wording, values compared', async () => {
 const gemsMod = await import('./.build/gems.mjs')
 const myChar = await import('./.build/my-character.mjs')
 test('my character file: Gems tab reads the PoB-imported copy', () => {
-  assert.equal(myChar.minePathOf('Storm Burst.xml'), 'Storm Burst (my character).xml')
-  assert.equal(myChar.minePathOf('a/Storm Burst (My Character).xml'), 'a/Storm Burst (My Character).xml')
-  assert.equal(myChar.planPathOf('X (my character).xml', ['X.xml']), 'X.xml')
-  assert.equal(myChar.mineExistsIn('X.xml', ['x (MY CHARACTER).xml']), true)
-  assert.equal(myChar.mineExistsIn('X.xml', ['X.xml']), false)
+  assert.equal(myChar.legacyPathOf('Storm Burst.xml'), 'Storm Burst (my character).xml')
+  assert.equal(myChar.planPathOf('X (my character).xml', ['X.xml'], null), 'X.xml')
   const it = buildXml.parseItemText('Rarity: RARE\nDoom Hood\nHubris Circlet\nSockets: B-B-B R\nLevelReq: 69\n+90 to maximum Life')
   assert.equal(it.sockets, 'B-B-B R')
   assert.deepEqual(it.mods, ['+90 to maximum Life'])
@@ -631,4 +628,72 @@ test('my character file: Gems tab reads the PoB-imported copy', () => {
   const cmp = gemsMod.compareGems([{ index: 0, slot: 'Helmet', enabled: true, gems: [{ name: 'Storm Burst', level: 20, quality: 20, enabled: true, support: false }, { name: 'Faster Casting', level: 20, enabled: true, support: true }] }], live.groups)
   assert.equal(cmp.lowCount, 1)
   assert.equal(cmp.missingCount, 1)
+})
+
+test('my character file: named after the character, linked, survives build renames', () => {
+  const m = myChar
+  assert.equal(m.charFilePath('Deathloom_Totems'), 'My characters/Deathloom_Totems.xml')
+  assert.equal(m.safeCharName('a/b:c. '), 'a_b_c')
+  // Windows paths from the builds list, any letter case
+  const builds = ['3.30\\Storm Burst.xml', 'My characters\\deathloom_totems.xml', 'Old (my character).xml']
+  let r = m.resolveMine('Deathloom_Totems', builds, {}, '3.30\\Storm Burst.xml')
+  assert.deepEqual(r, { path: 'My characters\\deathloom_totems.xml', how: 'named', legacy: null })
+  // build renamed: still found (the file doesn't depend on the build's name)
+  r = m.resolveMine('Deathloom_Totems', ['3.30\\Storm Burst v2.xml', ...builds.slice(1)], {}, '3.30\\Storm Burst v2.xml')
+  assert.equal(r.how, 'named')
+  // link wins; a dead link falls back to the name
+  const links = m.withLink({}, 'Deathloom_Totems', 'Old (my character).xml')
+  assert.equal(m.resolveMine('deathloom_totems', builds, links, null).path, 'Old (my character).xml')
+  assert.equal(m.resolveMine('Deathloom_Totems', builds.slice(0, 2), links, null).how, 'named')
+  assert.deepEqual(m.withLink(links, 'DEATHLOOM_TOTEMS', null), {})
+  // nothing set up: offer the old copy of the active build first
+  r = m.resolveMine('Other', ['A.xml', 'A (my character).xml', 'Z (my character).xml'], {}, 'Z.xml')
+  assert.deepEqual(r, { path: null, how: null, legacy: 'Z (my character).xml' })
+  assert.equal(m.resolveMine('', ['A.xml'], {}, 'A.xml').legacy, null)
+  assert.deepEqual(m.characterFiles(builds), ['My characters\\deathloom_totems.xml', 'Old (my character).xml'])
+  // active is the character file (opened in PoB): plan = last followed build
+  assert.equal(m.planPathOf('My characters\\x.xml', builds, '3.30\\Storm Burst.xml'), '3.30\\Storm Burst.xml')
+  assert.equal(m.planPathOf('A.xml', builds, 'B.xml'), 'A.xml')
+})
+
+test('gems merged view: status, change now, locked', async () => {
+  const gm = await import('./.build/gems-merged.mjs')
+  const build = [
+    { index: 0, slot: 'Helmet', enabled: true, gems: [
+      { name: 'Storm Burst', level: 20, quality: 20, enabled: true, support: false },
+      { name: 'Spell Totem Support', level: 20, enabled: true, support: true },
+      { name: 'Awakened Added Lightning Damage Support', level: 1, enabled: true, support: true }] },
+    { index: 1, slot: 'Boots', enabled: true, gems: [{ name: 'Flame Dash', level: 10, enabled: true, support: false }] }
+  ]
+  const mine = [{ index: 0, slot: 'Helmet', enabled: true, gems: [
+    { name: 'Storm Burst', level: 18, quality: 0, enabled: true, support: false },
+    { name: 'Spell Totem', level: 20, enabled: true, support: false },
+    { name: 'Rolling Magma', level: 10, enabled: true, support: false }] }]
+  const req = new Map([['storm burst', 12], ['spell totem', 8], ['awakened added lightning damage', 72], ['flame dash', 10]])
+  const rows = gemsMod.compareGems(build, mine).groups
+  const input = { rows, level: 30, reqLevels: req, source: 'mine', ticks: new Set(), mineReady: true }
+  const st = gm.mergedRows(input).flatMap(r => r.gems.map(g => `${g.name}:${g.status}`))
+  assert.deepEqual(st, ['Storm Burst:low', 'Spell Totem Support:have', 'Awakened Added Lightning Damage Support:locked', 'Flame Dash:missing'])
+  const plan = (name, reqLevel, slot) => ({ name, reqLevel, slot, support: false })
+  const ch = gm.changeNow(input, {
+    now: [plan('Storm Burst', 12), plan('Flame Dash', 10, 'Boots'), plan('Flame Dash', 10), plan('Awakened Added Lightning Damage Support', 72)],
+    drop: [plan('Rolling Magma', 1), plan('Freezing Pulse', 1)],
+    charGems: new Set(mine[0].gems.map(g => gm.gemKey(g.name)))
+  })
+  assert.deepEqual(ch.takeOut, ['Rolling Magma'])
+  assert.deepEqual(ch.socket.map(g => g.name), ['Flame Dash'])
+  assert.deepEqual(ch.levelUp, [{ name: 'Storm Burst', have: '18/0', want: '20/20' }])
+  assert.equal(ch.total, 3)
+  // ticks: ticked = have, nothing to level up, take out only what's ticked
+  const tin = { ...input, source: 'ticks', ticks: new Set(['Storm Burst', 'Freezing Pulse']), mineReady: false }
+  assert.deepEqual(gm.mergedRows(tin)[0].gems.map(g => g.status), ['have', 'missing', 'locked'])
+  const ct = gm.changeNow(tin, { now: [plan('Storm Burst', 12), plan('Flame Dash', 10)], drop: [plan('Rolling Magma', 1), plan('Freezing Pulse', 1)], charGems: new Set() })
+  assert.deepEqual([ct.takeOut, ct.socket.map(g => g.name), ct.levelUp], [['Freezing Pulse'], ['Flame Dash'], []])
+  // my character not read yet: nothing to change, statuses unknown (locked still shows)
+  const none = { ...input, mineReady: false }
+  assert.equal(gm.changeNow(none, { now: [plan('Flame Dash', 10)], drop: [], charGems: new Set() }).total, 0)
+  assert.deepEqual(gm.mergedRows(none)[0].gems.map(g => g.status), ['unknown', 'unknown', 'locked'])
+  // no plan: socket comes from the gear pieces' missing gems
+  assert.deepEqual(gm.changeNow(input, { now: [], drop: [], charGems: new Set() }).socket.map(g => g.name), ['Flame Dash'])
+  assert.deepEqual(gm.countStatus(gm.mergedRows(input)), { have: 1, low: 1, missing: 1, locked: 1, unknown: 0 })
 })

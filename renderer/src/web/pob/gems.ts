@@ -305,8 +305,8 @@ export function bySlot (
   return { slots, hidden }
 }
 
-// Deathloom fork (Gerhard 19 Nov 2026): your character from the "(my character)"
-// build file that Path of Building imported, in the same shape as PoB's live gems.
+// Deathloom fork (Gerhard 19 Nov 2026): your character from their file
+// ("My characters/<name>.xml", my-character.ts) that Path of Building imported, in the same shape as PoB's live gems.
 // Orbhoarder only reads the saved file; PoB did the import.
 export function liveFromSummary (s: PobBuildSummary): { groups: PobSocketGroup[], items: PobSocketedItem[] } {
   return {
