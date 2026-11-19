@@ -52,7 +52,11 @@ export const CATEGORY_TO_TRADE_ID = new Map([
   [ItemCategory.Charm, 'azmeri.charm'],
   [ItemCategory.Idol, 'idol'],
   [ItemCategory.Graft, 'graft'],
-  [ItemCategory.Chart, 'chart']
+  [ItemCategory.Chart, 'chart'],
+  [ItemCategory.HeadViscera, 'viscera.head'],
+  [ItemCategory.TorsoViscera, 'viscera.body'],
+  [ItemCategory.LowerLimbViscera, 'viscera.leg'],
+  [ItemCategory.UpperLimbViscera, 'viscera.arm']
 ])
 
 const TOTAL_MODS_TEXT = {
@@ -129,6 +133,7 @@ interface TradeRequest {
           quality?: FilterRange
           gem_level?: FilterRange
           corrupted?: FilterBoolean
+          twice_corrupted?: FilterBoolean
           fractured_item?: FilterBoolean
           gem_imbued?: FilterBoolean
           mirrored?: FilterBoolean
@@ -333,6 +338,9 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
   if (filters.corrupted?.value === false || filters.corrupted?.exact) {
     propSet(query.filters, 'misc_filters.filters.corrupted.option', String(filters.corrupted.value))
   }
+  if (filters.corrupted?.value === true && filters.corrupted.twice === false) {
+    propSet(query.filters, 'misc_filters.filters.twice_corrupted.option', String(filters.corrupted.twice))
+  }
   if (filters.fractured?.value === false) {
     propSet(query.filters, 'misc_filters.filters.fractured_item.option', String(false))
   }
@@ -350,6 +358,9 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
   }
   if (filters.mirrored?.disabled) {
     propSet(query.filters, 'misc_filters.filters.mirrored.option', String(false))
+  }
+  if (filters.notCatalysed && !filters.notCatalysed.disabled) {
+    propSet(query.filters, 'misc_filters.filters.quality.max', 0)
   }
 
   if (filters.gemLevel && !filters.gemLevel.disabled) {

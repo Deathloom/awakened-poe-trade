@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#240): merged upstream Awakened PoE Trade (3.30 updates, 17–19 Nov)
+- Game data updated to 3.30.0.3 (items, mods, trade stats in all languages).
+- Price check: Atlas Drops is its own map filter (next to Item Quantity), Twice Corrupted items show "Twice corrupted", Viscera and Threads supported, rare-only mods and 9-mod maps, new textual ranges, mod reminder text, "Not Catalysed" filter for jewellery, updated Chronicle of Atzoatl rooms. These replace Orbhoarder's own earlier stopgaps for Atlas Drops, Twice Corrupted and the temple rooms.
+
 ## [1.0.92] - 2026-11-19
 
 ### Fixed (#237)
