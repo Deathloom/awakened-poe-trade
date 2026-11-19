@@ -20,6 +20,7 @@ import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
 import { LIVE_CHARACTER_DATA, LIVE_CHARACTER_OFF, LiveGear, HttpError, type FetchFn } from './LiveGear'
 import { pobDefaults, withDefaults, isLegacyPobSetting, type PobDefaults } from './defaults'
 import { findExistingBuilds, copyBuilds } from './ExistingPob'
+import { isCodeError } from '../ErrorReporter'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
@@ -508,7 +509,7 @@ export class PobImpact {
             if (reply.ok) p.resolve(reply)
             else {
               const msg = String(reply.error ?? 'Unknown error')
-              if (/\.lua:\d+:/.test(msg)) this.onCodeError(msg)
+              if (isCodeError(msg)) this.onCodeError(msg)
               p.reject(new Error(msg))
             }
           }
