@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#254): "vs character" said "equipped needs 'items'"
+- Path of Building only updated at the next Orbhoarder start when its window was open, so the new character-file compare hit the old PoB. Orbhoarder now checks every minute and updates PoB as soon as its window is closed. Until then the price check says to close PoB instead of showing the raw error.
+- Price check: "vs build gear" / "vs character" now look like buttons; when "vs character" can't be used, it's greyed out and its tooltip says why.
+
 ### Fixed (#253): Path of Building slow to start gave errors
 - Orbhoarder now starts Path of Building in the background and loads your build a few seconds after it opens (and after PoB settings change), so the Build panel and price check don't hit a cold start. Loading or editing a build may take up to 2½ minutes before it counts as an error (was 30 seconds); other requests wait for it instead of failing.
 

@@ -65,6 +65,23 @@ export class PobInstaller {
 
   get installed () { return isInstalled(this.state.dir) }
 
+  // Deathloom fork (19 Nov 2026): the update was skipped because the PoB window was open
+  // (the "Update in PoB" flow keeps it open for a while). Check every minute and update
+  // as soon as it's closed, instead of waiting for the next Orbhoarder start.
+  private retryTimer: NodeJS.Timeout | null = null
+  private retryWhenClosed () {
+    if (this.retryTimer) return
+    this.retryTimer = setInterval(() => {
+      if (this.running) return
+      void isPobWindowRunning().then((open) => {
+        if (open || !this.retryTimer) return
+        clearInterval(this.retryTimer)
+        this.retryTimer = null
+        void this.ensure()
+      })
+    }, 60_000)
+  }
+
   private publish (patch: Partial<PobInstallState> = {}) {
     this.state = { ...this.state, ...patch }
     this.server.sendEventTo('broadcast', {
@@ -96,7 +113,8 @@ export class PobInstaller {
     const dir = this.state.dir
     const fresh = !isInstalled(dir)
     if (!fresh && !repair && await isPobWindowRunning()) {
-      this.logger.write('info [PoB install] PoB window open; checking next start')
+      this.logger.write('info [PoB install] PoB window open; checking again once it is closed')
+      this.retryWhenClosed()
       return
     }
     // A copy left inside the install folder (older Orbhoarder, or the installer couldn't move it)
