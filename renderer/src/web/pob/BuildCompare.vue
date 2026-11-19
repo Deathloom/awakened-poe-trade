@@ -23,23 +23,42 @@
     <div v-if="active" class="rounded bg-gray-900 px-2 py-1 text-xs text-gray-400">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span class="text-gray-200"><i class="fas fa-user-check mr-1" />Your character vs this build</span>
-        <button v-if="!mineExists" class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="busy"
-          :title="`Copies '${label(active)}' to '${label(minePath)}' in your folder`" @click="makeMine">Make the copy</button>
+        <button v-if="!mineExists && me.charName.value" class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="busy || me.busy.value"
+          :title="`Copies '${label(planPath)}' to '${label(minePath)}' in your folder`" @click="makeMine">Make {{ label(minePath) }}</button>
         <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" :title="`Opens Path of Building. There: open '${label(minePath)}', Import/Export Build → Import character → Items and Skills, then save.`" @click="openPob">{{ mineExists ? 'Update gear in Path of Building' : 'Open Path of Building' }}</button>
         <button v-if="mineExists" class="px-2 rounded bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50" :disabled="busy" :title="`Your character (left, blue) vs the build you follow (right, yellow), gear first. Uses what Path of Building last saved.`" @click="compareMine">Compare gear</button>
       </div>
       <div class="mt-0.5" :class="mineExists ? 'text-green-400' : 'text-yellow-500'">
-        {{ mineExists ? `Set up: ${label(minePath)} holds your character.` : 'Not set up yet for this build (once per build, about 2 minutes).' }}
+        {{ mineExists ? `Set up: ${label(minePath)} holds ${me.charName.value || 'your character'}. Any build you follow compares against it.` : 'Not set up yet for this character (once per character, about 2 minutes).' }}
       </div>
+      <!-- Deathloom fork (Gerhard 19 Nov 2026): the file belongs to the character, not the build -->
+      <div v-if="!me.charName.value" class="mt-0.5 flex items-center gap-x-1">
+        <span>Character name:</span>
+        <input v-model="nameDraft" class="bg-gray-700 rounded px-1 w-36" placeholder="as in game" @keydown.enter="me.setTypedName(nameDraft)">
+        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="!nameDraft.trim()" @click="me.setTypedName(nameDraft)">OK</button>
+        <span class="text-gray-500">(the game log hasn't seen a level-up yet)</span>
+      </div>
+      <div v-if="!mineExists && me.resolved.value.legacy && me.charName.value" class="mt-0.5 flex items-center gap-x-2">
+        <span>Found an older copy: <b class="text-gray-300">{{ label(me.resolved.value.legacy) }}</b></span>
+        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="me.link(me.resolved.value.legacy)">Use it</button>
+      </div>
+      <div v-if="me.charName.value && me.files.value.length" class="mt-0.5 flex items-center gap-x-1">
+        <span>File for {{ me.charName.value }}:</span>
+        <select class="bg-gray-800 rounded px-1 max-w-[16rem]" :value="me.minePath.value ?? ''" @change="me.link(($event.target as HTMLSelectElement).value || null)">
+          <option value="">(none)</option>
+          <option v-for="f of me.files.value" :key="f" :value="f">{{ label(f) }}</option>
+        </select>
+      </div>
+      <div v-if="me.manageError.value" class="mt-0.5 text-red-400">{{ me.manageError.value }}</div>
       <button class="mt-0.5 text-gray-400 hover:text-gray-200" @click="toggleSetup">
         <i class="fas" :class="setupOpen ? 'fa-caret-down' : 'fa-caret-right'" /> {{ mineExists ? 'How to update it, or set it up again' : 'How to set it up (first time)' }}</button>
       <div v-if="setupOpen" class="pl-2">
         <ol class="mt-0.5 list-decimal pl-4 space-y-0.5">
-          <li><b class="text-gray-300">Make the copy</b> (button above). It copies the build you follow to <b class="text-gray-300">{{ label(minePath) }}</b> and opens Path of Building. Your build itself is never changed.</li>
+          <li><b class="text-gray-300">Make {{ label(minePath) || 'My characters/<your character>' }}</b> (button above). It copies the build you follow into the <b class="text-gray-300">My characters</b> folder and opens Path of Building. Your build itself is never changed, and renaming or updating it later is fine.</li>
           <li>In Path of Building's build list, open <b class="text-gray-300">{{ label(minePath) }}</b>. Not the original: importing replaces that build's gear.</li>
           <li>Go to the <b class="text-gray-300">Import/Export Build</b> tab. Under <b class="text-gray-300">Import From Your Account</b>, sign in with your PoE account (Path of Building opens the official page), or under <b class="text-gray-300">Import By Account Name</b> type your name with its <b class="text-gray-300">#1234</b> and click <b class="text-gray-300">Start</b> (your profile's Characters tab must be public).</li>
           <li>Pick your league and character, tick <b class="text-gray-300">Delete equipment</b> and <b class="text-gray-300">Delete skills</b>, then click <b class="text-gray-300">Items and Skills</b>. Don't click <b class="text-gray-300">Passive Tree and Jewels</b>: the build's tree stays.</li>
-          <li>Save with <b class="text-gray-300">Ctrl+S</b>, come back here and click <b class="text-gray-300">Compare gear</b>. The Gems tab can use it too: tick <b class="text-gray-300">Compare with my character</b> under Whole build.</li>
+          <li>Save with <b class="text-gray-300">Ctrl+S</b>, come back here and click <b class="text-gray-300">Compare gear</b>. The Gems tab can use it too: <b class="text-gray-300">Equipped from → my character</b>.</li>
         </ol>
         <div class="mt-1 text-gray-400"><b class="text-gray-300">Gear changed?</b> Click <b class="text-gray-300">Update gear in Path of Building</b>, then steps 2, 4 and 5. Path of Building remembers your account, so it's a few clicks.</div>
         <div class="mt-1 text-gray-400"><b class="text-gray-300">Opening Path of Building yourself:</b> the button above, right-click the Orbhoarder tray icon → <b class="text-gray-300">Open Path of Building</b>, or set a key in Settings → Hotkeys → <b class="text-gray-300">Open Path of Building</b>. Use this one rather than another install, so it sees the same builds folder.</div>
@@ -131,7 +150,8 @@ import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobBuildSummary, PobTreeMapNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { compareBuilds, fmtStat, type BuildCompare } from './compare'
-import { minePathOf, planPathOf, mineExistsIn } from './my-character'
+import { samePath } from './my-character'
+import { useMyCharacter } from './use-my-character'
 
 const KEY = 'deathloom.build-compare.v1'
 const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch { return {} } })()
@@ -176,12 +196,11 @@ function requestNames () {
   namesId = (Date.now() & 0x3fffffff) | 1
   Host.sendEvent({ name: 'CLIENT->MAIN::pob-tree-map', payload: { requestId: namesId } })
 }
-onUnmounted(() => { lsBuilds.abort(); lsCompare.abort(); lsTree.abort(); lsManage.abort() })
+onUnmounted(() => { lsBuilds.abort(); lsCompare.abort(); lsTree.abort() })
 
 function next () { lastId = (lastId + 1000) | 0; return lastId }
 Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: next() } })
 
-// your character's copy of the active build: "<build> (my character).xml"
 const active = ref<string | null>(null)
 const SETUP_KEY = 'deathloom.compare-setup.v1'
 const setupPref = ref<boolean | null>((() => { try { const v = localStorage.getItem(SETUP_KEY); return v == null ? null : v === '1' } catch { return null } })())
@@ -191,24 +210,19 @@ function toggleSetup () {
   setupPref.value = !setupOpen.value
   try { localStorage.setItem(SETUP_KEY, setupPref.value ? '1' : '0') } catch {}
 }
-const minePath = computed(() => minePathOf(active.value ?? ''))
-const planPath = computed(() => planPathOf(active.value ?? '', builds.value))
-const mineExists = computed(() => mineExistsIn(active.value ?? '', builds.value))
-let manageId = 0
-const lsManage = Host.onEvent('MAIN->CLIENT::pob-manage-build', (e) => {
-  if (e.requestId !== manageId) return
-  busy.value = false
-  if (!e.ok) { error.value = e.error ?? 'Unknown error'; return }
-  if (e.list) builds.value = e.list.builds
-  openPob()
-})
+// Deathloom fork (Gerhard 19 Nov 2026): "My characters/<character>.xml", linked per character
+const me = useMyCharacter()
+me.refresh()
+const nameDraft = ref('')
+const mineExists = computed(() => !!me.minePath.value)
+const minePath = computed(() => me.minePath.value ?? me.targetPath.value)
+const planPath = me.planPath
 function makeMine () {
-  if (!active.value) return
-  busy.value = true
   error.value = ''
-  manageId = next()
-  const name = minePath.value.split(/[\\/]/).pop()!.replace(/\.xml$/i, '')
-  Host.sendEvent({ name: 'CLIENT->MAIN::pob-manage-build', payload: { requestId: manageId, op: 'duplicate', path: active.value, name } })
+  me.makeFile(() => {
+    Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: next() } })
+    openPob()
+  })
 }
 function openPob () {
   Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob' } })
@@ -226,7 +240,7 @@ const ranB = ref('')
 function run () {
   // your character always on the left (blue), whatever order the pickers are in,
   // so green + is always what the build has that you don't (Gerhard 17 Nov)
-  const isMine = (p: string) => mineExists.value && p.toLowerCase() === minePath.value.toLowerCase()
+  const isMine = (p: string) => mineExists.value && samePath(p, minePath.value)
   if (isMine(pathB.value) && !isMine(pathA.value)) [pathA.value, pathB.value] = [pathB.value, pathA.value]
   ranA.value = pathA.value
   ranB.value = pathB.value
@@ -238,8 +252,8 @@ function run () {
 // names instead of A / B: "Your character", "Build you follow", or the file name
 function sideName (p: string) {
   if (!p) return ''
-  if (p.toLowerCase() === minePath.value.toLowerCase() && mineExists.value) return 'Your character'
-  if (p === planPath.value && mineExists.value) return 'Build you follow'
+  if (mineExists.value && samePath(p, minePath.value)) return 'Your character'
+  if (mineExists.value && samePath(p, planPath.value)) return 'Build you follow'
   return label(p).split('/').pop() ?? p
 }
 const nameA = computed(() => sideName(ranA.value))

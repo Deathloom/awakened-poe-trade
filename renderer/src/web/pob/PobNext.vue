@@ -471,7 +471,7 @@ function loadTicks (): Record<string, string[]> {
   try { return JSON.parse(localStorage.getItem(TICKS_KEY) ?? '{}') ?? {} } catch { return {} }
 }
 const ticks = ref<Record<string, string[]>>(loadTicks())
-// ticked in another window (Build panel → Gems → For my level)
+// ticked in another window (Build panel → Gems, Equipped from → my ticks)
 const onTicks = (e: StorageEvent) => { if (e.key === TICKS_KEY) ticks.value = loadTicks() }
 window.addEventListener('storage', onTicks)
 onUnmounted(() => { window.removeEventListener('storage', onTicks) })

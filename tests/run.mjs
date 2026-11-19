@@ -39,6 +39,7 @@ const MODULES = {
   'atlas-taken': 'renderer/src/web/atlas/atlas-taken.ts',
   gems: 'renderer/src/web/pob/gems.ts',
   'my-character': 'renderer/src/web/pob/my-character.ts',
+  'gems-merged': 'renderer/src/web/pob/gems-merged.ts',
   'tree-step-logic': 'renderer/src/web/pob/tree-step-logic.ts',
   'item-defences': 'renderer/src/web/pob/item-defences.ts',
   'loadout-steps': 'renderer/src/web/pob/loadout-steps.ts'
