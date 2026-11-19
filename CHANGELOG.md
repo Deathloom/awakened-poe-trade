@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#241)
+- **Path of Building 2.68.1** (from PoB Community, 17 Nov): full 3.30 support: 3.30 uniques and changes, Wickerman equipment and Viscera mods (also on character import), Reliquarian mods, Putrid Seed jewel, 3.30 flask mods, and fixes (imbued support gem import crash, Excommunicate, ??? on pasted 3.30 items). Test builds get it first; stable when 1.0.93 ships.
+
 ### Changed (#240): merged upstream Awakened PoE Trade (3.30 updates, 17–19 Nov)
 - Game data updated to 3.30.0.3 (items, mods, trade stats in all languages).
 - Price check: Atlas Drops is its own map filter (next to Item Quantity), Twice Corrupted items show "Twice corrupted", Viscera and Threads supported, rare-only mods and 9-mod maps, new textual ranges, mod reminder text, "Not Catalysed" filter for jewellery, updated Chronicle of Atzoatl rooms. These replace Orbhoarder's own earlier stopgaps for Atlas Drops, Twice Corrupted and the temple rooms.
