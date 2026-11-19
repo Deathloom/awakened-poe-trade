@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#249): Gems tab compares with your character (optional)
+- Gems → Whole build has a **Compare with my character** tickbox (off by default). It reads the "(my character)" copy that Path of Building imported and marks each gem ok / lower level or quality / missing, with your sockets per slot. Re-read after saving in PoB.
+- Compare (Build → ⋯): shows whether it's set up, a clearer first-time guide (which file to open, account name with #1234, tick Delete equipment/skills, Items and Skills only), what to do when gear changes, and how to open Path of Building yourself (button, tray icon, Settings → Hotkeys).
+
 ### Changed (#248): calmer Build panel (first step of the UI clean-up)
 - Header: the tabs, the build name, one **Build** button (pick build / loadout), reload, and one **⋯** menu with labelled entries (import, sharing, what changes, compare, edit loadouts, manage builds) instead of 8 loose icons.
 - Gear rows: tick, item, defences, then **Trade** and **Upgrade** as labelled buttons and a **⋯** menu (copy name for the market, craft it, stash / vendor search, price check).

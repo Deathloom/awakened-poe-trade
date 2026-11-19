@@ -607,3 +607,28 @@ test('compare: mods matched by wording, values compared', async () => {
   assert.deepEqual(m.onlyA, ['Adds 1 to 2 Cold Damage'])
   assert.deepEqual(m.onlyB, ['+1 to Level of all Spell Skill Gems'])
 })
+
+const gemsMod = await import('./.build/gems.mjs')
+const myChar = await import('./.build/my-character.mjs')
+test('my character file: Gems tab reads the PoB-imported copy', () => {
+  assert.equal(myChar.minePathOf('Storm Burst.xml'), 'Storm Burst (my character).xml')
+  assert.equal(myChar.minePathOf('a/Storm Burst (My Character).xml'), 'a/Storm Burst (My Character).xml')
+  assert.equal(myChar.planPathOf('X (my character).xml', ['X.xml']), 'X.xml')
+  assert.equal(myChar.mineExistsIn('X.xml', ['x (MY CHARACTER).xml']), true)
+  assert.equal(myChar.mineExistsIn('X.xml', ['X.xml']), false)
+  const it = buildXml.parseItemText('Rarity: RARE\nDoom Hood\nHubris Circlet\nSockets: B-B-B R\nLevelReq: 69\n+90 to maximum Life')
+  assert.equal(it.sockets, 'B-B-B R')
+  assert.deepEqual(it.mods, ['+90 to maximum Life'])
+  const live = gemsMod.liveFromSummary({
+    stats: {},
+    groups: [{ slot: 'Helmet', enabled: true, gems: [{ name: 'Storm Burst', level: 18, quality: 5, enabled: true }] }],
+    items: [{ slot: 'Helmet', rarity: 'Rare', name: 'Doom Hood', base: 'Hubris Circlet', mods: [], sockets: 'B-B-B R' }, { slot: 'Ring 1', rarity: 'Rare', name: 'R', base: 'Ruby Ring', mods: [] }],
+    tree: { nodes: [], masteries: {} }
+  })
+  assert.equal(live.groups[0].index, 0)
+  assert.equal(live.groups[0].gems[0].support, false)
+  assert.deepEqual(live.items, [{ slot: 'Helmet', name: 'Doom Hood', baseName: 'Hubris Circlet', sockets: 'B-B-B R' }])
+  const cmp = gemsMod.compareGems([{ index: 0, slot: 'Helmet', enabled: true, gems: [{ name: 'Storm Burst', level: 20, quality: 20, enabled: true, support: false }, { name: 'Faster Casting', level: 20, enabled: true, support: true }] }], live.groups)
+  assert.equal(cmp.lowCount, 1)
+  assert.equal(cmp.missingCount, 1)
+})
