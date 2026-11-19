@@ -25,6 +25,13 @@ const LOG_LINES = 40
 
 // Lines that look like our own code failing (not "build not found" style messages)
 export function isCodeError (message: string): boolean {
+  // Deathloom fork (19 Nov): ImpactServer's own error() messages ("Seed must be…",
+  // "PoB doesn't recognise this item's base type", "Loadout not found…") are
+  // answers for the player, not bugs. A real Lua bug names another file/line or
+  // says "attempt to…" / "bad argument" / "stack overflow".
+  const first = message.split('\n')[0]
+  const own = /^ImpactServer\.lua:\d+: (.*)$/.exec(first)
+  if (own && !/\.lua:\d+:|attempt to |bad argument|stack overflow|nil value/.test(own[1]) && !/stack traceback/.test(message)) return false
   return /\.lua:\d+:/.test(message) || /\b(TypeError|ReferenceError|RangeError|SyntaxError)\b/.test(message)
 }
 

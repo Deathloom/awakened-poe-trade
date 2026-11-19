@@ -19,6 +19,7 @@ import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import type { PobImpact } from './PobImpact'
 import { openWebLink } from '../safe-open'
+import { isCodeError } from '../ErrorReporter'
 
 const REPLY_PREFIX = '@pob '
 const START_TIMEOUT = 30_000
@@ -406,7 +407,7 @@ export class PobSync {
           } else if (reply.id === next) {
             if (!reply.ok) {
               const msg = String(reply.error ?? 'Unknown error')
-              if (/\.lua:\d+:/.test(msg) && c.cmd !== 'report') this.onCodeError(msg)
+              if (isCodeError(msg) && c.cmd !== 'report') this.onCodeError(msg)
               finish(new Error(msg))
               return
             }

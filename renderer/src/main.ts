@@ -21,6 +21,8 @@ import { Host } from './web/background/IPC'
   const where = qs.get('hud') ? `hud=${qs.get('hud')}` : qs.has('desktop') ? 'desktop' : 'overlay'
   const report = (err: unknown, extra?: string) => {
     const e = err instanceof Error ? err : new Error(String(err))
+    // a cancelled request (newer one started, window closed) isn't a bug
+    if (e.name === 'AbortError') return
     Host.sendEvent({ name: 'CLIENT->MAIN::report-error', payload: { message: e.message, stack: e.stack, where: extra ? `${where}, ${extra}` : where } })
   }
   window.addEventListener('error', (ev) => { report(ev.error ?? ev.message) })
