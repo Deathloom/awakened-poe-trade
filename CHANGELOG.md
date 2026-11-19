@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#256): overlay review, part 2
+- Overlay panels have a drag bar on top (like the pinned panels): drag it to move the panel. Market search and Cheat sheets couldn't be moved before.
+- Build panel: price check is in the ⋯ menu in the Orbhoarder window too (opens over the game). In the overlay and in game, ⋯ → "Compare, edit loadouts, manage builds" opens the Orbhoarder window on the Build tab.
+- Help, setup guide and panel notes checked: Where panels show, Show while playing and Chat buttons are in Settings → Panels (not Path of Building); hotkeys in Settings → Hotkeys; the Build panel's buttons are in its ⋯ menu; build sharing is Build panel → ⋯ → Build sharing; any panel can be pinned in game.
+
 ### Fixed (#255): overlay panels move and open on their own
 - A panel's hotkey pressed in game shows only that panel, not the menu bar and every other open panel (Shift+Space still shows everything). Closes as before: hotkey again, Esc or click the game.
 - Overlay panels (build gear, guide, trade companion, market search/history, friends' board, tree, atlas, session, overview, cheat sheets, money) get a Move square on every corner; before, Move gave one tiny square at a single point.

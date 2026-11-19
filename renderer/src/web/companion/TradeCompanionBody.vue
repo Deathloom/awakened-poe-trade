@@ -162,8 +162,8 @@ let lastActiveId: string | null = null
 
 const mode = computed(() => chatMode())
 const modeHelp = computed(() => mode.value === 'send'
-  ? 'Each click sends one command to game chat (Settings → Path of Building → Chat buttons).'
-  : 'Each click copies the command: press Enter in game, Ctrl+V, Enter. To send directly, change Chat buttons in Settings → Path of Building.')
+  ? 'Each click sends one command to game chat (Settings → Panels → Chat buttons).'
+  : 'Each click copies the command: press Enter in game, Ctrl+V, Enter. To send directly, change Chat buttons in Settings → Panels.')
 
 const openTrades = computed(() => trades.value.filter(t => !t.done))
 // the last open trade was dealt with (Sold, dismissed, or the trade went through)

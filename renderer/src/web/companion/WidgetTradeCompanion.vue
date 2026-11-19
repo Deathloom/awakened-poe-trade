@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: trade companion (incoming/outgoing trade whispers from Client.txt) + sales ledger -->
-  <Widget :config="config" move-handles="corners" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :grip="!inHud" :removable="false" :inline-edit="false">
     <TradeCompanionBody v-if="!inHud" @incoming="onIncoming" />
   </Widget>
 </template>

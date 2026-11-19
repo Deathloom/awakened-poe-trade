@@ -99,7 +99,7 @@
       <div v-if="!result && !busy && !error" class="px-2 py-2 text-gray-500">
         Type an item name, pick it from the list and press Search. Whisper and Hideout
         {{ mode === 'send' ? 'send one chat message per click' : 'copy the chat message (paste it in chat with Ctrl+V)' }};
-        nothing is ever sent by itself. Change this in Settings → Path of Building → Chat buttons.
+        nothing is ever sent by itself. Change this in Settings → Panels → Chat buttons.
       </div>
       <button v-if="result && moreIds.length" class="w-full py-1 text-gray-400 hover:text-gray-100"
         :disabled="busy" @click="more">Show more</button>

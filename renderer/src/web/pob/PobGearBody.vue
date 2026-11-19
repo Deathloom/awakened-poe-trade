@@ -52,7 +52,7 @@
       <div v-if="showHelp" class="mx-1 mb-1 rounded bg-gray-900 px-2 py-1 text-xs text-gray-400">
         <b class="text-gray-300">Trade</b>: this item on the trade site (uniques: any copy) ·
         <b class="text-gray-300">Upgrade</b>: any base of this kind with at least these values (uniques: better rolls) ·
-        <b class="text-gray-300">⋯</b>: copy the name for the in-game market, craft it, stash / vendor search<template v-if="!desktop">, price check</template>.
+        <b class="text-gray-300">⋯</b>: copy the name for the in-game market, craft it, stash / vendor search, price check<template v-if="desktop"> (opens over the game)</template>.
       </div>
       <template v-for="group of groups" :key="group.key">
         <div class="px-1 pt-2 pb-px text-xs uppercase tracking-wide text-gray-500">{{ group.label }}</div>
@@ -196,7 +196,11 @@ const headerMenu = computed<UiMenuItem[]>(() => [
         { label: 'Edit loadouts and gems', icon: 'fas fa-pen', checked: showEdit.value, action: () => { showEdit.value = !showEdit.value } },
         { label: 'Manage builds (rename, delete…)', icon: 'fas fa-folder-open', checked: showManage.value, action: () => { showManage.value = !showManage.value } }
       ]
-    : [])
+    : [
+        { divider: true },
+        // Deathloom fork (overlay review 19 Nov): these need room, so they live in the Orbhoarder window
+        { label: 'Compare, edit loadouts, manage builds (Orbhoarder window)', icon: 'fas fa-external-link-alt', action: () => { Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'build' } }) } }
+      ])
 ])
 const showSync = ref(false)
 const showImport = ref(false)
@@ -318,7 +322,7 @@ function rowMenu (item: PobGearItem): UiMenuItem[] {
       ? [{ label: 'Craft it', icon: 'fas fa-flask', hint: 'Craft tab with this base and mods, and a step-by-step plan', action: () => requestCraft(item) }]
       : []),
     { label: 'Stash / vendor search (regex)', icon: 'fas fa-code', checked: regexSlot.value === item.slot, action: () => toggleRegex(item.slot) },
-    ...(!props.desktop ? [{ label: 'Price check here', icon: 'fas fa-search-dollar', action: () => priceCheck(item, null) }] : [])
+    { label: props.desktop ? 'Price check (opens over the game)' : 'Price check here', icon: 'fas fa-search-dollar', action: () => priceCheck(item, null) }
   ]
 }
 function toggle (slot: string) {
@@ -410,8 +414,8 @@ function saveRegex (item: PobGearItem) {
 
 // Open the normal price check window for this item (stat filters, prices, build impact)
 function priceCheck (item: PobGearItem, e: MouseEvent | null) {
-  if (props.hud) {
-    // main opens it in the overlay and activates the overlay
+  if (props.hud || props.desktop) {
+    // main opens it in the overlay and activates the overlay (the overlay owns the price check)
     Host.sendEvent({ name: 'CLIENT->MAIN::hud-gear-action', payload: { action: 'price-check', text: item.text } })
     return
   }

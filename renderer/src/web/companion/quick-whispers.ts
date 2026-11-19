@@ -1,6 +1,6 @@
 // Deathloom fork: your own chat buttons in the trade companion (Settings live in
 // the config). Each button is one chat message per click, like the built-in
-// ones (copy or send, Settings → Path of Building → Chat buttons).
+// ones (copy or send, Settings → Panels → Chat buttons).
 // Placeholders: {name} the other player, {item}, {price}.
 
 export interface QuickWhisper {

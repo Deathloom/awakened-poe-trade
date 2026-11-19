@@ -117,7 +117,7 @@
               and save) and the panels follow it.</p>
             <div class="mt-3 mb-1"><i class="fas fa-hammer mr-1" />No build yet? Get one</div>
             <p class="mb-2 text-gray-400 text-sm">Pick a guide, copy its Path of Building code or pobb.in link, then use
-              <i class="fas fa-file-import" /> in the build panel to import it. Links open in your browser.</p>
+              Build panel → ⋯ → Import a build. Links open in your browser.</p>
             <div class="flex flex-wrap gap-2">
               <button v-for="site of BUILD_SITES" :key="site.url" class="btn" :title="site.what" @click="openLink(site.url)">
                 <i class="fas fa-external-link-alt mr-1 text-xs" />{{ site.name }}</button>
@@ -145,7 +145,7 @@
               </tr>
             </table>
             <div class="text-gray-500 text-sm mb-2">More choices (which panels show in the overlay and in the Orbhoarder window):
-              Settings → Path of Building → Where panels show.</div>
+              Settings → Panels → Where panels show.</div>
             <div class="text-gray-500 text-sm mb-3">"Clicks go through" means the panel can't be clicked while you play
               (press {{ overlayKey }} to click it). Drag a panel by its top bar; resize it from the bottom-right corner.</div>
             <template v-if="pob.hud.guide || pob.hud.trades || pob.hud.gear">
@@ -219,11 +219,10 @@
               <li><b>{{ priceKey }}</b> over an item in game: price check, with what it does to your build.</li>
               <li><b>{{ pob.gearPanelKey || 'no hotkey' }}</b> build gear, <b>{{ pob.guideKey || 'no hotkey' }}</b> campaign guide,
                 <b>{{ pob.tradesKey || 'no hotkey' }}</b> trade companion, <b>{{ pob.openPobKey || 'no hotkey' }}</b> Path of Building.</li>
-              <li>Build panel: <i class="fas fa-cloud" /> build sharing (Pull / Push), <i class="fas fa-file-import" /> import a PoB code or link,
-                <i class="fas fa-exchange-alt" /> pick the build and loadout.</li>
+              <li>Build panel: <b>Build</b> picks the build and loadout; <b>⋯</b> has Import a build and Build sharing (Pull / Push).</li>
               <li>Orbhoarder window (tray icon, double-click): everything in one place, plus the Trade site tab.
                 All tab: <b>Edit layout</b> to add, remove and move panels.
-                Build tab: <i class="fas fa-pen" /> edit loadouts, <i class="fas fa-folder-open" /> manage builds.</li>
+                Build tab → ⋯: Compare, Edit loadouts, Manage builds.</li>
               <li><i class="fas fa-question-circle" /> on the top bar is a short how-to; the window's <b>Help</b> tab has the full help,
                 an FAQ and links to build guides. <i class="fas fa-magic" /> runs this guide again.</li>
               <li>Something wrong? Tray icon → Report a problem…</li>

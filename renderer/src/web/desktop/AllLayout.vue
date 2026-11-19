@@ -49,7 +49,7 @@
                 <div class="relative flex-1 min-h-0 rounded-b border border-dashed border-gray-600 overflow-hidden">
                   <div class="absolute inset-0 z-10 bg-gray-900/60" />
                   <div v-if="!shownBySettings(cols[c].items[r].id)" class="absolute inset-0 z-20 flex items-center justify-center p-2 text-center text-gray-400 text-sm">
-                    Switched off for the window in Settings → Path of Building → Where panels show
+                    Switched off for the window in Settings → Panels → Where panels show
                   </div>
                   <!-- drop: top half before, bottom half after -->
                   <div v-if="dragId && dragId !== cols[c].items[r].id" class="absolute inset-x-0 top-0 h-1/2 z-30"
@@ -68,7 +68,7 @@
       </template>
       <div v-if="!visCols.length" class="m-auto text-gray-500 text-center">
         No panels to show. Use <b>Edit layout</b> → Add panel, or switch panels back on in
-        Settings → Path of Building → Where panels show.
+        Settings → Panels → Where panels show.
       </div>
     </div>
   </div>

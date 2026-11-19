@@ -24,7 +24,7 @@
 
     <div v-if="state.signedIn === false" class="p-2 text-gray-400">
       The board uses your GitHub sign-in (the same as build sync). Sign in under
-      Settings → Path of Building → Build sync, then come back here.
+      Build panel → ⋯ → Build sharing (GitHub sync), then come back here.
     </div>
 
     <!-- post form -->
