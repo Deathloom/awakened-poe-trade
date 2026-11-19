@@ -92,7 +92,10 @@ export async function applyBuildOp (root: string, deletedRoot: string, req: Buil
       return path.relative(root, to)
     }
     case 'duplicate': {
-      const name = await freeName(dir, `${path.basename(from, ext)} - copy`, ext)
+      // Deathloom fork: an optional name (e.g. "<build> (my character)")
+      const want = String(req.name ?? '').trim().replace(/\.xml$/i, '')
+      if (want && !safeSegment(want)) throw new Error('That name has characters Windows doesn\'t allow')
+      const name = await freeName(dir, want || `${path.basename(from, ext)} - copy`, ext)
       const to = path.join(dir, name)
       await fs.copyFile(from, to)
       return path.relative(root, to)

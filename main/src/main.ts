@@ -238,6 +238,10 @@ app.on('ready', async () => {
       } catch {}
       // Trade site tab: open GGG trade pages from the overlay in the window
       eventPipe.onEventAnyClient('CLIENT->MAIN::user-action', (e) => {
+        if (e.action === 'open-pob') {
+          tray.openPob()
+          return
+        }
         if (e.action === 'open-window-view') {
           shortcuts.openWindowView?.(e.view)
           return

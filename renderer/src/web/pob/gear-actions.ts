@@ -35,15 +35,23 @@ export function openTradeSearch (text: string, upgrade = false): string | null {
     currency: widget.defaultCurrency
   })
   const preset = presets.presets.find(p => p.id === presets.active)!
-  if (upgrade) {
-    if (parsed.value.rarity === 'Unique') {
-      return 'Uniques have fixed stats: use Trade for the same unique with better rolls.'
-    }
-    if (preset.filters.searchRelaxed) preset.filters.searchRelaxed.disabled = false
+  if (upgrade && parsed.value.rarity === 'Unique') {
+    return 'Uniques have fixed stats: use Trade for the same unique with better rolls.'
+  }
+  // Deathloom fork (Gerhard 17 Nov 2026): Trade = this base type with all its
+  // mods ticked (at least these values); ↑ upgrade = any base of the same kind
+  // with the same mods. Before, the mods came through unticked (price check
+  // defaults) and Trade searched any wand instead of the item's base.
+  if (preset.filters.searchRelaxed) preset.filters.searchRelaxed.disabled = !upgrade
+  if (parsed.value.rarity !== 'Unique') {
     for (const s of preset.stats) {
-      if (s.group || s.disabled || !s.roll || s.roll.isNegated || s.not) continue
-      s.roll.min = s.roll.value
-      s.roll.max = ''
+      if (s.group || s.hidden || s.not || !s.tradeId.length) continue
+      if (s.roll) {
+        if (s.roll.isNegated) continue
+        s.roll.min = s.roll.value
+        s.roll.max = ''
+      }
+      s.disabled = false
     }
   }
   const query = createTradeRequest(preset.filters, preset.stats)

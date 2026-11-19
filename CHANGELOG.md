@@ -8,6 +8,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.92] - 2026-11-19
+
+### Fixed (#237)
+- **Build → Gear → Trade** searches that item's base type (e.g. Profane Wand) with all its mods ticked (at least these values); before, the mods came through unticked and it searched any wand. **↑ upgrade** does the same for any base of that kind.
+
+### Fixed (#236)
+- **Compare:** your character is always on the left (blue) and the build you follow on the right (yellow), even if the pickers were the other way round.
+
+### Fixed (#235)
+- **"Failed to load leagues" / price check not working:** Orbhoarder now talks to pathofexile.com with exactly the same browser string as its Browser window, so passing GGG's Cloudflare check there works for the price check too (before, the check you passed never applied). The error now says why (browser check, maintenance, too many requests) instead of a list of headers.
+
+### Changed (#234)
+- **Compare builds is clearer:** names instead of A / B ("Your character", "Build you follow", or the build's name), left (blue) / right (yellow) pickers, "Difference" column. Your character is now on the left and the build you follow on the right, so green + lines are the upgrades you still need. Step-by-step how-to and tooltips for the character import; Help → FAQ explains it and the tree arrows.
+
+### Added (#233)
+- **Your character vs your build:** Build → Gear → ⚖ Compare has a "Your character vs this build" helper. Make a copy of the build ("… (my character)"), open Path of Building, import your character's Items and Skills into that copy and save, then Compare gear shows each slot side by side. Path of Building does the import when you click it (within GGG's rules); Orbhoarder only reads the saved file. Redo it whenever your gear changes.
+
 ## [1.0.91] - 2026-11-17
 
 ### Added (#230)
