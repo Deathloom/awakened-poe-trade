@@ -38,14 +38,13 @@ export interface ParsedItem {
   mapArea?: BaseType
   areaLevel?: number
   areaItemQuantity?: number
-  // 3.30+: the map's quantity line is "Atlas Drops" (same values)
-  areaAtlasDrops?: boolean
+  areaAtlasDrops?: number
   areaItemRarity?: number
   areaPackSize?: number
   mapCompletionReward?: BaseType
   mapTier?: number
   mapMoreMaps?: number
-  mapMoreScarabs?: number
+  mapMoreThreads?: number
   mapMoreCurrency?: number
   mapMoreDivCards?: number
   heistBlueprint?: {
@@ -75,7 +74,7 @@ export interface ParsedItem {
   }
   stackSize?: { value: number, max: number }
   isUnidentified: boolean
-  isCorrupted: boolean
+  isCorrupted?: { twice?: boolean }
   isUnmodifiable?: boolean
   isMirrored?: boolean
   isSplit?: boolean
@@ -112,7 +111,6 @@ export function createVirtualItem (
   return {
     ...props,
     isUnidentified: props.isUnidentified ?? false,
-    isCorrupted: props.isCorrupted ?? false,
     newMods: props.newMods ?? [],
     statsByType: props.statsByType ?? [],
     unknownModifiers: props.unknownModifiers ?? [],

@@ -68,6 +68,7 @@ const parsers: Array<ParserFn | { virtual: VirtualParserFn }> = [
   parseSentinelCharge,
   parseScryingOrb,
   parseMercenary,
+  parseViscera,
   parseLogbookArea,
   parseLogbookArea,
   parseLogbookArea,
@@ -250,10 +251,8 @@ function parseAreaPropNested (line: string, item: ParsedItem): boolean {
   if (line.startsWith(_$.MAP_ITEM_QUANTITY)) {
     item.areaItemQuantity = parseInt(line.slice(_$.MAP_ITEM_QUANTITY.length), 10)
     return true
-  } else if (_$.MAP_ATLAS_DROPS && line.startsWith(_$.MAP_ATLAS_DROPS)) {
-    // 3.30 Covens: Item Quantity on maps became Atlas Drops at the same values
-    item.areaItemQuantity = parseInt(line.slice(_$.MAP_ATLAS_DROPS.length), 10)
-    item.areaAtlasDrops = true
+  } else if (line.startsWith(_$.MAP_ATLAS_DROPS)) {
+    item.areaAtlasDrops = parseInt(line.slice(_$.MAP_ATLAS_DROPS.length), 10)
     return true
   } else if (line.startsWith(_$.MAP_ITEM_RARITY)) {
     item.areaItemRarity = parseInt(line.slice(_$.MAP_ITEM_RARITY.length), 10)
@@ -276,8 +275,8 @@ function parseMap (section: string[], item: ParsedItem) {
     } else if (line.startsWith(_$.MAP_MORE_MAPS)) {
       item.mapMoreMaps = parseInt(line.slice(_$.MAP_MORE_MAPS.length), 10)
       isParsed = 'SECTION_PARSED'
-    } else if (line.startsWith(_$.MAP_MORE_SCARABS)) {
-      item.mapMoreScarabs = parseInt(line.slice(_$.MAP_MORE_SCARABS.length), 10)
+    } else if (line.startsWith(_$.MAP_MORE_THREADS)) {
+      item.mapMoreThreads = parseInt(line.slice(_$.MAP_MORE_THREADS.length), 10)
       isParsed = 'SECTION_PARSED'
     } else if (line.startsWith(_$.MAP_MORE_CURRENCY)) {
       item.mapMoreCurrency = parseInt(line.slice(_$.MAP_MORE_CURRENCY.length), 10)
@@ -382,7 +381,6 @@ function parseNamePlate (section: string[]) {
     name: name,
     baseType: baseType,
     isUnidentified: false,
-    isCorrupted: false,
     newMods: [],
     statsByType: [],
     unknownModifiers: [],
@@ -448,12 +446,14 @@ function parseInfluence (section: string[], item: ParsedItem) {
 }
 
 function parseCorrupted (section: string[], item: ParsedItem) {
-  // Deathloom fork: 3.30 Altar of Corruption / Lapidary Lens / Djinn-Touched Vaal Orb make items Twice Corrupted
-  if (section[0] === _$.CORRUPTED || section[0] === 'Twice ' + _$.CORRUPTED) {
-    item.isCorrupted = true
+  if (section[0] === _$.CORRUPTED) {
+    item.isCorrupted = {}
+    return 'SECTION_PARSED'
+  } else if (section[0] === _$.TWICE_CORRUPTED) {
+    item.isCorrupted = { twice: true }
     return 'SECTION_PARSED'
   } else if (section[0] === _$.UNMODIFIABLE) {
-    item.isCorrupted = true
+    item.isCorrupted = {}
     item.isUnmodifiable = true
     return 'SECTION_PARSED'
   }
@@ -710,6 +710,24 @@ function parseAccessory (section: string[], item: ParsedItem) {
   return isParsed
 }
 
+function parseViscera (section: string[], item: ParsedItem) {
+  if (item.info.refName !== 'Viscera') return 'PARSER_SKIPPED'
+  if (section.length === 1) {
+    switch (section[0]) {
+      case _$.VISCERA_HEAD:
+        item.category = ItemCategory.HeadViscera; break
+      case _$.VISCERA_LOWER_LIMB:
+        item.category = ItemCategory.LowerLimbViscera; break
+      case _$.VISCERA_UPPER_LIMB:
+        item.category = ItemCategory.UpperLimbViscera; break
+      case _$.VISCERA_TORSO:
+        item.category = ItemCategory.TorsoViscera; break
+    }
+    if (item.category) return 'SECTION_PARSED'
+  }
+  return 'SECTION_SKIPPED'
+}
+
 function parseLogbookArea (section: string[], item: ParsedItem) {
   if (item.info.refName !== 'Expedition Logbook') return 'PARSER_SKIPPED'
   if (section.length < 3) return 'SECTION_SKIPPED'
@@ -807,7 +825,8 @@ function parseModifiers (section: string[], item: ParsedItem) {
     item.rarity !== ItemRarity.Normal &&
     item.rarity !== ItemRarity.Magic &&
     item.rarity !== ItemRarity.Rare &&
-    item.rarity !== ItemRarity.Unique
+    item.rarity !== ItemRarity.Unique &&
+    item.info.refName !== 'Viscera'
   ) {
     return 'PARSER_SKIPPED'
   }
@@ -979,7 +998,7 @@ function parseVestigial (item: ParserState) {
   }
 }
 
-function parseCategoryByHelpText (section: string[], item: ParsedItem) {
+function parseCategoryByHelpText (section: string[], item: ParserState) {
   if (section[0] === _$.BEAST_HELP) {
     item.category = ItemCategory.CapturedBeast
     return 'SECTION_PARSED'
@@ -988,6 +1007,9 @@ function parseCategoryByHelpText (section: string[], item: ParsedItem) {
     return 'SECTION_PARSED'
   } else if (section[0] === _$.VOIDSTONE_HELP) {
     item.category = ItemCategory.Voidstone
+    return 'SECTION_PARSED'
+  } else if (section[0] === _$.VISCERA_HELP) {
+    item.name = 'Viscera'
     return 'SECTION_PARSED'
   }
 
