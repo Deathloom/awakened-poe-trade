@@ -7,7 +7,7 @@ import type { PobSocketGroup, PobSocketedItem } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, loadCharLevels, currentChar } from '@/web/companion/char-level'
 import { liveFromSummary } from './gems'
-import { resolveMine, planPathOf, characterFiles, charFilePath, withLink, isCharFile, CHAR_FOLDER, safeCharName, type Links } from './my-character'
+import { resolveMine, planPathOf, characterFiles, charFilePath, withLink, isCharFile, linkFor, CHAR_FOLDER, safeCharName, type Links } from './my-character'
 
 const LINKS_KEY = 'deathloom.my-character-files.v1'
 const NAME_KEY = 'deathloom.my-character-name.v1'
@@ -153,6 +153,14 @@ export function useMyCharacter () {
     busy,
     manageError
   }
+}
+
+// For the price check (no builds list needed): the character's name and linked file;
+// main checks they exist and falls back to "My characters/<name>.xml"
+export function myCharacterHint (): { name: string, file?: string } | undefined {
+  const name = currentChar(loadCharLevels())?.name || load<string>(NAME_KEY, '')
+  if (!name) return undefined
+  return { name, file: linkFor(load<Links>(LINKS_KEY, {}), name) }
 }
 
 export const fileLabel = (p: string | null | undefined) => (p ?? '').replace(/\.xml$/i, '').replace(/\\/g, '/')

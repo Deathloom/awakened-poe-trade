@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { myCharacterHint } from '@/web/pob/use-my-character'
 import type { PobBuildInfo, PobImpactResult, PobImpactCompare } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
@@ -143,10 +144,11 @@ const equippedTitle = computed(() => {
   const info = equippedInfo.value
   if (!info) return ''
   const who = [info.character, info.level ? `lvl ${info.level}` : null].filter(Boolean).join(' ')
-  const age = info.fetchedAt ? formatAge(Date.now() - info.fetchedAt) : ''
+  // from the character file: its age is when you last saved it in PoB
+  const age = info.fetchedAt ? (info.fromFile ? 'saved ' : '') + formatAge(Date.now() - info.fetchedAt) : ''
   const what = info.tree || info.skills
     ? [info.tree && 'tree', info.skills && 'gems'].filter(Boolean).join(' + ') + ' + items'
-    : 'items only'
+    : info.fromFile ? 'gear from your character file' : 'items only'
   const skipped = info.skipped.length ? ` · skipped: ${info.skipped.join(', ')}` : ''
   return [who, what, age].filter(Boolean).join(' · ') + skipped
 })
@@ -189,7 +191,7 @@ function request (refreshGear: boolean) {
   lastRequestId += 1
   Host.sendEvent({
     name: 'CLIENT->MAIN::pob-impact',
-    payload: { requestId: lastRequestId, itemText: props.item.rawText, refreshGear }
+    payload: { requestId: lastRequestId, itemText: props.item.rawText, refreshGear, myCharacter: myCharacterHint() }
   })
 }
 

@@ -100,13 +100,13 @@ export class PobImpact {
     // Deathloom fork: price checks in quick succession: only the newest waiting item is
     // calculated (each one is a full PoB calculation; the overlay shows only the last)
     let impactSeq = 0
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear }) => {
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear, myCharacter }) => {
       const send = this.server.replyTo()
       const seq = ++impactSeq
       this.queue = this.queue
         .then(async () => {
           if (seq !== impactSeq) throw new Error('A newer item is being checked.')
-          return await this.impact(itemText, refreshGear === true)
+          return await this.impact(itemText, refreshGear === true, myCharacter)
         })
         .then(({ build, result }) => {
           send({
@@ -424,6 +424,7 @@ export class PobImpact {
     this.appliedLoadout = ''
     this.sentGearAt = 0
     this.pobHasGear = false
+    this.fileGearKey = ''
     this.stdoutBuf = ''
     for (const p of this.pending.values()) {
       clearTimeout(p.timer)
@@ -603,6 +604,7 @@ export class PobImpact {
       if (this.pobHasGear && this.sentGearAt === 0) {
         await this.call('clearEquipped')
         this.pobHasGear = false
+        this.fileGearKey = ''
       }
     }
     if (!this.liveTarget()) {
@@ -687,6 +689,7 @@ export class PobImpact {
       // Loading drops PoB's live gear set
       this.sentGearAt = 0
       this.pobHasGear = false
+      this.fileGearKey = ''
       this.appliedLoadout = ''
       this.loadedRel = rel
       this.logger.write(`info [PoB] loaded build "${this.loadedBuild.name}"`)
@@ -703,6 +706,7 @@ export class PobImpact {
       // setLoadout drops PoB's live gear set
       this.sentGearAt = 0
       this.pobHasGear = false
+      this.fileGearKey = ''
     }
     return this.loadedBuild
   }
@@ -1222,16 +1226,66 @@ export class PobImpact {
     }
   }
 
-  async impact (itemText: string, refreshGear = false): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
+  // Deathloom fork (19 Nov 2026): "vs character" from your character's file. Path of Building's
+  // own Import character filled it (the player clicked it); Orbhoarder only reads the saved
+  // file, so no GGG character pages are called. Sent again when the file or the build changes.
+  private fileGearKey = ''
+  private fileGearInfo: { name: string, mtime: number } | null = null
+  private async syncFileGear (my?: { name: string, file?: string }): Promise<{ error?: string }> {
+    const clear = async () => {
+      if (this.fileGearKey) {
+        await this.call('clearEquipped')
+        this.pobHasGear = false
+        this.fileGearKey = ''
+        this.fileGearInfo = null
+      }
+    }
+    const setUp = 'To compare with your character, set up your character file once: Build panel → Gems → Equipped from: my character.'
+    if (!my || typeof my.name !== 'string' || !my.name) { await clear(); return { error: setUp } }
+    const root = path.resolve(this.playerDir())
+    const inRoot = (rel: unknown) => {
+      if (typeof rel !== 'string' || !rel.toLowerCase().endsWith('.xml')) return null
+      const full = path.resolve(root, rel)
+      return full.startsWith(root + path.sep) ? full : null
+    }
+    const safe = my.name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').replace(/[. ]+$/, '').trim()
+    let file: string | null = null
+    let mtime = 0
+    for (const cand of [inRoot(my.file), inRoot(path.join('My characters', `${safe}.xml`))]) {
+      if (!cand) continue
+      const st = await fs.stat(cand).catch(() => null)
+      if (st?.isFile()) { file = cand; mtime = st.mtimeMs; break }
+    }
+    if (!file) { await clear(); return { error: setUp } }
+    const key = `${file}|${mtime}`
+    if (key !== this.fileGearKey) {
+      try {
+        await this.call('equipped', { file, name: my.name })
+      } catch (err) {
+        this.fileGearKey = ''
+        this.fileGearInfo = null
+        this.pobHasGear = false
+        return { error: (err as Error).message.replace(/^.*ImpactServer\.lua:\d+: /, '') }
+      }
+      this.fileGearKey = key
+      this.fileGearInfo = { name: my.name, mtime }
+      this.pobHasGear = true
+    }
+    return {}
+  }
+
+  async impact (itemText: string, refreshGear = false, myCharacter?: { name: string, file?: string }): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
     await this.ensureBuild()
-    const live = await this.syncLiveGear(refreshGear)
+    // live gear from GGG's pages is off (LIVE_CHARACTER_DATA): use your character file
+    const live = this.liveTarget() ? await this.syncLiveGear(refreshGear) : await this.syncFileGear(myCharacter)
     const reply = await this.call('impact', { item: itemText })
     const result: PobImpactResult = { item: reply.item, compares: reply.compares, lines: reply.lines }
     if (reply.equipped) {
       const info = reply.equipped.info as PobEquippedInfo | undefined
       if (info) {
-        info.fetchedAt = this.sentGearAt
-        info.passivesError = this.passivesError
+        info.fetchedAt = this.fileGearKey ? this.fileGearInfo?.mtime : this.sentGearAt
+        info.passivesError = this.fileGearKey ? undefined : this.passivesError
+        if (this.fileGearKey) info.fromFile = true
         if (!Array.isArray(info.skipped)) info.skipped = []
         if (!Array.isArray(info.summary)) info.summary = []
       }
