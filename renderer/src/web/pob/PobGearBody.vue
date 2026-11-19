@@ -69,7 +69,11 @@
         <div v-for="item of group.items" :key="item.slot"
           class="rounded px-1 py-px hover:bg-gray-800">
           <div class="flex items-center gap-x-2">
-            <button class="flex-1 min-w-0 flex items-baseline gap-x-2 text-left" @click="toggle(item.slot)">
+            <!-- Deathloom fork (19 Nov): tick when you have this item (or one as good) -->
+            <button class="ui-tick shrink-0" :class="{ on: isOwned(item) }"
+              :title="isOwned(item) ? 'You have this (click to undo)' : 'Got it: tick when you have this item or one as good'"
+              @click="toggleOwned(item)" />
+            <button class="flex-1 min-w-0 flex items-baseline gap-x-2 text-left" :class="{ 'opacity-50': isOwned(item) }" @click="toggle(item.slot)">
               <span class="text-gray-500 text-sm shrink-0 w-24 truncate" :title="item.label">{{ item.label }}</span>
               <span class="truncate" :style="{ color: rarityColour(item.rarity) }" :title="itemTitle(item)">
                 {{ item.title || item.name }}</span>
@@ -83,14 +87,16 @@
                 @click="copy(item.searchText, item.slot)">
                 <i v-if="copiedKey === item.slot" class="fas fa-check text-green-400" />
                 <i v-else class="far fa-copy" /></button>
-              <button class="bg-gray-700 text-gray-300 px-1.5" :class="{ 'rounded-r': desktop && item.rarity === 'Unique' }" title="This exact item (all its stats) on the official trade site"
+              <button class="bg-gray-700 text-gray-300 px-1.5" :title="item.rarity === 'Unique' ? 'This unique on the official trade site (any rolls)' : 'This item (its base, all its mods at least these values) on the official trade site'"
                 @click="openTrade(item)">Trade</button>
-              <button v-if="item.rarity !== 'Unique'" class="bg-gray-700 text-gray-300 px-1.5" :class="{ 'rounded-r': desktop }"
-                title="Find an upgrade: any base of this kind with at least this item's values on its main stats (life, resistances, …)"
+              <button class="bg-gray-700 text-gray-300 px-1.5 rounded-r"
+                :title="item.rarity === 'Unique' ? 'Find better rolls: this unique with at least these values' : 'Find an upgrade: any base of this kind with at least these values'"
                 @click="openTrade(item, true)"><i class="fas fa-arrow-up" /></button>
-              <button v-if="item.rarity === 'Rare' || item.rarity === 'Magic'" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1"
+              <!-- same columns on every row: an empty slot where a button doesn't apply -->
+              <button v-if="item.rarity === 'Rare' || item.rarity === 'Magic'" class="bg-gray-700 text-gray-300 rounded px-1.5 ml-1 w-7"
                 title="Craft this: opens the Craft tab with this base and its mods filled in, and a step-by-step plan (cheapest method, what order)"
                 @click="requestCraft(item)"><i class="fas fa-flask" /></button>
+              <span v-else class="ml-1 w-7" aria-hidden="true" />
               <button class="bg-gray-700 rounded px-1.5 ml-1" :class="regexSlot === item.slot ? 'text-gray-100 bg-gray-600' : 'text-gray-300'"
                 title="Regex: make a stash / vendor search for items like this (pick the lines, at least these values)"
                 @click="toggleRegex(item.slot)"><i class="fas fa-code" /></button>
@@ -291,6 +297,27 @@ function request () {
 
 // Gear reloads when the build picker (re)loads, i.e. each time the panel opens
 
+// Deathloom fork (19 Nov): "got it" ticks per build and slot; a tick counts for
+// the item it was set on (if the build's item changes, the tick goes)
+const OWNED_KEY = 'deathloom.gear-owned.v1'
+function readOwned (): Record<string, Record<string, string>> {
+  try { const v = JSON.parse(localStorage.getItem(OWNED_KEY) ?? '{}'); return v && typeof v === 'object' ? v : {} } catch { return {} }
+}
+const owned = shallowRef(readOwned())
+const onOwned = (e: StorageEvent) => { if (e.key === OWNED_KEY) owned.value = readOwned() }
+window.addEventListener('storage', onOwned)
+onUnmounted(() => { window.removeEventListener('storage', onOwned) })
+const ownedKey = computed(() => `${build.value?.name ?? ''}|${itemSet.value ?? ''}`)
+function itemId (item: PobGearItem) { return `${item.title || item.name}|${item.baseName ?? ''}` }
+function isOwned (item: PobGearItem) { return owned.value[ownedKey.value]?.[item.slot] === itemId(item) }
+function toggleOwned (item: PobGearItem) {
+  const all = { ...owned.value }
+  const was = all[ownedKey.value] ?? {}
+  const on = was[item.slot] !== itemId(item)
+  all[ownedKey.value] = Object.fromEntries([...Object.entries(was).filter(([slot]) => slot !== item.slot), ...(on ? [[item.slot, itemId(item)]] : [])])
+  owned.value = all
+  try { localStorage.setItem(OWNED_KEY, JSON.stringify(all)) } catch {}
+}
 function toggle (slot: string) {
   opened.value[slot] = !isOpen(slot)
 }

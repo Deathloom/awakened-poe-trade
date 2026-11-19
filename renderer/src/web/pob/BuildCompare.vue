@@ -65,8 +65,24 @@
           <div class="text-gray-100">{{ g.slot }} <span v-if="g.same" class="text-gray-500">· same</span></div>
           <div class="text-blue-300 truncate">{{ nameA }}: {{ g.a ?? '(empty)' }}</div>
           <div class="text-yellow-300 truncate">{{ nameB }}: {{ g.b ?? '(empty)' }}</div>
-          <div v-for="m of g.onlyB" :key="'b' + m" class="pl-2 text-green-300" :title="`${nameB} has this, ${nameA} doesn't`">+ {{ m }}</div>
-          <div v-for="m of g.onlyA" :key="'a' + m" class="pl-2 text-red-300" :title="`${nameA} has this, ${nameB} doesn't`">− {{ m }}</div>
+          <!-- Deathloom fork (19 Nov): grouped, so it's clear what you have and what's left -->
+          <div v-if="g.onlyB.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Still need' : `Only on ${nameB}` }} <span class="text-gray-600">({{ g.onlyB.length }})</span></div>
+            <div v-for="m of g.onlyB" :key="'b' + m" class="pl-2 text-yellow-200">○ {{ m }}</div>
+          </div>
+          <div v-if="g.aLower.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Have it, but lower' : `Lower on ${nameA}` }}</div>
+            <div v-for="m of g.aLower" :key="'l' + m.a" class="pl-2 text-orange-300">◐ {{ m.a }} <span class="text-gray-500">→ {{ m.b }}</span></div>
+          </div>
+          <div v-if="g.both.length || g.aHigher.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Already have' : 'On both' }} <span class="text-gray-600">({{ g.both.length + g.aHigher.length }})</span></div>
+            <div v-for="m of g.both" :key="'s' + m" class="pl-2 text-green-300">✓ {{ m }}</div>
+            <div v-for="m of g.aHigher" :key="'h' + m.a" class="pl-2 text-green-300">✓ {{ m.a }} <span class="text-gray-500">(build: {{ m.b }})</span></div>
+          </div>
+          <div v-if="g.onlyA.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Extra on yours (not in the build)' : `Only on ${nameA}` }}</div>
+            <div v-for="m of g.onlyA" :key="'a' + m" class="pl-2 text-gray-500">· {{ m }}</div>
+          </div>
         </div>
         <div v-if="!result.gear.some(g => !g.same) && !gearAll" class="text-gray-500">Same gear in every slot.</div>
       </div>
@@ -216,6 +232,8 @@ function sideName (p: string) {
   return label(p).split('/').pop() ?? p
 }
 const nameA = computed(() => sideName(ranA.value))
+// your character on the left: word it as "still need" / "already have"
+const charMode = computed(() => nameA.value === 'Your character')
 const nameB = computed(() => sideName(ranB.value))
 const label = (p: string) => p.replace(/\.xml$/i, '').replace(/\\/g, '/')
 function who (s: PobBuildSummary) {
