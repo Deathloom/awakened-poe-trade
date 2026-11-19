@@ -225,7 +225,7 @@ function makeMine () {
   })
 }
 function openPob () {
-  Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob' } })
+  Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob', build: mineExists.value ? me.minePath.value ?? undefined : undefined } })
 }
 function compareMine () {
   // left = your character, right = the build you follow: green + = your upgrades

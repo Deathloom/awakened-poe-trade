@@ -837,8 +837,11 @@ type IpcUserAction =
   Event<'CLIENT->MAIN::user-action', {
     action: 'check-for-update' | 'update-and-restart' | 'quit'
   } | {
-    // Deathloom fork: start the Path of Building window (tray's Open Path of Building)
+    // Deathloom fork: start the Path of Building window (tray's Open Path of Building).
+    // build: a .xml in your player folder (as the builds list spells it): PoB opens it
+    // on the Import tab (PoB fork with --orbhoarder-import; else just opens PoB)
     action: 'open-pob'
+    build?: string
   } | {
     action: 'stash-search'
     text: string
