@@ -8,11 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
-### Fixed (#242)
+## [1.0.93] - 2026-11-19
+
+### Fixed (#243)
 - **Automatic problem reports only for real bugs:** messages meant for you (timeless seed out of range, a base type PoB doesn't know, a loadout name that isn't in the build) and cancelled price downloads no longer open reports. The poe.ninja download that a newer one cancels no longer shows up as an error at all.
 
 ### Changed (#241)
-- **Path of Building 2.68.1** (from PoB Community, 17 Nov): full 3.30 support: 3.30 uniques and changes, Wickerman equipment and Viscera mods (also on character import), Reliquarian mods, Putrid Seed jewel, 3.30 flask mods, and fixes (imbued support gem import crash, Excommunicate, ??? on pasted 3.30 items). Test builds get it first; stable when 1.0.93 ships.
+- **Path of Building 2.68.1** (from PoB Community, 17 Nov): full 3.30 support: 3.30 uniques and changes, Wickerman equipment and Viscera mods (also on character import), Reliquarian mods, Putrid Seed jewel, 3.30 flask mods, and fixes (imbued support gem import crash, Excommunicate, ??? on pasted 3.30 items). 
 
 ### Changed (#240): merged upstream Awakened PoE Trade (3.30 updates, 17–19 Nov)
 - Game data updated to 3.30.0.3 (items, mods, trade stats in all languages).
