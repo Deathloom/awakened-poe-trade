@@ -51,10 +51,10 @@
       <button v-if="activeBuild?.own" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
         @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
-      <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: jump to the whole build or to nothing"
+      <button class="ui-btn ui-btn-quiet" title="Taken on your atlas: jump to the whole build or to nothing"
         @click="trackOpen = !trackOpen"><i class="fas fa-check-double" /></button>
-      <button v-if="spec" class="text-gray-500 hover:text-gray-200" :title="nextIds.length ? 'Zoom to the next passives to take' : 'Zoom to this atlas build'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
-      <button class="text-gray-500 hover:text-gray-200" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
+      <button v-if="spec" class="ui-btn ui-btn-quiet" :title="nextIds.length ? 'Zoom to the next passives to take' : 'Zoom to this atlas build'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
+      <button class="ui-btn ui-btn-quiet" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
       <button class="hover:text-gray-200" :class="statsOpen ? 'text-yellow-300' : 'text-gray-500'" title="Stats: everything the passives in this build add up to"
         @click="toggleStats"><i class="fas fa-list-ul" /></button>
     </div>

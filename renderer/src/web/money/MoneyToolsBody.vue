@@ -48,7 +48,7 @@
         <span class="text-gray-300">Total:</span>
         <span class="text-yellow-300 text-sm">{{ money(total.chaos) }}</span>
         <span v-if="divine && total.chaos >= divine" class="text-gray-500">({{ Math.round(total.chaos) }} c)</span>
-        <button class="ml-auto text-gray-500 hover:text-gray-200" title="Set all counts to 0" @click="clearAll"><i class="fas fa-undo mr-1" />Clear</button>
+        <button class="ui-btn ui-btn-quiet ml-auto" title="Set all counts to 0" @click="clearAll"><i class="fas fa-undo mr-1" />Clear</button>
       </div>
       <div class="flex-1 min-h-0 overflow-y-auto px-2 space-y-0.5">
         <div class="flex items-center gap-2">

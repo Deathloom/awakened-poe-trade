@@ -29,7 +29,7 @@
       </span>
       <span v-if="run.start" class="text-gray-400" :title="'Started ' + new Date(run.start).toLocaleTimeString()">
         <i class="fas fa-stopwatch mr-1" />{{ elapsed }}</span>
-      <button class="ml-auto text-gray-500 hover:text-gray-200" title="Clear the checklist (also happens when you enter Aspirants' Plaza)" @click="resetRun(false)">Reset</button>
+      <button class="ui-btn ui-btn-quiet ml-auto" title="Clear the checklist (also happens when you enter Aspirants' Plaza)" @click="resetRun(false)">Reset</button>
     </div>
     <div class="px-3 py-0.5 text-xs text-gray-500 bg-gray-900 shrink-0">
       poelab.com as-is (community site, not part of Orbhoarder). Links to other sites open in your browser.

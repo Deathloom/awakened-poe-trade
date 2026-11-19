@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: copy the in-game market search text (press / in game, then Ctrl+V) -->
-  <button class="px-2 rounded text-gray-400 hover:text-gray-200 shrink-0"
+  <button class="ui-btn ui-btn-quiet px-2 rounded shrink-0"
     :title="`Copy '${text}' for the in-game market (press / then Ctrl+V)`"
     @click="copy(text)">
     <template v-if="copiedKey"><i class="fas fa-check text-green-400" /> Copied</template>

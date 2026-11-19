@@ -3,8 +3,18 @@
        Level from Client.txt, quest points from the campaign guide, the rest from
        the active build in Path of Building. No character data is fetched. -->
   <div class="widget-default-style text-gray-200 leading-tight text-sm flex flex-col h-full min-h-0">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1 bg-gray-900 rounded-t">
-      <span class="text-gray-500"><i class="fas fa-shoe-prints mr-1" />Next steps</span>
+    <!-- Deathloom fork (19 Nov, calmer UI): one line; character / level / quest points behind "Level" -->
+    <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t">
+      <span class="text-gray-500 shrink-0"><i class="fas fa-shoe-prints mr-1" />Next steps</span>
+      <span class="text-xs text-gray-400 truncate min-w-0" :title="summaryTitle">{{ summary }}</span>
+      <div class="ml-auto flex items-center gap-x-1 shrink-0">
+        <button class="ui-btn ui-btn-quiet" :class="{ 'ui-btn-on': showSetup }" title="Character, level and quest points"
+          @click="showSetup = !showSetup"><i class="fas fa-user-edit" />Level</button>
+        <button class="ui-btn ui-btn-quiet" :disabled="loading" title="Reload from Path of Building" @click="request">
+          <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
+      </div>
+    </div>
+    <div v-if="showSetup || (plan && !levelKnown)" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1 bg-gray-900 border-t border-gray-800">
       <label v-if="levels.chars.length > 1" class="text-xs text-gray-400">Character
         <select class="bg-gray-700 rounded px-1 ml-1" :value="levels.selected" @change="pickChar(($event.target as HTMLSelectElement).value)">
           <option value="">Last levelled ({{ levels.chars[0].name }})</option>
@@ -19,9 +29,6 @@
         <input type="number" min="0" max="30" class="w-10 bg-gray-700 rounded px-1 ml-1" :placeholder="String(loggedPoints ?? guidePoints)"
           :value="levels.questPoints ?? ''" @change="setQuestPoints(($event.target as HTMLInputElement).value)">
       </label>
-      <span v-if="plan" class="text-xs text-gray-500">{{ plan.available }} passive points</span>
-      <button class="ml-auto text-gray-500 hover:text-gray-200" title="Reload from Path of Building" @click="request">
-        <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
     </div>
 
     <div class="p-1 overflow-y-auto min-h-0 flex-1">
@@ -51,7 +58,7 @@
           <div class="lg-head flex items-baseline"><i class="fas fa-shoe-prints mr-1 text-gray-500" />
             <span>Next passives</span>
             <span class="ml-2 text-gray-600">{{ Math.min(plan.taken, plan.order.length) + plan.kept }} / {{ plan.order.length + plan.kept }} of this tree by now</span>
-            <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showAll = !showAll">{{ showAll ? 'Next only' : 'Whole order' }}</button>
+            <button class="ml-auto ui-btn ui-btn-quiet text-xs" @click="showAll = !showAll">{{ showAll ? 'Next only' : 'Whole order' }}</button>
           </div>
           <div v-if="!plan.order.length" class="text-gray-500">This tree adds no passives over the previous one.</div>
           <div v-else-if="!showAll && plan.taken >= plan.order.length" class="text-green-500">All passives of this tree should be taken by now.</div>
@@ -108,7 +115,7 @@
           <div class="lg-head flex items-baseline"><i class="fas fa-gem mr-1 text-gray-500" />
             <span>Quest gems for this build ({{ questGems.className }})</span>
             <span class="ml-2 text-gray-600">act {{ guideAct }}</span>
-            <button class="ml-auto text-gray-500 hover:text-gray-200" @click="allActs = !allActs">{{ allActs ? 'This act' : 'All acts' }}</button>
+            <button class="ml-auto ui-btn ui-btn-quiet text-xs" @click="allActs = !allActs">{{ allActs ? 'This act' : 'All acts' }}</button>
           </div>
           <div v-if="!questRows.length" class="text-xs text-gray-500">Nothing to pick up from quests {{ allActs ? '' : 'in this act' }}.</div>
           <div v-for="(q, i) of questRows" :key="i" class="pb-px" :class="q.act < guideAct ? 'opacity-50' : ''">
@@ -144,7 +151,7 @@
           <!-- manual "have it" ticks (the game log has no gem info) -->
           <div class="lg-sub flex items-baseline">
             <span>Your gems<template v-if="char"> ({{ char.name }})</template>: {{ haveCount }} of {{ uniqueGems.length }}</span>
-            <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showTicks = !showTicks">{{ showTicks ? 'hide' : 'tick what you have' }}</button>
+            <button class="ml-auto ui-btn ui-btn-quiet text-xs" @click="showTicks = !showTicks">{{ showTicks ? 'hide' : 'tick what you have' }}</button>
           </div>
           <div v-if="showTicks" class="flex flex-wrap gap-x-3 gap-y-px text-xs pb-1">
             <button v-for="g of uniqueGems" :key="'t' + g.name" type="button" class="gem-chip flex items-center gap-1"
@@ -159,7 +166,7 @@
           <div class="text-xs text-gray-500" title="Gems of this step's skill set you can socket at your level (level-1 requirement). Changes when you reach the next gem's level or the next levelling tree.">
             Gems in this step usable at level {{ level }}: {{ usableNow.length }} of {{ uniqueGems.length }}<template v-if="upcoming.length">
               · next: {{ upcoming[0].name }} at {{ upcoming[0].reqLevel }}</template>
-            <button class="ml-1 hover:text-gray-200" @click="showUsable = !showUsable">{{ showUsable ? 'hide' : 'show' }}</button>
+            <button class="ui-btn ui-btn-quiet ml-1" @click="showUsable = !showUsable">{{ showUsable ? 'hide' : 'show' }}</button>
           </div>
           <div v-if="showUsable" class="flex flex-wrap gap-x-3">
             <span v-for="g of usableNow" :key="'a' + g.name" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span>
@@ -170,7 +177,7 @@
         <div class="rounded px-1 py-1 mb-1 bg-gray-900 text-xs">
           <div class="lg-head flex items-baseline"><i class="fas fa-store mr-1 text-gray-500" />
             <span>Vendor recipes (act {{ guideAct }})</span>
-            <button class="ml-auto text-gray-500 hover:text-gray-200" @click="showRecipes = !showRecipes">{{ showRecipes ? 'hide' : `show ${recipes.length}` }}</button>
+            <button class="ml-auto ui-btn ui-btn-quiet text-xs" @click="showRecipes = !showRecipes">{{ showRecipes ? 'hide' : `show ${recipes.length}` }}</button>
           </div>
           <template v-if="showRecipes">
             <div v-for="r of recipes" :key="r.name" class="pb-1">
@@ -187,7 +194,7 @@
         <div class="rounded px-1 py-1 mb-1 bg-gray-900 text-xs">
           <div class="lg-head flex items-baseline"><i class="fas fa-scroll mr-1 text-gray-500" />
             <span>From the game log<template v-if="char"> · {{ char.name }}</template></span>
-            <button class="ml-auto text-gray-500 hover:text-gray-200" :disabled="rebuilding"
+            <button class="ml-auto ui-btn ui-btn-quiet text-xs" :disabled="rebuilding"
               title="Read the whole Client.txt again and rebuild every character's quests, passives, deaths and act times"
               @click="rebuild"><i class="fas fa-history mr-1" :class="{ 'fa-spin': rebuilding }" />Rebuild from game log</button>
           </div>
@@ -282,6 +289,14 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const plan = shallowRef<PobPlan | null>(null)
 const showAll = ref(false)
+// header line: who, level, points; the boxes to change them open with "Level"
+const showSetup = ref(false)
+const summary = computed(() => [
+  char.value?.name,
+  levelKnown.value ? `level ${level.value}` : 'level ?',
+  plan.value ? `${plan.value.available} points` : ''
+].filter(Boolean).join(' · '))
+const summaryTitle = computed(() => plan.value ? `${plan.value.available} passive points available at this level (quests included)` : '')
 const showUsable = ref(false)
 let lastRequestId = 0
 

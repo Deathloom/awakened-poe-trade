@@ -19,7 +19,7 @@
           <option v-for="b of folder.builds" :key="b.path" :value="b.path">{{ b.label }}</option>
         </optgroup>
       </select>
-      <button class="text-gray-500 hover:text-gray-200 shrink-0" title="Reload builds and loadouts"
+      <button class="ui-btn ui-btn-quiet shrink-0" title="Reload builds and loadouts"
         :disabled="busy" @click="request()"><i class="fas fa-sync-alt" :class="{ 'fa-spin': busy }" /></button>
     </div>
     <div v-if="loadouts" class="flex items-center gap-x-2">

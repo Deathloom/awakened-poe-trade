@@ -9,7 +9,7 @@
         <button v-for="m of MODES" :key="m.id" class="mk-tab" :class="{ 'mk-tab-on': mode === m.id }" :title="m.tip"
           @click="mode = m.id">{{ m.label }}</button>
       </div>
-      <button class="ml-auto text-gray-500 hover:text-gray-200" title="Reload prices from poe.ninja" :disabled="ninja.isLoading.value"
+      <button class="ui-btn ui-btn-quiet ml-auto" title="Reload prices from poe.ninja" :disabled="ninja.isLoading.value"
         @click="ninja.queuePricesFetch()"><i class="fas fa-sync-alt" :class="{ 'fa-spin': ninja.isLoading.value }" /></button>
     </div>
     <div class="flex flex-wrap items-center gap-2 px-2 py-1 shrink-0 text-xs">
@@ -61,7 +61,7 @@
               <button class="px-1" :class="isWatched(r.watchKey) ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'"
                 :title="isWatched(r.watchKey) ? 'Stop watching' : 'Watch (left panel)'" @click="watchRow(r)">
                 <i :class="isWatched(r.watchKey) ? 'fas fa-star' : 'far fa-star'" /></button>
-              <button class="px-1 text-gray-500 hover:text-gray-200" title="Open on poe.ninja" @click="open(r.item.url)">
+              <button class="ui-btn ui-btn-quiet px-1" title="Open on poe.ninja" @click="open(r.item.url)">
                 <i class="fas fa-external-link-alt" /></button>
             </td>
           </tr>

@@ -7,7 +7,7 @@
       <span class="text-gray-400">Edit loadouts</span>
       <span v-if="busy" class="text-xs text-gray-500"><i class="fas fa-circle-notch fa-spin mr-1" />Saving…</span>
       <span v-else-if="saved" class="text-xs text-green-400">Saved</span>
-      <button class="ml-auto text-gray-500 hover:text-gray-200" title="Reload" :disabled="busy" @click="load"><i class="fas fa-sync-alt" /></button>
+      <button class="ui-btn ui-btn-quiet ml-auto" title="Reload" :disabled="busy" @click="load"><i class="fas fa-sync-alt" /></button>
     </div>
     <div v-if="error" class="text-red-400">{{ error }}</div>
     <div class="text-xs text-gray-500">Close this build in Path of Building first (it would overwrite these changes when you save there). The old file is kept in "Build backups" next to your builds folder.</div>
@@ -31,8 +31,8 @@
         </template>
         <template v-else>
           <span class="flex-1 truncate" :class="set.id === activeId(kind.key) ? 'text-yellow-300' : 'text-gray-200'">{{ pobText(set.title) || 'Default' }}</span>
-          <button class="text-gray-500 hover:text-gray-200" title="Rename" :disabled="busy" @click="renaming = `${kind.key}:${set.id}`; renameText = pobText(set.title)"><i class="fas fa-i-cursor" /></button>
-          <button class="text-gray-500 hover:text-gray-200" title="Copy" :disabled="busy" @click="send([{ op: 'copySet', kind: kind.key, id: set.id, title: `${pobText(set.title) || 'Default'} (copy)` }])"><i class="fas fa-clone" /></button>
+          <button class="ui-btn ui-btn-quiet" title="Rename" :disabled="busy" @click="renaming = `${kind.key}:${set.id}`; renameText = pobText(set.title)"><i class="fas fa-i-cursor" /></button>
+          <button class="ui-btn ui-btn-quiet" title="Copy" :disabled="busy" @click="send([{ op: 'copySet', kind: kind.key, id: set.id, title: `${pobText(set.title) || 'Default'} (copy)` }])"><i class="fas fa-clone" /></button>
           <button v-if="confirmDelete !== `${kind.key}:${set.id}`" class="text-gray-500 hover:text-red-400" title="Delete"
             :disabled="busy || (loadouts?.[kind.list].length ?? 0) < 2" @click="confirmDelete = `${kind.key}:${set.id}`"><i class="fas fa-trash" /></button>
           <button v-else class="px-1 rounded bg-red-700 text-xs" @click="send([{ op: 'deleteSet', kind: kind.key, id: set.id }]); confirmDelete = null">Delete?</button>

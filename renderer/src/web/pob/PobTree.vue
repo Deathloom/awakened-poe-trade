@@ -8,7 +8,7 @@
         <span class="text-gray-300">{{ classText(tree) }}</span>
         <span class="text-gray-500">{{ tree.points }} points · {{ tree.ascendancyPoints }} ascendancy</span>
         <span class="flex-1" />
-        <button v-if="live || liveError" class="text-gray-500 hover:text-gray-200" title="Fetch the character again (rate-limited)"
+        <button v-if="live || liveError" class="ui-btn ui-btn-quiet" title="Fetch the character again (rate-limited)"
           :disabled="loading" @click="request(true)"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /> character</button>
       </div>
       <div v-if="liveError" class="px-1 pb-1 text-xs text-gray-500">{{ liveError }}</div>

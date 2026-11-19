@@ -9,7 +9,7 @@
       <option v-for="o of options" :key="o.key" :value="o.key">{{ o.label }}{{ o.key === current?.key ? ' (now)' : '' }}</option>
     </select>
     <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="use">Use it</button>
-    <button class="text-gray-400 hover:text-gray-200" title="Build → What changes (route icon) lists what to swap between two loadouts" @click="done">Not now</button>
+    <button class="ui-btn ui-btn-quiet" title="Build → What changes (route icon) lists what to swap between two loadouts" @click="done">Not now</button>
   </div>
 </template>
 

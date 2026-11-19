@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#257): calmer Levelling tab, one button look everywhere
+- Campaign guide: ‹ › step arrows and one ⋯ menu (Show the whole act, Show optional quests, Start over) instead of five loose icons.
+- Next steps: one header line (character · level · points) with a **Level** button that opens the character, level and quest-point boxes (they open by themselves while no level-up has been seen). Section buttons (Whole order, All acts, …) look like buttons.
+- Every small icon or text button across the app (atlas, tree map, build tools, session, market, trades, board, settings, help) now uses the same quiet button style, so it's clear what's clickable.
+
 ### Changed (#256): overlay review, part 2
 - Overlay panels have a drag bar on top (like the pinned panels): drag it to move the panel. Market search and Cheat sheets couldn't be moved before.
 - Build panel: price check is in the ⋯ menu in the Orbhoarder window too (opens over the game). In the overlay and in game, ⋯ → "Compare, edit loadouts, manage builds" opens the Orbhoarder window on the Build tab.
