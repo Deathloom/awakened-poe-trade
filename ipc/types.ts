@@ -388,6 +388,8 @@ export interface PobEquippedInfo {
   items: number
   skipped: string[]
   summary: PobImpactCompare['summary']
+  // Deathloom fork: gear came from your character file (PoB's Import character), not GGG's pages
+  fromFile?: boolean
   // What came from the character (false: the build's tree/skills were used)
   tree: boolean
   skills: boolean
@@ -879,6 +881,10 @@ type IpcPobImpactRequest =
     itemText: string
     // Fetch equipped gear now instead of using the cached copy (still rate-limited)
     refreshGear?: boolean
+    // Deathloom fork: your character's file (PoB's own Import character filled it), as linked
+    // in the Gems tab / Compare: name + linked path (player folder); main falls back to
+    // "My characters/<name>.xml". "vs character" compares with its gear.
+    myCharacter?: { name: string, file?: string }
   }>
 
 type IpcPobImpactResult =

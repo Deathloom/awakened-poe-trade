@@ -10,6 +10,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Fixed (#253): Path of Building slow to start gave errors
 - Orbhoarder now starts Path of Building in the background and loads your build a few seconds after it opens (and after PoB settings change), so the Build panel and price check don't hit a cold start. Loading or editing a build may take up to 2½ minutes before it counts as an error (was 30 seconds); other requests wait for it instead of failing.
+### Added (#252): price check "vs character" is back
+- The PoB part of the price check compares the item with **your character's gear** again ("vs character"), now from your character file (Path of Building's own Import character, the same file as Gems and Compare) instead of GGG's character pages. Uses the build's tree and gems; shows when the file was saved. Not set up yet: it says how (Build → Gems → Equipped from: my character). Needs the PoB fork from 19 Nov 2026 (comes with this version).
 
 ### Changed (#251): Update in PoB opens your character's file on the Import tab
 - **Update in PoB** (Gems tab) and **Open Path of Building** in Compare now open your character's file in Path of Building straight on the Import tab. If PoB is already open it switches to that file (asking to save unsaved changes first) instead of starting a second PoB. You still pick the character and click Items and Skills yourself. Needs the PoB fork from 19 Nov 2026 (comes with this version); an older or separate PoB just opens as before.
