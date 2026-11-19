@@ -183,6 +183,10 @@ export default defineComponent({
       if (props.moveHandles === 'top-bottom') {
         return ['tl', 'tc', 'tr', 'br', 'bc', 'bl']
       }
+      // Deathloom fork: one position name ("tl") was silently no handles at all
+      if (['tl', 'tc', 'tr', 'cr', 'br', 'bc', 'bl', 'cl', 'cc'].includes(props.moveHandles)) {
+        return [props.moveHandles]
+      }
       return []
     })
 

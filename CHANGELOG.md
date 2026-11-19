@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#255): overlay panels move and open on their own
+- A panel's hotkey pressed in game shows only that panel, not the menu bar and every other open panel (Shift+Space still shows everything). Closes as before: hotkey again, Esc or click the game.
+- Overlay panels (build gear, guide, trade companion, market search/history, friends' board, tree, atlas, session, overview, cheat sheets, money) get a Move square on every corner; before, Move gave one tiny square at a single point.
+- Help: how to move overlay panels, and that click-through pinned panels need Shift+Space before dragging.
+
 ### Fixed (#254): "vs character" said "equipped needs 'items'"
 - Path of Building only updated at the next Orbhoarder start when its window was open, so the new character-file compare hit the old PoB. Orbhoarder now checks every minute and updates PoB as soon as its window is closed. Until then the price check says to close PoB instead of showing the raw error.
 - Price check: "vs build gear" / "vs character" now look like buttons; when "vs character" can't be used, it's greyed out and its tooltip says why.

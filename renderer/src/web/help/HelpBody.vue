@@ -60,7 +60,8 @@
               <b>Whisper</b> uses GGG's own buy message, <b>Hideout</b> is <code>/hideout name</code> (works when the seller lets visitors in).
               Instant buyout listings open in the Trade site tab, where you click GGG's "Travel to Hideout".</li>
             <li><b>Panels over the game</b>: pin the build, guide or trade companion (Settings → Path of Building → Where panels show).
-              Drag them by the top bar, resize from the bottom-right corner.</li>
+              Drag them by the top bar, resize from the bottom-right corner. A panel set to click-through can't be dragged while you play: press Shift+Space first.</li>
+            <li><b>Panels in the overlay</b>: hover a panel, click <b>Move</b> and drag one of the corner squares. A panel's hotkey pressed in game shows only that panel; Shift+Space shows the menu and every open panel.</li>
             <li><b>Post to the friends' board</b>: set a hotkey in Settings → Path of Building, hover an item and press it. The board opens in the overlay with the item filled in.</li>
             <li><b>Chat buttons</b> (trade companion, market search, friends' board) copy the command, or send one chat message per click (setting). Nothing is ever sent by itself.</li>
           </ul>

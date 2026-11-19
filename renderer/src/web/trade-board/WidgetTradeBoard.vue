@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: friends' trade board in the overlay (widget menu, or the
        "Post to friends' board" hotkey on a hovered item) -->
-  <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :removable="false" :inline-edit="false">
     <TradeBoardBody />
   </Widget>
 </template>
@@ -39,6 +39,7 @@ import { Host } from '@/web/background/IPC'
 import { useInOverlay } from '../desktop/panels'
 import { postDraft } from './board'
 import TradeBoardBody from './TradeBoardBody.vue'
+import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: TradeBoardWidget }>()
 const wm = inject<WidgetManager>('wm')!
@@ -59,8 +60,7 @@ watch(shown, (on) => {
 // hotkey (Settings → Path of Building): toggles it in the overlay (focused, so you can type)
 const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
   if (e.target !== 'trade-board' || !shown.value) return
-  if (props.config.wmWants === 'hide' || !wm.active.value) wm.show(props.config.wmId)
-  else wm.hide(props.config.wmId)
+  toggleFromHotkey(wm, props.config.wmId, props.config.wmWants)
 })
 onUnmounted(() => { hotkey.abort() })
 </script>
