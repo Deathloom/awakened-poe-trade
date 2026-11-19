@@ -3,8 +3,8 @@
   <div class="flex flex-col h-full min-h-0 rounded bg-gray-800 text-xs">
     <div class="flex flex-wrap items-center gap-1 px-2 py-1 border-b border-gray-700 shrink-0">
       <span class="lg-head mr-1"><i class="fas fa-book mr-1 text-gray-500" />Cheat sheets</span>
-      <button v-for="s of tabs" :key="s.id" class="px-2 rounded"
-        :class="tab === s.id ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab(s.id)">{{ s.label }}</button>
+      <button v-for="s of tabs" :key="s.id" class="ui-tab"
+        :class="{ 'ui-tab-on': tab === s.id }" @click="setTab(s.id)">{{ s.label }}</button>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2 py-1 space-y-2">
       <template v-if="tab === 'progress'">

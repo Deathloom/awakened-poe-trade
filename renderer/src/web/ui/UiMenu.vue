@@ -71,4 +71,10 @@ onUnmounted(() => { document.removeEventListener('mousedown', onDoc); document.r
 .ui-btn-primary:hover { background: rgb(var(--accent) / 0.4); }
 .ui-btn-quiet { background: transparent; color: rgb(var(--g-400)); }
 .ui-btn-quiet:hover { background: rgb(var(--g-700)); color: rgb(var(--g-100)); }
+.ui-btn-danger { background: rgb(185 28 28); color: #fff; }
+.ui-btn-danger:hover { background: rgb(220 38 38); color: #fff; }
+/* one tab look for panel headers (same as the Build panel) */
+.ui-tab { padding: 0 0.5rem; border-radius: 0.25rem; color: rgb(var(--g-500)); white-space: nowrap; }
+.ui-tab:hover { color: rgb(var(--g-200)); }
+.ui-tab-on, .ui-tab-on:hover { background: rgb(var(--g-700)); color: rgb(var(--g-100)); }
 </style>
