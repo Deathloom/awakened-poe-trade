@@ -29,7 +29,7 @@
         <div class="flex items-center gap-x-2">
           <span class="text-green-400 truncate flex-1" :title="me.minePath.value">
             <i class="fas fa-user-check mr-1" />{{ fileLabel(me.minePath.value) }}<template v-if="me.level.value"> · lvl {{ me.level.value }}</template></span>
-          <button class="ui-btn ui-btn-quiet" @click="openPob" title="Open Path of Building. There: open this file, Import/Export Build → Import character → Items and Skills, Ctrl+S. Then ↻ here.">Update in PoB</button>
+          <button class="ui-btn ui-btn-quiet" @click="openPob" title="Opens this file in Path of Building on the Import tab. There: pick your character → Items and Skills (tick Delete equipment and Delete skills), Ctrl+S. Then ↻ here.">Update in PoB</button>
           <button class="ui-btn ui-btn-quiet" @click="pickOpen = !pickOpen">Change file</button>
         </div>
         <div v-if="mineEmpty" class="text-yellow-500">No gems in it yet: import your character's Items and Skills in Path of Building and save.</div>
@@ -57,7 +57,7 @@
         </div>
         <ol class="list-decimal pl-4 pt-px text-gray-500">
           <li>Make the file (button above). Path of Building opens.</li>
-          <li>In PoB, open <b class="text-gray-300">{{ fileLabel(me.targetPath.value) || 'My characters/<your character>' }}</b> → Import/Export Build → Import character. Tick Delete equipment and Delete skills, click <b class="text-gray-300">Items and Skills</b> (not the tree).</li>
+          <li>PoB opens <b class="text-gray-300">{{ fileLabel(me.targetPath.value) || 'My characters/<your character>' }}</b> on the Import tab (with an older PoB: open it yourself → Import/Export Build). Import character: Tick Delete equipment and Delete skills, click <b class="text-gray-300">Items and Skills</b> (not the tree).</li>
           <li>Ctrl+S in PoB, then ↻ here. Any build you follow compares against this file, so renaming or updating the build is fine.</li>
         </ol>
       </template>
@@ -248,7 +248,8 @@ const mineReady = computed(() => !!me.minePath.value && me.groups.value != null)
 const mineEmpty = computed(() => mineReady.value && !me.groups.value!.length)
 function useFile (p: string | null) { me.link(p); pickOpen.value = false; me.read() }
 function makeFile () { me.makeFile(() => { openPob(); me.read() }) }
-function openPob () { Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob' } }) }
+// opens PoB on the Import tab with your character's file (PoB fork); the import itself is yours to start
+function openPob () { Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob', build: me.minePath.value ?? undefined } }) }
 
 // --- the build's socket groups + items (loadout picked in the Build tab) ---
 const loading = ref(false)

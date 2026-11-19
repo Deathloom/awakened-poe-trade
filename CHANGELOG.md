@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#251): Update in PoB opens your character's file on the Import tab
+- **Update in PoB** (Gems tab) and **Open Path of Building** in Compare now open your character's file in Path of Building straight on the Import tab. If PoB is already open it switches to that file (asking to save unsaved changes first) instead of starting a second PoB. You still pick the character and click Items and Skills yourself. Needs the PoB fork from 19 Nov 2026 (comes with this version); an older or separate PoB just opens as before.
+
 ### Changed (#250): one Gems view, and your character's file belongs to the character
 - **Gems** is one view instead of "For my level" and "Whole build": a top bar (level, the build's stage, **Equipped from: my ticks / my character**), a **Change now** box only when there's something to do (take out, socket, level up, with counts), the gear pieces with each link group's gems marked ✓ have / ◐ lower / ○ missing / 🔒 at level X plus build and your sockets, and **Coming up** (next stage) collapsed at the bottom. With stages, only the current stage's groups show.
 - **Your character's file** is now "My characters/<character name>.xml" (name from the game log, or typed in once), not "<build> (my character)". Any build you follow compares against it, so renaming or updating the build doesn't break it. Pick or change the file per character; an older "(my character)" copy is offered with **Use it**. Compare, the Gems tab and Help are updated.
