@@ -13,4 +13,6 @@ export interface WidgetManager {
   bringToTop: (wmId: number) => void
   create: (wmType: string) => void
   setFlag: (wmId: number, flag: string, state: boolean) => void
+  // Deathloom fork: show only this widget while the overlay is active (panel hotkey from in game)
+  solo: (wmId: number) => void
 }

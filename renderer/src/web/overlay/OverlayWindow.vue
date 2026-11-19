@@ -63,6 +63,8 @@ export default defineComponent({
     const gameFocused = shallowRef(false)
     const hideUI = shallowRef(false)
     const showEditingNotification = shallowRef(false)
+    // Deathloom fork: panel opened by its hotkey from in game: only it shows (hotkey-toggle.ts)
+    const soloId = shallowRef<number | null>(null)
 
     watch(active, (active) => {
       if (active) {
@@ -101,6 +103,7 @@ export default defineComponent({
       gameFocused.value = state.game
 
       if (active.value === false) {
+        soloId.value = null
         for (const w of widgets.value) {
           if (w.wmFlags.includes('hide-on-blur')) {
             hide(w.wmId)
@@ -154,11 +157,18 @@ export default defineComponent({
       if (topmostWidget.wmZorder === 'exclusive') {
         hide(topmostWidget.wmId)
       }
-      widgets.value.find(_ => _.wmId === wmId)!.wmWants = 'show'
+      const w = widgets.value.find(_ => _.wmId === wmId)!
+      w.wmWants = 'show'
+      if (soloId.value !== null && soloId.value !== wmId && w.wmZorder !== 'exclusive') soloId.value = null
     }
 
     function hide (wmId: WMID) {
       widgets.value.find(_ => _.wmId === wmId)!.wmWants = 'hide'
+      if (soloId.value === wmId) soloId.value = null
+    }
+
+    function solo (wmId: WMID) {
+      soloId.value = wmId
     }
 
     function remove (wmId: WMID) {
@@ -212,7 +222,9 @@ export default defineComponent({
           hideUI.value ? (active.value && w.wmWants === 'show' && w.wmFlags.includes('ignore-ui-visibility'))
             : !active.value && w.wmFlags.includes('invisible-on-blur') ? false
                 : showExclusive ? w === showExclusive
-                  : w.wmWants === 'show'
+                  : (active.value && soloId.value !== null && w.wmId !== soloId.value &&
+                      w.wmFlags.includes('invisible-on-blur')) ? false
+                      : w.wmWants === 'show'
       }))
     })
 
@@ -255,7 +267,8 @@ export default defineComponent({
       remove,
       bringToTop,
       create,
-      setFlag
+      setFlag,
+      solo
     })
 
     function handleBackgroundClick () {

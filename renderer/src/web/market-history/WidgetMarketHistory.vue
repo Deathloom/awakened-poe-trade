@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: price trends for watched items (poe.ninja 7 days + points recorded by the overlay) -->
-  <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :removable="false" :inline-edit="false">
     <MarketHistoryBody :active="config.wmWants === 'show'" />
   </Widget>
 </template>
@@ -38,6 +38,7 @@ import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import { useInOverlay } from '../desktop/panels'
 import MarketHistoryBody from './MarketHistoryBody.vue'
+import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: MarketHistoryWidget }>()
 // Where panels show: not in the overlay → hidden and out of the widget menu
@@ -52,8 +53,7 @@ watchPlacement(shown, (on) => {
 // hotkey (Settings → Path of Building); pinned in game it toggles in the HUD window (main)
 const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
   if (e.target !== 'panel:market' || !shown.value) return
-  if (props.config.wmWants === 'hide' || !wmPlace.active.value) wmPlace.show(props.config.wmId)
-  else wmPlace.hide(props.config.wmId)
+  toggleFromHotkey(wmPlace, props.config.wmId, props.config.wmWants)
 })
 onUnmounted(() => { hotkey.abort() })
 </script>
