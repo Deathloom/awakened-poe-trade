@@ -24,6 +24,9 @@ import { isCodeError } from '../ErrorReporter'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
+// Deathloom fork (Gerhard 19 Nov 2026): loading a big build right after PoB starts (cold
+// data caches) can take well over 30 s, which showed as an error in the app
+const LOAD_TIMEOUT = 150_000
 const REPLY_PREFIX = '@pob '
 
 interface Pending {
@@ -265,6 +268,27 @@ export class PobImpact {
       // overlay started (maybe while already playing): fill the list, pick the last played
       this.scheduleResolve(1500, false)
     }
+    if (cfg?.enabled && (!same || !this.warmedUp)) this.warmUp()
+  }
+
+  // Deathloom fork (Gerhard 19 Nov 2026): start the headless PoB and load the active build
+  // in the background when Orbhoarder starts (or PoB settings change), so the first build
+  // panel / price check doesn't wait for a cold start. Runs in the queue like any request;
+  // failures are only logged (the next real request tries again and shows the error).
+  private warmedUp = false
+  private warmTimer: ReturnType<typeof setTimeout> | null = null
+  private warmUp () {
+    this.warmedUp = true
+    if (this.warmTimer) clearTimeout(this.warmTimer)
+    this.warmTimer = setTimeout(() => {
+      this.warmTimer = null
+      if (!this.cfg?.enabled) return
+      const t0 = Date.now()
+      this.queue = this.queue
+        .then(async () => { await this.ensureBuild() })
+        .then(() => { this.logger.write(`info [PoB] warmed up in ${Math.round((Date.now() - t0) / 1000)} s`) })
+        .catch((err: Error) => { this.logger.write(`warn [PoB] warm-up: ${err.message}`) })
+    }, 4000)
   }
 
   private liveTarget () {
@@ -683,7 +707,7 @@ export class PobImpact {
     // Going back to PoB's own sets needs a fresh load
     if (this.appliedLoadout && !choice) this.loadedKey = null
     if (key !== this.loadedKey || !this.loadedBuild) {
-      const reply = await this.call('load', { path: buildPath })
+      const reply = await this.call('load', { path: buildPath }, LOAD_TIMEOUT)
       this.loadedKey = key
       this.loadedBuild = reply.build as PobBuildInfo
       // Loading drops PoB's live gear set
@@ -923,7 +947,7 @@ export class PobImpact {
       if (op.op === 'newLoadout') return { ...op, spec: op.spec ?? active.spec, itemSet: op.itemSet ?? active.itemSet, skillSet: op.skillSet ?? active.skillSet }
       return op
     })
-    const reply = await this.call('edit', { path: buildPath, ops: filled })
+    const reply = await this.call('edit', { path: buildPath, ops: filled }, LOAD_TIMEOUT)
     const xml = reply.xml
     if (typeof xml !== 'string' || !xml.includes('<PathOfBuilding')) throw new Error("Path of Building didn't return the build")
     // backup of the file as it was (one per build, replaced on each edit)
