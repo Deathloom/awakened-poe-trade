@@ -21,6 +21,8 @@
           :class="{ 'text-gray-200': showEdit }" @click="showEdit = !showEdit"><i class="fas fa-pen" /></button>
         <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Manage builds: rename, move to a folder, duplicate, delete"
           :class="{ 'text-gray-200': showManage }" @click="showManage = !showManage"><i class="fas fa-folder-open" /></button>
+        <button class="text-gray-500 hover:text-gray-200 text-sm" title="What changes: compare the loadout you play with another stage of this build (gems, passives, gear, Wickerman)"
+          :class="{ 'text-gray-200': showSteps }" @click="showSteps = !showSteps"><i class="fas fa-route" /></button>
         <button v-if="desktop" class="text-gray-500 hover:text-gray-200 text-sm" title="Compare two builds: stats, gear, gems, passive tree"
           :class="{ 'text-gray-200': showCompare }" @click="showCompare = !showCompare"><i class="fas fa-balance-scale" /></button>
         <button class="text-gray-500 hover:text-gray-200 text-sm" title="Pick the build and loadout"
@@ -37,6 +39,7 @@
     <loadout-editor v-if="desktop && showEdit" class="shrink-0 border-b border-gray-700" @changed="pickerRef?.request()" />
     <build-manager v-if="desktop && showManage" class="shrink-0 border-b border-gray-700" @changed="pickerRef?.request()" />
     <build-compare v-if="desktop && showCompare" class="shrink-0 border-b border-gray-700" />
+    <loadout-changes v-if="showSteps" ref="stepsRef" class="shrink-0 border-b border-gray-700 max-h-[50%] overflow-y-auto" @changed="pickerRef?.request()" />
     <build-picker v-show="showPicker" ref="pickerRef" class="shrink-0" @changed="onBuildChanged" />
     <div v-if="filterReminder" class="shrink-0 px-2 py-1 text-xs text-gray-400 bg-gray-900 border-b border-gray-700">
       <i class="fas fa-filter mr-1" />Loot filter for {{ filterReminder.build }}: <span class="text-gray-200">{{ filterReminder.name }}</span>
@@ -136,6 +139,7 @@
           </div>
         </div>
       </template>
+      <wickerman-card ref="wickRef" />
       <div v-if="itemSet" class="px-1 pt-2 text-xs text-gray-600">Item set: {{ pobText(itemSet) }}</div>
     </div>
     </template>
@@ -154,6 +158,8 @@ import BuildPicker from './BuildPicker.vue'
 import BuildManager from './BuildManager.vue'
 import BuildCompare from './BuildCompare.vue'
 import LoadoutEditor from './LoadoutEditor.vue'
+import LoadoutChanges from './LoadoutChanges.vue'
+import WickermanCard from './WickermanCard.vue'
 import BuildSync from './BuildSync.vue'
 import BuildImport from './BuildImport.vue'
 import PobGems from './PobGems.vue'
@@ -189,6 +195,9 @@ const tab = ref<Tab>('gear')
 const showPicker = ref(true)
 const showManage = ref(false)
 const showCompare = ref(false)
+const showSteps = ref(false)
+const stepsRef = ref<InstanceType<typeof LoadoutChanges> | null>(null)
+const wickRef = ref<InstanceType<typeof WickermanCard> | null>(null)
 const showEdit = ref(false)
 const showSync = ref(false)
 const showImport = ref(false)
@@ -218,6 +227,8 @@ function setTab (key: Tab) {
 // The picker loads the build list when the panel opens and after each change
 function onBuildChanged (b: PobBuildInfo | null) {
   if (b) build.value = b
+  stepsRef.value?.request()
+  wickRef.value?.request()
   if (tab.value === 'gear') request()
   else if (tab.value === 'gems') gemsRef.value?.request()
   else if (tab.value === 'map') mapRef.value?.request()

@@ -7,6 +7,7 @@
          taken (game log) and the next passives; the tree map follows it. Without the
          Levelling guide panel (Mapping layout) it runs hidden so the tree still updates. -->
     <div v-if="needPlanner" class="hidden"><PobNext /></div>
+    <mapping-loadout-prompt />
     <div v-if="editing" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 mx-2 mt-2 rounded bg-blue-900 text-sm shrink-0">
       <i class="fas fa-arrows-alt text-blue-300" />
       <span class="text-blue-100">Drag a panel by its bar to move it. Drop it on the left or right edge of a column for a new column.</span>
@@ -80,6 +81,7 @@ import PobGearBody from '../pob/PobGearBody.vue'
 import PobTreeMap from '../pob/PobTreeMap.vue'
 import LevellingBody from './LevellingBody.vue'
 import PobNext from '../pob/PobNext.vue'
+import MappingLoadoutPrompt from './MappingLoadoutPrompt.vue'
 import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
 import MoneyToolsBody from '../money/MoneyToolsBody.vue'

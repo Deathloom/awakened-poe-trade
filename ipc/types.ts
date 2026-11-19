@@ -421,8 +421,13 @@ export interface PobBuildSummary {
   stats: Record<string, number>
   groups: Array<{ label?: string, slot?: string, enabled: boolean, gems: Array<{ name: string, level?: number, quality?: number, enabled: boolean }> }>
   items: Array<{ slot: string, rarity: string, name: string, base: string, mods: string[] }>
-  tree: { version?: string, nodes: number[], masteries: Record<string, string> }
+  tree: { version?: string, nodes: number[], masteries: Record<string, string>, title?: string, classId?: number, ascendClassId?: number }
+  // Deathloom fork: which sets were read (titles as PoB shows them)
+  sets?: { spec?: string, itemSet?: string, skillSet?: string }
 }
+
+// Deathloom fork: read these sets instead of the build's active ones (PoB ids)
+export interface PobSetSelection { spec?: number, itemSet?: number, skillSet?: number }
 
 export interface PobImpactCompare {
   header: string
@@ -1489,6 +1494,9 @@ type IpcPobCompareRequest =
     // paths relative to the player folder (from pob-builds)
     a: string
     b: string
+    // Deathloom fork: compare loadouts (sets) instead of the active ones
+    selA?: PobSetSelection
+    selB?: PobSetSelection
   }>
 
 type IpcPobCompareResult =

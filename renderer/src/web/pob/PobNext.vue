@@ -41,7 +41,9 @@
           </template>
         </div>
         <div v-if="plan.phases.length === 1" class="px-1 pb-1 text-xs text-gray-600">
-          One tree only. Name extra trees in Path of Building after a level ("Level 12", "Level 30", …) to plan step by step.
+          One tree only (e.g. a poe.ninja character): the levelling order is worked out from this final tree, so early
+          picks can feel odd. A guide's levelling tree works better, or name extra trees in Path of Building after a level
+          ("Level 12", "Level 30", …) to plan step by step.
         </div>
 
         <!-- passives -->

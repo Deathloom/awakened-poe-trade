@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#246)
+- **What changes between stages** (Build panel → route icon): compare the loadout you play with any other loadout of the build (Early → Mid, Level 30 → 60, Elementalist → Occultist…). Lists gems to swap, passives to take and refund (notables by name), gear changes and Wickerman changes, and warns when the ascendancy or class changes. "Switch to" picks that loadout. Works with every kind of build: guide stages with their own gear, trees only, branching variants and placeholder gear ("any Vaal Regalia"); a single poe.ninja character simply has nothing to compare.
+- **"Which loadout do you play in maps?"** Once the All tab switches to Mapping, builds with several loadouts ask once (Use it / Not now). Orbhoarder never picks one by itself.
+- **Wickerman in Build → Gear:** the build's Viscera per slot with poe.ninja prices and a total. Hidden when the build has no Wickerman.
+- Levelling guide: clearer note when a build has only its final tree.
+
 ## [1.0.93] - 2026-11-19
 
 ### Fixed (#243)
