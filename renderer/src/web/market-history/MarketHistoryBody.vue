@@ -5,8 +5,8 @@
       <span class="text-gray-500"><i class="fas fa-chart-line mr-1" />Market</span>
       <!-- Deathloom fork: Market overview is a tab here (was its own panel) -->
       <template v-if="tabs !== false">
-        <button class="px-2 rounded text-xs" :class="tab === 'watched' ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab('watched')">Watched</button>
-        <button class="px-2 rounded text-xs" :class="tab === 'all' ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab('all')">All prices</button>
+        <button class="ui-tab" :class="{ 'ui-tab-on': tab === 'watched' }" @click="setTab('watched')">Watched</button>
+        <button class="ui-tab" :class="{ 'ui-tab-on': tab === 'all' }" @click="setTab('all')">All prices</button>
       </template>
       <span class="text-xs text-gray-500 ml-auto">{{ league ?? 'no league' }}</span>
     </div>
@@ -23,13 +23,10 @@
           <span v-else class="text-gray-600 shrink-0 text-xs">no price</span>
           <span v-if="w.change != null" class="text-xs shrink-0 w-12 text-right" :class="w.change >= 0 ? 'text-green-500' : 'text-red-400'">
             {{ w.change >= 0 ? '+' : '' }}{{ Math.round(w.change) }}%</span>
-          <button class="btn-mini shrink-0" :class="w.alert ? 'text-yellow-300' : ''" :disabled="!w.now"
+          <button class="ui-btn ui-btn-quiet shrink-0" :class="{ 'ui-btn-on': w.alert }" :disabled="!w.now"
             :title="w.alert ? `Alert when the price moves ${w.alert.pct}% from ${fmt(w.alert.base)} c (click to change)` : 'Price alert: tell me when the price moves (click: 10%, 20%, 50%, off)'"
             @click="cycleAlert(w)"><i class="fas fa-bell mr-1" />{{ w.alert ? w.alert.pct + '%' : 'Alert' }}</button>
-          <button class="btn-mini shrink-0" title="Open this item on poe.ninja (full history)" :disabled="!w.now" @click="w.now && open(w.now.url)">
-            <i class="fas fa-external-link-alt mr-1" />Open on poe.ninja</button>
-          <button class="btn-mini shrink-0 hover:text-red-300" title="Stop watching this item" @click="removeWatch(w.key)">
-            <i class="fas fa-trash-alt mr-1" />Delete</button>
+          <ui-menu :items="rowMenu(w)" align-right title="More: open on poe.ninja, stop watching" button-class="ui-btn-quiet" />
         </div>
         <div class="flex gap-x-2 items-end pt-1">
           <div class="flex-1">
@@ -55,6 +52,7 @@
 
 <script setup lang="ts">
 import MarketOverview from './MarketOverview.vue'
+import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import VueApexcharts from 'vue3-apexcharts'
 import { usePoeninja } from '@/web/background/Prices'
@@ -128,6 +126,13 @@ watch(() => props.active, (active) => {
 watch(() => items.value.map(w => `${w.key}=${w.now?.chaos ?? ''}`).join('|'), recordAll)
 
 function open (url: string) { window.open(url) }
+function rowMenu (w: { key: string, now: { url: string } | null }): UiMenuItem[] {
+  return [
+    { label: 'Open on poe.ninja (full history)', icon: 'fas fa-external-link-alt', disabled: !w.now, action: () => { if (w.now) open(w.now.url) } },
+    { divider: true },
+    { label: 'Stop watching', icon: 'fas fa-trash-alt', action: () => { removeWatch(w.key) } }
+  ]
+}
 function fmt (n: number) { return n >= 100 ? Math.round(n) : Math.round(n * 10) / 10 }
 
 const sparkOptions = {
@@ -143,11 +148,3 @@ const lineOptions = {
   tooltip: { enabled: true, theme: 'dark', x: { format: 'dd MMM HH:mm' }, y: { formatter: (v: number) => `${fmt(v)} c` } }
 }
 </script>
-
-<style lang="postcss" scoped>
-.btn-mini {
-  @apply bg-gray-700 text-gray-300 rounded px-2 text-xs;
-  &:hover:not(:disabled) { @apply text-gray-100; }
-  &:disabled { @apply opacity-50; }
-}
-</style>

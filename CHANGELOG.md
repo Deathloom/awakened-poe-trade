@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#258): calmer Market, Trades, Board, Market search, Money and Cheat sheets
+- Same tab look in every panel header as the Build panel (Market, Trades, Friends' board, Money tools, Cheat sheets).
+- Market → Watched: each item keeps its Alert button; Open on poe.ninja and Stop watching moved into a ⋯ menu.
+- Main actions stand out in the accent colour (Post, Post to the board, I want it / I have one, Search); everything else uses the normal or quiet button. Fewer one-off colours (blue, green); Remove turns red only while it asks to confirm.
+
 ### Changed (#257): calmer Levelling tab, one button look everywhere
 - Campaign guide: ‹ › step arrows and one ⋯ menu (Show the whole act, Show optional quests, Start over) instead of five loose icons.
 - Next steps: one header line (character · level · points) with a **Level** button that opens the character, level and quest-point boxes (they open by themselves while no level-up has been seen). Section buttons (Whole order, All acts, …) look like buttons.

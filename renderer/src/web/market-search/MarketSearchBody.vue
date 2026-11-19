@@ -22,12 +22,12 @@
           </button>
         </div>
       </div>
-      <button class="btn" :disabled="!picked || busy" @click="run"><i class="fas fa-search" /> Search</button>
+      <button class="ui-btn ui-btn-primary" :disabled="!picked || busy" @click="run"><i class="fas fa-search" /> Search</button>
     </div>
     <div v-if="link" class="mx-1 mb-1 px-2 py-1 rounded bg-gray-900 shrink-0 text-xs">
       <div class="flex items-center gap-x-2">
         <span class="text-gray-300 truncate"><i class="fas fa-link mr-1" />Trade site {{ link.kind }} · {{ link.league }}</span>
-        <button class="btn ml-auto shrink-0" @click="openLink"><i class="fas fa-store mr-1" />Open this search</button>
+        <button class="ui-btn ml-auto shrink-0" @click="openLink"><i class="fas fa-store mr-1" />Open this search</button>
       </div>
       <div v-if="league && link.league.toLowerCase() !== league.toLowerCase()" class="text-yellow-400 mt-0.5">
         This link is for {{ link.league }}; your league is {{ league }}. It opens as it is.</div>
@@ -56,7 +56,7 @@
     <div v-if="error" class="px-2 py-1 text-red-400">{{ error }}</div>
     <div v-if="result" class="flex items-center gap-x-2 px-2 pb-1 text-xs text-gray-400 shrink-0">
       <span>{{ result.total }} listed · showing {{ listings.length }}</span>
-      <button class="ml-auto hover:text-gray-100" title="Open this search on the trade site" @click="openSite">
+      <button class="ml-auto ui-btn ui-btn-quiet" title="Open this search on the trade site" @click="openSite">
         <i class="fas fa-store mr-1" />Trade site</button>
     </div>
 
@@ -80,14 +80,14 @@
           <span v-if="l.instantBuyout" class="px-1 rounded bg-indigo-800 text-indigo-200">instant buyout</span>
           <span class="ml-auto flex gap-x-1">
             <template v-if="l.instantBuyout">
-              <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" title="Opens this search in the Trade site tab: click GGG's own &quot;Travel to Hideout&quot; there (needs your trade site sign-in)"
+              <button class="ui-btn" title="Opens this search in the Trade site tab: click GGG's own &quot;Travel to Hideout&quot; there (needs your trade site sign-in)"
                 @click="openSite"><i class="fas fa-door-open mr-1" />Hideout (trade site)</button>
             </template>
             <template v-else>
-              <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-40" :disabled="!whisperText(l)"
+              <button class="ui-btn" :disabled="!whisperText(l)"
                 :title="`${mode === 'send' ? 'Sends' : 'Copies'} GGG's buy message to ${l.ign} (one chat message)`"
                 @click="chat(whisperText(l))"><i class="fas fa-comment-dots mr-1" />Whisper</button>
-              <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-40" :disabled="!hideoutCommand(l)"
+              <button class="ui-btn" :disabled="!hideoutCommand(l)"
                 :title="`${mode === 'send' ? 'Sends' : 'Copies'} /hideout ${l.ign} (one chat command). Works when the seller lets visitors in; most sellers invite you to their party first.`"
                 @click="chat(hideoutCommand(l))"><i class="fas fa-door-open mr-1" />Hideout</button>
             </template>
@@ -101,7 +101,7 @@
         {{ mode === 'send' ? 'send one chat message per click' : 'copy the chat message (paste it in chat with Ctrl+V)' }};
         nothing is ever sent by itself. Change this in Settings → Panels → Chat buttons.
       </div>
-      <button v-if="result && moreIds.length" class="w-full py-1 text-gray-400 hover:text-gray-100"
+      <button v-if="result && moreIds.length" class="w-full ui-btn ui-btn-quiet justify-center"
         :disabled="busy" @click="more">Show more</button>
       <div v-if="busy" class="px-2 py-2 text-gray-500"><i class="fas fa-circle-notch fa-spin mr-1" />Searching (rate-limited like price checks)…</div>
     </div>
