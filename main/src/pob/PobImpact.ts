@@ -1289,7 +1289,12 @@ export class PobImpact {
         this.fileGearKey = ''
         this.fileGearInfo = null
         this.pobHasGear = false
-        return { error: (err as Error).message.replace(/^.*ImpactServer\.lua:\d+: /, '') }
+        const msg = (err as Error).message.replace(/^.*ImpactServer\.lua:\d+: /, '')
+        // PoB from before the fork's character-file support (#42): its update waits until the PoB window is closed
+        if (/equipped needs 'items'/.test(msg)) {
+          return { error: 'Path of Building needs an update for "vs character". Close the Path of Building window: Orbhoarder updates it within a minute, then price check again.' }
+        }
+        return { error: msg }
       }
       this.fileGearKey = key
       this.fileGearInfo = { name: my.name, mtime }

@@ -12,8 +12,10 @@
     <template v-else-if="result">
       <div v-if="result.equipped || result.equippedError" class="flex items-center gap-x-1 mb-1 text-sm">
         <button v-for="m of modes" :key="m.key"
-          class="px-1 rounded" :class="mode === m.key ? 'bg-gray-700 text-gray-200' : 'text-gray-500'"
+          class="px-1.5 rounded border"
+          :class="modeClass(m.key)"
           :disabled="m.key === 'equipped' && !result.equipped"
+          :title="m.key === 'equipped' && !result.equipped ? (result.equippedError || 'Not available yet') : undefined"
           @click="setMode(m.key)">{{ m.label }}</button>
         <span v-if="mode === 'equipped' && equippedInfo" class="text-gray-500 truncate ml-1" :title="equippedTitle">{{ equippedTitle }}</span>
         <button v-if="liveGearOn" class="text-gray-500 ml-auto" title="Refresh equipped gear (rate-limited)"
@@ -111,6 +113,12 @@ const buildTitle = computed(() => {
 
 // Which gear the item is compared against. Remembered while the overlay runs.
 type Mode = 'build' | 'equipped'
+// selected / can't be used (no character result) / normal button
+function modeClass (key: Mode): string {
+  if (mode.value === key) return 'bg-gray-700 border-gray-600 text-gray-200'
+  if (key === 'equipped' && !result.value?.equipped) return 'border-gray-800 text-gray-600 cursor-not-allowed'
+  return 'border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-500'
+}
 const modes: Array<{ key: Mode, label: string }> = [
   { key: 'build', label: 'vs build gear' },
   { key: 'equipped', label: 'vs character' }
