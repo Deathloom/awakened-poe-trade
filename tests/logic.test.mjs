@@ -524,3 +524,75 @@ test('gear defences read from item text', async () => {
   assert.deepEqual(itemDefences('Rarity: Rare\nArmour: 500\nEvasion Rating: 480'), [{ name: 'Armour', short: 'AR', value: '500' }, { name: 'Evasion Rating', short: 'EV', value: '480' }])
   assert.deepEqual(itemDefences(undefined), [])
 })
+
+const STAGES = `<PathOfBuilding>
+  <Build level="90" className="Witch" ascendClassName="Elementalist" mainSocketGroup="1"></Build>
+  <Skills activeSkillSet="1">
+    <SkillSet id="1" title="Early"><Skill enabled="true"><Gem nameSpec="Winter Orb" level="20" enabled="true"/><Gem nameSpec="Elemental Overload" level="20" enabled="true"/></Skill></SkillSet>
+    <SkillSet id="2" title="Pcharge"><Skill enabled="true"><Gem nameSpec="Winter Orb" level="21" enabled="true"/><Gem nameSpec="Power Charge On Critical Support" level="20" enabled="true"/></Skill></SkillSet>
+  </Skills>
+  <Tree activeSpec="1">
+    <Spec title="Early" classId="3" ascendClassId="2" treeVersion="3_30" nodes="1,2,3"/>
+    <Spec title="Pcharge" classId="3" ascendClassId="3" treeVersion="3_30" nodes="1,2,4,5"/>
+  </Tree>
+  <Items activeItemSet="1">
+    <Item id="1">
+Rarity: RARE
+New Item
+Vaal Regalia
+</Item>
+    <Item id="2">
+Rarity: RARE
+Doom Shell
+Vaal Regalia
++90 to maximum Life
+</Item>
+    <Item id="3">
+Rarity: NORMAL
+Greater Engorged Eye
+</Item>
+    <Item id="4">
+Rarity: RARE
+Grim Cowl
+Hubris Circlet
++40 to maximum Energy Shield
+</Item>
+    <ItemSet id="1" title="Early"><Slot name="Body Armour" itemId="2"/><Slot name="Helmet" itemId="4"/></ItemSet>
+    <ItemSet id="2" title="Pcharge"><Slot name="Body Armour" itemId="1"/><Slot name="Head" itemId="3"/></ItemSet>
+  </Items>
+</PathOfBuilding>`
+
+test('loadouts: options, stage changes with placeholders, class switch and Wickerman', async () => {
+  const st = await import('./.build/loadout-steps.mjs')
+  const lo = {
+    trees: [{ id: 1, title: 'Early' }, { id: 2, title: 'Pcharge' }],
+    itemSets: [{ id: 1, title: 'Early' }, { id: 2, title: 'Pcharge' }],
+    skillSets: [{ id: 1, title: 'Early' }, { id: 2, title: 'Pcharge' }],
+    named: ['Early', 'Pcharge'],
+    active: { spec: 1, itemSet: 1, skillSet: 1, named: 'Early' }
+  }
+  const opts = st.loadoutOptions(lo)
+  assert.deepEqual(opts.map(o => o.label), ['Early', 'Pcharge'])
+  assert.deepEqual(opts[1].sel, { spec: 2, itemSet: 2, skillSet: 2 })
+  assert.equal(st.currentOption(lo, opts).label, 'Early')
+  // single snapshot (poe.ninja): nothing to compare
+  assert.deepEqual(st.loadoutOptions({ trees: [{ id: 1, title: '' }], itemSets: [{ id: 1, title: '' }], skillSets: [], named: [], active: { spec: 1, itemSet: 1, skillSet: 1 } }), [])
+  // trees only (Level 30 / 60 / 90): gear and skills stay the active ones
+  const treesOnly = st.loadoutOptions({ trees: [{ id: 1, title: 'Lvl 30' }, { id: 2, title: 'Lvl 90' }], itemSets: [{ id: 1, title: '' }], skillSets: [], named: [], active: { spec: 1, itemSet: 1, skillSet: 1 } })
+  assert.deepEqual(treesOnly.map(o => [o.label, o.own.items]), [['Lvl 30', false], ['Lvl 90', false]])
+
+  const a = buildXml.parseBuildXml(STAGES, { spec: 1, itemSet: 1, skillSet: 1 })
+  const b = buildXml.parseBuildXml(STAGES, { spec: 2, itemSet: 2, skillSet: 2 })
+  assert.equal(a.sets.spec, 'Early')
+  const c = st.stageChanges(a, b)
+  assert.equal(c.ascendancyChanges, true)
+  assert.equal(c.classChanges, false)
+  assert.deepEqual(c.take, [4, 5])
+  assert.deepEqual(c.refund, [3])
+  assert.deepEqual(c.gems.map(g => `${g.change}:${g.name}`), ['removed:Elemental Overload', 'added:Power Charge On Critical Support', 'level:Winter Orb'])
+  // placeholder Vaal Regalia on the same base: nothing to do; helmet missing in target: keep yours
+  assert.deepEqual(c.gear, [])
+  assert.deepEqual(c.wickerman.map(w => w.to), ['Greater Engorged Eye'])
+  assert.deepEqual(st.wickermanOf(b), [{ slot: 'Head', name: 'Greater Engorged Eye' }])
+  assert.equal(st.stageChanges(a, a).nothing, true)
+})
