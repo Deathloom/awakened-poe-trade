@@ -155,7 +155,7 @@ test('build files: read and compare two builds', () => {
   assert.equal(c.stats.find(r => r.stat === 'CombinedDPS').better, 'a')
   assert.equal(c.stats.find(r => r.stat === 'FireResist').better, undefined)
   const helm = c.gear.find(g => g.slot === 'Helmet')
-  assert.deepEqual(helm.onlyA, ['+80 to maximum Life']); assert.deepEqual(helm.onlyB, ['+90 to maximum Life'])
+  assert.deepEqual(helm.aLower, [{ a: '+80 to maximum Life', b: '+90 to maximum Life' }]); assert.deepEqual(helm.onlyB, [])
   assert.equal(c.gear.find(g => g.slot === 'Body Armour').b, undefined)
   assert.deepEqual(c.gems.map(g => `${g.change}:${g.name}`), ['removed:Raise Zombie', 'added:Summon Skeletons'])
   assert.deepEqual(c.tree.onlyA, [1]); assert.deepEqual(c.tree.onlyB, [4, 5]); assert.equal(c.tree.same, 3)
@@ -595,4 +595,15 @@ test('loadouts: options, stage changes with placeholders, class switch and Wicke
   assert.deepEqual(c.wickerman.map(w => w.to), ['Greater Engorged Eye'])
   assert.deepEqual(st.wickermanOf(b), [{ slot: 'Head', name: 'Greater Engorged Eye' }])
   assert.equal(st.stageChanges(a, a).nothing, true)
+})
+
+test('compare: mods matched by wording, values compared', async () => {
+  const { matchMods } = await import('./.build/build-compare.mjs')
+  const m = matchMods(['+70 to maximum Life', '+40% to Fire Resistance', '10% reduced Mana Cost of Skills', 'Adds 1 to 2 Cold Damage'],
+    ['+90 to maximum Life', '+40% to Fire Resistance', '15% reduced Mana Cost of Skills', '+1 to Level of all Spell Skill Gems'])
+  assert.deepEqual(m.both, ['+40% to Fire Resistance'])
+  assert.deepEqual(m.aLower.map(x => x.a), ['+70 to maximum Life', '10% reduced Mana Cost of Skills'])
+  assert.deepEqual(m.aHigher.map(x => x.a), [])
+  assert.deepEqual(m.onlyA, ['Adds 1 to 2 Cold Damage'])
+  assert.deepEqual(m.onlyB, ['+1 to Level of all Spell Skill Gems'])
 })

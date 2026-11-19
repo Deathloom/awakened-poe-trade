@@ -112,7 +112,7 @@ function gearSteps (rows: GearRow[], a: PobBuildSummary, b: PobBuildSummary): Ge
       from: r.a,
       to: placeholder ? `any ${ib.base}` : r.b,
       placeholder,
-      add: placeholder ? [] : r.onlyB,
+      add: placeholder ? [] : [...r.onlyB, ...r.aLower.map(m => m.b)],
       remove: placeholder ? [] : r.onlyA
     })
   }

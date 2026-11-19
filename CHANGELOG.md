@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#247)
+- **Build → Gear:** a "got it" tickbox on every item (ticked items fade, per build and item set); uniques get ↑ too (the same unique with at least these rolls); the buttons line up in the same columns on every row.
+- **Compare gear is clearer:** mods are matched by wording, so per slot you see ○ still need, ◐ have it but lower (your value → the build's), ✓ already have, and extras on yours, instead of a list of + and − lines.
+
 ### Added (#246)
 - **What changes between stages** (Build panel → route icon): compare the loadout you play with any other loadout of the build (Early → Mid, Level 30 → 60, Elementalist → Occultist…). Lists gems to swap, passives to take and refund (notables by name), gear changes and Wickerman changes, and warns when the ascendancy or class changes. "Switch to" picks that loadout. Works with every kind of build: guide stages with their own gear, trees only, branching variants and placeholder gear ("any Vaal Regalia"); a single poe.ninja character simply has nothing to compare.
 - **"Which loadout do you play in maps?"** Once the All tab switches to Mapping, builds with several loadouts ask once (Use it / Not now). Orbhoarder never picks one by itself.
