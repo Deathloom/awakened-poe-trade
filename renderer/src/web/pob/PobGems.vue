@@ -7,22 +7,26 @@
         title="What to socket and take out at your level (from the build's levelling skill sets)" @click="setMode('level')">For my level</button>
       <button class="px-2 rounded" :class="mode === 'build' ? 'bg-gray-700 text-gray-100' : 'text-gray-500 hover:text-gray-200'"
         title="Every gem of the loadout picked in the Build tab, with sockets" @click="setMode('build')">Whole build</button>
+      <label v-if="mode === 'build'" class="ml-auto flex items-center gap-x-1 text-gray-400 cursor-pointer"
+        title="Optional: mark what your character already has, from the '(my character)' copy that Path of Building imported (set up under Build → ⋯ → Compare)">
+        <input type="checkbox" :checked="useMine" @change="setUseMine(($event.target as HTMLInputElement).checked)">Compare with my character</label>
     </div>
+    <div v-if="mode === 'build' && useMine && mineNote" class="mx-1 mb-1 rounded bg-gray-900 px-2 py-1 text-xs text-gray-400">{{ mineNote }}</div>
     <pob-gems-for-level v-if="mode === 'level'" ref="levelRef" />
     <template v-else>
     <div v-if="error" class="p-1 text-gray-400">{{ error }}</div>
     <div v-else-if="!groups && loading" class="p-1 text-gray-500 lg-loading">Loading from Path of Building…</div>
     <template v-else-if="comparison">
       <div class="flex items-center gap-x-2 px-1 pb-1 text-xs">
-        <span v-if="liveError" class="text-gray-500 flex-1">{{ liveError }}</span>
-        <span v-else-if="live" class="flex-1" :class="comparison.missingCount || comparison.lowCount ? 'text-yellow-500' : 'text-green-500'">
+        <span v-if="!useMine && liveError" class="text-gray-500 flex-1">{{ liveError }}</span>
+        <span v-else-if="effLive" class="flex-1" :class="comparison.missingCount || comparison.lowCount ? 'text-yellow-500' : 'text-green-500'">
           <template v-if="comparison.missingCount || comparison.lowCount">
-            {{ character }}: {{ comparison.missingCount }} missing, {{ comparison.lowCount }} under level/quality
+            {{ effName }}: {{ comparison.missingCount }} missing, {{ comparison.lowCount }} under level/quality
           </template>
-          <template v-else>{{ character }} has every gem the build uses</template>
+          <template v-else>{{ effName }} has every gem the build uses</template>
         </span>
-        <button v-if="live || liveError" class="text-gray-500 hover:text-gray-200" title="Fetch the character again (rate-limited)"
-          :disabled="loading" @click="request(true)"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /> character</button>
+        <button v-if="useMine && mineReady" class="text-gray-500 hover:text-gray-200" title="Read the '(my character)' file again after saving it in Path of Building"
+          :disabled="loading" @click="request()"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /> re-read</button>
       </div>
       <div v-for="sv of view.slots" :key="sv.slot" class="rounded px-1 py-1 mb-1 bg-gray-900">
         <!-- Slot header: item + its sockets (build), character's sockets below -->
@@ -74,11 +78,11 @@
         <!-- Gems, one block per link group -->
         <div v-for="row of sv.rows" :key="row.group.index" class="mt-1 pl-1 border-l-2"
           :class="row.group.main ? 'border-yellow-600' : 'border-gray-700'">
-          <div v-if="sv.rows.length > 1 || row.group.main || row.liveSlot || (live && !row.matched)" class="flex items-baseline gap-x-2 text-xs text-gray-500">
+          <div v-if="sv.rows.length > 1 || row.group.main || row.liveSlot || (effLive && !row.matched)" class="flex items-baseline gap-x-2 text-xs text-gray-500">
             <span class="text-gray-400 truncate min-w-0 flex-1" :title="linkTitle(row)">{{ linkTitle(row) }}</span>
             <span v-if="row.group.main" class="text-yellow-500 shrink-0 whitespace-nowrap">main skill</span>
             <span v-if="row.liveSlot" class="shrink-0 whitespace-nowrap">yours: {{ row.liveSlot }}</span>
-            <span v-else-if="live && !row.matched" class="shrink-0 whitespace-nowrap text-red-400">not on character</span>
+            <span v-else-if="effLive && !row.matched" class="shrink-0 whitespace-nowrap text-red-400">not on character</span>
           </div>
           <div v-for="(g, idx) of row.gems" :key="idx" class="flex items-baseline gap-x-2" :class="{ hidden: !g.gem.enabled }">
             <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0 self-center" :style="{ background: gemColour(g.gem.colour) }" />
@@ -116,6 +120,7 @@
       <div class="px-1 pt-1 text-xs text-gray-600">
         Grouped by gear piece. Each bar on the left is one link group: link those gems together.
         Sockets: build = the item in PoB, yours = your character's. Level/quality as set in PoB.
+        <template v-if="!effLive">Tick <b>Compare with my character</b> above to see what you already have.</template>
       </div>
     </template>
     </template>
@@ -128,7 +133,8 @@ import type { PobGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
 import { pobText } from './labels'
 import { Host } from '@/web/background/IPC'
 import PobGemsForLevel from './PobGemsForLevel.vue'
-import { NO_SLOT, compareGems, bySlot, parseSockets, needsText, checkText, coloursText, bonusText, type GemRow, type GemStatus, type GroupRow } from './gems'
+import { minePathOf, mineExistsIn } from './my-character'
+import { NO_SLOT, liveFromSummary, compareGems, bySlot, parseSockets, needsText, checkText, coloursText, bonusText, type GemRow, type GemStatus, type GroupRow } from './gems'
 
 const loading = ref(false)
 const showHidden = ref(false)
@@ -157,7 +163,52 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-gems', (e) => {
   liveError.value = e.liveError ?? null
 })
 const characterListener = Host.onEvent('MAIN->CLIENT::pob-character', () => { request() })
-onUnmounted(() => { listener.abort(); characterListener.abort() })
+
+// Deathloom fork (Gerhard 19 Nov 2026): optional, your character from the
+// "(my character)" file Path of Building imported. Only the saved file is read.
+const MINE_KEY = 'deathloom.gems-mine.v1'
+const useMine = ref((() => { try { return localStorage.getItem(MINE_KEY) === '1' } catch { return false } })())
+const mineLive = shallowRef<PobSocketGroup[] | undefined>(undefined)
+const mineItems = shallowRef<PobSocketedItem[] | undefined>(undefined)
+const mineNote = ref('')
+const mineReady = ref(false)
+const mineId = (Date.now() & 0x0fffffff) | 0x10000000
+let mineReq = 0
+let minePath = ''
+const buildsListener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => {
+  if (e.requestId !== mineId + mineReq * 2) return
+  const active = e.ok ? e.list?.active ?? null : null
+  if (!active) { mineReady.value = false; mineNote.value = 'Pick a build in the Build tab first.'; return }
+  if (!mineExistsIn(active, e.list?.builds ?? [])) {
+    mineReady.value = false
+    mineNote.value = "Not set up yet for this build. Build tab → ⋯ → Compare builds / your character → Make the copy, then import your character's Items and Skills in Path of Building and save."
+    return
+  }
+  minePath = minePathOf(active)
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-compare', payload: { requestId: mineId + mineReq * 2 + 1, a: minePath, b: minePath } })
+})
+const compareListener = Host.onEvent('MAIN->CLIENT::pob-compare', (e) => {
+  if (e.requestId !== mineId + mineReq * 2 + 1) return
+  if (!e.ok || !e.a) { mineReady.value = false; mineNote.value = e.error ?? 'Could not read your character file.'; return }
+  const l = liveFromSummary(e.a)
+  mineLive.value = l.groups
+  mineItems.value = l.items
+  mineReady.value = true
+  mineNote.value = l.groups.length ? '' : `${minePath.split(/[\\/]/).pop()?.replace(/\.xml$/i, '')} has no gems yet: import your character's Items and Skills in Path of Building and save.`
+})
+function requestMine () {
+  mineReq += 1
+  Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: mineId + mineReq * 2 } })
+}
+function setUseMine (v: boolean) {
+  useMine.value = v
+  try { localStorage.setItem(MINE_KEY, v ? '1' : '0') } catch {}
+  if (v) requestMine()
+}
+const effLive = computed(() => useMine.value ? (mineReady.value ? mineLive.value : undefined) : live.value)
+const effItems = computed(() => useMine.value ? (mineReady.value ? mineItems.value : undefined) : liveItems.value)
+const effName = computed(() => useMine.value ? 'Your character' : character.value)
+onUnmounted(() => { listener.abort(); characterListener.abort(); buildsListener.abort(); compareListener.abort() })
 
 const MODE_KEY = 'deathloom.gems-mode.v1'
 const mode = ref<'level' | 'build'>((() => { try { return localStorage.getItem(MODE_KEY) === 'build' ? 'build' : 'level' } catch { return 'level' } })())
@@ -172,6 +223,7 @@ function request (refreshGear = false) {
     levelRef.value?.request()
     return
   }
+  if (useMine.value) requestMine()
   loading.value = true
   lastRequestId += 1
   Host.sendEvent({
@@ -182,13 +234,13 @@ function request (refreshGear = false) {
 defineExpose({ request })
 if (mode.value === 'build') request()
 
-const comparison = computed(() => groups.value ? compareGems(groups.value, live.value) : null)
+const comparison = computed(() => groups.value ? compareGems(groups.value, effLive.value) : null)
 const view = computed(() => {
   const empty = { slots: [], hidden: [], granted: [] as GroupRow[] }
   if (!comparison.value) return empty
   const granted = comparison.value.groups.filter(r => r.group.source && r.group.enabled)
   const rest = { ...comparison.value, groups: comparison.value.groups.filter(r => !(r.group.source && r.group.enabled)) }
-  return { ...bySlot(rest, items.value, liveItems.value), granted }
+  return { ...bySlot(rest, items.value, effItems.value), granted }
 })
 
 function linkTitle (row: GroupRow) {

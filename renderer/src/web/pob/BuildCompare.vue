@@ -28,13 +28,23 @@
         <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" :title="`Opens Path of Building. There: open '${label(minePath)}', Import/Export Build → Import character → Items and Skills, then save.`" @click="openPob">{{ mineExists ? 'Update gear in Path of Building' : 'Open Path of Building' }}</button>
         <button v-if="mineExists" class="px-2 rounded bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50" :disabled="busy" :title="`Your character (left, blue) vs the build you follow (right, yellow), gear first. Uses what Path of Building last saved.`" @click="compareMine">Compare gear</button>
       </div>
-      <ol class="mt-0.5 list-decimal pl-4 space-y-px">
-        <li v-if="!mineExists"><b class="text-gray-300">Make the copy</b>: a copy of the build you follow, named <b class="text-gray-300">{{ label(minePath) }}</b>, to hold your character's gear. Path of Building opens.</li>
-        <li>In Path of Building, open <b class="text-gray-300">{{ label(minePath) }}</b> from the build list.</li>
-        <li><b class="text-gray-300">Import/Export Build</b> tab → <b class="text-gray-300">Import character</b> → your account → your character → <b class="text-gray-300">Items and Skills</b>. Leave the passive tree alone.</li>
-        <li>Save in Path of Building (<b class="text-gray-300">Ctrl+S</b>), then come back here and click <b class="text-gray-300">Compare gear</b>.</li>
-      </ol>
-      <div class="mt-0.5 text-gray-500">Left (blue) = your character, right (yellow) = the build you follow. Green <b>+</b> lines are what the build has that you don't yet: your upgrades. Gear changed? Do steps 2–4 again. Path of Building does the import when you click it; Orbhoarder only reads the saved file.</div>
+      <div class="mt-0.5" :class="mineExists ? 'text-green-400' : 'text-yellow-500'">
+        {{ mineExists ? `Set up: ${label(minePath)} holds your character.` : 'Not set up yet for this build (once per build, about 2 minutes).' }}
+      </div>
+      <button class="mt-0.5 text-gray-400 hover:text-gray-200" @click="toggleSetup">
+        <i class="fas" :class="setupOpen ? 'fa-caret-down' : 'fa-caret-right'" /> {{ mineExists ? 'How to update it, or set it up again' : 'How to set it up (first time)' }}</button>
+      <div v-if="setupOpen" class="pl-2">
+        <ol class="mt-0.5 list-decimal pl-4 space-y-0.5">
+          <li><b class="text-gray-300">Make the copy</b> (button above). It copies the build you follow to <b class="text-gray-300">{{ label(minePath) }}</b> and opens Path of Building. Your build itself is never changed.</li>
+          <li>In Path of Building's build list, open <b class="text-gray-300">{{ label(minePath) }}</b>. Not the original: importing replaces that build's gear.</li>
+          <li>Go to the <b class="text-gray-300">Import/Export Build</b> tab. Under <b class="text-gray-300">Import From Your Account</b>, sign in with your PoE account (Path of Building opens the official page), or under <b class="text-gray-300">Import By Account Name</b> type your name with its <b class="text-gray-300">#1234</b> and click <b class="text-gray-300">Start</b> (your profile's Characters tab must be public).</li>
+          <li>Pick your league and character, tick <b class="text-gray-300">Delete equipment</b> and <b class="text-gray-300">Delete skills</b>, then click <b class="text-gray-300">Items and Skills</b>. Don't click <b class="text-gray-300">Passive Tree and Jewels</b>: the build's tree stays.</li>
+          <li>Save with <b class="text-gray-300">Ctrl+S</b>, come back here and click <b class="text-gray-300">Compare gear</b>. The Gems tab can use it too: tick <b class="text-gray-300">Compare with my character</b> under Whole build.</li>
+        </ol>
+        <div class="mt-1 text-gray-400"><b class="text-gray-300">Gear changed?</b> Click <b class="text-gray-300">Update gear in Path of Building</b>, then steps 2, 4 and 5. Path of Building remembers your account, so it's a few clicks.</div>
+        <div class="mt-1 text-gray-400"><b class="text-gray-300">Opening Path of Building yourself:</b> the button above, right-click the Orbhoarder tray icon → <b class="text-gray-300">Open Path of Building</b>, or set a key in Settings → Hotkeys → <b class="text-gray-300">Open Path of Building</b>. Use this one rather than another install, so it sees the same builds folder.</div>
+      </div>
+      <div class="mt-0.5 text-gray-500">Left (blue) = your character, right (yellow) = the build you follow. The import happens in Path of Building when you click it; Orbhoarder only reads the saved file.</div>
     </div>
     <div v-if="error" class="text-red-400">{{ error }}</div>
     <div v-if="!error && !result" class="text-xs text-gray-500">Or pick any two builds from your folder (or a friend's, via Player): left (blue) and right (yellow). Green shows what the right one has more of. Uses what Path of Building last saved in each file.</div>
@@ -121,6 +131,7 @@ import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobBuildSummary, PobTreeMapNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { compareBuilds, fmtStat, type BuildCompare } from './compare'
+import { minePathOf, planPathOf, mineExistsIn } from './my-character'
 
 const KEY = 'deathloom.build-compare.v1'
 const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch { return {} } })()
@@ -172,17 +183,17 @@ Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: next() 
 
 // your character's copy of the active build: "<build> (my character).xml"
 const active = ref<string | null>(null)
-const MINE = ' (my character)'
-const minePath = computed(() => {
-  const a = active.value ?? ''
-  return a.toLowerCase().endsWith(MINE.toLowerCase() + '.xml') ? a : a.replace(/\.xml$/i, `${MINE}.xml`)
-})
-const planPath = computed(() => {
-  const a = active.value ?? ''
-  const plan = a.replace(new RegExp(`${MINE.replace(/[()]/g, '\\$&')}\\.xml$`, 'i'), '.xml')
-  return builds.value.includes(plan) ? plan : a
-})
-const mineExists = computed(() => builds.value.some(b => b.toLowerCase() === minePath.value.toLowerCase()))
+const SETUP_KEY = 'deathloom.compare-setup.v1'
+const setupPref = ref<boolean | null>((() => { try { const v = localStorage.getItem(SETUP_KEY); return v == null ? null : v === '1' } catch { return null } })())
+// open by default until it's set up, then closed unless you open it
+const setupOpen = computed(() => setupPref.value ?? !mineExists.value)
+function toggleSetup () {
+  setupPref.value = !setupOpen.value
+  try { localStorage.setItem(SETUP_KEY, setupPref.value ? '1' : '0') } catch {}
+}
+const minePath = computed(() => minePathOf(active.value ?? ''))
+const planPath = computed(() => planPathOf(active.value ?? '', builds.value))
+const mineExists = computed(() => mineExistsIn(active.value ?? '', builds.value))
 let manageId = 0
 const lsManage = Host.onEvent('MAIN->CLIENT::pob-manage-build', (e) => {
   if (e.requestId !== manageId) return

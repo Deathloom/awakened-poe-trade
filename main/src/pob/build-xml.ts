@@ -40,7 +40,7 @@ function blocks (xml: string, name: string): Array<{ attrs: Record<string, strin
 const META = /^[A-Za-z][\w ']*:\s*\S/
 const FLAGS = /^(Shaper|Elder|Crusader|Redeemer|Hunter|Warlord|Synthesised|Fractured|Searing Exarch|Eater of Worlds) Item$|^(Corrupted|Mirrored|Split|Unidentified|Foulborn)$/i
 
-export interface ParsedItemText { rarity: string, name: string, base: string, mods: string[] }
+export interface ParsedItemText { rarity: string, name: string, base: string, mods: string[], sockets?: string }
 
 export function parseItemText (text: string): ParsedItemText {
   const lines = decodeXml(text).split(/\r?\n/).map(l => l.trim()).filter(Boolean)
@@ -52,13 +52,15 @@ export function parseItemText (text: string): ParsedItemText {
   const name = rest[0] ?? ''
   const base = named ? (rest[1] ?? '') : name
   const mods: string[] = []
+  // Deathloom fork: sockets for the Gems tab ("Sockets: R-G-B B")
+  const sockets = lines.find(l => /^Sockets:/i.test(l))?.replace(/^Sockets:\s*/i, '').trim() || undefined
   for (const l of rest.slice(named ? 2 : 1)) {
     if (META.test(l) || FLAGS.test(l)) continue
     // PoB tags: {crafted}{range:0.5}{variant:1,2}{tags:...}
     const t = l.replace(/\{[^}]*\}/g, '').trim()
     if (t && !mods.includes(t)) mods.push(t)
   }
-  return { rarity: rarity ? rarity[0].toUpperCase() + rarity.slice(1).toLowerCase() : '', name, base, mods }
+  return { rarity: rarity ? rarity[0].toUpperCase() + rarity.slice(1).toLowerCase() : '', name, base, mods, ...(sockets ? { sockets } : {}) }
 }
 
 const MAX_ITEMS = 60
