@@ -5,8 +5,10 @@
 // exile-leveling.LICENSE.txt). Regenerate it at each league start. One step per
 // zone you enter; the guide moves to the next matching step when Client.txt says
 // "You have entered <zone>". Quest passive points sit on the quest's hand-in line.
+// The route (~57 kB) is loaded the first time something needs it (F4): call
+// loadRoute() and wait for it; until then STEPS is empty.
 
-import ROUTE_JSON from './campaign-route.json'
+import { lazyOnce } from './lazy-data'
 
 export type RoutePart = string | {
   k: 'quest' | 'kill' | 'area' | 'waypoint' | 'waypoint_get' | 'trial' | 'logout' | 'dir' | 'generic' |
@@ -70,8 +72,17 @@ export function onlyActive (only: string | undefined, bandit: BanditFlag = loadB
   return only.startsWith('!') ? only.slice(1) !== bandit : only === bandit
 }
 
-// In route order
-export const STEPS = clarifyVendorLines((ROUTE_JSON as unknown as { steps: RouteStep[] }).steps)
+// In route order; empty until loadRoute() has finished (filled in place, so
+// every module that imported it sees the steps)
+export const STEPS: RouteStep[] = []
+export function routeLoaded (): boolean { return STEPS.length > 0 }
+
+// A failed load is tried once more, then again the next time it's asked for (lazy-data.ts)
+export const loadRoute: () => Promise<RouteStep[]> = lazyOnce(() =>
+  import('./campaign-route.json').then(m => {
+    if (!STEPS.length) STEPS.push(...clarifyVendorLines((m.default as unknown as { steps: RouteStep[] }).steps))
+    return STEPS
+  }))
 
 // Deathloom fork: the route's vendor recipe lines listed only the ingredients.
 // Say what to do and what you get (checked against poedb / poewiki 14 Nov 2026).
@@ -154,12 +165,12 @@ function stepPassives (st: RouteStep, bandit: BanditFlag): number {
 export function questPassivesTotal (bandit: BanditFlag = loadBandit()): number {
   return STEPS.reduce((n, st) => n + stepPassives(st, bandit), 0)
 }
-export const QUEST_PASSIVES = questPassivesTotal('BANDIT_KILL')
 
 // Where the guide is (index into STEPS), shared by every window through localStorage
 // (v2: the route from 1.0.33; v1 indexes were for the old hand-written route)
 export const CAMPAIGN_STEP_KEY = 'deathloom.campaign-step.v2'
 export function loadCampaignStep (): number {
+  if (!STEPS.length) return 0
   try { return Math.min(STEPS.length - 1, Math.max(0, Number(localStorage.getItem(CAMPAIGN_STEP_KEY)) || 0)) } catch { return 0 }
 }
 
@@ -167,6 +178,7 @@ export function loadCampaignStep (): number {
 // switching characters (or a level 69 in maps) doesn't show another one's act
 export const CAMPAIGN_STEP_BY_CHAR_KEY = 'deathloom.campaign-step.by-char.v1'
 export function loadStepByChar (): Record<string, number> {
+  if (!STEPS.length) return {}
   try {
     const raw = JSON.parse(localStorage.getItem(CAMPAIGN_STEP_BY_CHAR_KEY) ?? 'null')
     if (!raw || typeof raw !== 'object') return {}
@@ -174,7 +186,8 @@ export function loadStepByChar (): Record<string, number> {
   } catch { return {} }
 }
 export function saveStepForChar (name: string, index: number) {
-  if (!name) return
+  // before the route is in, loadStepByChar() is empty: saving would drop the other characters
+  if (!name || !STEPS.length) return
   try {
     const all = loadStepByChar()
     if (all[name] === index) return
@@ -221,6 +234,7 @@ export function actFromAreaCode (code: string | undefined): number | null {
 // never jumps to act 6's. Without it, only the current and the next act.
 // Returns -1 when there's no forward match.
 export function findStep (zone: string, current: number, act: number | null = null, bandit: BanditFlag = loadBandit()): number {
+  if (!STEPS.length) return -1
   const target = norm(zone)
   const curAct = STEPS[Math.max(0, Math.min(current, STEPS.length - 1))].act
   for (let i = Math.max(0, current + 1); i < STEPS.length; i++) {
