@@ -50,6 +50,9 @@ jobs:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       with:
         fetch-depth: 0
+        # the job's write token isn't left in .git/config for npm install scripts
+        # (gh uses GH_TOKEN; nothing here pushes with git)
+        persist-credentials: false
     - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version: 22
@@ -71,6 +74,10 @@ jobs:
         sha="$GITHUB_SHA"
         if [[ "$CHANNEL" == "stable" && "$GITHUB_REF" != "refs/heads/master" ]]; then
           echo "Stable releases only run from master (merge dev into master first)."; exit 1
+        fi
+        # Testing copies install every test release: only from dev (or master), never a stray branch
+        if [[ "$CHANNEL" == "testing" && "$GITHUB_REF" != "refs/heads/dev" && "$GITHUB_REF" != "refs/heads/master" ]]; then
+          echo "Test releases only run from dev or master."; exit 1
         fi
         if [[ "$CHANNEL" == "testing" ]]; then
           full="$V-beta.$(( ${last:-0} + 1 ))"

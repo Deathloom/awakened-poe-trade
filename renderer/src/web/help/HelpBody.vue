@@ -36,7 +36,7 @@
               Green = taken, orange = still to take. Step along the build with the arrows (1 or 5 passives) as you take passives in game;
               ⋯ → "Taken: jump to all or nothing" sets "I have this whole build" (or "I have nothing" after a respec or in a new league).
               <b>Edit</b>: click a passive to take it with the path to it, or refund it with what hangs off it; notables with a choice let you pick the effect.
-              <b>Stats</b> adds up everything the passives give. Ready-made tree: pick the content you farm (one or more), keep Map sustain on and set the points;
+              <b>Stats</b> adds up everything the passives give. Ready-made tree: pick the content you farm (one or more), keep Map sustain on and set the points, then Generate: it shows on the atlas without saving, so Generate again until you like it, then Save (or Discard);
               Orbhoarder takes that content's notables by the shortest path from the start, using only GGG's own atlas data.
               Atlas builds are saved in your builds folder (Atlas) and sync with your builds, so friends who can see your builds see your atlas builds too
               (listed under their name, read-only: ⋯ → Copy to my atlas builds). Also on the All tab (Edit layout → Add panel → Atlas tree).</li>

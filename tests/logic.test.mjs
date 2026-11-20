@@ -11,6 +11,7 @@ globalThis.localStorage = {
 }
 
 const guard = await import('./.build/request-guard.mjs')
+const buildFiles = await import('./.build/build-files.mjs')
 const session = await import('./.build/play-session.mjs')
 const money = await import('./.build/money.mjs')
 const tools = await import('./.build/settings-tools.mjs')
@@ -19,6 +20,23 @@ const sheets = await import('./.build/sheets.mjs')
 const buildXml = await import('./.build/build-xml.mjs')
 const compare = await import('./.build/build-compare.mjs')
 const game = await import('./.build/game.mjs')
+
+test('request guard: what a phone may ask for', () => {
+  const ok = guard.allowedFromOtherDevice
+  assert.equal(ok('CLIENT->MAIN::pob-gems', { requestId: 1 }), true)
+  assert.equal(ok('CLIENT->MAIN::build-notes', {}), true)
+  assert.equal(ok('CLIENT->MAIN::save-config', { contents: '{}' }), false)
+  assert.equal(ok('CLIENT->MAIN::update-host-config', {}), false)
+  assert.equal(ok('CLIENT->MAIN::tools', { op: 'remote-set' }), false)
+  assert.equal(ok('CLIENT->MAIN::pob-copy-builds', { source: 'C:/' }), false)
+  assert.equal(ok('CLIENT->MAIN::user-action', { action: 'open-trade-tab', url: 'x' }), true)
+  assert.equal(ok('CLIENT->MAIN::user-action', { action: 'chat-command', text: '/hideout' }), false)
+  assert.equal(ok('CLIENT->MAIN::user-action', { action: 'quit' }), false)
+  assert.equal(ok('CLIENT->MAIN::user-action', null), false)
+  assert.equal(ok('CLIENT->MAIN::pob-sync', { op: 'pull' }), true)
+  assert.equal(ok('CLIENT->MAIN::pob-sync', { op: 'signOut' }), false)
+  assert.equal(ok('CLIENT->MAIN::pob-sync', { op: 'configure', player: '..' }), false)
+})
 
 test('request guard: loopback always, other devices only with the key', () => {
   const K = 'k'.repeat(32)
@@ -29,6 +47,20 @@ test('request guard: loopback always, other devices only with the key', () => {
   assert.equal(guard.isAllowedRequest({ host: '192.168.1.9:47284', key: 'x'.repeat(32) }, opts), false)
   assert.equal(guard.isAllowedRequest({ host: '192.168.1.9:47284', key: K }, {}), false)
   assert.equal(guard.isAllowedRequest({ host: '127.0.0.1:47284', secFetchSite: 'cross-site' }, {}), false)
+  // F1: another device can't skip the key by sending Host: 127.0.0.1 / localhost
+  assert.equal(guard.isAllowedRequest({ host: '127.0.0.1:47284', remoteAddress: '192.168.1.9' }, opts), false)
+  assert.equal(guard.isAllowedRequest({ host: 'localhost:47284', remoteAddress: '::ffff:192.168.1.9' }, opts), false)
+  assert.equal(guard.isAllowedRequest({ host: '127.0.0.1:47284', remoteAddress: '192.168.1.9', key: K }, opts), true)
+  assert.equal(guard.isAllowedRequest({ host: '127.0.0.1:47284', remoteAddress: '192.168.1.9', key: K }, {}), false)
+  assert.equal(guard.isAllowedRequest({ host: '127.0.0.1:47284', remoteAddress: '' }, opts), false)
+  // this PC itself: no key
+  assert.equal(guard.isAllowedRequest({ host: '127.0.0.1:47284', remoteAddress: '127.0.0.1' }, opts), true)
+  assert.equal(guard.isAllowedRequest({ host: 'localhost:47284', remoteAddress: '::ffff:127.0.0.1' }, {}), true)
+  assert.equal(guard.isAllowedRequest({ host: '[::1]:47284', remoteAddress: '::1' }, {}), true)
+  assert.equal(guard.isLoopbackAddress('127.0.0.1'), true)
+  assert.equal(guard.isLoopbackAddress('::ffff:127.0.0.1'), true)
+  assert.equal(guard.isLoopbackAddress('10.0.0.127'), false)
+  assert.equal(guard.isLoopbackAddress(undefined), false)
   assert.equal(guard.requestKey('/?desktop&key=' + K, undefined), K)
   assert.equal(guard.requestKey('/', 'a=1; orbhoarder_key=' + K), K)
 })
@@ -778,4 +810,32 @@ test('market outlook: no cap; too-fast items flagged and left out; backtest on t
   const s = mt.backtestSummary(Array.from({ length: 6 }, () => item(10 * 1.03 ** 6, g)))
   assert.equal(s.n, 6); assert.equal(s.rose, 6); assert.equal(s.within, 6)
   assert.ok(s.medianMiss < 5)
+})
+
+test('player folder name must be one plain folder (F1 review)', () => {
+  const ok = buildFiles.safeSegment
+  assert.equal(ok('Gerhard'), true)
+  assert.equal(ok('deathloom-builds'), true)
+  assert.equal(ok('..'), false)
+  assert.equal(ok('a/b'), false)
+  assert.equal(ok('..\\Windows'), false)
+  assert.equal(ok('C:'), false)
+  assert.equal(ok('.hidden'), false)
+  assert.equal(ok('con'), false)
+})
+
+test('problem reports: home folder and secrets scrubbed in any spelling', async () => {
+  const { scrubText, homePattern } = await import('./.build/report-scrub.mjs')
+  const home = 'C:\\Users\\Gerhard'
+  assert.equal(scrubText('at C:\\Users\\Gerhard\\Documents\\x.lua:3', home), 'at %USERPROFILE%\\Documents\\x.lua:3')
+  assert.equal(scrubText('c:/users/gerhard/AppData', home), '%USERPROFILE%/AppData')
+  assert.equal(scrubText('{"p":"C:\\\\Users\\\\GERHARD\\\\a"}', home), '{"p":"%USERPROFILE%\\\\a"}')
+  // another user whose name starts the same stays (no partial match)
+  assert.equal(scrubText('C:\\Users\\Gerhard2\\a', home), 'C:\\Users\\Gerhard2\\a')
+  assert.equal(scrubText('/home/gerhard/.config', '/home/gerhard'), '%USERPROFILE%/.config')
+  assert.equal(homePattern('C:\\'), null)
+  assert.equal(scrubText('Authorization: Bearer abcdefghijklmnopqrstuvwxyz', ''), 'Authorization: Bearer <token>')
+  assert.equal(scrubText('x ghp_0123456789abcdefABCDEF y', home), 'x <token> y')
+  assert.equal(scrubText('POESESSID=abc123def', home), 'POESESSID=<session>')
+  assert.equal(scrubText('{"refresh_token":"r-123"}', home), '{"refresh_token":"<secret>"}')
 })

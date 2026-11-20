@@ -202,6 +202,10 @@ export class PobImpact {
       })
   }
 
+  // Deathloom fork (F1 review): folders you picked in the folder dialog this run
+  // (Copy builds from another folder only takes one of these)
+  private pickedFolders = new Set<string>()
+
   private async pickFolder (title: string, defaultPath: string): Promise<string | null> {
     try {
       const opts: Electron.OpenDialogOptions = {
@@ -213,7 +217,9 @@ export class PobImpact {
       const res = parent
         ? await dialog.showOpenDialog(parent, opts)
         : await dialog.showOpenDialog(opts)
-      return (res.canceled || res.filePaths.length === 0) ? null : res.filePaths[0]
+      if (res.canceled || res.filePaths.length === 0) return null
+      this.pickedFolders.add(path.resolve(res.filePaths[0]).toLowerCase())
+      return res.filePaths[0]
     } catch (e) {
       this.logger.write(`error [PoB] folder picker: ${(e as Error).message}`)
       return null
@@ -819,6 +825,9 @@ export class PobImpact {
 
   // Copy the earlier PoB install's builds into the player folder (or the builds folder)
   async copyExistingBuilds (source?: string) {
+    if (source && !this.pickedFolders.has(path.resolve(source).toLowerCase())) {
+      throw new Error('Choose the folder with Choose folder… first')
+    }
     const from = source || (await this.existingBuilds())?.buildsDir
     if (!from) throw new Error('No other Path of Building builds found')
     const target = this.playerDir()

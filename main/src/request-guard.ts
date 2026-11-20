@@ -51,8 +51,17 @@ function sameKey (a: string, b: string): boolean {
   return diff === 0
 }
 
+// Deathloom fork (F1 review, 20 Nov 2026): the connection's own address. The Host
+// header is written by the sender, so another device could send "Host: 127.0.0.1"
+// and skip the key; the socket address can't be faked that way.
+export function isLoopbackAddress (address: string | undefined): boolean {
+  if (!address) return false
+  const a = address.toLowerCase().replace(/^::ffff:/, '')
+  return a === '::1' || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(a)
+}
+
 export function isAllowedRequest (
-  headers: { host?: string, origin?: string, secFetchSite?: string, key?: string },
+  headers: { host?: string, origin?: string, secFetchSite?: string, key?: string, remoteAddress?: string },
   opts: GuardOptions = {}
 ): boolean {
   const host = (headers.host ?? '').toLowerCase()
@@ -60,7 +69,10 @@ export function isAllowedRequest (
   const name = hostName(host)
   const listen = opts.listenHost?.toLowerCase()
   const listensWide = listen === '0.0.0.0' || listen === '::'
-  if (!LOOPBACK.has(name)) {
+  // another device: by the Host it asked for, or by where the connection comes from
+  const otherDevice = !LOOPBACK.has(name) ||
+    (headers.remoteAddress !== undefined && !isLoopbackAddress(headers.remoteAddress))
+  if (otherDevice) {
     if (!(listen && (listensWide || name === listen))) return false
     // another device: only with the remote key (no key configured = refused)
     if (!opts.remoteKey || !headers.key || !sameKey(headers.key, opts.remoteKey)) return false
@@ -93,4 +105,35 @@ export function safeJoin (baseDir: string, urlPath: string): string | null {
   const base = path.resolve(baseDir)
   const full = path.resolve(base, '.' + path.sep + rel.replace(/^[\\/]+/, ''))
   return (full === base || full.startsWith(base + path.sep)) ? full : null
+}
+
+// Deathloom fork (F1 review, Gerhard 20 Nov 2026): what a phone or other device
+// (a connection that isn't this PC, with the key) may ask for. Panels work as on
+// the PC; settings, folders, installs, sign-in and anything that sends input to
+// the game stay on this PC.
+const NOT_FROM_OTHER_DEVICES = new Set([
+  'CLIENT->MAIN::save-config',
+  'CLIENT->MAIN::update-host-config',
+  'CLIENT->MAIN::tools',
+  'CLIENT->MAIN::pob-pick-folder',
+  'CLIENT->MAIN::pob-install',
+  'CLIENT->MAIN::pob-copy-builds',
+  'CLIENT->MAIN::pob-setup-probe',
+  'CLIENT->MAIN::hud-size',
+  'CLIENT->MAIN::hud-hover',
+  'CLIENT->MAIN::hud-drag',
+  'CLIENT->MAIN::hud-resize',
+  'CLIENT->MAIN::hud-typing',
+  'CLIENT->MAIN::hud-panel',
+  'CLIENT->MAIN::hud-gear-action'
+])
+const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
+const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])
+
+export function allowedFromOtherDevice (name: string, payload: unknown): boolean {
+  if (NOT_FROM_OTHER_DEVICES.has(name)) return false
+  const op = (key: string) => (payload != null && typeof payload === 'object') ? (payload as Record<string, unknown>)[key] : undefined
+  if (name === 'CLIENT->MAIN::user-action') return USER_ACTIONS_FROM_OTHER_DEVICES.has(String(op('action')))
+  if (name === 'CLIENT->MAIN::pob-sync') return POB_SYNC_FROM_OTHER_DEVICES.has(String(op('op')))
+  return true
 }

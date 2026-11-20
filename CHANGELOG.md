@@ -8,6 +8,43 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.96] - 2026-11-20
+
+### Security (F1 follow-up): Content-Security-Policy
+- Orbhoarder's own pages only run scripts that ship with the app (no inline or injected scripts, no plugins) and can't be framed by other sites.
+
+### Security (F1 follow-up): build folder checks
+- **Copy builds** from another folder only copies from a folder you chose with **Choose folder…** (or the other PoB that was found).
+- A player name that isn't a plain folder name (e.g. `..` or `a/b`) is ignored and the builds folder is used, so build backups and deleted builds can't land outside it.
+
+### Security (F2 review): build pipeline and problem reports
+- Problem reports and Bug button logs now also hide your Windows user folder when a log spells it in lower case, with / or doubled \\ (before only the exact spelling was hidden).
+- Build checks on GitHub can no longer publish or write to the repo (read-only, pinned actions); the release job no longer leaves its token where install scripts could read it. Nothing changes in the app.
+
+### Security (F1 follow-up): overlay browser and DevTools
+- The overlay's web browser no longer downloads files (like the Trade site and Lab tabs); open the page in your own browser to download. Redirects are held to web links like normal links.
+- DevTools (Ctrl+Shift+I) is off in the installed app; start Orbhoarder with `--devtools` if support needs it.
+
+### Security (F1 follow-up): what a phone can do
+- A phone or other device on the phone link can use the panels as before, but can no longer change settings, folders, PoB install, sign-in or phone access, or send anything to the game (chat commands, stash search). Those stay on this PC.
+- Settings → Tools says the phone link isn't encrypted: home Wi-Fi only, turn it off or press New key on shared networks.
+
+### Security (F1 review): phone access key can't be skipped
+- With **Settings → Tools → Phone or other devices** on, another device on the network could reach the local server without the key by sending a made-up `Host: 127.0.0.1` header. The server now checks where the connection really comes from; this PC still needs no key, phones still use the QR link.
+- A malformed message from a window is ignored instead of raising an error report.
+
+### Security (F2 review): installed app and test releases
+- The installed app can no longer be started as a plain Node.js runner or with a debug port (`ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS`, `--inspect`), so other programs can't use it to run their own code. The app itself works as before.
+- Test releases can only be built from dev (or master), never from another branch.
+
+### Changed (#278): ready-made atlas tree previews first
+- Atlas → ⋯ → Ready-made atlas tree: **Generate** now only shows the tree on the atlas (with its stats), nothing is saved. Change the picks or points and **Generate again** as often as you like, then **Save** it once (or **Discard**). Closing the panel or picking another atlas build discards the preview.
+
+### Changed (#279): cheat sheets for 3.30.0d
+- Covens: outcomes that guarantee a single Divine Orb or Orb of Annulment need 2 Fate copies (not 3); Fate counter in the area; Abomination map's Nightmare of the Depraved Trinity is the only boss there with the Fate empowerment.
+- Map mechanics: new Abyss and Incursion Thread mods, rarer Breach Wombgift mod, Hiveblood from the Breach Sapling, currency drop changes (rarity raises currency quality, Foulborn orbs drop anywhere, Originator's and Primordial Exalted Orbs), Blight Currency Lanes and Sacred Fauna lifeforce.
+- The 3.30.0d hotfixes (Covetous Dark, Headhunter, Abyssal mods, Witch of the Woods, duplicate rares) change nothing in Orbhoarder.
+
 ## [1.0.95] - 2026-11-20
 
 Hotfix: only this fix on top of 1.0.94 (the rest of dev ships later).

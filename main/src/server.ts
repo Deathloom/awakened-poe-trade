@@ -10,7 +10,7 @@ import { ConfigStore } from './host-files/ConfigStore'
 import { addFileUploadRoutes } from './host-files/file-uploads'
 import type { AppUpdater } from './AppUpdater'
 import type { Logger } from './RemoteLogger'
-import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE } from './request-guard'
+import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE, isLoopbackAddress, allowedFromOtherDevice } from './request-guard'
 import { remoteKey } from './remote-key'
 import { remoteAccessOn } from './remote-access'
 
@@ -30,7 +30,7 @@ server.emit = ((event: string, ...args: any[]) => {
   if (event === 'request' || event === 'upgrade') {
     const req = args[0]
     const key = listenHost ? requestKey(req.url, req.headers.cookie) : undefined
-    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined, key }, { listenHost, remoteKey: listenHost ? remoteKey() : undefined })) {
+    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined, key, remoteAddress: req.socket?.remoteAddress ?? '' }, { listenHost, remoteKey: listenHost ? remoteKey() : undefined })) {
       if (rejectedCount++ < 20) {
         console.warn(`[server] refused ${event} ${String(req.url).slice(0, 80)} from origin=${String(req.headers.origin)} host=${String(req.headers.host)}`)
       }
@@ -53,11 +53,16 @@ server.emit = ((event: string, ...args: any[]) => {
 }) as typeof server.emit
 // Deathloom fork: see startServer
 const STABLE_PORT = 47284
+// Deathloom fork: Content-Security-Policy of the app pages (see the static file handler)
+export const APP_CSP = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
 const websocketServer = new WebSocketServer({ noServer: true })
 let lastActiveClient: WebSocket
 // Deathloom fork: the HUD window ("show while playing") connects as a second
 // client. It only listens; replies meant for the overlay never go to it.
 const hudClients = new WeakSet<WebSocket>()
+// Deathloom fork: phones / other devices (not this PC): limited events, see allowedFromOtherDevice
+const otherDeviceClients = new WeakSet<WebSocket>()
+let refusedFromDevice = 0
 // the client whose message is being handled right now (see replyTo)
 let dispatchingSocket: WebSocket | undefined
 
@@ -71,7 +76,13 @@ if (!process.env.VITE_DEV_SERVER_URL) {
     const urlPath = req.url!.split('?')[0]
     const filePath = (urlPath === '/') ? '/index.html' : urlPath
     switch (path.extname(filePath)) {
-      case '.html': res.setHeader('content-type', 'text/html'); break;
+      case '.html':
+        res.setHeader('content-type', 'text/html')
+        // Deathloom fork (F1 review, baseline 1.8): scripts only from the app itself
+        // (no inline or injected scripts, no plugins), no <base> tricks, the page
+        // can't be framed by other sites and forms only post back to the app
+        res.setHeader('content-security-policy', APP_CSP)
+        break;
       case '.js': res.setHeader('content-type', 'text/javascript'); break;
       case '.json': res.setHeader('content-type', 'application/json'); break;
       case '.svg': res.setHeader('content-type', 'image/svg+xml'); break;
@@ -143,6 +154,7 @@ server.on('upgrade', (req, socket, head) => {
   }
   websocketServer.handleUpgrade(req, socket, head, (ws) => {
     if (req.url === '/events?client=hud') hudClients.add(ws)
+    if (!isLoopbackAddress(req.socket?.remoteAddress)) otherDeviceClients.add(ws)
     websocketServer.emit('connection', ws, req)
   })
 })
@@ -161,7 +173,17 @@ export async function startServer (
     // left "Checking for updates" on screen for good.
     socket.send(JSON.stringify({ name: 'MAIN->CLIENT::updater-state', payload: appUpdater.info }))
     socket.on('message', (bytes) => {
-      const event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
+      // Deathloom fork (F1 review): a malformed message is dropped, not thrown in the
+      // main process (it used to end up as an error report)
+      let event: IpcEvent
+      try {
+        event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
+      } catch { return }
+      if (typeof event?.name !== 'string' || !event.name.startsWith('CLIENT->MAIN::')) return
+      if (otherDeviceClients.has(socket) && !allowedFromOtherDevice(event.name, event.payload)) {
+        if (refusedFromDevice++ < 20) console.warn(`[server] not from another device: ${event.name}`)
+        return
+      }
       if (event.name === 'CLIENT->MAIN::used-recently') {
         if (isHud) return
         lastActiveClient = socket
