@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.95] - 2026-11-20
+
+Hotfix: only this fix on top of 1.0.94 (the rest of dev ships later).
+
+### Fixed (#272): tree map didn't follow a build switch
+- Switching build, character, loadout or player in the Build panel (or making, copying or deleting a loadout) now reloads the tree map, passive tree and gems in every panel and window, e.g. the tree on the right of the Levelling layout. Before, only the panel you clicked in got the new build.
+
 ## [1.0.94] - 2026-11-20
 
 ### Changed (#264): Shopping list you can shop from
