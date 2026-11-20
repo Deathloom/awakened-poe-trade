@@ -11,6 +11,9 @@ export interface VendorRecipe {
   fromAct: number
   tags: Array<'levelling' | 'currency' | 'defence'>
   note?: string
+  // Deathloom fork (Gerhard 20 Nov 2026): this league's vendor-recipe challenge it
+  // counts for, and which of its items (Covens of Umbra list from poedb; update each league)
+  challenge?: { name: string, items: string }
 }
 
 export const VENDOR_RECIPES: VendorRecipe[] = [
@@ -71,7 +74,25 @@ export const VENDOR_RECIPES: VendorRecipe[] = [
     get: 'One flask of the next base type',
     fromAct: 1,
     tags: ['levelling'],
-    note: 'Handy when your flasks fall behind your level.'
+    note: 'Handy when your flasks fall behind your level.',
+    challenge: { name: 'Peddler\'s Produce I', items: 'Life Flask, Mana Flask' }
+  },
+  {
+    name: 'Ruby, Topaz or Sapphire Ring',
+    give: 'Iron Ring + a red gem (Ruby), green gem (Topaz) or blue gem (Sapphire)',
+    get: 'Normal Ruby, Topaz or Sapphire Ring',
+    fromAct: 1,
+    tags: ['levelling'],
+    note: 'Skill or support gem; the ring can be any rarity.',
+    challenge: { name: 'Peddler\'s Produce I', items: 'Ruby, Topaz or Sapphire Ring' }
+  },
+  {
+    name: 'Agate, Turquoise or Citrine Amulet',
+    give: 'Two of Amber / Jade / Lapis Amulet + Orb of Transmutation',
+    get: 'Amber + Lapis = Agate · Jade + Lapis = Turquoise · Amber + Jade = Citrine',
+    fromAct: 1,
+    tags: ['levelling'],
+    challenge: { name: 'Peddler\'s Produce I', items: 'Agate, Turquoise or Citrine Amulet' }
   },
   {
     name: 'Chaos resistance ring or amulet',
@@ -108,7 +129,8 @@ export const VENDOR_RECIPES: VendorRecipe[] = [
     get: 'Chaos Orb (Exalted Orb for 3)',
     fromAct: 1,
     tags: ['currency'],
-    note: 'New in 3.30: worth checking your rares for matching names before vendoring them.'
+    note: 'New in 3.30: worth checking your rares for matching names before vendoring them.',
+    challenge: { name: 'Peddler\'s Produce II', items: 'Exalted Orb (the 3-rare version)' }
   },
   {
     name: 'Vaal Orb',
@@ -124,34 +146,30 @@ export const VENDOR_RECIPES: VendorRecipe[] = [
     fromAct: 10,
     tags: ['currency'],
     note: 'Mostly for early maps.'
-  }
-]
-
-// Deathloom fork (Gerhard 20 Nov 2026): the league's vendor-recipe challenges and a
-// recipe for each item. Covens of Umbra (3.30) list from poedb's Covens challenges;
-// recipes checked against poedb / mobalytics recipe lists 20 Nov 2026. Update each league.
-export interface ChallengeRecipe { want: string, give: string, note?: string }
-export interface RecipeChallenge { league: string, name: string, items: ChallengeRecipe[] }
-
-export const CHALLENGE_RECIPES: RecipeChallenge[] = [
-  {
-    league: 'Covens of Umbra',
-    name: 'Peddler\'s Produce I',
-    items: [
-      { want: 'Life Flask', give: '3 life flasks of the same base type', note: 'Gives the next base type up.' },
-      { want: 'Mana Flask', give: '3 mana flasks of the same base type', note: 'Gives the next base type up.' },
-      { want: 'Ruby, Topaz or Sapphire Ring', give: 'Iron Ring + a red gem (Ruby), green gem (Topaz) or blue gem (Sapphire)', note: 'Skill or support gem; any rarity of ring.' },
-      { want: 'Agate, Turquoise or Citrine Amulet', give: 'Two of Amber / Jade / Lapis Amulet + Orb of Transmutation', note: 'Amber + Lapis = Agate · Jade + Lapis = Turquoise · Amber + Jade = Citrine.' }
-    ]
   },
   {
-    league: 'Covens of Umbra',
-    name: 'Peddler\'s Produce II',
-    items: [
-      { want: 'Tier 16 Map', give: '3 Tier 15 maps of the same kind', note: 'Same map name, e.g. three of one T15 map.' },
-      { want: 'Unique Item', give: '3 copies of the same unique (not corrupted)', note: 'Gives one of that unique with new rolls. Use cheap ones.' },
-      { want: 'Item with Influence', give: 'Astrolabe Amulet + a red, a green and a blue gem', note: 'Gives an Onyx Amulet with two random influences.' },
-      { want: 'Exalted Orb', give: '3 rare items with the same name', note: '3.30 recipe (2 give a Chaos Orb).' }
-    ]
+    name: 'Tier 16 map',
+    give: '3 Tier 15 maps of the same kind (same map name)',
+    get: 'A Tier 16 map',
+    fromAct: 10,
+    tags: ['currency'],
+    challenge: { name: 'Peddler\'s Produce II', items: 'Tier 16 Map' }
+  },
+  {
+    name: 'Unique reroll',
+    give: '3 copies of the same unique (not corrupted)',
+    get: 'One of that unique with new rolls',
+    fromAct: 1,
+    tags: ['currency'],
+    note: 'Use cheap ones.',
+    challenge: { name: 'Peddler\'s Produce II', items: 'Unique Item' }
+  },
+  {
+    name: 'Influenced Onyx Amulet',
+    give: 'Astrolabe Amulet + a red, a green and a blue gem',
+    get: 'Onyx Amulet with two random influences',
+    fromAct: 1,
+    tags: ['currency'],
+    challenge: { name: 'Peddler\'s Produce II', items: 'Item with Influence' }
   }
 ]
