@@ -53,7 +53,8 @@ const MODULES = {
   'patch-notes': 'renderer/src/web/patch-notes/patch-notes.ts',
   'vendor-recipes': 'renderer/src/web/companion/vendor-recipes.ts',
   'cheat-progress': 'renderer/src/web/cheats/progress.ts',
-  'quest-gems': 'renderer/src/web/companion/quest-gems.ts'
+  'quest-gems': 'renderer/src/web/companion/quest-gems.ts',
+  'cheat-threads': 'renderer/src/web/cheats/threads.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
