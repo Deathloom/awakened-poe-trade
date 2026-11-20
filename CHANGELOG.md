@@ -28,6 +28,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Performance (F4): even lighter windows
 - Each panel and window starts with about a sixth less code to load (1.9 MB → 1.6 MB): the Atlas tree loads the first time you open it, and unused leftovers are gone. Nothing else changes.
 
+### Performance (F4): one price download for all windows
+- The poe.ninja price list (several MB) is now downloaded once and shared by the price check, Money tools, Market overview and Market history for up to 10 minutes, instead of each window downloading it on its own. Same prices, less waiting and less data.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

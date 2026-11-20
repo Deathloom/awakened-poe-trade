@@ -950,3 +950,58 @@ test('patch notes: newest forum thread, alert once, first check silent', async (
   assert.deepEqual(pn.loadState('not json'), {})
   assert.equal(pn.loadState(JSON.stringify(r.state)).known.id, 4018000)
 })
+
+// F4a: poe.ninja price list kept in main for a few minutes, shared by all windows
+const pc = await import('./.build/proxy-cache.mjs')
+
+test('proxy cache: only poe.ninja dense overview GETs are cached', () => {
+  const ok = pc.isCacheableProxyRequest
+  const url = 'poe.ninja/poe1/api/economy/current/dense/overviews?league=Keepers&language=en'
+  assert.equal(ok('GET', url), true)
+  assert.equal(ok('GET', 'poe.ninja/api/economy/current/dense/overviews?league=Keepers'), true)
+  assert.equal(ok('POST', url), false)
+  assert.equal(ok(undefined, url), false)
+  assert.equal(ok('GET', 'www.pathofexile.com/api/trade/data/stats'), false)
+  assert.equal(ok('GET', 'www.poeprices.info/api?l=Keepers'), false)
+  assert.equal(ok('GET', 'poe.ninja/poe1/api/economy/current/dense/overviews/../x'), false)
+  assert.equal(ok('GET', 'poe.ninja/poe1/api/economy/stash/current/item/overview?league=Keepers'), false)
+  assert.equal(ok('GET', 'poe.ninja.evil.com/poe1/api/economy/current/dense/overviews'), false)
+  assert.equal(ok('GET', 'poe.ninja:8443/poe1/api/economy/current/dense/overviews'), false)
+  assert.equal(ok('GET', 'x@poe.ninja/poe1/api/economy/current/dense/overviews'), false)
+})
+
+test('proxy cache: keeps 200s for the TTL, bounded size, shares one download', async () => {
+  let t = 0
+  const cache = new pc.ResponseCache(1000, 2, () => t)
+  const ok = (body) => ({ statusCode: 200, statusMessage: 'OK', headers: {}, body: new TextEncoder().encode(body) })
+  let loads = 0
+  const load = (body) => () => { loads++; return new Promise(resolve => setTimeout(() => resolve(ok(body)), 5)) }
+
+  // two windows asking at the same time: one download
+  const [a, b] = await Promise.all([cache.fetch('A', load('a1')), cache.fetch('A', load('a2'))])
+  assert.equal(loads, 1)
+  assert.equal(a, b)
+  // within the TTL: kept copy
+  t = 999
+  assert.equal(await cache.fetch('A', load('a3')), a)
+  assert.equal(loads, 1)
+  // after the TTL: downloaded again
+  t = 1000
+  const a4 = await cache.fetch('A', load('a4'))
+  assert.equal(loads, 2)
+  assert.equal(new TextDecoder().decode(a4.body), 'a4')
+
+  // errors are passed on but not kept
+  const err = { statusCode: 429, statusMessage: 'Too Many Requests', headers: {}, body: new Uint8Array() }
+  assert.equal((await cache.fetch('E', async () => err)).statusCode, 429)
+  assert.equal(cache.get('E'), undefined)
+  await assert.rejects(cache.fetch('F', async () => { throw new Error('net') }))
+  assert.equal((await cache.fetch('F', async () => ok('f'))).statusCode, 200)
+
+  // bounded: the oldest goes first
+  cache.set('G', ok('g'))
+  assert.equal(cache.size, 2)
+  assert.equal(cache.get('A'), undefined)
+  assert.ok(cache.get('F'))
+  assert.ok(cache.get('G'))
+})
