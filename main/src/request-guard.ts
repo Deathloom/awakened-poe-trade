@@ -51,8 +51,17 @@ function sameKey (a: string, b: string): boolean {
   return diff === 0
 }
 
+// Deathloom fork (F1 review, 20 Nov 2026): the connection's own address. The Host
+// header is written by the sender, so another device could send "Host: 127.0.0.1"
+// and skip the key; the socket address can't be faked that way.
+export function isLoopbackAddress (address: string | undefined): boolean {
+  if (!address) return false
+  const a = address.toLowerCase().replace(/^::ffff:/, '')
+  return a === '::1' || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(a)
+}
+
 export function isAllowedRequest (
-  headers: { host?: string, origin?: string, secFetchSite?: string, key?: string },
+  headers: { host?: string, origin?: string, secFetchSite?: string, key?: string, remoteAddress?: string },
   opts: GuardOptions = {}
 ): boolean {
   const host = (headers.host ?? '').toLowerCase()
@@ -60,7 +69,10 @@ export function isAllowedRequest (
   const name = hostName(host)
   const listen = opts.listenHost?.toLowerCase()
   const listensWide = listen === '0.0.0.0' || listen === '::'
-  if (!LOOPBACK.has(name)) {
+  // another device: by the Host it asked for, or by where the connection comes from
+  const otherDevice = !LOOPBACK.has(name) ||
+    (headers.remoteAddress !== undefined && !isLoopbackAddress(headers.remoteAddress))
+  if (otherDevice) {
     if (!(listen && (listensWide || name === listen))) return false
     // another device: only with the remote key (no key configured = refused)
     if (!opts.remoteKey || !headers.key || !sameKey(headers.key, opts.remoteKey)) return false
