@@ -321,7 +321,7 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
 // guide position use the route. If it can't be loaded, levels etc. still count.
 export function startLevelRecorder () {
   const ready = loadRoute().then(() => {}, () => {})
-  const record = (e: { lines: string[] }) => { void ready.then(() => recordNow(e)) }
+  const record = (e: { lines: string[] }) => { ready.then(() => recordNow(e)).catch((err) => { console.error(err) }) }
   const recordNow = (e: { lines: string[] }) => {
     const session = loadSession()
     const before = JSON.stringify(session)
