@@ -27,6 +27,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - With **Settings → Tools → Phone or other devices** on, another device on the network could reach the local server without the key by sending a made-up `Host: 127.0.0.1` header. The server now checks where the connection really comes from; this PC still needs no key, phones still use the QR link.
 - A malformed message from a window is ignored instead of raising an error report.
 
+### Fixed (#272): tree map didn't follow a build switch
+- Switching build, character, loadout or player in the Build panel (or making, copying or deleting a loadout) now reloads the tree map, passive tree and gems in every panel and window, e.g. the tree on the right of the Levelling layout. Before, only the panel you clicked in got the new build.
+
 ## [1.0.94] - 2026-11-20
 
 ### Changed (#264): Shopping list you can shop from
