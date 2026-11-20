@@ -19,6 +19,7 @@
       </div>
       <div class="px-3 py-2 border-t border-gray-700 flex items-center">
         <span class="text-xs text-gray-500">Settings → What's new shows this again.</span>
+        <PatchNotesLink class="ml-2 text-xs" />
         <button class="ml-auto px-3 rounded bg-gray-700 hover:bg-gray-600" @click="close">Got it</button>
       </div>
     </div>
@@ -31,6 +32,7 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { changesSince, compareVersions, isTestVersion, parseChangelog, renderMarkdown, type ChangelogVersion } from './changelog'
 import { whatsNewRequested } from './whats-new-state'
+import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 
 // active: the window is showing (overlay: Shift+Space open; Orbhoarder window: always)
 const props = defineProps<{ active: boolean }>()

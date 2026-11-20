@@ -53,7 +53,7 @@
               <b>Crafting</b> (crafting currency prices with a week's trend, and a sum of what your craft costs).
               The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Money tools → Currency counter).</li>
             <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
-            <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide and What's new.</li>
+            <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide, What's new and <b>Patch notes</b> (GGG's PC patch notes; a yellow dot means new notes came out since you last opened them, with a Windows notification too: Settings → General to turn it off).</li>
           </ul>
         </section>
 

@@ -104,6 +104,13 @@
     </div>
 
     <div class="mb-4">
+      <ui-toggle :modelValue="pob.patchNotesAlert !== false" @update:modelValue="pob.patchNotesAlert = $event">Tell me when new patch notes are out</ui-toggle>
+      <div class="text-gray-500 text-sm mt-1">
+        Every 30 minutes while Orbhoarder runs, it reads GGG's public Patch Notes forum page (PC). New notes show a
+        Windows notification (click to read them) and a dot on <b>Patch notes</b> in Cheat sheets and Settings. PoE1 only.
+      </div>
+    </div>
+    <div class="mb-4">
       <ui-toggle :modelValue="pob.errorReports !== false" @update:modelValue="pob.errorReports = $event">Send problem reports automatically</ui-toggle>
       <div class="text-gray-500 text-sm mt-1">
         When Orbhoarder or its Path of Building hits an error, it opens an issue in the group's private

@@ -19,6 +19,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - Picking **Threads** no longer takes "Threads are more likely to be of type …" notables (Dextral / Sinistral Threads) set to a type you didn't pick (e.g. Ultimatum): they're only taken, with your type chosen, when one of their options is a content you picked. "Cannot be of type" ones rule out a type you didn't pick.
 - A notable that works inside another content (Trialmaster's Boon is Ultimatum even when it rewards Divination cards; Faith in Arms is Mercenaries) is only taken when that content is picked. Each stat line counts as the content it names first.
 
+### Added: patch notes link and alert
+- **Patch notes** link in Cheat sheets, Settings and What's new opens GGG's newest PC patch notes. When new notes (or a hotfix) are posted, Orbhoarder shows a Windows notification (click to read) and a yellow dot on the link until you open them. It reads GGG's public Patch Notes forum page every 30 minutes while it runs; turn it off in Settings → General. PoE1 only.
 
 ## [1.0.97] - 2026-11-20
 

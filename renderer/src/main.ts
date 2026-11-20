@@ -33,6 +33,9 @@ import { Host } from './web/background/IPC'
   if (where === 'overlay') {
     const { startLevelRecorder } = await import('./web/companion/char-level')
     startLevelRecorder()
+    // and checks GGG's forum for new patch notes (one window only)
+    const { startPatchNotesWatch } = await import('./web/patch-notes/patch-notes-store')
+    startPatchNotesWatch()
   }
 
   const app = createApp(App)

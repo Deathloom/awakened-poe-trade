@@ -910,3 +910,43 @@ test('atlas generator: type pickers only for picked content (Threads ≠ Ultimat
   const n2 = decodeAtlas(r2.code).nodes.map(name)
   assert.ok(!n2.includes('Dextral Threads') && !n2.includes('Sinistral Threads'))
 })
+
+test('patch notes: newest forum thread, alert once, first check silent', async () => {
+  const pn = await import('./.build/patch-notes.mjs')
+  const html = `
+    <tr><td class="thread"><div class="title"><a href="/forum/view-thread/4017726">3.30.0d Patch Notes</a></div>
+      <a href="/forum/view-thread/4017726/page/3">3</a></td>
+      <td class="last_post"><a href="/forum/view-thread/4017726/page/3#p1">Today</a></td></tr>
+    <tr><td><div class="title"><a href="/forum/view-thread/4017887">3.30.0d Hotfix 2 &amp; more</a></div></td></tr>
+    <tr><td><div class="title"><a href="/forum/view-thread/3000001">Patch Notes Forum Rules</a></div></td></tr>
+    <tr><td><a href="/forum/view-thread/4017999">Announcement</a></td></tr>`
+  const threads = pn.parseForumThreads(html)
+  assert.deepEqual(threads.map(t => t.id), [4017726, 4017887, 3000001])
+  const newest = pn.newestThread(threads)
+  assert.deepEqual(newest, { id: 4017887, title: '3.30.0d Hotfix 2 & more' })
+  assert.equal(pn.newestThread([]), undefined)
+  // first check: remembered, no alert, nothing unseen
+  let r = pn.afterCheck({}, newest, 1)
+  assert.equal(r.notify, undefined)
+  assert.equal(pn.unseen(r.state), undefined)
+  assert.equal(pn.linkUrl(r.state), 'https://www.pathofexile.com/forum/view-thread/4017887')
+  // same thread again: no alert
+  r = pn.afterCheck(r.state, newest, 2)
+  assert.equal(r.notify, undefined)
+  // newer thread: one alert, unseen until opened
+  const next = { id: 4018000, title: '3.30.0e Patch Notes' }
+  r = pn.afterCheck(r.state, next, 3)
+  assert.deepEqual(r.notify, next)
+  assert.deepEqual(pn.unseen(r.state), next)
+  assert.equal(pn.afterCheck(r.state, next, 4).notify, undefined)
+  const seen = pn.markSeen(r.state)
+  assert.equal(pn.unseen(seen), undefined)
+  // page couldn't be read (Cloudflare, offline): state kept
+  assert.deepEqual(pn.afterCheck(seen, undefined, 5).state.known, next)
+  // no state yet: link goes to the forum
+  assert.equal(pn.linkUrl({}), pn.PATCH_NOTES_FORUM)
+  // stored state is checked
+  assert.deepEqual(pn.loadState('{"known":{"id":"x","title":1},"seenId":2.5}'), { known: undefined, seenId: undefined, checkedAt: undefined })
+  assert.deepEqual(pn.loadState('not json'), {})
+  assert.equal(pn.loadState(JSON.stringify(r.state)).known.id, 4018000)
+})

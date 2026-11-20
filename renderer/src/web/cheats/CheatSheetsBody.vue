@@ -5,6 +5,7 @@
       <span class="lg-head mr-1"><i class="fas fa-book mr-1 text-gray-500" />Cheat sheets</span>
       <button v-for="s of tabs" :key="s.id" class="ui-tab"
         :class="{ 'ui-tab-on': tab === s.id }" @click="setTab(s.id)">{{ s.label }}</button>
+      <PatchNotesLink class="ml-auto" show-title />
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-3">
       <template v-if="tab === 'progress'">
@@ -49,6 +50,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { PROGRESS, loadProgress, saveProgress } from './progress'
 import { SHEETS, sectionsFor } from './sheets'

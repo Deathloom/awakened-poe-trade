@@ -48,7 +48,8 @@ const MODULES = {
   'loadout-steps': 'renderer/src/web/pob/loadout-steps.ts',
   'market-tools': 'renderer/src/web/market-history/market-tools.ts',
   'atlas-generator': 'renderer/src/web/atlas/atlas-generator.ts',
-  'atlas-tree-test': 'renderer/src/web/atlas/atlas-tree.ts'
+  'atlas-tree-test': 'renderer/src/web/atlas/atlas-tree.ts',
+  'patch-notes': 'renderer/src/web/patch-notes/patch-notes.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
