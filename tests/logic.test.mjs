@@ -911,6 +911,24 @@ test('atlas generator: type pickers only for picked content (Threads ≠ Ultimat
   assert.ok(!n2.includes('Dextral Threads') && !n2.includes('Sinistral Threads'))
 })
 
+test('atlas generator: Beasts / Syndicate trees take the Bestiary / Betrayal Thread type notables', async () => {
+  const { generateAtlas } = await import('./.build/atlas-generator.mjs')
+  const { decodeAtlas, ATLAS, ATLAS_BY_ID } = await import('./.build/atlas-tree-test.mjs')
+  const name = id => ATLAS_BY_ID.get(id)?.[6].trim()
+  const option = (spec, id) => (ATLAS.variants[String(id)] ?? []).find(([e]) => e === spec.choices[String(id)])?.[1].join(' ') ?? ''
+  for (const [content, thread] of [['beasts', 'Bestiary'], ['syndicate', 'Betrayal']]) {
+    const r = generateAtlas({ contents: [content], sustain: false, budget: 150 })
+    assert.ok(r.notables.includes('Sinistral Threads'), `${content}: Sinistral Threads`)
+    assert.ok(r.notables.includes('Unthreaded'), `${content}: Unthreaded`)
+    const spec = decodeAtlas(r.code)
+    const sin = spec.nodes.find(id => name(id) === 'Sinistral Threads')
+    assert.match(option(spec, sin), new RegExp(thread))
+    // Unthreaded rules out another type, never your own
+    const un = spec.nodes.find(id => name(id) === 'Unthreaded')
+    assert.doesNotMatch(option(spec, un), new RegExp(thread))
+  }
+})
+
 test('patch notes: newest forum thread, alert once, first check silent', async () => {
   const pn = await import('./.build/patch-notes.mjs')
   const html = `

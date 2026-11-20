@@ -31,6 +31,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Performance (F4): one price download for all windows
 - The poe.ninja price list (several MB) is now downloaded once and shared by the price check, Money tools, Market overview and Market history for up to 10 minutes, instead of each window downloading it on its own. Same prices, less waiting and less data.
 
+### Changed: Beasts / Syndicate atlas trees take Thread type notables
+- Ready-made atlas tree: picking **Beasts** or **Syndicate** now also takes Sinistral Threads (set to Bestiary / Betrayal) and Unthreaded (ruling out another type), which were missed before.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
