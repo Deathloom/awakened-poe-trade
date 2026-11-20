@@ -30,7 +30,7 @@ server.emit = ((event: string, ...args: any[]) => {
   if (event === 'request' || event === 'upgrade') {
     const req = args[0]
     const key = listenHost ? requestKey(req.url, req.headers.cookie) : undefined
-    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined, key }, { listenHost, remoteKey: listenHost ? remoteKey() : undefined })) {
+    if (!isAllowedRequest({ host: req.headers.host, origin: req.headers.origin, secFetchSite: typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : undefined, key, remoteAddress: req.socket?.remoteAddress ?? '' }, { listenHost, remoteKey: listenHost ? remoteKey() : undefined })) {
       if (rejectedCount++ < 20) {
         console.warn(`[server] refused ${event} ${String(req.url).slice(0, 80)} from origin=${String(req.headers.origin)} host=${String(req.headers.host)}`)
       }
@@ -161,7 +161,13 @@ export async function startServer (
     // left "Checking for updates" on screen for good.
     socket.send(JSON.stringify({ name: 'MAIN->CLIENT::updater-state', payload: appUpdater.info }))
     socket.on('message', (bytes) => {
-      const event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
+      // Deathloom fork (F1 review): a malformed message is dropped, not thrown in the
+      // main process (it used to end up as an error report)
+      let event: IpcEvent
+      try {
+        event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
+      } catch { return }
+      if (typeof event?.name !== 'string' || !event.name.startsWith('CLIENT->MAIN::')) return
       if (event.name === 'CLIENT->MAIN::used-recently') {
         if (isHud) return
         lastActiveClient = socket

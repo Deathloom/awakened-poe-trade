@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (F1 review): phone access key can't be skipped
+- With **Settings → Tools → Phone or other devices** on, another device on the network could reach the local server without the key by sending a made-up `Host: 127.0.0.1` header. The server now checks where the connection really comes from; this PC still needs no key, phones still use the QR link.
+- A malformed message from a window is ignored instead of raising an error report.
+
 ## [1.0.94] - 2026-11-20
 
 ### Changed (#264): Shopping list you can shop from
