@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.94] - 2026-11-20
+
 ### Changed (#264): Shopping list you can shop from
 - **Market → Shopping**: every row has **Trade** (opens the trade site: uniques any copy, rares this base with these mods, gems cheapest first) and gear rows have **↑** (same unique with at least these rolls / any base with these mods), the same searches as the Build panel's Gear tab. Click a gear row to see its mods. Rares now get their own row (no price: it depends on the rolls).
 
