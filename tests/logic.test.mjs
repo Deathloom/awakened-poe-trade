@@ -1060,6 +1060,8 @@ test('quest gems: data loads on demand (once), then plans picks and vendor buys 
   assert.deepEqual(plan.steps[0].buy.map(g => g.name), ['Arcane Surge'])
   assert.deepEqual(plan.notFromQuests.map(g => g.name), ['Spark'])
   assert.equal(qg.planQuestGems(fake, 'Ranger', wanted), null)
+})
+
 test('thread planner: guaranteed mods, 3/6/8 bonus, cost, sheet lines', async () => {
   const th = await import('./.build/cheat-threads.mjs')
   assert.equal(th.THREADS.length, 10)
