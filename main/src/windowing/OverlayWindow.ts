@@ -1,6 +1,6 @@
 import { lockToAppPages, hardenWebview, denyWebviewPermissions, openWebLink, isWebLink } from '../safe-open'
 import path from 'path'
-import { BrowserWindow, dialog, shell, Menu, WebContents, session } from 'electron'
+import { app, BrowserWindow, dialog, shell, Menu, WebContents, session } from 'electron'
 import { OverlayController, OVERLAY_WINDOW_OPTS } from 'electron-overlay-window'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
@@ -46,10 +46,13 @@ export class OverlayWindow {
       }
     })
 
+    // Deathloom fork (F1 review): DevTools only in development, or when started
+    // with --devtools (for support); installed builds keep Edit and Reload
+    const devTools = !app.isPackaged || process.argv.includes('--devtools')
     this.window.setMenu(Menu.buildFromTemplate([
       { role: 'editMenu' },
       { role: 'reload' },
-      { role: 'toggleDevTools' }
+      ...(devTools ? [{ role: 'toggleDevTools' as const }] : [])
     ]))
 
     this.window.webContents.on('before-input-event', this.handleExtraCommands)
@@ -61,8 +64,17 @@ export class OverlayWindow {
         return { action: 'deny' }
       })
       webviewWebContents.on('will-navigate', (e, url) => { if (!isWebLink(url)) e.preventDefault() })
+      // Deathloom fork (F1 review): redirects held to web links too
+      webviewWebContents.on('will-redirect', (e, url) => { if (!isWebLink(url)) e.preventDefault() })
     })
-    denyWebviewPermissions(session.fromPartition(OVERLAY_BROWSER_PARTITION))
+    const browserSession = session.fromPartition(OVERLAY_BROWSER_PARTITION)
+    denyWebviewPermissions(browserSession)
+    // Deathloom fork (F1 review, Gerhard 20 Nov 2026): nothing is downloaded through
+    // the overlay browser (same as the trade / lab tabs); open the page in your browser
+    browserSession.on('will-download', (e, item) => {
+      e.preventDefault()
+      this.logger.write(`info [browser] download blocked: ${item.getFilename().slice(0, 80)}`)
+    })
 
     // Deathloom fork: web links only, and the window stays on the overlay's pages
     lockToAppPages(this.window.webContents)
