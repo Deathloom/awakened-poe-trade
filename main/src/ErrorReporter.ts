@@ -12,6 +12,7 @@ import * as os from 'os'
 import { app } from 'electron'
 import type { ServerEvents } from './server'
 import type { Logger } from './RemoteLogger'
+import { scrubText } from './report-scrub'
 
 export type ReportSource = 'main' | 'overlay' | 'pob'
 
@@ -51,17 +52,7 @@ export function reportKey (source: ReportSource, message: string, stack?: string
 // No home folder (Windows user name) and no secrets in reports: GitHub tokens,
 // Authorization headers, POESESSID cookies and token-like query/JSON values
 export function scrub (text: string): string {
-  const home = os.homedir()
-  let out = text
-  if (home) {
-    out = out.split(home).join('%USERPROFILE%')
-    out = out.split(home.replace(/\\/g, '/')).join('%USERPROFILE%')
-  }
-  return out
-    .replace(/\b(?:gh[opusr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,})\b/g, '<token>')
-    .replace(/\b(Bearer|token)\s+[A-Za-z0-9._~+/=-]{16,}/gi, '$1 <token>')
-    .replace(/(POESESSID\s*[=:]\s*"?)[A-Za-z0-9]+/gi, '$1<session>')
-    .replace(/((?:access_token|refresh_token|client_secret|device_code|password|secret)["']?\s*[=:]\s*["']?)[^\s"'&,}]+/gi, '$1<secret>')
+  return scrubText(text, os.homedir())
 }
 
 // Deathloom fork: "Report a bug / Suggest a feature" (desktop window). Without a

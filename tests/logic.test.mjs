@@ -823,3 +823,19 @@ test('player folder name must be one plain folder (F1 review)', () => {
   assert.equal(ok('.hidden'), false)
   assert.equal(ok('con'), false)
 })
+
+test('problem reports: home folder and secrets scrubbed in any spelling', async () => {
+  const { scrubText, homePattern } = await import('./.build/report-scrub.mjs')
+  const home = 'C:\\Users\\Gerhard'
+  assert.equal(scrubText('at C:\\Users\\Gerhard\\Documents\\x.lua:3', home), 'at %USERPROFILE%\\Documents\\x.lua:3')
+  assert.equal(scrubText('c:/users/gerhard/AppData', home), '%USERPROFILE%/AppData')
+  assert.equal(scrubText('{"p":"C:\\\\Users\\\\GERHARD\\\\a"}', home), '{"p":"%USERPROFILE%\\\\a"}')
+  // another user whose name starts the same stays (no partial match)
+  assert.equal(scrubText('C:\\Users\\Gerhard2\\a', home), 'C:\\Users\\Gerhard2\\a')
+  assert.equal(scrubText('/home/gerhard/.config', '/home/gerhard'), '%USERPROFILE%/.config')
+  assert.equal(homePattern('C:\\'), null)
+  assert.equal(scrubText('Authorization: Bearer abcdefghijklmnopqrstuvwxyz', ''), 'Authorization: Bearer <token>')
+  assert.equal(scrubText('x ghp_0123456789abcdefABCDEF y', home), 'x <token> y')
+  assert.equal(scrubText('POESESSID=abc123def', home), 'POESESSID=<session>')
+  assert.equal(scrubText('{"refresh_token":"r-123"}', home), '{"refresh_token":"<secret>"}')
+})
