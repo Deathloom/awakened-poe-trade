@@ -49,7 +49,9 @@ const MODULES = {
   'market-tools': 'renderer/src/web/market-history/market-tools.ts',
   'atlas-generator': 'renderer/src/web/atlas/atlas-generator.ts',
   'atlas-tree-test': 'renderer/src/web/atlas/atlas-tree.ts',
-  'patch-notes': 'renderer/src/web/patch-notes/patch-notes.ts'
+  'patch-notes': 'renderer/src/web/patch-notes/patch-notes.ts',
+  'vendor-recipes': 'renderer/src/web/companion/vendor-recipes.ts',
+  'cheat-progress': 'renderer/src/web/cheats/progress.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

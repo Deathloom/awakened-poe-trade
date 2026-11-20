@@ -22,6 +22,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added: patch notes link and alert
 - **Patch notes** link in Cheat sheets, Settings and What's new opens GGG's newest PC patch notes. When new notes (or a hotfix) are posted, Orbhoarder shows a Windows notification (click to read) and a yellow dot on the link until you open them. It reads GGG's public Patch Notes forum page every 30 minutes while it runs; turn it off in Settings → General. PoE1 only.
 
+### Tests (Q1): data guards
+- The automatic checks now fail if price check loses our added exchange items (Frayed Thread, Engineer's Orbs, the new Exalted Orbs, shards, Breach Blessings and others), if the atlas tree loses its 3.30.0c notables, or if the Threads cheat sheet or vendor recipes go missing. Nothing changes in the app.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
