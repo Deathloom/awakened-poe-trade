@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (F1 follow-up): Content-Security-Policy
+- Orbhoarder's own pages only run scripts that ship with the app (no inline or injected scripts, no plugins) and can't be framed by other sites.
+
 ### Security (F1 follow-up): build folder checks
 - **Copy builds** from another folder only copies from a folder you chose with **Choose folder…** (or the other PoB that was found).
 - A player name that isn't a plain folder name (e.g. `..` or `a/b`) is ignored and the builds folder is used, so build backups and deleted builds can't land outside it.
