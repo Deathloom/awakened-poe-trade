@@ -5,6 +5,8 @@
 // The data (~70 kB) is loaded the first time a panel needs it (F4):
 // loadQuestGemData() once, then planQuestGems(data, …).
 
+import { lazyOnce } from './lazy-data'
+
 interface QuestOffer {
   quest: string
   id: string
@@ -18,15 +20,9 @@ interface QuestOffer {
 
 export interface QuestGemData { classes: string[], start: Record<string, string[]>, quests: QuestOffer[] }
 
-let pending: Promise<QuestGemData> | null = null
-export function loadQuestGemData (): Promise<QuestGemData> {
-  if (!pending) {
-    pending = import('./quest-gems.json').then(m => m.default as unknown as QuestGemData)
-    // a failed load is tried again next time
-    pending.catch(() => { pending = null })
-  }
-  return pending
-}
+// a failed load is tried once more, then again the next time a panel asks (lazy-data.ts)
+export const loadQuestGemData: () => Promise<QuestGemData> =
+  lazyOnce(() => import('./quest-gems.json').then(m => m.default as unknown as QuestGemData))
 
 export interface WantedGem { name: string, reqLevel: number, support: boolean }
 
