@@ -11,6 +11,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Security (F2b): phone key encrypted
 - The phone link key is now kept with Windows' own encryption for your Windows user (it used to be a plain text file in the config folder). Your phone's saved link keeps working: the old file is moved over and deleted on the next start with phone access on.
 - The Build checks on GitHub now also pin the upload/download steps to exact versions. Nothing changes in the app.
+
 ### Performance (F3): lighter windows
 - The chart library (price check trend line, Market history sparklines) loads the first time a chart is shown instead of with every window: each panel and window starts with about a quarter less code to load (2.4 MB → 1.9 MB).
 
