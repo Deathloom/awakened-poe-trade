@@ -15,6 +15,7 @@ mkdirSync(out, { recursive: true })
 
 const MODULES = {
   'request-guard': 'main/src/request-guard.ts',
+  'proxy-cache': 'main/src/proxy-cache.ts',
   'build-files': 'main/src/pob/BuildFiles.ts',
   'report-scrub': 'main/src/report-scrub.ts',
   'remote-key-store': 'main/src/remote-key-store.ts',
