@@ -37,7 +37,8 @@ export const SHEETS: Sheet[] = [
         title: 'The loop',
         lines: [
           'Ritual → Fate: beating a coven ritual lets you choose a Fate for the area boss. Up to 3 Fates on one boss; you can hold more and choose which 3.',
-          'Fates make the boss harder and its loot better (currency, uniques, maps). Matching Fates unlock rarer rewards (Exceptional supports, new uniques). Same Fate more than once (3.30.0b): the 1st and 3rd copy triple their reward, the 2nd does nothing, so use 1 or 3 copies, never 2.',
+          'Fates make the boss harder and its loot better (currency, uniques, maps). Matching Fates unlock rarer rewards (Exceptional supports, new uniques). Same Fate more than once (3.30.0b): the 1st and 3rd copy triple their reward, the 2nd does nothing, so use 1 or 3 copies, never 2. Exception (3.30.0d): outcomes that guarantee a single Divine Orb or Orb of Annulment need only 2 copies.',
+          'The area shows how many Fates are available in it (3.30.0d counter).',
           'Wickerman: 4 slots (head, arm, body, leg), so up to 4 Viscera active. Each Viscera is a boss-specific buff (life, regen, poison and more).',
           'Viscera come in 3 tiers; the top tier only from endgame versions of bosses.'
         ]
@@ -69,6 +70,7 @@ export const SHEETS: Sheet[] = [
         focus: 'bosses',
         title: 'Bosses',
         lines: [
+          'Abomination map (3.30.0d): the Nightmare of the Depraved Trinity is now the only boss there that gains the Fate empowerment, and it can drop every Fate Empowerment item.',
           'Fated bosses in higher-tier atlas areas can drop Grim Fates. They are kept on the Wickerman until used, and each belongs to one pinnacle boss.',
           'A Grim Fate pinnacle boss gets new attacks (seen: Sirus with crow swarms, Uber Elder beams from portals, Shaper mirror illusions) and drops Pinnacle Boss Viscera, among the strongest Wickerman buffs.',
           'Beating a Grim Fate pinnacle is the road to the Coven Queen (exact steps: check in game).',
@@ -233,7 +235,9 @@ export const SHEETS: Sheet[] = [
           'Guaranteed Thread mods (3.30.0c): 1–3 Threads at least 1 mod, 4–7 at least 2, 8+ at least 3.',
           'Bonus stat at 3 / 6 / 8 Threads (3.30.0c): Abyss +1/2/3 pits · Breach 20/40/60% more magic monsters · Blight +40/80/120% chance a lane is at least magic · Legion +1/2/3 encounters · Expedition 15/30/50% chance remnants get an extra suffix · Ultimatum more rares, from 6 rewards as one extra round · Ritual 20/40/60% more favours · Bestiary +2/3/4 red beasts · Betrayal 30/60/90% more reinforcements · Incursion 20/30/40% pack size.',
           '3.30.0c added vendor recipes for Threads and for Viscera; GGG didn\'t say what they take yet: put them in a vendor\'s sell window to see what you\'d get.',
-          'Map Item Quantity is now Atlas Drops (more maps and Threads). Monster rarity now decides which loot can drop: higher rarity, better currency.'
+          'Map Item Quantity is now Atlas Drops (more maps and Threads). Monster rarity now decides which loot can drop: higher rarity, better currency.',
+          'New Thread mods (3.30.0d): Abyss, rare Abyssal monsters get an extra Abyssal mod; Incursion, one room holds only Architects, who drop an Itemised Temple of the current layout (random room tiers). The Breach mod that makes every rare Breach monster drop a Wombgift is rarer now; the Genesis Tree Sapling from Breach Threads gives a lot of Hiveblood.',
+          'Currency drops (3.30.0d): item rarity always raises the average quality of currency that drops. Foulborn Exalted, Regal and Augmentation Orbs drop anywhere now. New: Originator\'s Exalted Orb (rare map: removes a random suffix, adds a rare-only mod; works on Nightmare Maps) and Primordial Exalted Orb (reveals a random Exotic Exalted Orb).'
         ]
       },
       {
@@ -254,8 +258,8 @@ export const SHEETS: Sheet[] = [
           'Ritual: kill in the circle, then spend tribute on the rewards; defer the ones you want later. 3.30: Blood-filled Vessels need Ritual Threads.',
           'Expedition: place explosives through the remnants\' area; the remnant mods make monsters stronger and loot better. 3.30: Gwennen no longer gambles items (a "take a chance" for Astragali instead).',
           'Ultimatum: win the trial rounds; each round adds a modifier. Take the reward when the next risk is too big. 3.30: rewards keep getting better after round 10.',
-          'Blight: build towers on the paths before the monsters reach the pump; Blighted maps need oils on the anoint.',
-          'Harvest: 3.30: Sacred Flora replaces the Sacred Grove; less lifeforce drops but in bigger stacks, for the crafts at the Horticrafting station.',
+          'Blight: build towers on the paths before the monsters reach the pump; Blighted maps need oils on the anoint. 3.30.0d: Currency Lane monsters scale their drops with Atlas Drops; low-tier maps spawn fewer of them; Rogue Exiles in Blight are a bit weaker.',
+          'Harvest: 3.30: Sacred Flora replaces the Sacred Grove; less lifeforce drops but in bigger stacks, for the crafts at the Horticrafting station. 3.30.0d: Sacred Fauna lifeforce drops at the end of the encounter, around the base of the tree.',
           'Incursion: 3.30: Atziri is now in the Temple of Atzoatl; Royal Visages replace Mortal fragments.',
           'Mirage: 3.30: now in all leagues, in maps.'
         ]

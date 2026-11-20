@@ -38,6 +38,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Changed (#278): ready-made atlas tree previews first
 - Atlas → ⋯ → Ready-made atlas tree: **Generate** now only shows the tree on the atlas (with its stats), nothing is saved. Change the picks or points and **Generate again** as often as you like, then **Save** it once (or **Discard**). Closing the panel or picking another atlas build discards the preview.
 
+### Changed (#279): cheat sheets for 3.30.0d
+- Covens: outcomes that guarantee a single Divine Orb or Orb of Annulment need 2 Fate copies (not 3); Fate counter in the area; Abomination map's Nightmare of the Depraved Trinity is the only boss there with the Fate empowerment.
+- Map mechanics: new Abyss and Incursion Thread mods, rarer Breach Wombgift mod, Hiveblood from the Breach Sapling, currency drop changes (rarity raises currency quality, Foulborn orbs drop anywhere, Originator's and Primordial Exalted Orbs), Blight Currency Lanes and Sacred Fauna lifeforce.
+- The 3.30.0d hotfixes (Covetous Dark, Headhunter, Abyssal mods, Witch of the Woods, duplicate rares) change nothing in Orbhoarder.
+
 ## [1.0.95] - 2026-11-20
 
 Hotfix: only this fix on top of 1.0.94 (the rest of dev ships later).
