@@ -57,6 +57,16 @@ export function openTradeSearch (text: string, upgrade = false): string | null {
   return null
 }
 
+// Deathloom fork (20 Nov 2026, Market → Shopping): trade search by item type only
+// (gems), cheapest first, online sellers. Returns an error message or null.
+export function openTradeByType (type: string): string | null {
+  const league = useLeagues().selectedId.value
+  if (!league) return 'Pick a league first (price check window title).'
+  const query = { query: { status: { option: 'online' }, type, stats: [{ type: 'and', filters: [] }] }, sort: { price: 'asc' } }
+  openTradeLink(`https://${getTradeEndpoint()}/trade/search/${league}?q=${JSON.stringify(query)}`)
+  return null
+}
+
 // Open the normal price check window for this item (stat filters, prices, build impact)
 export function openPriceCheck (text: string, position: { x: number, y: number }) {
   Host.selfDispatch({

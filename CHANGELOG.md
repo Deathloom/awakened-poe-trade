@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#264): Shopping list you can shop from
+- **Market → Shopping**: every row has **Trade** (opens the trade site: uniques any copy, rares this base with these mods, gems cheapest first) and gear rows have **↑** (same unique with at least these rolls / any base with these mods), the same searches as the Build panel's Gear tab. Click a gear row to see its mods. Rares now get their own row (no price: it depends on the rolls).
+
 ### Added (#263): league challenge vendor recipes
 - **Cheat sheets → Vendor recipes** starts with this league's vendor-recipe challenges (Peddler's Produce I and II, Covens of Umbra) and a recipe for each item: life / mana flask, Ruby / Topaz / Sapphire ring, Agate / Turquoise / Citrine amulet, Tier 16 map, unique item, item with influence, Exalted Orb.
 

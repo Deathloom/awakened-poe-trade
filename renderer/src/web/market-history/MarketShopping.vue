@@ -16,18 +16,31 @@
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2">
       <div v-if="!loading && !shop.rows.length && !error" class="text-gray-500 py-1">No uniques or gems in this build's gear. Pick a build in the Build panel first.</div>
-      <div v-for="r of visible" :key="r.key" class="flex items-center gap-2 py-0.5 border-t border-gray-800" :class="{ 'opacity-50': r.owned }">
-        <input type="checkbox" :checked="r.owned" :title="r.kind === 'unique' ? 'Got it (same tick as the Build panel)' : 'Got it'" @change="toggle(r)">
-        <i class="w-4 text-center text-gray-500" :class="r.kind === 'gem' ? 'fas fa-gem' : 'fas fa-ring'" />
-        <span class="flex-1 min-w-0 truncate" :title="r.slots.join(', ')">{{ r.label }}<span v-if="r.slots.length" class="text-gray-500"> · {{ r.slots.join(', ') }}</span></span>
-        <price-spark :item="r.listing" />
-        <span class="w-14 text-right" :class="r.listing ? 'text-yellow-300' : 'text-gray-600'"
-          :title="r.listing ? `Cheapest on poe.ninja${r.listing.variant ? ': ' + r.listing.variant : ''}` : 'No poe.ninja price'">{{ r.listing ? money(r.listing.chaos) : '–' }}</span>
-        <ui-menu :items="rowMenu(r)" align-right button-class="ui-btn-quiet" title="More" />
+      <div v-for="r of visible" :key="r.key" class="border-t border-gray-800" :class="{ 'opacity-50': r.owned }">
+        <div class="flex items-center gap-2 py-0.5">
+          <input type="checkbox" :checked="r.owned" :title="r.kind === 'gem' ? 'Got it' : 'Got it (same tick as the Build panel)'" @change="toggle(r)">
+          <button class="w-4 text-center text-gray-500 hover:text-gray-200" :disabled="!gearOf(r)" :title="gearOf(r) ? 'Show the mods' : ''" @click="toggleOpen(r)">
+            <i v-if="gearOf(r)" class="fas" :class="openRows.has(r.key) ? 'fa-chevron-down' : 'fa-chevron-right'" />
+            <i v-else class="fas fa-gem" /></button>
+          <button class="flex-1 min-w-0 truncate text-left" :class="r.kind === 'unique' ? 'text-orange-300' : (r.kind === 'rare' ? 'text-yellow-200' : 'text-teal-300')"
+            :title="r.slots.join(', ')" @click="toggleOpen(r)">{{ r.label }}<span v-if="r.slots.length" class="text-gray-500"> · {{ r.slots.join(', ') }}</span></button>
+          <price-spark v-if="r.kind !== 'rare'" :item="r.listing" />
+          <span class="w-14 text-right" :class="r.listing ? 'text-yellow-300' : 'text-gray-600'"
+            :title="r.kind === 'rare' ? 'Rares: price depends on the rolls, use Trade' : (r.listing ? `Cheapest on poe.ninja${r.listing.variant ? ': ' + r.listing.variant : ''}` : 'No poe.ninja price')">{{ r.listing ? money(r.listing.chaos) : (r.kind === 'rare' ? 'rolls' : '–') }}</span>
+          <button class="ui-btn ui-btn-quiet" :title="tradeTitle(r)" @click="trade(r, false)"><i class="fas fa-search" />Trade</button>
+          <button v-if="gearOf(r)" class="ui-btn ui-btn-quiet" :title="r.kind === 'unique' ? 'Trade: the same unique with at least these rolls' : 'Trade: any base of the same kind with at least these mods'" @click="trade(r, true)"><i class="fas fa-arrow-up" /></button>
+          <ui-menu :items="rowMenu(r)" align-right button-class="ui-btn-quiet" title="More" />
+        </div>
+        <div v-if="tradeErr[r.key]" class="pl-12 pb-1 text-red-400">{{ tradeErr[r.key] }}</div>
+        <div v-if="openRows.has(r.key) && gearOf(r)" class="pl-12 pb-1.5 space-y-px">
+          <div class="text-gray-400">{{ gearOf(r)!.baseName }}<template v-if="gearOf(r)!.itemLevel"> · item level {{ gearOf(r)!.itemLevel }}</template><template v-if="gearOf(r)!.corrupted"> · <span class="text-red-400">corrupted</span></template></div>
+          <div v-for="(m, mi) of gearOf(r)!.mods" :key="mi" :class="modClass(m)">{{ m.text }}<span v-if="m.crafted" class="text-gray-500"> (crafted)</span><span v-if="m.fractured" class="text-gray-500"> (fractured)</span></div>
+          <div v-if="!gearOf(r)!.mods.length" class="text-gray-500">No mods in the build file.</div>
+        </div>
       </div>
     </div>
     <div class="px-2 py-1 text-gray-500 shrink-0">
-      <i class="fas fa-info-circle mr-1" />Cheapest version on poe.ninja (gems: lowest level/quality, not corrupted). Rares depend on their rolls: use Trade in the Build panel's Gear tab.
+      <i class="fas fa-info-circle mr-1" />Prices: cheapest on poe.ninja (gems: lowest level/quality). Trade opens the trade site: uniques any copy, rares this base with these mods; ↑ = at least these rolls / any base.
     </div>
   </div>
 </template>
@@ -40,6 +53,7 @@ import PriceSpark from './PriceSpark.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { useMarket } from './use-market'
 import { copyText } from '../pob/market'
+import { openTradeSearch, openTradeByType } from '../pob/gear-actions'
 import { shoppingList, type ShopRow } from './market-tools'
 
 const { all, money, open, ninja } = useMarket()
@@ -98,7 +112,7 @@ const itemId = (i: PobGearItem) => `${i.title || i.name}|${i.baseName ?? ''}`
 
 const mainGear = computed(() => gear.value.filter(i => i.group !== 'swap'))
 const shop = computed(() => shoppingList(
-  mainGear.value.map(i => ({ slot: i.label || i.slot, name: i.searchText, unique: i.rarity === 'Unique', owned: owned.value[ownedKey.value]?.[i.slot] === itemId(i) })),
+  mainGear.value.map(i => ({ slot: i.label || i.slot, id: i.slot, name: i.rarity === 'Unique' ? i.searchText : (i.title || i.name || i.baseName), unique: i.rarity === 'Unique', owned: owned.value[ownedKey.value]?.[i.slot] === itemId(i) })),
   groups.value.filter(g => g.enabled).flatMap(g => g.gems),
   all.value,
   new Set(gemTicks.value[buildName.value] ?? [])
@@ -118,8 +132,8 @@ function toggle (r: ShopRow) {
     try { localStorage.setItem(GEMS_KEY, JSON.stringify(all)) } catch {}
     return
   }
-  // unique: tick every slot that has it (same storage as the Build panel)
-  const items = mainGear.value.filter(i => i.rarity === 'Unique' && i.searchText.toLowerCase() === r.label.toLowerCase())
+  // gear: tick every slot behind the row (same storage as the Build panel)
+  const items = mainGear.value.filter(i => r.ids.includes(i.slot))
   const allOwned = { ...owned.value }
   const slots = new Set(items.map(i => i.slot))
   const kept = Object.entries(allOwned[ownedKey.value] ?? {}).filter(([slot]) => !slots.has(slot))
@@ -128,9 +142,39 @@ function toggle (r: ShopRow) {
   try { localStorage.setItem(OWNED_KEY, JSON.stringify(allOwned)) } catch {}
 }
 
+// Deathloom fork (Gerhard 20 Nov 2026: no mods, no trade buttons): mods fold out per
+// row; Trade / ↑ use the same searches as the Build panel's Gear tab
+const openRows = ref(new Set<string>())
+function toggleOpen (r: ShopRow) {
+  if (!gearOf(r)) return
+  const s = new Set(openRows.value)
+  if (s.has(r.key)) s.delete(r.key); else s.add(r.key)
+  openRows.value = s
+}
+function gearOf (r: ShopRow): PobGearItem | null {
+  return r.ids.length ? (mainGear.value.find(i => i.slot === r.ids[0]) ?? null) : null
+}
+function modClass (m: PobGearItem['mods'][number]) {
+  if (m.kind === 'implicit' || m.kind === 'enchant') return 'text-blue-300'
+  if (m.crafted) return 'text-sky-200'
+  if (m.fractured) return 'text-yellow-200'
+  return 'text-gray-200'
+}
+function tradeTitle (r: ShopRow) {
+  if (r.kind === 'gem') return `Trade site: ${r.label}, cheapest first`
+  if (r.kind === 'unique') return `Trade site: any ${r.label}`
+  return 'Trade site: this base type with these mods (at least these values)'
+}
+const tradeErr = ref<Record<string, string>>({})
+function trade (r: ShopRow, upgrade: boolean) {
+  const g = gearOf(r)
+  const err = g ? openTradeSearch(g.text, upgrade) : openTradeByType(r.label)
+  tradeErr.value = { ...tradeErr.value, [r.key]: err ?? '' }
+}
+
 function rowMenu (r: ShopRow): UiMenuItem[] {
   return [
-    { label: 'Copy name for the in-game market', icon: 'far fa-copy', hint: 'Press / in game, then Ctrl+V', action: () => copyText(r.label) },
+    { label: 'Copy name for the in-game market', icon: 'far fa-copy', hint: 'Press / in game, then Ctrl+V', action: () => copyText(gearOf(r)?.searchText ?? r.label) },
     { label: 'Open on poe.ninja', icon: 'fas fa-external-link-alt', disabled: !r.listing, action: () => { if (r.listing) open(r.listing.url) } }
   ]
 }

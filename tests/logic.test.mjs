@@ -717,7 +717,8 @@ test('market tools: shopping list, sell list, farming, crafting, divine', async 
       { slot: 'Helmet', name: 'Rare thing', unique: false, owned: false }, { slot: 'Boots', name: 'Unknown Unique', unique: true, owned: false }],
     [{ name: 'Arc', enabled: true }, { name: 'Arc', enabled: true }, { name: 'Off Gem', enabled: false }],
     items, new Set())
-  assert.equal(shop.rows.length, 3) // Wickerman (merged slots), Unknown Unique, Arc
+  assert.equal(shop.rows.length, 4) // Wickerman (merged slots), Unknown Unique, Arc, the rare (own row, no price)
+  assert.equal(shop.rows.find(r => r.kind === 'rare').label, 'Rare thing')
   assert.deepEqual(shop.rows.find(r => r.label === 'Wickerman').slots, ['Ring 1', 'Ring 2'])
   assert.equal(shop.rows.find(r => r.label === 'Wickerman').owned, false) // one slot still missing
   assert.equal(shop.total, 51)
