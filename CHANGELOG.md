@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.96] - 2026-11-20
+
 ### Security (F1 follow-up): Content-Security-Policy
 - Orbhoarder's own pages only run scripts that ship with the app (no inline or injected scripts, no plugins) and can't be framed by other sites.
 
