@@ -106,3 +106,34 @@ export function safeJoin (baseDir: string, urlPath: string): string | null {
   const full = path.resolve(base, '.' + path.sep + rel.replace(/^[\\/]+/, ''))
   return (full === base || full.startsWith(base + path.sep)) ? full : null
 }
+
+// Deathloom fork (F1 review, Gerhard 20 Nov 2026): what a phone or other device
+// (a connection that isn't this PC, with the key) may ask for. Panels work as on
+// the PC; settings, folders, installs, sign-in and anything that sends input to
+// the game stay on this PC.
+const NOT_FROM_OTHER_DEVICES = new Set([
+  'CLIENT->MAIN::save-config',
+  'CLIENT->MAIN::update-host-config',
+  'CLIENT->MAIN::tools',
+  'CLIENT->MAIN::pob-pick-folder',
+  'CLIENT->MAIN::pob-install',
+  'CLIENT->MAIN::pob-copy-builds',
+  'CLIENT->MAIN::pob-setup-probe',
+  'CLIENT->MAIN::hud-size',
+  'CLIENT->MAIN::hud-hover',
+  'CLIENT->MAIN::hud-drag',
+  'CLIENT->MAIN::hud-resize',
+  'CLIENT->MAIN::hud-typing',
+  'CLIENT->MAIN::hud-panel',
+  'CLIENT->MAIN::hud-gear-action'
+])
+const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
+const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])
+
+export function allowedFromOtherDevice (name: string, payload: unknown): boolean {
+  if (NOT_FROM_OTHER_DEVICES.has(name)) return false
+  const op = (key: string) => (payload != null && typeof payload === 'object') ? (payload as Record<string, unknown>)[key] : undefined
+  if (name === 'CLIENT->MAIN::user-action') return USER_ACTIONS_FROM_OTHER_DEVICES.has(String(op('action')))
+  if (name === 'CLIENT->MAIN::pob-sync') return POB_SYNC_FROM_OTHER_DEVICES.has(String(op('op')))
+  return true
+}

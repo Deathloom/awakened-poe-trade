@@ -20,6 +20,23 @@ const buildXml = await import('./.build/build-xml.mjs')
 const compare = await import('./.build/build-compare.mjs')
 const game = await import('./.build/game.mjs')
 
+test('request guard: what a phone may ask for', () => {
+  const ok = guard.allowedFromOtherDevice
+  assert.equal(ok('CLIENT->MAIN::pob-gems', { requestId: 1 }), true)
+  assert.equal(ok('CLIENT->MAIN::build-notes', {}), true)
+  assert.equal(ok('CLIENT->MAIN::save-config', { contents: '{}' }), false)
+  assert.equal(ok('CLIENT->MAIN::update-host-config', {}), false)
+  assert.equal(ok('CLIENT->MAIN::tools', { op: 'remote-set' }), false)
+  assert.equal(ok('CLIENT->MAIN::pob-copy-builds', { source: 'C:/' }), false)
+  assert.equal(ok('CLIENT->MAIN::user-action', { action: 'open-trade-tab', url: 'x' }), true)
+  assert.equal(ok('CLIENT->MAIN::user-action', { action: 'chat-command', text: '/hideout' }), false)
+  assert.equal(ok('CLIENT->MAIN::user-action', { action: 'quit' }), false)
+  assert.equal(ok('CLIENT->MAIN::user-action', null), false)
+  assert.equal(ok('CLIENT->MAIN::pob-sync', { op: 'pull' }), true)
+  assert.equal(ok('CLIENT->MAIN::pob-sync', { op: 'signOut' }), false)
+  assert.equal(ok('CLIENT->MAIN::pob-sync', { op: 'configure', player: '..' }), false)
+})
+
 test('request guard: loopback always, other devices only with the key', () => {
   const K = 'k'.repeat(32)
   const opts = { listenHost: '0.0.0.0', remoteKey: K }

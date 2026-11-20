@@ -10,7 +10,7 @@ import { ConfigStore } from './host-files/ConfigStore'
 import { addFileUploadRoutes } from './host-files/file-uploads'
 import type { AppUpdater } from './AppUpdater'
 import type { Logger } from './RemoteLogger'
-import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE } from './request-guard'
+import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE, isLoopbackAddress, allowedFromOtherDevice } from './request-guard'
 import { remoteKey } from './remote-key'
 import { remoteAccessOn } from './remote-access'
 
@@ -58,6 +58,9 @@ let lastActiveClient: WebSocket
 // Deathloom fork: the HUD window ("show while playing") connects as a second
 // client. It only listens; replies meant for the overlay never go to it.
 const hudClients = new WeakSet<WebSocket>()
+// Deathloom fork: phones / other devices (not this PC): limited events, see allowedFromOtherDevice
+const otherDeviceClients = new WeakSet<WebSocket>()
+let refusedFromDevice = 0
 // the client whose message is being handled right now (see replyTo)
 let dispatchingSocket: WebSocket | undefined
 
@@ -143,6 +146,7 @@ server.on('upgrade', (req, socket, head) => {
   }
   websocketServer.handleUpgrade(req, socket, head, (ws) => {
     if (req.url === '/events?client=hud') hudClients.add(ws)
+    if (!isLoopbackAddress(req.socket?.remoteAddress)) otherDeviceClients.add(ws)
     websocketServer.emit('connection', ws, req)
   })
 })
@@ -168,6 +172,10 @@ export async function startServer (
         event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
       } catch { return }
       if (typeof event?.name !== 'string' || !event.name.startsWith('CLIENT->MAIN::')) return
+      if (otherDeviceClients.has(socket) && !allowedFromOtherDevice(event.name, event.payload)) {
+        if (refusedFromDevice++ < 20) console.warn(`[server] not from another device: ${event.name}`)
+        return
+      }
       if (event.name === 'CLIENT->MAIN::used-recently') {
         if (isHud) return
         lastActiveClient = socket

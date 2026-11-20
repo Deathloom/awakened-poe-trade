@@ -33,6 +33,7 @@
       <div class="text-base mb-1">Phone or other devices</div>
       <div class="text-gray-500 mb-2">Open the Orbhoarder window in a browser on your phone or another PC on the same Wi-Fi (campaign guide, build notes, cheat sheets on a second screen). Only devices that open the link with its key get in.</div>
       <ui-toggle :modelValue="remote?.enabled === true" @update:modelValue="setRemote">Allow my phone or other devices on my network</ui-toggle>
+      <div class="text-gray-500 mt-1">Settings, folders, sign-in and anything that types in the game only work on this PC. The link isn't encrypted: use it on your home Wi-Fi, and turn it off (or press New key) on shared networks such as a LAN party or café.</div>
       <div v-if="remote && remote.enabled !== remote.listening" class="text-yellow-300 mt-1">
         {{ remote.enabled ? 'Orbhoarder makes the phone link after a restart.' : 'Phone access stops after a restart.' }}
         <button class="ml-1 ui-btn ui-btn-primary" @click="restart">Restart now</button>
