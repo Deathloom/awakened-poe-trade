@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#262): 3.30.0c / 0d patch notes
+- **Atlas tree data 3.30.0c** (GGG's export, 19 Nov): new Celestial Presence and Runic Distortion notables, Bountiful Harvest / Ancient Writings / Phantom Anomalies wording.
+- **Cheat sheets → Threads**: guaranteed mods by Thread count, the 3 / 6 / 8 Thread bonus per league, new Thread and Viscera vendor recipes noted.
 ### Changed (#261): easier to read, less crowded; tree map starts at your level
 - **Easier-to-read small print** (on by default) now also brightens greyed text: three text levels instead of six, faded rows (done steps, taken passives) less faded, a bit more space between lines, and the levelling section headers follow the theme.
 - **Campaign guide** (window): the act's finished steps fold into one "N steps done" line (click to show); more space between steps; the colour legend moved to ⋯ → What the colours mean.
