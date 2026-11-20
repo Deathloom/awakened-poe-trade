@@ -17,7 +17,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 1.5 | Web pages inside the app get no browser permissions (camera, mic, notifications, …) | ✅ | `denyWebviewPermissions` (default session), trade and lab tab sessions |
 | 1.6 | App windows can't navigate away from the app's own pages; popups denied | ✅ | `lockToAppPages`, `guardTradeWebview` |
 | 1.7 | `shell.openExternal` only with http(s) links (other schemes can start programs) | ✅ | `openWebLink`; remaining direct calls use fixed URLs |
-| 1.8 | Content-Security-Policy on app pages | ⚠️ open | Pages come from the local server only; a CSP needs testing against webviews, websocket and poecdn images. Planned. |
+| 1.8 | Content-Security-Policy on app pages | ✅ scripts only from the app (`script-src 'self'`), no plugins, `base-uri`/`form-action` self, no framing. Styles, images and connections stay open (Vue inline styles, poecdn images, WebSocket); tighten later | `server.ts` `APP_CSP` |
 | 1.9 | `allowRunningInsecureContent: false`, `webSecurity` not disabled anywhere | ✅ | all windows |
 
 ## 2. Local server (renderer ↔ main)
@@ -26,6 +26,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 |---|------|--------|-------|
 | 2.1 | Listens on 127.0.0.1 only by default | ✅ | `server.ts` |
 | 2.2 | Requests and WebSocket upgrades from other web pages refused (Host + Origin check, blocks CSRF and DNS rebinding) | ✅ | `request-guard.ts` |
+| 2.3 | Phone link ("Phone or other devices"): other devices need the key, decided by the connection's address (not the Host header); they can't change settings, folders, sign-in or phone access, or send input to the game | ✅ | `request-guard.ts` `isLoopbackAddress`, `allowedFromOtherDevice` |
 
 ## 3. Secrets (ASVS V6/V8)
 

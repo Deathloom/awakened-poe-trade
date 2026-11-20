@@ -53,6 +53,8 @@ server.emit = ((event: string, ...args: any[]) => {
 }) as typeof server.emit
 // Deathloom fork: see startServer
 const STABLE_PORT = 47284
+// Deathloom fork: Content-Security-Policy of the app pages (see the static file handler)
+export const APP_CSP = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
 const websocketServer = new WebSocketServer({ noServer: true })
 let lastActiveClient: WebSocket
 // Deathloom fork: the HUD window ("show while playing") connects as a second
@@ -74,7 +76,13 @@ if (!process.env.VITE_DEV_SERVER_URL) {
     const urlPath = req.url!.split('?')[0]
     const filePath = (urlPath === '/') ? '/index.html' : urlPath
     switch (path.extname(filePath)) {
-      case '.html': res.setHeader('content-type', 'text/html'); break;
+      case '.html':
+        res.setHeader('content-type', 'text/html')
+        // Deathloom fork (F1 review, baseline 1.8): scripts only from the app itself
+        // (no inline or injected scripts, no plugins), no <base> tricks, the page
+        // can't be framed by other sites and forms only post back to the app
+        res.setHeader('content-security-policy', APP_CSP)
+        break;
       case '.js': res.setHeader('content-type', 'text/javascript'); break;
       case '.json': res.setHeader('content-type', 'application/json'); break;
       case '.svg': res.setHeader('content-type', 'image/svg+xml'); break;
