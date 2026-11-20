@@ -32,6 +32,15 @@
         <div class="text-gray-500"><i class="fas fa-info-circle mr-1" />{{ sheet.check }} GGG changes mechanics now and then.</div>
       </template>
       <template v-else>
+        <!-- Deathloom fork (20 Nov 2026): this league's vendor-recipe challenges first -->
+        <div v-for="c of CHALLENGE_RECIPES" :key="c.name" class="rounded bg-gray-900 px-2 py-1.5">
+          <div class="text-gray-100 font-semibold mb-0.5"><i class="fas fa-trophy mr-1 text-yellow-400" />{{ c.name }}
+            <span class="text-gray-500 font-normal">· {{ c.league }} challenge</span></div>
+          <div v-for="i of c.items" :key="i.want" class="pt-1">
+            <div><span class="text-green-300">{{ i.want }}</span> <span class="text-gray-500">←</span> <span class="text-gray-300">{{ i.give }}</span></div>
+            <div v-if="i.note" class="text-gray-500">{{ i.note }}</div>
+          </div>
+        </div>
         <div class="text-gray-300">Sell these together to any vendor.</div>
         <div v-for="r of VENDOR_RECIPES" :key="r.name" class="border-t border-gray-700 pt-1">
           <div class="text-gray-100">{{ r.name }} <span class="text-gray-500">· from act {{ r.fromAct }}</span></div>
@@ -50,7 +59,7 @@ import { computed, ref, watch } from 'vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { PROGRESS, loadProgress, saveProgress } from './progress'
 import { SHEETS, sectionsFor } from './sheets'
-import { VENDOR_RECIPES } from '../companion/vendor-recipes'
+import { VENDOR_RECIPES, CHALLENGE_RECIPES } from '../companion/vendor-recipes'
 
 const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Checklist' }]
 const KEY = 'deathloom.cheats.tab.v1'

@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (#263): league challenge vendor recipes
+- **Cheat sheets → Vendor recipes** starts with this league's vendor-recipe challenges (Peddler's Produce I and II, Covens of Umbra) and a recipe for each item: life / mana flask, Ruby / Topaz / Sapphire ring, Agate / Turquoise / Citrine amulet, Tier 16 map, unique item, item with influence, Exalted Orb.
+
 ### Changed (#262): 3.30.0c / 0d patch notes
 - **Atlas tree data 3.30.0c** (GGG's export, 19 Nov): new Celestial Presence and Runic Distortion notables, Bountiful Harvest / Ancient Writings / Phantom Anomalies wording.
 - **Price check data**: 25 exchange items the trade site has but our data lacked (upstream's 3.30 data replaced our earlier additions): the new **Originator's Exalted Orb** and **Primordial Exalted Orb** (3.30.0d), plus Frayed Thread, Engineer's / Infused Engineer's Orb, Cartographer's Chisel, Orb of Horizons, Harbinger's Orb, Dead Man's Sulphur, currency shards, Breach Blessings, Shaper / Elder / Uber Elder / Sirus fragment sets and four legacy Omens. English only. The two new orbs are in Market → Crafting too.

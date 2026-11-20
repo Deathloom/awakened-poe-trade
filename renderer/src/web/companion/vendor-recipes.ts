@@ -126,3 +126,32 @@ export const VENDOR_RECIPES: VendorRecipe[] = [
     note: 'Mostly for early maps.'
   }
 ]
+
+// Deathloom fork (Gerhard 20 Nov 2026): the league's vendor-recipe challenges and a
+// recipe for each item. Covens of Umbra (3.30) list from poedb's Covens challenges;
+// recipes checked against poedb / mobalytics recipe lists 20 Nov 2026. Update each league.
+export interface ChallengeRecipe { want: string, give: string, note?: string }
+export interface RecipeChallenge { league: string, name: string, items: ChallengeRecipe[] }
+
+export const CHALLENGE_RECIPES: RecipeChallenge[] = [
+  {
+    league: 'Covens of Umbra',
+    name: 'Peddler\'s Produce I',
+    items: [
+      { want: 'Life Flask', give: '3 life flasks of the same base type', note: 'Gives the next base type up.' },
+      { want: 'Mana Flask', give: '3 mana flasks of the same base type', note: 'Gives the next base type up.' },
+      { want: 'Ruby, Topaz or Sapphire Ring', give: 'Iron Ring + a red gem (Ruby), green gem (Topaz) or blue gem (Sapphire)', note: 'Skill or support gem; any rarity of ring.' },
+      { want: 'Agate, Turquoise or Citrine Amulet', give: 'Two of Amber / Jade / Lapis Amulet + Orb of Transmutation', note: 'Amber + Lapis = Agate · Jade + Lapis = Turquoise · Amber + Jade = Citrine.' }
+    ]
+  },
+  {
+    league: 'Covens of Umbra',
+    name: 'Peddler\'s Produce II',
+    items: [
+      { want: 'Tier 16 Map', give: '3 Tier 15 maps of the same kind', note: 'Same map name, e.g. three of one T15 map.' },
+      { want: 'Unique Item', give: '3 copies of the same unique (not corrupted)', note: 'Gives one of that unique with new rolls. Use cheap ones.' },
+      { want: 'Item with Influence', give: 'Astrolabe Amulet + a red, a green and a blue gem', note: 'Gives an Onyx Amulet with two random influences.' },
+      { want: 'Exalted Orb', give: '3 rare items with the same name', note: '3.30 recipe (2 give a Chaos Orb).' }
+    ]
+  }
+]
