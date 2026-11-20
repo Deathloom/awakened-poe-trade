@@ -40,6 +40,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Performance (F4c): lighter windows, part 3
 - Windows start with a little less code again (1.44 MB → 1.35 MB): the campaign route, the campaign guide and the levelling planner load the first time one of them is shown; the level recorder waits for the route instead of needing it at start. If the route or the quest-gem data fails to load, it is tried once more; the guide then says "Couldn't load this panel" with a **Retry** button, and opening the panel again tries again, instead of staying empty. The levelling planner works without the route (act 1, no guide points). Nothing else changes.
 
+### Added (Q2): Challenges
+- **Cheat sheets → Challenges**: all 40 Covens of Umbra challenges with their steps, a tip and a link to the cheat sheet that helps (Vendor recipes, Thread planner, Map mechanics, Covens, Endgame bosses, Checklist). Tick challenges and steps yourself (x/40); saved on this PC per league, so a new league starts empty. Nothing is read from your account.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

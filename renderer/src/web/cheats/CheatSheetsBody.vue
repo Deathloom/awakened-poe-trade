@@ -9,6 +9,7 @@
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-3">
       <ThreadPlanner v-if="tab === 'threads'" />
+      <ChallengeTracker v-else-if="tab === 'challenges'" @open-tab="setTab" />
       <template v-else-if="tab === 'progress'">
         <div class="text-gray-400">League start, then endgame: tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
         <div v-for="g of PROGRESS" :key="g.title">
@@ -54,21 +55,21 @@ import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { PROGRESS, loadProgress, saveProgress } from './progress'
-import { SHEETS, sectionsFor } from './sheets'
+import { SHEETS, OWN_TABS, sectionsFor } from './sheets'
+import ChallengeTracker from './ChallengeTracker.vue'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 
 // Thread planner brings the atlas tree data (~170 kB): loaded when its tab opens
 const ThreadPlanner = defineAsyncComponent(() => import('./ThreadPlanner.vue'))
 
-const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'threads', label: 'Thread planner' }, { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Checklist' }]
-const OWN_TABS = ['threads', 'recipes', 'progress']
+const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), ...OWN_TABS]
 const KEY = 'deathloom.cheats.tab.v1'
 const tab = ref((() => { try { return localStorage.getItem(KEY) ?? 'betrayal' } catch { return 'betrayal' } })())
 function setTab (id: string) {
   tab.value = id
   try { localStorage.setItem(KEY, id) } catch {}
 }
-const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (OWN_TABS.includes(tab.value) ? null : SHEETS[0]))
+const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (OWN_TABS.some(t => t.id === tab.value) ? null : SHEETS[0]))
 
 // per-sheet focus switch (Covens: levelling / mapping profit / bosses)
 const FOCUS_KEY = 'deathloom.cheats.focus.v1'
