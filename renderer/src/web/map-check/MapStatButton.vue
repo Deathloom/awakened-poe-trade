@@ -1,10 +1,12 @@
 <template>
-  <div class="flex">
-    <button @click="handleClick" :class="[$style.cycleBtn, btnStyle().bg]">
+  <div class="flex" :title="buildTitle">
+    <button @click="handleClick" :class="[$style.cycleBtn, btnStyle().bg, { [$style.buildDanger]: buildFlag?.danger, [$style.buildGrey]: greyed }]">
       <i class="text-center w-4 shrink-0"
         :class="btnStyle().icon" />
       <ItemModifierText class="truncate"
         :text="stat.matcher" :roll="stat.roll" />
+      <!-- Deathloom fork (Q4): dangerous for the active PoB build -->
+      <i v-if="buildFlag?.danger" class="fas fa-hammer ml-auto shrink-0 text-red-400" />
     </button>
     <button @click="toggleSeenStatus" :class="$style.seenBtn">
       <i v-if="newStatIconVisible()" class="fas fa-eye-slash"></i>
@@ -16,12 +18,16 @@
 import { computed, useCssModule } from 'vue'
 import { PreparedStat } from './prepare-map-stats'
 import { nextDecision, decisionCreate, type MapCheckConfig } from './common.js'
+import type { BuildModFlag } from './build-map-rules'
 
 import ItemModifierText from '../ui/ItemModifierText.vue'
 
 const props = defineProps<{
   stat: PreparedStat,
   config: MapCheckConfig
+  // Deathloom fork (Q4): undefined = no build loaded (or turned off), null = the
+  // rules don't know this mod (doesn't affect the build)
+  buildFlag?: BuildModFlag | null
 }>()
 
 const $style = useCssModule()
@@ -45,6 +51,17 @@ const decision = computed<string>({
       entry.value.decision = newSet
     }
   }
+})
+
+// grey what doesn't affect the build, unless you coloured it yourself
+// (mods dangerous for every build are never greyed)
+const greyed = computed(() => props.buildFlag !== undefined && !props.buildFlag?.danger && !props.buildFlag?.general &&
+  (decision.value === '-' || decision.value === 's'))
+const buildTitle = computed(() => {
+  if (props.buildFlag === undefined) return undefined
+  if (props.buildFlag === null) return 'PoB: no build-specific rule for this mod'
+  if (props.buildFlag.general) return `PoB: ${props.buildFlag.reason}`
+  return `PoB: ${props.buildFlag.danger ? 'dangerous for your build' : 'fine for your build'}. ${props.buildFlag.reason}`
 })
 
 function newStatIconVisible (): boolean {
@@ -92,6 +109,10 @@ function handleClick () {
   &.normal:hover {
     @apply bg-gray-700;
   }
+
+  /* Deathloom fork (Q4) */
+  &.buildDanger { box-shadow: inset 3px 0 0 theme('colors.red.500'); }
+  &.buildGrey { opacity: 0.5; }
 }
 
 .seenBtn {

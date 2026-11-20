@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import { readFileSync } from 'fs'
 import * as path from 'path'
-import { applyBuildOp, type BuildFileOp } from './BuildFiles'
+import { applyBuildOp, realFileInside, type BuildFileOp } from './BuildFiles'
 import { parseBuildXml } from './build-xml'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
@@ -932,10 +932,12 @@ export class PobImpact {
   private async readBuildSummary (rel: unknown, sel?: PobSetSelection): Promise<PobBuildSummary> {
     if (typeof rel !== 'string' || !rel.toLowerCase().endsWith('.xml')) throw new Error('Pick two builds')
     const root = path.resolve(this.playerDir())
-    const full = path.resolve(root, rel)
-    if (!full.startsWith(root + path.sep)) throw new Error('Not in your builds folder')
-    const st = await fs.stat(full).catch(() => null)
-    if (!st?.isFile()) throw new Error(`Build not found: ${path.basename(rel)}`)
+    if (!path.resolve(root, rel).startsWith(root + path.sep)) throw new Error('Not in your builds folder')
+    // Deathloom fork (Q4 review): real paths, so a link inside the folder can't point outside it
+    const full = await realFileInside(root, rel).catch(() => undefined)
+    if (full === null) throw new Error('Not in your builds folder')
+    const st = full ? await fs.stat(full).catch(() => null) : null
+    if (!full || !st?.isFile()) throw new Error(`Build not found: ${path.basename(rel)}`)
     if (st.size > 8 * 1024 * 1024) throw new Error(`Build file too big: ${path.basename(rel)}`)
     const clean = (n: unknown) => (typeof n === 'number' && Number.isInteger(n) && n > 0 && n < 1000) ? n : undefined
     return parseBuildXml(await fs.readFile(full, 'utf8'), sel ? { spec: clean(sel.spec), itemSet: clean(sel.itemSet), skillSet: clean(sel.skillSet) } : {})

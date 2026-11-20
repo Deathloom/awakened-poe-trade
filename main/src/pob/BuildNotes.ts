@@ -9,8 +9,9 @@ import path from 'path'
 import { promises as fs } from 'fs'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
-import type { BuildNotesData } from '../../../ipc/types'
-import { safeSegment } from './BuildFiles'
+import type { BuildMapProfile, BuildNotesData } from '../../../ipc/types'
+import { safeSegment, realFileInside } from './BuildFiles'
+import { parseBuildXml, buildMapProfile } from './build-xml'
 
 const DIR = 'Build notes'
 const MAX_BYTES = 32 * 1024
@@ -18,6 +19,8 @@ const MAX_TEXT = 20000
 const MAX_MODS = 40
 const MAX_MOD = 60
 const MAX_FILTER = 300
+// same cap as Compare builds
+const MAX_BUILD_BYTES = 8 * 1024 * 1024
 
 export interface ActiveBuild { playerDir: string, rel: string, own: boolean, player: string }
 
@@ -80,6 +83,8 @@ export function notesFile (playerDir: string, rel: string): string {
 
 export class BuildNotes {
   private queue = Promise.resolve()
+  // Deathloom fork (Q4): last build profile read (file + mtime), so map checks don't re-read the build
+  private profileCache: { key: string, profile: BuildMapProfile | undefined } | null = null
 
   constructor (
     private server: ServerEvents,
@@ -108,7 +113,8 @@ export class BuildNotes {
   private async handle (op: 'get' | 'save', data?: BuildNotesData) {
     const a = await this.active()
     const file = notesFile(a.playerDir, a.rel)
-    const base = { ok: true, build: a.rel, player: a.player, own: a.own }
+    const profile = await this.profile(a)
+    const base = { ok: true, build: a.rel, player: a.player, own: a.own, ...(profile ? { profile } : {}) }
     if (op === 'save') {
       if (!a.own) throw new Error("Friends' notes are read-only (switch Player back to yourself)")
       const clean = cleanNotes(data)
@@ -126,5 +132,30 @@ export class BuildNotes {
       if (st.size <= MAX_BYTES) data2 = notesFromFile(await fs.readFile(file, 'utf8'))
     } catch {}
     return { ...base, data: data2 }
+  }
+
+  // Deathloom fork (Q4): the active build's stats and gems for the map check, read
+  // from the file (only inside the player folder, size-capped, parsed as data).
+  // undefined when it can't be read: the map check then works as before.
+  private async profile (a: ActiveBuild): Promise<BuildMapProfile | undefined> {
+    let key = `${a.playerDir}|${a.rel}`
+    try {
+      const full = await realFileInside(a.playerDir, a.rel)
+      if (!full || !/\.xml$/i.test(full)) return undefined
+      const st = await fs.stat(full)
+      if (!st.isFile() || st.size > MAX_BUILD_BYTES) return undefined
+      key = `${full}|${st.mtimeMs}|${st.size}`
+      if (this.profileCache?.key === key) return this.profileCache.profile
+      const profile = buildMapProfile(parseBuildXml(await fs.readFile(full, 'utf8')))
+      this.profileCache = { key, profile }
+      return profile
+    } catch (e) {
+      // once per build file, not on every map check
+      if (this.profileCache?.key !== key) {
+        this.logger.write(`warn [Build notes] build stats for the map check: ${(e as Error).message}`)
+        this.profileCache = { key, profile: undefined }
+      }
+      return undefined
+    }
   }
 }

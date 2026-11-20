@@ -4,6 +4,9 @@ export interface MapCheckConfig {
   profile: number
   showNewStats: boolean
   selectedStats: MapCheckStat[]
+  // Deathloom fork (Q4): flag mods dangerous for the active PoB build, grey the rest
+  // (undefined = on, so older configs need no migration)
+  buildAware?: boolean
 }
 
 export interface MapCheckStat {

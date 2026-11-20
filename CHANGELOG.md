@@ -43,6 +43,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q2): Challenges
 - **Cheat sheets → Challenges**: all 40 Covens of Umbra challenges with their steps, a tip and a link to the cheat sheet that helps (Vendor recipes, Thread planner, Map mechanics, Covens, Endgame bosses, Checklist). Tick challenges and steps yourself (x/40); saved on this PC per league, so a new league starts empty. Nothing is read from your account.
 
+### Added (Q4): map check warns for your PoB build
+- With a Path of Building build active, the map check marks mods dangerous for that build (red edge and hammer; hover for why: thorns/reflect for melee, no regen or less recovery for regen/leech builds, less max res when your over-cap is low, curses unless you're curse immune, ailment avoidance for ignite/poison builds, …) and greys mods that don't affect it, using the stats PoB saved in the build file; your own colours stay, **?** shows the legend, Settings → Maps → Warn for my PoB build turns it off. Mods dangerous for every build (more monster damage or crit, penetration, poison on hit, …) are never greyed. Security: reading a build file (map check, Compare builds) now checks the real path, so a link inside your builds folder can't point to a file outside it.
+
 ### Changed: Beasts / Syndicate atlas trees take Thread type notables
 - Ready-made atlas tree: picking **Beasts** or **Syndicate** now also takes Sinistral Threads (set to Bestiary / Betrayal) and Unthreaded (ruling out another type), which were missed before.
 

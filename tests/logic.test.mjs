@@ -1282,3 +1282,165 @@ test('challenge tracker: ticks per league, SC/HC/SSF share, toggling, counts, fi
   assert.equal(ch.loadChallengeTicks('toString').size, 0)
   localStorage.removeItem(K)
 })
+
+test('map check: build-aware map mod warnings (Q4)', async () => {
+  const r = await import('./.build/build-map-rules.mjs')
+  const { readFileSync } = await import('node:fs')
+  const profile = (stats, mainGems, gems = mainGems, itemMods = []) => ({ mainSkill: mainGems[0], stats, mainGems, gems, itemMods })
+  // melee physical slammer: big armour, life regen, little over-cap, curses enemies
+  const slam = r.buildTraits(profile(
+    { Life: 5000, LifeRegenRecovery: 300, LifeLeechGainRate: 100, HitChance: 95, CombinedDPS: 1e6, TotalDPS: 1e6, Armour: 30000, PhysicalDamageReduction: 70, FireResist: 75, ColdResist: 75, LightningResist: 75, ChaosResist: -20, FireResistOverCap: 5, ColdResistOverCap: 20, LightningResistOverCap: 12, PhysicalMaximumHitTaken: 20000, FireMaximumHitTaken: 9000, ColdMaximumHitTaken: 9000, LightningMaximumHitTaken: 9000, ChaosMaximumHitTaken: 4000, Cooldown: 0 },
+    ['Boneshatter', 'Brutality', 'Melee Physical Damage'], ['Boneshatter', 'Brutality', 'Melee Physical Damage', 'Vulnerability', 'Pride', 'Determination']))
+  // self-cast crit lightning spell on energy shield, leeching, curse immune
+  const arc = r.buildTraits(profile(
+    { Life: 1, EnergyShield: 8000, EnergyShieldLeechGainRate: 900, CritChance: 65, CombinedDPS: 2e6, TotalDPS: 2e6, FireResist: 76, ColdResist: 76, LightningResist: 76, ChaosResist: 75, FireResistOverCap: 40, ColdResistOverCap: 45, LightningResistOverCap: 50, ChaosResistOverCap: 0 },
+    ['Arc', 'Spell Echo', 'Lightning Penetration'], ['Arc', 'Spell Echo', 'Lightning Penetration', 'Zealotry', 'Discipline', 'Wave of Conviction'], ['Immune to Curses', 'Inflict Lightning Exposure on Hit']))
+  // minions (summoner), regen-free, nothing else
+  const minion = r.buildTraits(profile(
+    { Life: 4500, ActiveMinionLimit: 20, CombinedDPS: 5e5, FireResist: 75, ColdResist: 75, LightningResist: 75, ChaosResist: 10 },
+    ['Raise Spectre', 'Minion Damage'], ['Raise Spectre', 'Minion Damage', 'Flesh Offering']))
+  // ignite caster with totems
+  const ignite = r.buildTraits(profile(
+    { Life: 4000, CombinedDPS: 1e6, TotalDPS: 2e5, IgniteDPS: 8e5, TotemPlacementTime: 0.5, FireResist: 75, ColdResist: 60, LightningResist: 75, FireResistOverCap: 30, ColdResistOverCap: 0, LightningResistOverCap: 30 },
+    ['Fireball', 'Spell Totem', 'Burning Damage']))
+
+  const allRefs = new Map(readFileSync(new URL('../renderer/public/data/en/stats.ndjson', import.meta.url), 'utf8')
+    .split('\n').filter(Boolean).map(l => JSON.parse(l)).map(s => [s.ref, s]))
+  const refsOk = (ref) => Boolean(allRefs.get(ref)?.fromAreaMods)
+  const check = (t, ref, value) => r.checkMapMod(ref, value, t)
+  const danger = (t, ref, value) => check(t, ref, value)?.danger
+
+  // traits
+  assert.equal(slam.melee, true); assert.equal(slam.physical, true); assert.equal(slam.regen, true); assert.equal(slam.armour, true)
+  assert.equal(arc.spell, true); assert.equal(arc.crit, true); assert.equal(arc.leech, true); assert.equal(arc.curseImmune, true); assert.equal(arc.melee, false)
+  assert.equal(minion.minion, true); assert.equal(minion.attack, false)
+  assert.equal(ignite.delivered, true); assert.ok(ignite.igniteShare > 0.7)
+
+  // thorns / melee reflect: only the melee build
+  for (const ref of ['Rare Monsters have Physical Thorns reflecting # Physical Damage', 'Rare Monsters have Elemental Thorns reflecting # Elemental Damage', '#% of Melee Physical Damage taken reflected to Attacker']) {
+    assert.equal(danger(slam, ref), true, ref)
+    assert.equal(danger(arc, ref), false, ref)
+    assert.equal(danger(minion, ref), false, ref)
+    assert.equal(danger(ignite, ref), false, ref)
+  }
+  // regen / leech / recovery (value relative to "more Recovery Rate": 40% less = -40)
+  assert.equal(danger(slam, 'Players cannot Regenerate Life, Mana or Energy Shield'), true)
+  assert.equal(danger(arc, 'Players cannot Regenerate Life, Mana or Energy Shield'), false)
+  assert.equal(danger(arc, 'Monsters cannot be Leeched from'), true)
+  assert.equal(danger(minion, 'Monsters cannot be Leeched from'), false)
+  assert.equal(danger(arc, 'Players have #% less Recovery Rate of Life and Energy Shield', -40), true)
+  assert.equal(danger(minion, 'Players have #% less Recovery Rate of Life and Energy Shield', -40), false)
+  assert.equal(danger(arc, 'Players have #% increased Maximum total Life, Mana and Energy Shield Recovery per second from Leech', -60), true)
+  // max res vs over-cap
+  assert.equal(danger(slam, 'Players have #% to all maximum Resistances', -10), true)
+  assert.match(check(slam, 'Players have #% to all maximum Resistances', -10).reason, /5%/)
+  assert.equal(danger(arc, 'Players have #% to all maximum Resistances', -10), false)
+  assert.equal(danger(minion, 'Players have #% to all maximum Resistances', -10), true, 'no over-cap saved: may drop below cap')
+  // curses vs curse immunity, Elemental Weakness vs over-cap, Vulnerability vs weakest hit
+  assert.equal(danger(arc, 'Players are Cursed with Temporal Chains'), false)
+  assert.equal(danger(slam, 'Players are Cursed with Temporal Chains'), true)
+  assert.equal(danger(slam, 'Players are Cursed with Elemental Weakness'), true)
+  assert.equal(danger(ignite, 'Players are Cursed with Elemental Weakness'), true, 'cold over-cap 0')
+  assert.equal(danger(slam, 'Players are Cursed with Vulnerability'), false, 'chaos is the weakest hit')
+  // hexproof vs curse users; ailment avoidance vs ailment builds
+  assert.equal(danger(slam, 'Monsters are Hexproof'), true)
+  assert.equal(danger(arc, 'Monsters are Hexproof'), false)
+  assert.equal(danger(ignite, 'Monsters have #% chance to Avoid Elemental Ailments'), true)
+  assert.equal(danger(arc, 'Monsters have #% chance to Avoid Elemental Ailments'), false)
+  assert.equal(danger(ignite, 'Monsters have a #% chance to avoid Poison, Impale, and Bleeding'), false)
+  // hit-side mods
+  assert.equal(danger(arc, 'Monsters take #% reduced Extra Damage from Critical Strikes', 30), true)
+  assert.equal(danger(slam, 'Monsters take #% reduced Extra Damage from Critical Strikes', 30), false)
+  assert.equal(danger(slam, 'Players have #% more Accuracy Rating', -25), true)
+  assert.equal(danger(slam, 'Players have #% more Accuracy Rating', 25), false)
+  assert.equal(danger(arc, 'Players have #% more Accuracy Rating', -25), false)
+  assert.equal(danger(arc, 'Monsters have +#% chance to Suppress Spell Damage'), true)
+  assert.equal(danger(slam, 'Monsters have +#% chance to Suppress Spell Damage'), false)
+  assert.equal(danger(arc, '+#% Monster Elemental Resistances'), true)
+  assert.equal(danger(slam, '+#% Monster Elemental Resistances'), false)
+  assert.equal(danger(slam, '+#% Monster Physical Damage Reduction'), true)
+  assert.equal(danger(minion, '+#% Monster Physical Damage Reduction'), false)
+  // defences, auras, exposure, extra damage vs res (20% less armour = -20)
+  assert.equal(danger(slam, 'Players have #% less Armour', -40), true)
+  assert.equal(danger(arc, 'Players have #% less Armour', -40), false)
+  assert.equal(danger(arc, 'Players have #% increased effect of Non-Curse Auras from Skills', -60), true)
+  assert.equal(danger(arc, 'Players cannot inflict Exposure'), true)
+  assert.equal(danger(slam, 'Players cannot inflict Exposure'), false)
+  assert.equal(danger(slam, 'Monsters gain #% of their Physical Damage as Extra Chaos Damage'), true)
+  assert.equal(danger(arc, 'Monsters gain #% of their Physical Damage as Extra Chaos Damage'), false)
+  assert.equal(danger(ignite, 'Monsters deal #% extra Physical Damage as Cold'), true)
+  assert.equal(danger(ignite, 'Monsters deal #% extra Physical Damage as Fire'), false)
+  // mods the rules don't know: null (greyed, "no build-specific rule")
+  assert.equal(check(slam, '#% increased Pack size', 20), null)
+  // penetration vs uncapped res / elemental weakest hit; poison on hit vs chaos res
+  const pen = 'Monster Damage Penetrates #% Elemental Resistances'
+  assert.equal(danger(ignite, pen, 10), true, 'cold uncapped')
+  assert.equal(danger(slam, pen, 10), false, 'capped, chaos is the weakest hit')
+  assert.equal(check(slam, pen, 10).general, true, 'still never greyed')
+  assert.equal(danger(slam, 'Monsters Poison on Hit'), true, 'chaos res -20')
+  assert.equal(danger(arc, 'Monsters Poison on Hit'), false)
+  assert.equal(check(arc, 'Monsters Poison on Hit').general, true)
+  // dangerous for every build: never greyed (general), only in the harmful direction
+  for (const [ref, v] of [['+#% to Monster Critical Strike Multiplier', 40], ['#% increased Monster Damage', 20], ['All Monster Damage from Hits always Ignites', undefined],
+    ['Buffs on Players expire #% faster', 50], ['Players gain #% reduced Flask Charges', -40], ['Unique Boss deals #% increased Damage', 25]]) {
+    for (const t of [slam, arc, minion, ignite]) {
+      const f = check(t, ref, v)
+      assert.ok(f && !f.danger && f.general, ref)
+      assert.match(f.reason, /every build/)
+    }
+    assert.ok(r.ALWAYS_DANGEROUS[ref], ref)
+  }
+  assert.equal(check(slam, 'Players gain #% reduced Flask Charges', 20), null, 'more flask charges: not general')
+  assert.equal(check(slam, 'Buffs on Players expire #% faster', -30), null, 'buffs slower: not general')
+  for (const ref of Object.keys(r.ALWAYS_DANGEROUS)) {
+    assert.ok(refsOk(ref), `map mod stat missing: ${ref}`)
+  }
+  assert.match(r.describeTraits(slam), /melee/)
+
+  // every rule names a real map mod stat (an upstream data refresh can't silently break them)
+  const refs = new Map(readFileSync(new URL('../renderer/public/data/en/stats.ndjson', import.meta.url), 'utf8')
+    .split('\n').filter(Boolean).map(l => JSON.parse(l)).map(s => [s.ref, s]))
+  for (const ref of Object.keys(r.MAP_MOD_RULES)) {
+    assert.ok(refs.get(ref)?.fromAreaMods, `map mod stat missing: ${ref}`)
+  }
+})
+
+test('build files: real path must stay inside the player folder (Q4 review)', async () => {
+  const fs = await import('node:fs/promises')
+  const os = await import('node:os')
+  const path = await import('node:path')
+  const base = await fs.mkdtemp(path.join(os.tmpdir(), 'q4-'))
+  try {
+    const root = path.join(base, 'player')
+    await fs.mkdir(path.join(root, 'sub'), { recursive: true })
+    await fs.writeFile(path.join(root, 'sub', 'a.xml'), 'x')
+    await fs.writeFile(path.join(base, 'outside.xml'), 'x')
+    assert.equal(await buildFiles.realFileInside(root, 'sub/a.xml'), await fs.realpath(path.join(root, 'sub', 'a.xml')))
+    assert.equal(await buildFiles.realFileInside(root, '../outside.xml'), null)
+    let linked = true
+    try { await fs.symlink(path.join(base, 'outside.xml'), path.join(root, 'link.xml')) } catch { linked = false }
+    if (linked) assert.equal(await buildFiles.realFileInside(root, 'link.xml'), null, 'a link out of the folder is refused')
+    await assert.rejects(buildFiles.realFileInside(root, 'missing.xml'))
+  } finally {
+    await fs.rm(base, { recursive: true, force: true })
+  }
+})
+
+test('build file: profile for the map check (Q4)', () => {
+  const sum = {
+    mainSkill: 'Boneshatter',
+    stats: { Life: 5000, FireResistOverCap: 10, 'bad key': 3, NaNStat: NaN },
+    groups: [
+      { enabled: true, gems: [{ name: 'Pride', enabled: true }] },
+      { enabled: true, gems: [{ name: 'Boneshatter', enabled: true }, { name: 'Brutality', enabled: true }, { name: 'Ruthless', enabled: false }] },
+      { enabled: false, gems: [{ name: 'Vulnerability', enabled: true }] }
+    ],
+    items: [{ slot: 'Ring 1', rarity: 'Rare', name: 'x', base: 'y', mods: ['+30 to maximum Life', 'Immune to Curses'] }],
+    tree: { nodes: [], masteries: {} }
+  }
+  const p = buildXml.buildMapProfile(sum)
+  assert.deepEqual(p.stats, { Life: 5000, FireResistOverCap: 10 })
+  assert.deepEqual(p.mainGems, ['Boneshatter', 'Brutality'])
+  assert.deepEqual(p.gems, ['Pride', 'Boneshatter', 'Brutality'])
+  assert.deepEqual(p.itemMods, ['Immune to Curses'])
+})
