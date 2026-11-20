@@ -10,12 +10,19 @@ on:
     paths-ignore:
       - README.md
 
+# Deathloom fork: build check only. Releases come from release.yml; this job
+# never publishes (-p never) and only needs to read the repo.
+permissions:
+  contents: read
+
 jobs:
   renderer:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
     - run: npm ci
       working-directory: ./renderer
     - run: npm run lint
@@ -35,8 +42,10 @@ jobs:
         os: [windows-2022, ubuntu-22.04, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
     - uses: actions/download-artifact@v8
       with:
         name: renderer-dist
@@ -45,10 +54,8 @@ jobs:
       working-directory: ./main
     - run: npm run build
       working-directory: ./main
-    - run: npm run package "--" -p onTagOrDraft
+    - run: npm run package "--" -p never
       working-directory: ./main
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Hash
       if: ${{ startsWith(matrix.os, 'windows') }}
       run: type .\main\dist\latest.yml

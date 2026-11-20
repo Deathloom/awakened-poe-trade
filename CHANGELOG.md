@@ -15,6 +15,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - **Copy builds** from another folder only copies from a folder you chose with **Choose folder…** (or the other PoB that was found).
 - A player name that isn't a plain folder name (e.g. `..` or `a/b`) is ignored and the builds folder is used, so build backups and deleted builds can't land outside it.
 
+### Security (F2 review): build pipeline and problem reports
+- Problem reports and Bug button logs now also hide your Windows user folder when a log spells it in lower case, with / or doubled \\ (before only the exact spelling was hidden).
+- Build checks on GitHub can no longer publish or write to the repo (read-only, pinned actions); the release job no longer leaves its token where install scripts could read it. Nothing changes in the app.
+
 ### Security (F1 follow-up): overlay browser and DevTools
 - The overlay's web browser no longer downloads files (like the Trade site and Lab tabs); open the page in your own browser to download. Redirects are held to web links like normal links.
 - DevTools (Ctrl+Shift+I) is off in the installed app; start Orbhoarder with `--devtools` if support needs it.
