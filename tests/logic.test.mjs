@@ -38,6 +38,15 @@ test('request guard: what a phone may ask for', () => {
   assert.equal(ok('CLIENT->MAIN::pob-sync', { op: 'configure', player: '..' }), false)
 })
 
+test('request guard: overlay events reach main (price check), not from phones', () => {
+  assert.equal(guard.isClientEvent('OVERLAY->MAIN::track-area'), true)
+  assert.equal(guard.isClientEvent('OVERLAY->MAIN::focus-game'), true)
+  assert.equal(guard.isClientEvent('CLIENT->MAIN::pob-gems'), true)
+  assert.equal(guard.isClientEvent('MAIN->CLIENT::pob-gems'), false)
+  assert.equal(guard.isClientEvent(undefined), false)
+  assert.equal(guard.allowedFromOtherDevice('OVERLAY->MAIN::track-area', {}), false)
+})
+
 test('request guard: loopback always, other devices only with the key', () => {
   const K = 'k'.repeat(32)
   const opts = { listenHost: '0.0.0.0', remoteKey: K }

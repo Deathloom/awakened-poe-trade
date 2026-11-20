@@ -10,7 +10,7 @@ import { ConfigStore } from './host-files/ConfigStore'
 import { addFileUploadRoutes } from './host-files/file-uploads'
 import type { AppUpdater } from './AppUpdater'
 import type { Logger } from './RemoteLogger'
-import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE, isLoopbackAddress, allowedFromOtherDevice } from './request-guard'
+import { isAllowedRequest, safeJoin, requestKey, REMOTE_KEY_COOKIE, isLoopbackAddress, allowedFromOtherDevice, isClientEvent } from './request-guard'
 import { remoteKey } from './remote-key'
 import { remoteAccessOn } from './remote-access'
 
@@ -179,7 +179,7 @@ export async function startServer (
       try {
         event = JSON.parse(bytes.toString('utf-8')) as IpcEvent
       } catch { return }
-      if (typeof event?.name !== 'string' || !event.name.startsWith('CLIENT->MAIN::')) return
+      if (!isClientEvent(event?.name)) return
       if (otherDeviceClients.has(socket) && !allowedFromOtherDevice(event.name, event.payload)) {
         if (refusedFromDevice++ < 20) console.warn(`[server] not from another device: ${event.name}`)
         return

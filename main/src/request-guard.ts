@@ -130,7 +130,16 @@ const NOT_FROM_OTHER_DEVICES = new Set([
 const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
 const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])
 
+// Events a window may send to main: CLIENT->MAIN:: and the overlay page's own
+// OVERLAY->MAIN:: (price check area, focus the game). Dropping the second kind in
+// 1.0.96 left the price check unclickable (hotfix 1.0.97).
+export function isClientEvent (name: unknown): name is string {
+  return typeof name === 'string' && (name.startsWith('CLIENT->MAIN::') || name.startsWith('OVERLAY->MAIN::'))
+}
+
 export function allowedFromOtherDevice (name: string, payload: unknown): boolean {
+  // overlay window control (track-area, focus-game) is for this PC's overlay only
+  if (!name.startsWith('CLIENT->MAIN::')) return false
   if (NOT_FROM_OTHER_DEVICES.has(name)) return false
   const op = (key: string) => (payload != null && typeof payload === 'object') ? (payload as Record<string, unknown>)[key] : undefined
   if (name === 'CLIENT->MAIN::user-action') return USER_ACTIONS_FROM_OTHER_DEVICES.has(String(op('action')))
