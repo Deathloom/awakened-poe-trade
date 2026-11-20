@@ -1123,6 +1123,18 @@ export interface BuildNotesData {
   // loot filter: a FilterBlade link or a filter name
   filter: string
 }
+// Deathloom fork (Q4): what the map check needs to know about the active build,
+// read from its file (PoB's saved stats, no PoB run). Data only, also for friends' builds.
+export interface BuildMapProfile {
+  mainSkill?: string
+  // PoB's saved PlayerStat values (Life, FireResistOverCap, LifeRegenRecovery, …)
+  stats: Record<string, number>
+  // enabled gems of the main skill group, and of every enabled group
+  mainGems: string[]
+  gems: string[]
+  // equipped item mods about curses or exposure (curse immunity, exposure on hit)
+  itemMods: string[]
+}
 type IpcBuildNotesRequest =
   Event<'CLIENT->MAIN::build-notes', {
     requestId: number
@@ -1142,6 +1154,8 @@ type IpcBuildNotesResult =
     data?: BuildNotesData
     // the save that went through (other windows reload)
     saved?: boolean
+    // Deathloom fork (Q4): the build's stats for build-aware map mod warnings (left out when the file can't be read)
+    profile?: BuildMapProfile
   }>
 
 export interface BoardState {

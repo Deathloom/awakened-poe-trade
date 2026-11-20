@@ -12,6 +12,15 @@
           class="w-6 bg-gray-800"
         >{{ profile.text }}</button>
       </div>
+      <!-- Deathloom fork (Q4): legend for the build-aware marks -->
+      <button v-if="buildTraits" class="ui-btn ui-btn-quiet" :class="{ 'ui-btn-on': showLegend }"
+        title="What the PoB marks mean" @click="toggleLegend"><i class="fas fa-question" /></button>
+    </div>
+    <div v-if="buildTraits && showLegend" class="px-8 py-1 bg-gray-900 text-xs text-gray-400 border-t border-gray-800">
+      Checked against <b class="text-gray-300">{{ buildName }}</b><template v-if="traitsLine"> ({{ traitsLine }})</template>:
+      <i class="fas fa-hammer text-red-400" /> = dangerous for this build (hover a mod for why) ·
+      greyed = doesn't affect it. Your own colours stay. Uses the stats PoB saved in the build file.
+      Turn off in Settings → Maps.
     </div>
     <FullscreenImage v-if="image"
       :class="$style.screenshot" :src="image" />
@@ -30,7 +39,7 @@
       </div>
       <div v-else class="flex flex-col">
         <MapStatButton v-for="stat in mapStats" :key="stat.matcher"
-          :stat="stat" :config="config" />
+          :stat="stat" :config="config" :build-flag="buildFlagOf(stat)" />
         <div v-for="stat of unknownModifiers" :key="stat.type + '/' + stat.text"
           class="py-1 px-8">
           <span class="text-orange-400">{{ t('Not recognized modifier') }} &mdash;</span> {{ stat.text }}
@@ -43,11 +52,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ItemRarity, ParsedItem } from '@/parser'
 import { ModifierType } from '@/parser/modifiers'
-import { prepareMapStat } from './prepare-map-stats'
+import { prepareMapStat, type PreparedStat } from './prepare-map-stats'
+import { buildTraits as toTraits, checkMapMod, describeTraits, type BuildModFlag } from './build-map-rules'
 import { type MapCheckConfig, isOutdated } from './common.js'
 
 import MapStatButton from './MapStatButton.vue'
@@ -102,6 +112,26 @@ const buildWarnings = computed(() => {
   const lines = props.item.rawText.split(/\r?\n/).map(l => l.replace(/ \((implicit|enchant|crafted|fractured)\)$/, '').trim()).filter(Boolean)
   return badMods(lines, avoid)
 })
+
+// Deathloom fork (Q4): build-aware warnings from the active build's saved PoB stats
+// (none loaded or turned off in Settings → Maps: the map check works as before)
+const buildTraits = computed(() => {
+  if (props.config.buildAware === false) return null
+  const profile = notesState.value?.profile
+  // a build never saved in PoB has no stats: guessing from gems alone would grey nearly everything
+  return profile && profile.stats.Life != null ? toTraits(profile) : null
+})
+const traitsLine = computed(() => buildTraits.value ? describeTraits(buildTraits.value) : '')
+function buildFlagOf (stat: PreparedStat): BuildModFlag | null | undefined {
+  if (!buildTraits.value) return undefined
+  return checkMapMod(stat.ref, stat.value, buildTraits.value)
+}
+const LEGEND_KEY = 'deathloom.map-check-legend.v1'
+const showLegend = ref((() => { try { return localStorage.getItem(LEGEND_KEY) === '1' } catch { return false } })())
+function toggleLegend () {
+  showLegend.value = !showLegend.value
+  try { localStorage.setItem(LEGEND_KEY, showLegend.value ? '1' : '0') } catch {}
+}
 
 const mapStats = computed(() => props.item.statsByType
   .filter(calc => calc.type === ModifierType.Explicit)
