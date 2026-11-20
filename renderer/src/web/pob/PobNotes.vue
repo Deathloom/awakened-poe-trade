@@ -44,7 +44,7 @@
         <div v-if="customMods.length || !state.own" class="mt-1 flex flex-wrap gap-1">
           <span v-for="m of (state.own ? customMods : draft.mapMods)" :key="m" class="bg-gray-700 rounded px-1">
             {{ presetLabel(m) }}
-            <button v-if="state.own" class="text-gray-500 hover:text-gray-200 ml-1" title="Remove" @click="toggleMod(m, false)"><i class="fas fa-times" /></button>
+            <button v-if="state.own" class="ui-btn ui-btn-quiet ml-1" title="Remove" @click="toggleMod(m, false)"><i class="fas fa-times" /></button>
           </span>
           <span v-if="!state.own && !draft.mapMods.length" class="text-gray-500">None.</span>
         </div>

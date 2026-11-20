@@ -24,7 +24,49 @@ export const COMPARE_STATS: Array<{ stat: string, label: string, pct?: boolean, 
 ]
 
 export interface StatRow { stat: string, label: string, a?: number, b?: number, diff?: number, better?: 'a' | 'b', pct?: boolean }
-export interface GearRow { slot: string, same: boolean, a?: string, b?: string, onlyA: string[], onlyB: string[] }
+export interface GearRow {
+  slot: string
+  same: boolean
+  a?: string
+  b?: string
+  // Deathloom fork (19 Nov): mods matched by their wording (numbers left out), so
+  // "+70 to maximum Life" vs "+90 to maximum Life" is one line with two values
+  both: string[]
+  // same mod, A's value is higher / lower than B's
+  aHigher: Array<{ a: string, b: string }>
+  aLower: Array<{ a: string, b: string }>
+  onlyA: string[]
+  onlyB: string[]
+}
+
+const NUM = /[+-]?\d+(?:\.\d+)?/g
+export function modTemplate (m: string): string { return m.replace(NUM, '#').trim().toLowerCase() }
+function modValue (m: string): number {
+  const n = (m.match(NUM) ?? []).map(Number)
+  return n.length ? n.reduce((s, v) => s + Math.abs(v), 0) / n.length : 0
+}
+// mods that are better when smaller ("increased Mana Cost", "increased Attribute Requirements", "Damage taken")
+const LOWER_BETTER = /\b(increased|more)\b.*\b(mana cost|requirements|damage taken)\b/i
+
+export function matchMods (aMods: string[], bMods: string[]): Pick<GearRow, 'both' | 'aHigher' | 'aLower' | 'onlyA' | 'onlyB'> {
+  const out = { both: [] as string[], aHigher: [] as Array<{ a: string, b: string }>, aLower: [] as Array<{ a: string, b: string }>, onlyA: [] as string[], onlyB: [] as string[] }
+  const rest = [...bMods]
+  for (const ma of aMods) {
+    const exact = rest.indexOf(ma)
+    if (exact >= 0) { out.both.push(ma); rest.splice(exact, 1); continue }
+    const t = modTemplate(ma)
+    const i = rest.findIndex(mb => modTemplate(mb) === t)
+    if (i < 0) { out.onlyA.push(ma); continue }
+    const mb = rest.splice(i, 1)[0]
+    const va = modValue(ma)
+    const vb = modValue(mb)
+    const aBetter = LOWER_BETTER.test(ma) ? va < vb : va > vb
+    if (va === vb) out.both.push(ma)
+    else (aBetter ? out.aHigher : out.aLower).push({ a: ma, b: mb })
+  }
+  out.onlyB.push(...rest)
+  return out
+}
 export interface GemRow { name: string, a?: number, b?: number, change: 'added' | 'removed' | 'level' }
 export interface TreeDiff { onlyA: number[], onlyB: number[], same: number, masteriesChanged: number[], versionA?: string, versionB?: string }
 
@@ -64,12 +106,9 @@ export function compareGear (a: PobBuildSummary, b: PobBuildSummary): GearRow[] 
   return slots.map(slot => {
     const ia = a.items.find(i => i.slot === slot)
     const ib = b.items.find(i => i.slot === slot)
-    const ma = new Set(ia?.mods ?? [])
-    const mb = new Set(ib?.mods ?? [])
-    const onlyA = [...ma].filter(m => !mb.has(m))
-    const onlyB = [...mb].filter(m => !ma.has(m))
-    const same = !!ia && !!ib && ia.name === ib.name && ia.base === ib.base && !onlyA.length && !onlyB.length
-    return { slot, same, a: ia && itemLabel(ia), b: ib && itemLabel(ib), onlyA, onlyB }
+    const m = matchMods(ia?.mods ?? [], ib?.mods ?? [])
+    const same = !!ia && !!ib && ia.name === ib.name && ia.base === ib.base && !m.onlyA.length && !m.onlyB.length && !m.aHigher.length && !m.aLower.length
+    return { slot, same, a: ia && itemLabel(ia), b: ib && itemLabel(ib), ...m }
   })
 }
 

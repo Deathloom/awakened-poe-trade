@@ -37,8 +37,13 @@ const MODULES = {
   'market-trends': 'renderer/src/web/market-history/market-trends.ts',
   'atlas-value': 'renderer/src/web/atlas/atlas-value.ts',
   'atlas-taken': 'renderer/src/web/atlas/atlas-taken.ts',
+  gems: 'renderer/src/web/pob/gems.ts',
+  'my-character': 'renderer/src/web/pob/my-character.ts',
+  'gems-merged': 'renderer/src/web/pob/gems-merged.ts',
   'tree-step-logic': 'renderer/src/web/pob/tree-step-logic.ts',
-  'item-defences': 'renderer/src/web/pob/item-defences.ts'
+  'item-defences': 'renderer/src/web/pob/item-defences.ts',
+  'loadout-steps': 'renderer/src/web/pob/loadout-steps.ts',
+  'market-tools': 'renderer/src/web/market-history/market-tools.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

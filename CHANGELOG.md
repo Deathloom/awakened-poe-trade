@@ -8,6 +8,99 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.94] - 2026-11-20
+
+### Changed (#264): Shopping list you can shop from
+- **Market → Shopping**: every row has **Trade** (opens the trade site: uniques any copy, rares this base with these mods, gems cheapest first) and gear rows have **↑** (same unique with at least these rolls / any base with these mods), the same searches as the Build panel's Gear tab. Click a gear row to see its mods. Rares now get their own row (no price: it depends on the rolls).
+
+### Added (#263): league challenge vendor recipes
+- **Cheat sheets → Vendor recipes**: recipes that count for this league's vendor-recipe challenges (Peddler's Produce I and II, Covens of Umbra) carry a 🏆 line naming the challenge and item. New recipes for the challenge items the list didn't have: Ruby / Topaz / Sapphire ring, Agate / Turquoise / Citrine amulet, Tier 16 map, unique reroll, influenced Onyx Amulet. (#265: one list instead of separate challenge cards.)
+
+### Changed (#262): 3.30.0c / 0d patch notes
+- **Atlas tree data 3.30.0c** (GGG's export, 19 Nov): new Celestial Presence and Runic Distortion notables, Bountiful Harvest / Ancient Writings / Phantom Anomalies wording.
+- **Price check data**: 25 exchange items the trade site has but our data lacked (upstream's 3.30 data replaced our earlier additions): the new **Originator's Exalted Orb** and **Primordial Exalted Orb** (3.30.0d), plus Frayed Thread, Engineer's / Infused Engineer's Orb, Cartographer's Chisel, Orb of Horizons, Harbinger's Orb, Dead Man's Sulphur, currency shards, Breach Blessings, Shaper / Elder / Uber Elder / Sirus fragment sets and four legacy Omens. English only. The two new orbs are in Market → Crafting too.
+- **Cheat sheets → Threads**: guaranteed mods by Thread count, the 3 / 6 / 8 Thread bonus per league, new Thread and Viscera vendor recipes noted.
+
+### Changed (#261): easier to read, less crowded; tree map starts at your level
+- **Easier-to-read small print** (on by default) now also brightens greyed text: three text levels instead of six, faded rows (done steps, taken passives) less faded, a bit more space between lines, and the levelling section headers follow the theme.
+- **Campaign guide** (window): the act's finished steps fold into one "N steps done" line (click to show); more space between steps; the colour legend moved to ⋯ → What the colours mean.
+- **Next steps**: roomier sections; the long "one tree only" note is one line (hover for the rest).
+- **Cheat sheets**: normal-size text, bold section titles, more space.
+- **Tree map, levelling**: a tree you haven't stepped through yet starts where your level and quest points say you are (same number as Next steps), not at the game log's short run (switching to the next tree in PoB showed 5/88). New **My level** button jumps back there. The "live character is turned off" notice no longer sits over the levelling and switch maps.
+- **Market → Outlook**: no more +60% on everything (that was a cap). The real 3-day projection is shown; items moving over 100% (thin markets, e.g. 1c gems bought out) say "too fast" and stay out of Outlook (see Rising). New line on top checks the outlook against this week's own prices: how many picks really rose and the typical miss. The sticky table header no longer lets the first row show through.
+- **Levelling order** (PoB fork #43): finishes a branch before starting another, so the next 5 passives no longer jump across the tree.
+
+### Changed (#260): Calmer panels part 3
+- **Atlas**: header is now build picker, Edit, zoom, fit, Stats and one ⋯ menu (add from a link, ready-made tree, copy to mine, rename, copy link, open on pathofexile.com, taken all/nothing, delete). Rename has Save/Cancel; empty atlas shows Add buttons.
+- **This session**: stopwatch play/pause stays; Reset stopwatch and Start a new session moved to ⋯. Loot buttons use the shared button look.
+- **Craft**: main buttons, tabs and input focus use the theme accent like the rest of the app.
+- **Settings**: Save/Cancel, Tools, Path of Building, Panels and Appearance buttons use the shared button look; the picked settings page is easier to read (accent mark). Theme touches (Potato, Comic, Vendor, Mirror) now apply to the shared buttons too.
+- Help: Atlas entry updated (⋯ menu, step arrows instead of auto-ticking).
+
+### Added (#259): Market tools
+- **Shopping**: your followed build's uniques and gems with the cheapest poe.ninja price, a total of what's still to buy, and got-it ticks (uniques share the Build panel's tick).
+- **Sell list**: add what you plan to sell; today's value, a week of prices, a sell-soon / can-wait hint, and a copy button for a `~price` note.
+- **Farming**: name your strategy; maps with loot added in This session show profit per map and per hour by strategy or league mechanic (kept on this PC).
+- **Crafting**: crafting currency prices with a week's trend, how many per divine, and a sum of what your craft costs.
+- **Divine ratio and wallet**: the Market bar shows 1 div = … c with its trend; click for a chaos ↔ divine converter and your wallet total from the currency counter.
+
+### Changed (#258): calmer Market, Trades, Board, Market search, Money and Cheat sheets
+- Same tab look in every panel header as the Build panel (Market, Trades, Friends' board, Money tools, Cheat sheets).
+- Market → Watched: each item keeps its Alert button; Open on poe.ninja and Stop watching moved into a ⋯ menu.
+- Main actions stand out in the accent colour (Post, Post to the board, I want it / I have one, Search); everything else uses the normal or quiet button. Fewer one-off colours (blue, green); Remove turns red only while it asks to confirm.
+
+### Changed (#257): calmer Levelling tab, one button look everywhere
+- Campaign guide: ‹ › step arrows and one ⋯ menu (Show the whole act, Show optional quests, Start over) instead of five loose icons.
+- Next steps: one header line (character · level · points) with a **Level** button that opens the character, level and quest-point boxes (they open by themselves while no level-up has been seen). Section buttons (Whole order, All acts, …) look like buttons.
+- Every small icon or text button across the app (atlas, tree map, build tools, session, market, trades, board, settings, help) now uses the same quiet button style, so it's clear what's clickable.
+
+### Changed (#256): overlay review, part 2
+- Overlay panels have a drag bar on top (like the pinned panels): drag it to move the panel. Market search and Cheat sheets couldn't be moved before.
+- Build panel: price check is in the ⋯ menu in the Orbhoarder window too (opens over the game). In the overlay and in game, ⋯ → "Compare, edit loadouts, manage builds" opens the Orbhoarder window on the Build tab.
+- Help, setup guide and panel notes checked: Where panels show, Show while playing and Chat buttons are in Settings → Panels (not Path of Building); hotkeys in Settings → Hotkeys; the Build panel's buttons are in its ⋯ menu; build sharing is Build panel → ⋯ → Build sharing; any panel can be pinned in game.
+
+### Fixed (#255): overlay panels move and open on their own
+- A panel's hotkey pressed in game shows only that panel, not the menu bar and every other open panel (Shift+Space still shows everything). Closes as before: hotkey again, Esc or click the game.
+- Overlay panels (build gear, guide, trade companion, market search/history, friends' board, tree, atlas, session, overview, cheat sheets, money) get a Move square on every corner; before, Move gave one tiny square at a single point.
+- Help: how to move overlay panels, and that click-through pinned panels need Shift+Space before dragging.
+
+### Fixed (#254): "vs character" said "equipped needs 'items'"
+- Path of Building only updated at the next Orbhoarder start when its window was open, so the new character-file compare hit the old PoB. Orbhoarder now checks every minute and updates PoB as soon as its window is closed. Until then the price check says to close PoB instead of showing the raw error.
+- Price check: "vs build gear" / "vs character" now look like buttons; when "vs character" can't be used, it's greyed out and its tooltip says why.
+
+### Fixed (#253): Path of Building slow to start gave errors
+- Orbhoarder now starts Path of Building in the background and loads your build a few seconds after it opens (and after PoB settings change), so the Build panel and price check don't hit a cold start. Loading or editing a build may take up to 2½ minutes before it counts as an error (was 30 seconds); other requests wait for it instead of failing.
+
+### Added (#252): price check "vs character" is back
+- The PoB part of the price check compares the item with **your character's gear** again ("vs character"), now from your character file (Path of Building's own Import character, the same file as Gems and Compare) instead of GGG's character pages. Uses the build's tree and gems; shows when the file was saved. Not set up yet: it says how (Build → Gems → Equipped from: my character). Needs the PoB fork from 19 Nov 2026 (comes with this version).
+
+### Changed (#251): Update in PoB opens your character's file on the Import tab
+- **Update in PoB** (Gems tab) and **Open Path of Building** in Compare now open your character's file in Path of Building straight on the Import tab. If PoB is already open it switches to that file (asking to save unsaved changes first) instead of starting a second PoB. You still pick the character and click Items and Skills yourself. Needs the PoB fork from 19 Nov 2026 (comes with this version); an older or separate PoB just opens as before.
+
+### Changed (#250): one Gems view, and your character's file belongs to the character
+- **Gems** is one view instead of "For my level" and "Whole build": a top bar (level, the build's stage, **Equipped from: my ticks / my character**), a **Change now** box only when there's something to do (take out, socket, level up, with counts), the gear pieces with each link group's gems marked ✓ have / ◐ lower / ○ missing / 🔒 at level X plus build and your sockets, and **Coming up** (next stage) collapsed at the bottom. With stages, only the current stage's groups show.
+- **Your character's file** is now "My characters/<character name>.xml" (name from the game log, or typed in once), not "<build> (my character)". Any build you follow compares against it, so renaming or updating the build doesn't break it. Pick or change the file per character; an older "(my character)" copy is offered with **Use it**. Compare, the Gems tab and Help are updated.
+
+### Added (#249): Gems tab compares with your character (optional)
+- Gems → Whole build has a **Compare with my character** tickbox (off by default). It reads the "(my character)" copy that Path of Building imported and marks each gem ok / lower level or quality / missing, with your sockets per slot. Re-read after saving in PoB.
+- Compare (Build → ⋯): shows whether it's set up, a clearer first-time guide (which file to open, account name with #1234, tick Delete equipment/skills, Items and Skills only), what to do when gear changes, and how to open Path of Building yourself (button, tray icon, Settings → Hotkeys).
+
+### Changed (#248): calmer Build panel (first step of the UI clean-up)
+- Header: the tabs, the build name, one **Build** button (pick build / loadout), reload, and one **⋯** menu with labelled entries (import, sharing, what changes, compare, edit loadouts, manage builds) instead of 8 loose icons.
+- Gear rows: tick, item, defences, then **Trade** and **Upgrade** as labelled buttons and a **⋯** menu (copy name for the market, craft it, stash / vendor search, price check).
+- The button legend moved behind a **?** (remembered); Show mods moved next to it.
+- New shared button look (ui-btn) and menu (UiMenu) for the rest of the app to follow.
+
+### Changed (#247)
+- **Build → Gear:** a "got it" tickbox on every item (ticked items fade, per build and item set); uniques get ↑ too (the same unique with at least these rolls); the buttons line up in the same columns on every row.
+- **Compare gear is clearer:** mods are matched by wording, so per slot you see ○ still need, ◐ have it but lower (your value → the build's), ✓ already have, and extras on yours, instead of a list of + and − lines.
+
+### Added (#246)
+- **What changes between stages** (Build panel → route icon): compare the loadout you play with any other loadout of the build (Early → Mid, Level 30 → 60, Elementalist → Occultist…). Lists gems to swap, passives to take and refund (notables by name), gear changes and Wickerman changes, and warns when the ascendancy or class changes. "Switch to" picks that loadout. Works with every kind of build: guide stages with their own gear, trees only, branching variants and placeholder gear ("any Vaal Regalia"); a single poe.ninja character simply has nothing to compare.
+- **"Which loadout do you play in maps?"** Once the All tab switches to Mapping, builds with several loadouts ask once (Use it / Not now). Orbhoarder never picks one by itself.
+- **Wickerman in Build → Gear:** the build's Viscera per slot with poe.ninja prices and a total. Hidden when the build has no Wickerman.
+- Levelling guide: clearer note when a build has only its final tree.
+
 ## [1.0.93] - 2026-11-19
 
 ### Fixed (#243)

@@ -129,7 +129,7 @@
     </div>
     <div v-if="a.windowBg === 'image'" class="mb-2">
       <div class="flex items-center gap-2 mb-2">
-        <button type="button" class="btn" @click="pickImage">Choose picture…</button>
+        <button type="button" class="ui-btn" @click="pickImage">Choose picture…</button>
         <span class="text-gray-500 text-sm truncate">{{ a.windowBgImage ? 'Picture set' : 'No picture yet' }}</span>
         <input ref="fileEl" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" @change="onFile" />
       </div>
@@ -143,7 +143,7 @@
       <div class="text-gray-500 text-sm">Lower lets the background show through the panels.</div>
     </div>
 
-    <button type="button" class="btn" @click="reset">Reset to defaults</button>
+    <button type="button" class="ui-btn" @click="reset">Reset to defaults</button>
   </div>
 </template>
 

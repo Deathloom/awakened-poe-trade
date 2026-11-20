@@ -9,7 +9,7 @@
         <button v-for="k of KINDS" :key="k.key" class="px-3 py-0.5 rounded mr-1"
           :class="kind === k.key ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
           @click="kind = k.key"><i class="fas mr-1" :class="k.icon" />{{ k.label }}</button>
-        <button class="ml-auto text-gray-500 hover:text-gray-200" title="Close" @click="emit('close')"><i class="fas fa-times" /></button>
+        <button class="ui-btn ui-btn-quiet ml-auto" title="Close" @click="emit('close')"><i class="fas fa-times" /></button>
       </div>
       <div v-if="!done" class="overflow-y-auto px-4 py-3 flex flex-col gap-y-2">
         <label class="text-sm text-gray-400">{{ kind === 'bug' ? 'What went wrong? (one line)' : 'Your idea in one line' }}</label>

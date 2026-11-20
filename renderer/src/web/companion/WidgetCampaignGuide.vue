@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: campaign guide; follows the current zone from Client.txt -->
-  <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :grip="!inHud" :removable="false" :inline-edit="false">
     <CampaignGuideBody v-if="!inHud" />
   </Widget>
 </template>
@@ -37,6 +37,7 @@ import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
 import { inOverlay } from '../desktop/panels'
 import CampaignGuideBody from './CampaignGuideBody.vue'
+import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: CampaignGuideWidget }>()
 // Only draw while the overlay is active (Shift+Space), never over the game while
@@ -58,11 +59,7 @@ watch(inHud, (pinned) => {
 const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
   if (e.target !== 'campaign-guide' || inHud.value) return
   // from in game (overlay not active yet) it always opens; main focuses the overlay
-  if (props.config.wmWants === 'hide' || !wm.active.value) {
-    wm.show(props.config.wmId)
-  } else {
-    wm.hide(props.config.wmId)
-  }
+  toggleFromHotkey(wm, props.config.wmId, props.config.wmWants)
 })
 onUnmounted(() => { hotkey.abort() })
 </script>

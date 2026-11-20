@@ -35,15 +35,13 @@ export function openTradeSearch (text: string, upgrade = false): string | null {
     currency: widget.defaultCurrency
   })
   const preset = presets.presets.find(p => p.id === presets.active)!
-  if (upgrade && parsed.value.rarity === 'Unique') {
-    return 'Uniques have fixed stats: use Trade for the same unique with better rolls.'
-  }
   // Deathloom fork (Gerhard 17 Nov 2026): Trade = this base type with all its
   // mods ticked (at least these values); ↑ upgrade = any base of the same kind
   // with the same mods. Before, the mods came through unticked (price check
   // defaults) and Trade searched any wand instead of the item's base.
   if (preset.filters.searchRelaxed) preset.filters.searchRelaxed.disabled = !upgrade
-  if (parsed.value.rarity !== 'Unique') {
+  // uniques: Trade = any copy of this unique; ↑ = the same unique with at least these rolls
+  if (parsed.value.rarity !== 'Unique' || upgrade) {
     for (const s of preset.stats) {
       if (s.group || s.hidden || s.not || !s.tradeId.length) continue
       if (s.roll) {
@@ -55,6 +53,16 @@ export function openTradeSearch (text: string, upgrade = false): string | null {
     }
   }
   const query = createTradeRequest(preset.filters, preset.stats)
+  openTradeLink(`https://${getTradeEndpoint()}/trade/search/${league}?q=${JSON.stringify(query)}`)
+  return null
+}
+
+// Deathloom fork (20 Nov 2026, Market → Shopping): trade search by item type only
+// (gems), cheapest first, online sellers. Returns an error message or null.
+export function openTradeByType (type: string): string | null {
+  const league = useLeagues().selectedId.value
+  if (!league) return 'Pick a league first (price check window title).'
+  const query = { query: { status: { option: 'online' }, type, stats: [{ type: 'and', filters: [] }] }, sort: { price: 'asc' } }
   openTradeLink(`https://${getTradeEndpoint()}/trade/search/${league}?q=${JSON.stringify(query)}`)
   return null
 }

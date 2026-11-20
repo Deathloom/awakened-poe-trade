@@ -7,12 +7,10 @@
       <!-- stopwatch you start yourself (replaces the old Stopwatch widget) -->
       <span class="ml-auto flex items-center gap-x-1 text-gray-300" title="Stopwatch: start and pause it yourself">
         <i class="fas fa-hourglass-half text-gray-500" />{{ dur(watchMs) }}
-        <button class="text-gray-500 hover:text-gray-200 px-0.5" :title="watch.startedAt ? 'Pause' : 'Start'" @click="toggleWatch">
+        <button class="ui-btn ui-btn-quiet px-0.5" :title="watch.startedAt ? 'Pause the stopwatch' : 'Start the stopwatch'" @click="toggleWatch">
           <i class="fas" :class="watch.startedAt ? 'fa-pause' : 'fa-play'" /></button>
-        <button class="text-gray-500 hover:text-gray-200 px-0.5" title="Reset the stopwatch" @click="resetWatch"><i class="fas fa-undo" /></button>
       </span>
-      <button class="ml-3 text-gray-500 hover:text-gray-200" title="Start a new session (a new one also starts after 2 hours without playing)"
-        @click="reset"><i class="fas fa-redo mr-1" />New session</button>
+      <UiMenu class="ml-1" :items="menuItems" title="More: reset the stopwatch, start a new session" align-right />
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2 py-1 space-y-1">
       <div class="flex flex-wrap gap-x-4 text-gray-300">
@@ -30,11 +28,11 @@
         <span class="lg-sub mr-1" :title="'Add what this map dropped (your estimate). ' + (current ? 'Current map.' : 'Last map.')">
           Loot{{ current ? '' : ' (last map)' }}:</span>
         <span class="text-yellow-300 mr-1">{{ money(lootTarget.loot ?? 0) }}</span>
-        <button v-for="b of LOOT_STEPS" :key="b" class="btn-loot" @click="addLoot(b)">+{{ b }}c</button>
-        <button v-if="divine" class="btn-loot" :title="`1 divine = ${Math.round(divine)} c`" @click="addLoot(divine)">+1 div</button>
+        <button v-for="b of LOOT_STEPS" :key="b" class="ui-btn" @click="addLoot(b)">+{{ b }}c</button>
+        <button v-if="divine" class="ui-btn" :title="`1 divine = ${Math.round(divine)} c`" @click="addLoot(divine)">+1 div</button>
         <input v-model.number="lootInput" type="number" min="0" class="w-14 bg-gray-900 rounded px-1" placeholder="c" title="Type an amount in chaos and press Enter"
           @keydown.enter="lootInput && addLoot(lootInput); lootInput = null">
-        <button v-if="lootTarget.loot" class="btn-loot" title="Clear this map's loot" @click="setLoot(0)"><i class="fas fa-undo" /></button>
+        <button v-if="lootTarget.loot" class="ui-btn" title="Clear this map's loot" @click="setLoot(0)"><i class="fas fa-undo" /></button>
         <span class="ml-auto text-gray-500" title="What running one map costs you (map, threads, astrolabes…), taken off the profit">
           Cost/map <input :value="cost || ''" type="number" min="0" class="w-12 bg-gray-900 rounded px-1" placeholder="0" @change="setCost(($event.target as HTMLInputElement).valueAsNumber)"> c</span>
       </div>
@@ -109,6 +107,7 @@ import {
   addMapLoot, mapProfit, loadMapCost, saveMapCost, MAP_COST_KEY, loadLastSession, keepLastSession, LAST_SESSION_KEY
 } from './play-session'
 import { usePoeninja } from '@/web/background/Prices'
+import UiMenu, { type UiMenuItem } from '@/web/ui/UiMenu.vue'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from './char-level'
 
 const s = ref<PlaySession>(loadPlaySession())
@@ -159,6 +158,13 @@ onUnmounted(() => {
   clearInterval(timer)
   window.removeEventListener('storage', onStorage)
 })
+
+// rare actions live in the ⋯ menu (calmer header, 20 Nov 2026)
+const menuItems = computed<UiMenuItem[]>(() => [
+  { label: 'Reset the stopwatch', icon: 'fas fa-undo', disabled: !watchMs.value, action: resetWatch },
+  { divider: true },
+  { label: 'Start a new session', icon: 'fas fa-redo', hint: 'A new one also starts after 2 hours without playing', action: reset }
+])
 
 function reset () {
   keepLastSession(loadPlaySession())
@@ -244,10 +250,3 @@ function clock (at: number) {
   return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 </script>
-
-<style lang="postcss" scoped>
-.btn-loot {
-  @apply bg-gray-700 text-gray-300 rounded px-1.5;
-  &:hover { @apply bg-gray-600 text-gray-100; }
-}
-</style>

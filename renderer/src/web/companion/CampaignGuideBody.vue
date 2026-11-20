@@ -8,15 +8,11 @@
       <span v-if="areaLevel && !hideRoute" class="text-gray-500 text-xs" title="Level of the campaign zone you're in">area level {{ areaLevel }}</span>
       <span v-if="!hideRoute && step.act === 2" class="text-xs px-1 rounded bg-gray-800 text-yellow-300"
         :title="'Bandit choice from your Path of Building build (Configuration tab). Kill all three if the build says Kill all.'">Bandits: {{ BANDIT_LABEL[bandit] }}</span>
-      <div v-if="!hideRoute" class="ml-auto flex gap-x-2 text-gray-500">
-        <button class="hover:text-gray-200" title="Previous step" @click="move(-1)"><i class="fas fa-chevron-left" /></button>
-        <button class="hover:text-gray-200" title="Next step" @click="move(1)"><i class="fas fa-chevron-right" /></button>
-        <button class="hover:text-gray-200" :title="showAll ? 'Show fewer steps' : 'Show the whole act'" @click="showAll = !showAll">
-          <i class="fas" :class="showAll ? 'fa-compress-alt' : 'fa-list'" /></button>
-        <button class="hover:text-gray-200" :class="{ 'text-indigo-300': optional }"
-          :title="optional ? 'Optional quests shown (A Fixture of Fate, A Dirty Job, Bestel\'s Epic …). Click to hide them.' : 'Optional quests hidden. Click to show them.'"
-          @click="toggleOptional"><i class="fas fa-plus-square" /></button>
-        <button class="hover:text-gray-200" title="Start over (new character)" @click="reset"><i class="fas fa-undo" /></button>
+      <!-- Deathloom fork (19 Nov, calmer UI): step arrows + one ⋯ menu instead of five loose icons -->
+      <div v-if="!hideRoute" class="ml-auto flex items-center gap-x-1 shrink-0">
+        <button class="ui-btn ui-btn-quiet" title="Previous step" @click="move(-1)"><i class="fas fa-chevron-left" /></button>
+        <button class="ui-btn ui-btn-quiet" title="Next step" @click="move(1)"><i class="fas fa-chevron-right" /></button>
+        <ui-menu :items="guideMenu" align-right title="More: whole act, optional quests, start over" />
       </div>
     </div>
     <!-- Labyrinth: shown while in the lab, closes after Izaro or on leaving -->
@@ -26,7 +22,7 @@
       <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
       <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Orbhoarder window)"
         @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
-      <button class="text-gray-500 hover:text-gray-200" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
+      <button class="ui-btn ui-btn-quiet" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
     </div>
     <!-- Campaign finished for this character (Kitava in act 10, or it has been in a map) -->
     <div v-if="hideRoute" class="p-2 text-xs text-gray-400 leading-snug">
@@ -35,8 +31,10 @@
       <button class="mt-2 px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="showRouteAnyway = true">
         <i class="fas fa-list mr-1" />Show the route anyway</button>
     </div>
-    <div v-else ref="listEl" class="p-1 min-h-0" :class="{ 'overflow-y-auto flex-1': tall }">
-      <div v-for="s of visible" :key="s.i" class="flex gap-x-2 px-1 rounded" :data-current="s.i === index ? '1' : undefined"
+    <div v-else ref="listEl" class="p-1 min-h-0 space-y-0.5" :class="{ 'overflow-y-auto flex-1': tall }">
+      <button v-if="doneHidden && (tall || showAll)" class="ui-btn ui-btn-quiet text-xs" title="Show the finished steps of this act"
+        @click="showDone = true"><i class="fas fa-check" />{{ doneHidden }} step{{ doneHidden > 1 ? 's' : '' }} done in act {{ step.act }}</button>
+      <div v-for="s of visible" :key="s.i" class="flex gap-x-2 px-1 py-0.5 rounded" :data-current="s.i === index ? '1' : undefined"
         :class="s.i === index ? 'bg-gray-800' : (s.i < index ? 'opacity-50' : '')">
         <span class="w-4 shrink-0 text-center">
           <i v-if="s.i === index" class="fas fa-map-marker-alt text-green-400" />
@@ -101,7 +99,7 @@
           </template>
         </div>
       </div>
-      <div class="px-1 pt-1 text-xs text-gray-500 flex flex-wrap gap-x-3">
+      <div v-if="legendOpen" class="px-1 pt-1 text-xs text-gray-500 flex flex-wrap gap-x-3">
         <span class="g-quest"><i class="fas fa-scroll" />quest</span>
         <span class="g-kill"><i class="fas fa-skull" />boss</span>
         <span class="g-item"><i class="fas fa-box" />item / object</span>
@@ -126,6 +124,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
+import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore, loadStepByChar, saveStepForChar, firstStepOfAct, campaignDone } from './campaign-route'
@@ -242,9 +241,17 @@ function gemsFor (p: Exclude<RoutePart, string>) {
   return [p.offer, ...(p.more ?? [])].map(o => gemFor(o)).filter((g): g is NonNullable<typeof g> => g != null)
 }
 
+// Deathloom fork (20 Nov, readability): in the tall view the act's finished steps fold
+// into one "N steps done" line (the last one stays visible); click to show them
+const showDone = ref(false)
+watch(() => step.value.act, () => { showDone.value = false })
+const actSteps = computed(() => STEPS.map((s, i) => ({ ...s, i }))
+  .filter(s => onlyActive(s.only, bandit.value, optional.value) && s.act === step.value.act))
+const doneHidden = computed(() => (showAll.value || showDone.value) ? 0
+  : Math.max(0, actSteps.value.filter(s => s.i < index.value).length - 1))
 const visible = computed(() => {
+  if (showAll.value || props.tall) return actSteps.value.slice(doneHidden.value)
   const all = STEPS.map((s, i) => ({ ...s, i })).filter(s => onlyActive(s.only, bandit.value, optional.value))
-  if (showAll.value || props.tall) return all.filter(s => s.act === step.value.act)
   return all.slice(Math.max(0, index.value - 1), index.value + 5)
 })
 
@@ -271,6 +278,14 @@ function move (d: number) {
   while (i > 0 && i < STEPS.length - 1 && !onlyActive(STEPS[i].only, bandit.value, optional.value)) i += d
   setIndex(i)
 }
+const legendOpen = ref(false)
+const guideMenu = computed<UiMenuItem[]>(() => [
+  { label: 'Show the whole act', icon: 'fas fa-list', checked: showAll.value, action: () => { showAll.value = !showAll.value } },
+  { label: 'Show optional quests', icon: 'fas fa-plus-square', checked: optional.value, hint: 'A Fixture of Fate, A Dirty Job, Bestel\'s Epic …', action: toggleOptional },
+  { label: 'What the colours mean', icon: 'fas fa-question-circle', checked: legendOpen.value, action: () => { legendOpen.value = !legendOpen.value } },
+  { divider: true },
+  { label: 'Start over (new character)', icon: 'fas fa-undo', action: reset }
+])
 function reset () { setIndex(0); lastZone.value = ''; matched.value = true; showRouteAnyway.value = true }
 
 const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {

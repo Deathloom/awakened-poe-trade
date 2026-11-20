@@ -155,7 +155,7 @@ test('build files: read and compare two builds', () => {
   assert.equal(c.stats.find(r => r.stat === 'CombinedDPS').better, 'a')
   assert.equal(c.stats.find(r => r.stat === 'FireResist').better, undefined)
   const helm = c.gear.find(g => g.slot === 'Helmet')
-  assert.deepEqual(helm.onlyA, ['+80 to maximum Life']); assert.deepEqual(helm.onlyB, ['+90 to maximum Life'])
+  assert.deepEqual(helm.aLower, [{ a: '+80 to maximum Life', b: '+90 to maximum Life' }]); assert.deepEqual(helm.onlyB, [])
   assert.equal(c.gear.find(g => g.slot === 'Body Armour').b, undefined)
   assert.deepEqual(c.gems.map(g => `${g.change}:${g.name}`), ['removed:Raise Zombie', 'added:Summon Skeletons'])
   assert.deepEqual(c.tree.onlyA, [1]); assert.deepEqual(c.tree.onlyB, [4, 5]); assert.equal(c.tree.same, 3)
@@ -523,4 +523,259 @@ test('gear defences read from item text', async () => {
   assert.deepEqual(itemDefences(t).map(d => `${d.short} ${d.value}`), ['Block 24%', 'ES 132'])
   assert.deepEqual(itemDefences('Rarity: Rare\nArmour: 500\nEvasion Rating: 480'), [{ name: 'Armour', short: 'AR', value: '500' }, { name: 'Evasion Rating', short: 'EV', value: '480' }])
   assert.deepEqual(itemDefences(undefined), [])
+})
+
+const STAGES = `<PathOfBuilding>
+  <Build level="90" className="Witch" ascendClassName="Elementalist" mainSocketGroup="1"></Build>
+  <Skills activeSkillSet="1">
+    <SkillSet id="1" title="Early"><Skill enabled="true"><Gem nameSpec="Winter Orb" level="20" enabled="true"/><Gem nameSpec="Elemental Overload" level="20" enabled="true"/></Skill></SkillSet>
+    <SkillSet id="2" title="Pcharge"><Skill enabled="true"><Gem nameSpec="Winter Orb" level="21" enabled="true"/><Gem nameSpec="Power Charge On Critical Support" level="20" enabled="true"/></Skill></SkillSet>
+  </Skills>
+  <Tree activeSpec="1">
+    <Spec title="Early" classId="3" ascendClassId="2" treeVersion="3_30" nodes="1,2,3"/>
+    <Spec title="Pcharge" classId="3" ascendClassId="3" treeVersion="3_30" nodes="1,2,4,5"/>
+  </Tree>
+  <Items activeItemSet="1">
+    <Item id="1">
+Rarity: RARE
+New Item
+Vaal Regalia
+</Item>
+    <Item id="2">
+Rarity: RARE
+Doom Shell
+Vaal Regalia
++90 to maximum Life
+</Item>
+    <Item id="3">
+Rarity: NORMAL
+Greater Engorged Eye
+</Item>
+    <Item id="4">
+Rarity: RARE
+Grim Cowl
+Hubris Circlet
++40 to maximum Energy Shield
+</Item>
+    <ItemSet id="1" title="Early"><Slot name="Body Armour" itemId="2"/><Slot name="Helmet" itemId="4"/></ItemSet>
+    <ItemSet id="2" title="Pcharge"><Slot name="Body Armour" itemId="1"/><Slot name="Head" itemId="3"/></ItemSet>
+  </Items>
+</PathOfBuilding>`
+
+test('loadouts: options, stage changes with placeholders, class switch and Wickerman', async () => {
+  const st = await import('./.build/loadout-steps.mjs')
+  const lo = {
+    trees: [{ id: 1, title: 'Early' }, { id: 2, title: 'Pcharge' }],
+    itemSets: [{ id: 1, title: 'Early' }, { id: 2, title: 'Pcharge' }],
+    skillSets: [{ id: 1, title: 'Early' }, { id: 2, title: 'Pcharge' }],
+    named: ['Early', 'Pcharge'],
+    active: { spec: 1, itemSet: 1, skillSet: 1, named: 'Early' }
+  }
+  const opts = st.loadoutOptions(lo)
+  assert.deepEqual(opts.map(o => o.label), ['Early', 'Pcharge'])
+  assert.deepEqual(opts[1].sel, { spec: 2, itemSet: 2, skillSet: 2 })
+  assert.equal(st.currentOption(lo, opts).label, 'Early')
+  // single snapshot (poe.ninja): nothing to compare
+  assert.deepEqual(st.loadoutOptions({ trees: [{ id: 1, title: '' }], itemSets: [{ id: 1, title: '' }], skillSets: [], named: [], active: { spec: 1, itemSet: 1, skillSet: 1 } }), [])
+  // trees only (Level 30 / 60 / 90): gear and skills stay the active ones
+  const treesOnly = st.loadoutOptions({ trees: [{ id: 1, title: 'Lvl 30' }, { id: 2, title: 'Lvl 90' }], itemSets: [{ id: 1, title: '' }], skillSets: [], named: [], active: { spec: 1, itemSet: 1, skillSet: 1 } })
+  assert.deepEqual(treesOnly.map(o => [o.label, o.own.items]), [['Lvl 30', false], ['Lvl 90', false]])
+
+  const a = buildXml.parseBuildXml(STAGES, { spec: 1, itemSet: 1, skillSet: 1 })
+  const b = buildXml.parseBuildXml(STAGES, { spec: 2, itemSet: 2, skillSet: 2 })
+  assert.equal(a.sets.spec, 'Early')
+  const c = st.stageChanges(a, b)
+  assert.equal(c.ascendancyChanges, true)
+  assert.equal(c.classChanges, false)
+  assert.deepEqual(c.take, [4, 5])
+  assert.deepEqual(c.refund, [3])
+  assert.deepEqual(c.gems.map(g => `${g.change}:${g.name}`), ['removed:Elemental Overload', 'added:Power Charge On Critical Support', 'level:Winter Orb'])
+  // placeholder Vaal Regalia on the same base: nothing to do; helmet missing in target: keep yours
+  assert.deepEqual(c.gear, [])
+  assert.deepEqual(c.wickerman.map(w => w.to), ['Greater Engorged Eye'])
+  assert.deepEqual(st.wickermanOf(b), [{ slot: 'Head', name: 'Greater Engorged Eye' }])
+  assert.equal(st.stageChanges(a, a).nothing, true)
+})
+
+test('compare: mods matched by wording, values compared', async () => {
+  const { matchMods } = await import('./.build/build-compare.mjs')
+  const m = matchMods(['+70 to maximum Life', '+40% to Fire Resistance', '10% reduced Mana Cost of Skills', 'Adds 1 to 2 Cold Damage'],
+    ['+90 to maximum Life', '+40% to Fire Resistance', '15% reduced Mana Cost of Skills', '+1 to Level of all Spell Skill Gems'])
+  assert.deepEqual(m.both, ['+40% to Fire Resistance'])
+  assert.deepEqual(m.aLower.map(x => x.a), ['+70 to maximum Life', '10% reduced Mana Cost of Skills'])
+  assert.deepEqual(m.aHigher.map(x => x.a), [])
+  assert.deepEqual(m.onlyA, ['Adds 1 to 2 Cold Damage'])
+  assert.deepEqual(m.onlyB, ['+1 to Level of all Spell Skill Gems'])
+})
+
+const gemsMod = await import('./.build/gems.mjs')
+const myChar = await import('./.build/my-character.mjs')
+test('my character file: Gems tab reads the PoB-imported copy', () => {
+  assert.equal(myChar.legacyPathOf('Storm Burst.xml'), 'Storm Burst (my character).xml')
+  assert.equal(myChar.planPathOf('X (my character).xml', ['X.xml'], null), 'X.xml')
+  const it = buildXml.parseItemText('Rarity: RARE\nDoom Hood\nHubris Circlet\nSockets: B-B-B R\nLevelReq: 69\n+90 to maximum Life')
+  assert.equal(it.sockets, 'B-B-B R')
+  assert.deepEqual(it.mods, ['+90 to maximum Life'])
+  const live = gemsMod.liveFromSummary({
+    stats: {},
+    groups: [{ slot: 'Helmet', enabled: true, gems: [{ name: 'Storm Burst', level: 18, quality: 5, enabled: true }] }],
+    items: [{ slot: 'Helmet', rarity: 'Rare', name: 'Doom Hood', base: 'Hubris Circlet', mods: [], sockets: 'B-B-B R' }, { slot: 'Ring 1', rarity: 'Rare', name: 'R', base: 'Ruby Ring', mods: [] }],
+    tree: { nodes: [], masteries: {} }
+  })
+  assert.equal(live.groups[0].index, 0)
+  assert.equal(live.groups[0].gems[0].support, false)
+  assert.deepEqual(live.items, [{ slot: 'Helmet', name: 'Doom Hood', baseName: 'Hubris Circlet', sockets: 'B-B-B R' }])
+  const cmp = gemsMod.compareGems([{ index: 0, slot: 'Helmet', enabled: true, gems: [{ name: 'Storm Burst', level: 20, quality: 20, enabled: true, support: false }, { name: 'Faster Casting', level: 20, enabled: true, support: true }] }], live.groups)
+  assert.equal(cmp.lowCount, 1)
+  assert.equal(cmp.missingCount, 1)
+})
+
+test('my character file: named after the character, linked, survives build renames', () => {
+  const m = myChar
+  assert.equal(m.charFilePath('Deathloom_Totems'), 'My characters/Deathloom_Totems.xml')
+  assert.equal(m.safeCharName('a/b:c. '), 'a_b_c')
+  // Windows paths from the builds list, any letter case
+  const builds = ['3.30\\Storm Burst.xml', 'My characters\\deathloom_totems.xml', 'Old (my character).xml']
+  let r = m.resolveMine('Deathloom_Totems', builds, {}, '3.30\\Storm Burst.xml')
+  assert.deepEqual(r, { path: 'My characters\\deathloom_totems.xml', how: 'named', legacy: null })
+  // build renamed: still found (the file doesn't depend on the build's name)
+  r = m.resolveMine('Deathloom_Totems', ['3.30\\Storm Burst v2.xml', ...builds.slice(1)], {}, '3.30\\Storm Burst v2.xml')
+  assert.equal(r.how, 'named')
+  // link wins; a dead link falls back to the name
+  const links = m.withLink({}, 'Deathloom_Totems', 'Old (my character).xml')
+  assert.equal(m.resolveMine('deathloom_totems', builds, links, null).path, 'Old (my character).xml')
+  assert.equal(m.resolveMine('Deathloom_Totems', builds.slice(0, 2), links, null).how, 'named')
+  assert.deepEqual(m.withLink(links, 'DEATHLOOM_TOTEMS', null), {})
+  // nothing set up: offer the old copy of the active build first
+  r = m.resolveMine('Other', ['A.xml', 'A (my character).xml', 'Z (my character).xml'], {}, 'Z.xml')
+  assert.deepEqual(r, { path: null, how: null, legacy: 'Z (my character).xml' })
+  assert.equal(m.resolveMine('', ['A.xml'], {}, 'A.xml').legacy, null)
+  assert.deepEqual(m.characterFiles(builds), ['My characters\\deathloom_totems.xml', 'Old (my character).xml'])
+  // active is the character file (opened in PoB): plan = last followed build
+  assert.equal(m.planPathOf('My characters\\x.xml', builds, '3.30\\Storm Burst.xml'), '3.30\\Storm Burst.xml')
+  assert.equal(m.planPathOf('A.xml', builds, 'B.xml'), 'A.xml')
+})
+
+test('gems merged view: status, change now, locked', async () => {
+  const gm = await import('./.build/gems-merged.mjs')
+  const build = [
+    { index: 0, slot: 'Helmet', enabled: true, gems: [
+      { name: 'Storm Burst', level: 20, quality: 20, enabled: true, support: false },
+      { name: 'Spell Totem Support', level: 20, enabled: true, support: true },
+      { name: 'Awakened Added Lightning Damage Support', level: 1, enabled: true, support: true }] },
+    { index: 1, slot: 'Boots', enabled: true, gems: [{ name: 'Flame Dash', level: 10, enabled: true, support: false }] }
+  ]
+  const mine = [{ index: 0, slot: 'Helmet', enabled: true, gems: [
+    { name: 'Storm Burst', level: 18, quality: 0, enabled: true, support: false },
+    { name: 'Spell Totem', level: 20, enabled: true, support: false },
+    { name: 'Rolling Magma', level: 10, enabled: true, support: false }] }]
+  const req = new Map([['storm burst', 12], ['spell totem', 8], ['awakened added lightning damage', 72], ['flame dash', 10]])
+  const rows = gemsMod.compareGems(build, mine).groups
+  const input = { rows, level: 30, reqLevels: req, source: 'mine', ticks: new Set(), mineReady: true }
+  const st = gm.mergedRows(input).flatMap(r => r.gems.map(g => `${g.name}:${g.status}`))
+  assert.deepEqual(st, ['Storm Burst:low', 'Spell Totem Support:have', 'Awakened Added Lightning Damage Support:locked', 'Flame Dash:missing'])
+  const plan = (name, reqLevel, slot) => ({ name, reqLevel, slot, support: false })
+  const ch = gm.changeNow(input, {
+    now: [plan('Storm Burst', 12), plan('Flame Dash', 10, 'Boots'), plan('Flame Dash', 10), plan('Awakened Added Lightning Damage Support', 72)],
+    drop: [plan('Rolling Magma', 1), plan('Freezing Pulse', 1)],
+    charGems: new Set(mine[0].gems.map(g => gm.gemKey(g.name)))
+  })
+  assert.deepEqual(ch.takeOut, ['Rolling Magma'])
+  assert.deepEqual(ch.socket.map(g => g.name), ['Flame Dash'])
+  assert.deepEqual(ch.levelUp, [{ name: 'Storm Burst', have: '18/0', want: '20/20' }])
+  assert.equal(ch.total, 3)
+  // ticks: ticked = have, nothing to level up, take out only what's ticked
+  const tin = { ...input, source: 'ticks', ticks: new Set(['Storm Burst', 'Freezing Pulse']), mineReady: false }
+  assert.deepEqual(gm.mergedRows(tin)[0].gems.map(g => g.status), ['have', 'missing', 'locked'])
+  const ct = gm.changeNow(tin, { now: [plan('Storm Burst', 12), plan('Flame Dash', 10)], drop: [plan('Rolling Magma', 1), plan('Freezing Pulse', 1)], charGems: new Set() })
+  assert.deepEqual([ct.takeOut, ct.socket.map(g => g.name), ct.levelUp], [['Freezing Pulse'], ['Flame Dash'], []])
+  // my character not read yet: nothing to change, statuses unknown (locked still shows)
+  const none = { ...input, mineReady: false }
+  assert.equal(gm.changeNow(none, { now: [plan('Flame Dash', 10)], drop: [], charGems: new Set() }).total, 0)
+  assert.deepEqual(gm.mergedRows(none)[0].gems.map(g => g.status), ['unknown', 'unknown', 'locked'])
+  // no plan: socket comes from the gear pieces' missing gems
+  assert.deepEqual(gm.changeNow(input, { now: [], drop: [], charGems: new Set() }).socket.map(g => g.name), ['Flame Dash'])
+  assert.deepEqual(gm.countStatus(gm.mergedRows(input)), { have: 1, low: 1, missing: 1, locked: 1, unknown: 0 })
+})
+
+test('market tools: shopping list, sell list, farming, crafting, divine', async () => {
+  const mt = await import('./.build/market-tools.mjs')
+  const L = (ns, name, chaos, variant, graph = [0, 0, 0, 0, 0, 0, 0]) => ({ ns, name, chaos, variant, graph, category: 'x', url: 'u' })
+  const items = [
+    L('UNIQUE', 'Wickerman', 50), L('UNIQUE', 'Wickerman', 80, '6L'),
+    L('GEM', 'Arc', 5, '20/20'), L('GEM', 'Arc', 1, '1'), L('GEM', 'Arc', 0.5, '21/20c'),
+    L('GEM', 'Only Corrupt', 9, '21c'),
+    L('ITEM', 'Divine Orb', 150), L('ITEM', 'Orb of Alteration', 0.2)
+  ]
+  // cheapest: lowest price, corrupted gems only when nothing else
+  assert.equal(mt.cheapestByName(items, 'GEM', 'arc').chaos, 1)
+  assert.equal(mt.cheapestByName(items, 'GEM', 'Only Corrupt').chaos, 9)
+  assert.equal(mt.cheapestByName(items, 'UNIQUE', 'Wickerman').chaos, 50)
+
+  const shop = mt.shoppingList(
+    [{ slot: 'Ring 1', name: 'Wickerman', unique: true, owned: false }, { slot: 'Ring 2', name: 'Wickerman', unique: true, owned: true },
+      { slot: 'Helmet', name: 'Rare thing', unique: false, owned: false }, { slot: 'Boots', name: 'Unknown Unique', unique: true, owned: false }],
+    [{ name: 'Arc', enabled: true }, { name: 'Arc', enabled: true }, { name: 'Off Gem', enabled: false }],
+    items, new Set())
+  assert.equal(shop.rows.length, 4) // Wickerman (merged slots), Unknown Unique, Arc, the rare (own row, no price)
+  assert.equal(shop.rows.find(r => r.kind === 'rare').label, 'Rare thing')
+  assert.deepEqual(shop.rows.find(r => r.label === 'Wickerman').slots, ['Ring 1', 'Ring 2'])
+  assert.equal(shop.rows.find(r => r.label === 'Wickerman').owned, false) // one slot still missing
+  assert.equal(shop.total, 51)
+  assert.equal(shop.missing, 1)
+  assert.equal(shop.rares, 1)
+  assert.equal(mt.shoppingList([], [{ name: 'Arc', enabled: true }], items, new Set(['arc'])).total, 0)
+
+  assert.equal(mt.priceNote(300, 150), '~price 2 divine')
+  assert.equal(mt.priceNote(44.6, 150, '~b/o'), '~b/o 45 chaos')
+  assert.equal(mt.priceNote(0.2, 150), '~price 1 chaos')
+  assert.deepEqual(mt.sellTotal([{ qty: 2 }, { qty: 1 }], e => e.qty === 2 ? 10 : null), { chaos: 20, missing: 1 })
+  assert.equal(mt.sellHint(L('ITEM', 'x', 80, undefined, [0, -5, -10, -15, -20])).tone, 'sell')
+  assert.equal(mt.sellHint(L('ITEM', 'x', 120, undefined, [0, 5, 10, 15, 20])).tone, 'wait')
+  assert.equal(mt.sellHint(L('ITEM', 'x', 100, undefined, [0, 1])), null) // too few days
+
+  const runs = mt.runsFromSession([
+    { seed: 'a', code: 'MapX', start: 1, ms: 6 * 60_000, mechanics: ['Breach'], loot: 60, strategy: 'Breach' },
+    { seed: 'b', code: 'MapX', start: 2, ms: 6 * 60_000, mechanics: [], loot: 20 },
+    { seed: 'c', code: 'MapX', start: 3, ms: 6 * 60_000, mechanics: ['Breach'] }, // no loot typed: left out
+    { seed: 'd', code: 'MapX', start: 4, ms: 0, mechanics: [], loot: 5 } // not finished
+  ], 10, 'Covens')
+  assert.equal(runs.length, 2)
+  assert.equal(runs[1].strategy, 'No strategy set')
+  assert.equal(runs[0].league, 'Covens')
+  const st = mt.farmingStats(runs, 'strategy')
+  assert.equal(st[0].name, 'Breach')
+  assert.equal(st[0].perMap, 50)
+  assert.equal(Math.round(st[0].perHour), 500)
+  assert.equal(mt.farmingStats(runs, 'mechanic').find(s => s.name === 'No mechanic seen').maps, 1)
+  assert.equal(mt.mergeRuns(runs, [{ ...runs[0], loot: 99 }]).length, 2)
+  assert.equal(mt.mergeRuns(runs, [{ ...runs[0], loot: 99 }])[0].loot, 99)
+
+  const price = n => ({ 'Orb of Alteration': 0.2 })[n] ?? null
+  assert.deepEqual(mt.craftTotal([{ name: 'Orb of Alteration', count: 100 }, { name: 'Chaos Orb', count: 5 }, { name: 'Mystery', count: 1 }, { name: 'Zero', count: 0 }], price),
+    { chaos: 25, missing: ['Mystery'] })
+  assert.equal(mt.convert(300, 'chaos', 150), 2)
+  assert.equal(mt.convert(2, 'div', 150), 300)
+  assert.equal(mt.convert(2, 'div', undefined), null)
+  assert.equal(mt.divineSeries(items[6]).length, 7)
+})
+
+test('market outlook: no cap; too-fast items flagged and left out; backtest on the week', async () => {
+  const mt = await import('./.build/market-trends.mjs')
+  // graph = % vs 7 days ago, oldest first; chaos = today
+  const item = (chaos, graph) => ({ chaos, graph, name: 'x', ns: 'GEM', category: 'skill-gems', url: '' })
+  // 1c → 15c in a week: too fast to call, not a steady climber
+  const wild = mt.trendOf(item(15, [0, 100, 300, 600, 900, 1200, 1400]))
+  assert.equal(wild.wild, true)
+  assert.equal(mt.isSteadyClimber(wild), false)
+  // steady +3%/day: a real number, not 60
+  const g = [0, 1, 2, 3, 4, 5, 6].map(d => (1.03 ** d - 1) * 100)
+  const steady = mt.trendOf(item(10 * 1.03 ** 6, g))
+  assert.equal(steady.wild, false)
+  assert.ok(steady.outlook > 3 && steady.outlook < 12, String(steady.outlook))
+  assert.equal(mt.isSteadyClimber(steady), true)
+  // backtest: steady climbers that kept climbing count as rose and within
+  const s = mt.backtestSummary(Array.from({ length: 6 }, () => item(10 * 1.03 ** 6, g)))
+  assert.equal(s.n, 6); assert.equal(s.rose, 6); assert.equal(s.within, 6)
+  assert.ok(s.medianMiss < 5)
 })

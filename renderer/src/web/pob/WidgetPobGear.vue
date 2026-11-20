@@ -1,6 +1,6 @@
 <template>
   <!-- Deathloom fork: the active PoB build's gear, with Copy / Trade / Check per item -->
-  <Widget :config="config" move-handles="tl" :removable="false" :inline-edit="false">
+  <Widget :config="config" move-handles="corners" :grip="!inHud" :removable="false" :inline-edit="false">
     <PobGearBody v-if="!inHud" :active="config.wmWants === 'show' && wm.active.value" />
   </Widget>
 </template>
@@ -40,6 +40,7 @@ import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
 import { inOverlay } from '../desktop/panels'
 import PobGearBody from './PobGearBody.vue'
+import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{
   config: PobGearWidget
@@ -60,11 +61,7 @@ const hotkey = Host.onEvent('MAIN->CLIENT::widget-action', (e) => {
   if (e.target !== 'pob-gear' || inHud.value) return
   // From in game (overlay not active yet) the hotkey always opens the panel;
   // main focuses the overlay at the same time
-  if (props.config.wmWants === 'hide' || !wm.active.value) {
-    wm.show(props.config.wmId)
-  } else {
-    wm.hide(props.config.wmId)
-  }
+  toggleFromHotkey(wm, props.config.wmId, props.config.wmWants)
 })
 onUnmounted(() => { hotkey.abort() })
 </script>

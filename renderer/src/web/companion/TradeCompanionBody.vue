@@ -5,8 +5,8 @@
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500 shrink-0"><i class="fas fa-handshake mr-1" />Trades</span>
       <div class="flex gap-px shrink-0">
-        <button v-for="t of TABS" :key="t.key" class="px-2 rounded"
-          :class="tab === t.key ? 'bg-gray-700 text-gray-100' : 'text-gray-500 hover:text-gray-200'"
+        <button v-for="t of TABS" :key="t.key" class="ui-tab"
+          :class="{ 'ui-tab-on': tab === t.key }"
           @click="tab = t.key">{{ t.label }}<span v-if="t.key === 'trades' && openTrades.length" class="text-yellow-400"> {{ openTrades.length }}</span></button>
       </div>
       <span class="ml-auto text-xs text-gray-500" :title="modeHelp">{{ mode === 'send' ? 'buttons send to chat' : 'buttons copy' }}</span>
@@ -25,7 +25,7 @@
           <span class="font-semibold truncate" :title="t.char">{{ t.char }}</span>
           <span v-if="inArea.has(t.char)" class="text-green-400 text-xs shrink-0">in your area</span>
           <span class="ml-auto text-gray-500 text-xs shrink-0">{{ ago(t.at) }}</span>
-          <button class="text-gray-500 hover:text-gray-200 shrink-0" title="Remove" @click="dismiss(t.id)"><i class="fas fa-times" /></button>
+          <button class="ui-btn ui-btn-quiet shrink-0" title="Remove" @click="dismiss(t.id)"><i class="fas fa-times" /></button>
         </div>
         <div class="truncate" :title="t.item">{{ t.item }}</div>
         <div class="flex gap-x-2 text-xs text-gray-400">
@@ -35,22 +35,22 @@
         <div v-if="t.message" class="text-xs text-gray-500 truncate" :title="t.message">"{{ t.message }}"</div>
         <div class="flex flex-wrap gap-1 pt-1">
           <template v-if="t.direction === 'from'">
-            <button v-for="b of SELL_BUTTONS" :key="b.label" class="bg-gray-700 hover:bg-gray-600 rounded px-1.5"
+            <button v-for="b of SELL_BUTTONS" :key="b.label" class="ui-btn"
               :title="b.cmd(t.char)" @click="press(t, b.cmd(t.char), b.key)">
               <i v-if="pressed === t.id + b.key" class="fas fa-check text-green-400" /> {{ b.label }}</button>
           </template>
           <template v-else>
-            <button v-for="b of BUY_BUTTONS" :key="b.label" class="bg-gray-700 hover:bg-gray-600 rounded px-1.5"
+            <button v-for="b of BUY_BUTTONS" :key="b.label" class="ui-btn"
               :title="b.cmd(t.char)" @click="press(t, b.cmd(t.char), b.key)">
               <i v-if="pressed === t.id + b.key" class="fas fa-check text-green-400" /> {{ b.label }}</button>
           </template>
-          <button v-for="(q, i) of quickFor(t)" :key="'q' + i" class="bg-gray-700 hover:bg-gray-600 rounded px-1.5 border border-gray-600"
+          <button v-for="(q, i) of quickFor(t)" :key="'q' + i" class="ui-btn ui-btn-quiet border border-gray-600"
             :title="fillQuick(q.text, t)" @click="press(t, fillQuick(q.text, t), 'q' + i)">
             <i v-if="pressed === t.id + 'q' + i" class="fas fa-check text-green-400" /> {{ q.label }}</button>
         </div>
       </div>
       <div v-if="!compact" class="px-1 pt-1 text-xs text-gray-600">{{ modeHelp }}
-        <button v-if="canEdit" class="ml-1 text-blue-400 hover:underline" @click="editing = !editing">{{ editing ? 'Done' : 'Your own buttons…' }}</button>
+        <button v-if="canEdit" class="ml-1 ui-btn ui-btn-quiet" :class="{ 'ui-btn-on': editing }" @click="editing = !editing">{{ editing ? 'Done' : 'Your own buttons…' }}</button>
       </div>
       <div v-if="editing" class="m-1 p-2 rounded bg-gray-900 text-sm">
         <div class="text-gray-500 mb-1">Your own chat buttons (up to {{ MAX_QUICK }}). In the text, {name} = the other player, {item}, {price}. Start with @{name} to whisper, or / for a command.</div>
@@ -62,7 +62,7 @@
             <option value="buy">buying</option>
             <option value="both">both</option>
           </select>
-          <button class="text-gray-500 hover:text-gray-200" title="Remove" @click="quick.splice(i, 1)"><i class="fas fa-times" /></button>
+          <button class="ui-btn ui-btn-quiet" title="Remove" @click="quick.splice(i, 1)"><i class="fas fa-times" /></button>
         </div>
         <div class="flex gap-2 mt-1">
           <button class="btn" :disabled="quick.length >= MAX_QUICK" @click="quick.push({ label: '', text: '@{name} ', for: 'sell' })">Add</button>
@@ -93,7 +93,7 @@
         <span class="shrink-0" :class="e.direction === 'from' ? 'text-green-400' : 'text-red-300'">{{ e.direction === 'from' ? '+' : '−' }}{{ e.price }}</span>
         <span class="truncate flex-1" :title="e.item">{{ e.item }}</span>
         <span class="text-gray-500 text-xs shrink-0">{{ e.char }}</span>
-        <button class="text-gray-600 hover:text-gray-300 shrink-0" title="Remove from ledger" @click="removeLedger(e.id)"><i class="fas fa-times" /></button>
+        <button class="ui-btn ui-btn-quiet shrink-0" title="Remove from ledger" @click="removeLedger(e.id)"><i class="fas fa-times" /></button>
       </div>
     </div>
   </div>
@@ -162,8 +162,8 @@ let lastActiveId: string | null = null
 
 const mode = computed(() => chatMode())
 const modeHelp = computed(() => mode.value === 'send'
-  ? 'Each click sends one command to game chat (Settings → Path of Building → Chat buttons).'
-  : 'Each click copies the command: press Enter in game, Ctrl+V, Enter. To send directly, change Chat buttons in Settings → Path of Building.')
+  ? 'Each click sends one command to game chat (Settings → Panels → Chat buttons).'
+  : 'Each click copies the command: press Enter in game, Ctrl+V, Enter. To send directly, change Chat buttons in Settings → Panels.')
 
 const openTrades = computed(() => trades.value.filter(t => !t.done))
 // the last open trade was dealt with (Sold, dismissed, or the trade went through)

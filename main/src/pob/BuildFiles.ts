@@ -12,7 +12,7 @@ export interface BuildFileOp {
   path: string
   // rename: new file name (without .xml)
   name?: string
-  // move: folder inside your player folder, e.g. "3.30/Witch" ('' = top)
+  // move / duplicate: folder inside your player folder, e.g. "3.30/Witch" ('' = top)
   folder?: string
 }
 
@@ -95,8 +95,16 @@ export async function applyBuildOp (root: string, deletedRoot: string, req: Buil
       // Deathloom fork: an optional name (e.g. "<build> (my character)")
       const want = String(req.name ?? '').trim().replace(/\.xml$/i, '')
       if (want && !safeSegment(want)) throw new Error('That name has characters Windows doesn\'t allow')
-      const name = await freeName(dir, want || `${path.basename(from, ext)} - copy`, ext)
-      const to = path.join(dir, name)
+      // and an optional folder (e.g. "My characters": the character's file)
+      let targetDir = dir
+      if (req.folder != null) {
+        const folder = safeFolder(String(req.folder))
+        if (folder == null) throw new Error('That folder name has characters Windows doesn\'t allow')
+        targetDir = inside(root, folder || '.')
+        await fs.mkdir(targetDir, { recursive: true })
+      }
+      const name = await freeName(targetDir, want || `${path.basename(from, ext)} - copy`, ext)
+      const to = path.join(targetDir, name)
       await fs.copyFile(from, to)
       return path.relative(root, to)
     }

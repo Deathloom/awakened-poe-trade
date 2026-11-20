@@ -13,7 +13,7 @@
         <option value="">Right build…</option>
         <option v-for="p of builds" :key="p" :value="p">{{ label(p) }}</option>
       </select>
-      <button class="text-gray-500 hover:text-gray-200" title="Swap left and right" @click="[pathA, pathB] = [pathB, pathA]"><i class="fas fa-exchange-alt" /></button>
+      <button class="ui-btn ui-btn-quiet" title="Swap left and right" @click="[pathA, pathB] = [pathB, pathA]"><i class="fas fa-exchange-alt" /></button>
       <button class="px-2 rounded bg-gray-600 hover:bg-gray-500 disabled:opacity-50" :disabled="busy || !pathA || !pathB || pathA === pathB" @click="run">
         <i v-if="busy" class="fas fa-spinner fa-spin mr-1" />Compare</button>
     </div>
@@ -23,18 +23,47 @@
     <div v-if="active" class="rounded bg-gray-900 px-2 py-1 text-xs text-gray-400">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span class="text-gray-200"><i class="fas fa-user-check mr-1" />Your character vs this build</span>
-        <button v-if="!mineExists" class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="busy"
-          :title="`Copies '${label(active)}' to '${label(minePath)}' in your folder`" @click="makeMine">Make the copy</button>
+        <button v-if="!mineExists && me.charName.value" class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="busy || me.busy.value"
+          :title="`Copies '${label(planPath)}' to '${label(minePath)}' in your folder`" @click="makeMine">Make {{ label(minePath) }}</button>
         <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" :title="`Opens Path of Building. There: open '${label(minePath)}', Import/Export Build → Import character → Items and Skills, then save.`" @click="openPob">{{ mineExists ? 'Update gear in Path of Building' : 'Open Path of Building' }}</button>
         <button v-if="mineExists" class="px-2 rounded bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50" :disabled="busy" :title="`Your character (left, blue) vs the build you follow (right, yellow), gear first. Uses what Path of Building last saved.`" @click="compareMine">Compare gear</button>
       </div>
-      <ol class="mt-0.5 list-decimal pl-4 space-y-px">
-        <li v-if="!mineExists"><b class="text-gray-300">Make the copy</b>: a copy of the build you follow, named <b class="text-gray-300">{{ label(minePath) }}</b>, to hold your character's gear. Path of Building opens.</li>
-        <li>In Path of Building, open <b class="text-gray-300">{{ label(minePath) }}</b> from the build list.</li>
-        <li><b class="text-gray-300">Import/Export Build</b> tab → <b class="text-gray-300">Import character</b> → your account → your character → <b class="text-gray-300">Items and Skills</b>. Leave the passive tree alone.</li>
-        <li>Save in Path of Building (<b class="text-gray-300">Ctrl+S</b>), then come back here and click <b class="text-gray-300">Compare gear</b>.</li>
-      </ol>
-      <div class="mt-0.5 text-gray-500">Left (blue) = your character, right (yellow) = the build you follow. Green <b>+</b> lines are what the build has that you don't yet: your upgrades. Gear changed? Do steps 2–4 again. Path of Building does the import when you click it; Orbhoarder only reads the saved file.</div>
+      <div class="mt-0.5" :class="mineExists ? 'text-green-400' : 'text-yellow-500'">
+        {{ mineExists ? `Set up: ${label(minePath)} holds ${me.charName.value || 'your character'}. Any build you follow compares against it.` : 'Not set up yet for this character (once per character, about 2 minutes).' }}
+      </div>
+      <!-- Deathloom fork (Gerhard 19 Nov 2026): the file belongs to the character, not the build -->
+      <div v-if="!me.charName.value" class="mt-0.5 flex items-center gap-x-1">
+        <span>Character name:</span>
+        <input v-model="nameDraft" class="bg-gray-700 rounded px-1 w-36" placeholder="as in game" @keydown.enter="me.setTypedName(nameDraft)">
+        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100 disabled:opacity-50" :disabled="!nameDraft.trim()" @click="me.setTypedName(nameDraft)">OK</button>
+        <span class="text-gray-500">(the game log hasn't seen a level-up yet)</span>
+      </div>
+      <div v-if="!mineExists && me.resolved.value.legacy && me.charName.value" class="mt-0.5 flex items-center gap-x-2">
+        <span>Found an older copy: <b class="text-gray-300">{{ label(me.resolved.value.legacy) }}</b></span>
+        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="me.link(me.resolved.value.legacy)">Use it</button>
+      </div>
+      <div v-if="me.charName.value && me.files.value.length" class="mt-0.5 flex items-center gap-x-1">
+        <span>File for {{ me.charName.value }}:</span>
+        <select class="bg-gray-800 rounded px-1 max-w-[16rem]" :value="me.minePath.value ?? ''" @change="me.link(($event.target as HTMLSelectElement).value || null)">
+          <option value="">(none)</option>
+          <option v-for="f of me.files.value" :key="f" :value="f">{{ label(f) }}</option>
+        </select>
+      </div>
+      <div v-if="me.manageError.value" class="mt-0.5 text-red-400">{{ me.manageError.value }}</div>
+      <button class="ui-btn ui-btn-quiet mt-0.5" @click="toggleSetup">
+        <i class="fas" :class="setupOpen ? 'fa-caret-down' : 'fa-caret-right'" /> {{ mineExists ? 'How to update it, or set it up again' : 'How to set it up (first time)' }}</button>
+      <div v-if="setupOpen" class="pl-2">
+        <ol class="mt-0.5 list-decimal pl-4 space-y-0.5">
+          <li><b class="text-gray-300">Make {{ label(minePath) || 'My characters/<your character>' }}</b> (button above). It copies the build you follow into the <b class="text-gray-300">My characters</b> folder and opens Path of Building. Your build itself is never changed, and renaming or updating it later is fine.</li>
+          <li>In Path of Building's build list, open <b class="text-gray-300">{{ label(minePath) }}</b>. Not the original: importing replaces that build's gear.</li>
+          <li>Go to the <b class="text-gray-300">Import/Export Build</b> tab. Under <b class="text-gray-300">Import From Your Account</b>, sign in with your PoE account (Path of Building opens the official page), or under <b class="text-gray-300">Import By Account Name</b> type your name with its <b class="text-gray-300">#1234</b> and click <b class="text-gray-300">Start</b> (your profile's Characters tab must be public).</li>
+          <li>Pick your league and character, tick <b class="text-gray-300">Delete equipment</b> and <b class="text-gray-300">Delete skills</b>, then click <b class="text-gray-300">Items and Skills</b>. Don't click <b class="text-gray-300">Passive Tree and Jewels</b>: the build's tree stays.</li>
+          <li>Save with <b class="text-gray-300">Ctrl+S</b>, come back here and click <b class="text-gray-300">Compare gear</b>. The Gems tab can use it too: <b class="text-gray-300">Equipped from → my character</b>.</li>
+        </ol>
+        <div class="mt-1 text-gray-400"><b class="text-gray-300">Gear changed?</b> Click <b class="text-gray-300">Update gear in Path of Building</b>, then steps 2, 4 and 5. Path of Building remembers your account, so it's a few clicks.</div>
+        <div class="mt-1 text-gray-400"><b class="text-gray-300">Opening Path of Building yourself:</b> the button above, right-click the Orbhoarder tray icon → <b class="text-gray-300">Open Path of Building</b>, or set a key in Settings → Hotkeys → <b class="text-gray-300">Open Path of Building</b>. Use this one rather than another install, so it sees the same builds folder.</div>
+      </div>
+      <div class="mt-0.5 text-gray-500">Left (blue) = your character, right (yellow) = the build you follow. The import happens in Path of Building when you click it; Orbhoarder only reads the saved file.</div>
     </div>
     <div v-if="error" class="text-red-400">{{ error }}</div>
     <div v-if="!error && !result" class="text-xs text-gray-500">Or pick any two builds from your folder (or a friend's, via Player): left (blue) and right (yellow). Green shows what the right one has more of. Uses what Path of Building last saved in each file.</div>
@@ -65,8 +94,24 @@
           <div class="text-gray-100">{{ g.slot }} <span v-if="g.same" class="text-gray-500">· same</span></div>
           <div class="text-blue-300 truncate">{{ nameA }}: {{ g.a ?? '(empty)' }}</div>
           <div class="text-yellow-300 truncate">{{ nameB }}: {{ g.b ?? '(empty)' }}</div>
-          <div v-for="m of g.onlyB" :key="'b' + m" class="pl-2 text-green-300" :title="`${nameB} has this, ${nameA} doesn't`">+ {{ m }}</div>
-          <div v-for="m of g.onlyA" :key="'a' + m" class="pl-2 text-red-300" :title="`${nameA} has this, ${nameB} doesn't`">− {{ m }}</div>
+          <!-- Deathloom fork (19 Nov): grouped, so it's clear what you have and what's left -->
+          <div v-if="g.onlyB.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Still need' : `Only on ${nameB}` }} <span class="text-gray-600">({{ g.onlyB.length }})</span></div>
+            <div v-for="m of g.onlyB" :key="'b' + m" class="pl-2 text-yellow-200">○ {{ m }}</div>
+          </div>
+          <div v-if="g.aLower.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Have it, but lower' : `Lower on ${nameA}` }}</div>
+            <div v-for="m of g.aLower" :key="'l' + m.a" class="pl-2 text-orange-300">◐ {{ m.a }} <span class="text-gray-500">→ {{ m.b }}</span></div>
+          </div>
+          <div v-if="g.both.length || g.aHigher.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Already have' : 'On both' }} <span class="text-gray-600">({{ g.both.length + g.aHigher.length }})</span></div>
+            <div v-for="m of g.both" :key="'s' + m" class="pl-2 text-green-300">✓ {{ m }}</div>
+            <div v-for="m of g.aHigher" :key="'h' + m.a" class="pl-2 text-green-300">✓ {{ m.a }} <span class="text-gray-500">(build: {{ m.b }})</span></div>
+          </div>
+          <div v-if="g.onlyA.length" class="pl-2 mt-0.5">
+            <div class="text-gray-400">{{ charMode ? 'Extra on yours (not in the build)' : `Only on ${nameA}` }}</div>
+            <div v-for="m of g.onlyA" :key="'a' + m" class="pl-2 text-gray-500">· {{ m }}</div>
+          </div>
         </div>
         <div v-if="!result.gear.some(g => !g.same) && !gearAll" class="text-gray-500">Same gear in every slot.</div>
       </div>
@@ -105,6 +150,8 @@ import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobBuildSummary, PobTreeMapNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { compareBuilds, fmtStat, type BuildCompare } from './compare'
+import { samePath } from './my-character'
+import { useMyCharacter } from './use-my-character'
 
 const KEY = 'deathloom.build-compare.v1'
 const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch { return {} } })()
@@ -149,42 +196,36 @@ function requestNames () {
   namesId = (Date.now() & 0x3fffffff) | 1
   Host.sendEvent({ name: 'CLIENT->MAIN::pob-tree-map', payload: { requestId: namesId } })
 }
-onUnmounted(() => { lsBuilds.abort(); lsCompare.abort(); lsTree.abort(); lsManage.abort() })
+onUnmounted(() => { lsBuilds.abort(); lsCompare.abort(); lsTree.abort() })
 
 function next () { lastId = (lastId + 1000) | 0; return lastId }
 Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: next() } })
 
-// your character's copy of the active build: "<build> (my character).xml"
 const active = ref<string | null>(null)
-const MINE = ' (my character)'
-const minePath = computed(() => {
-  const a = active.value ?? ''
-  return a.toLowerCase().endsWith(MINE.toLowerCase() + '.xml') ? a : a.replace(/\.xml$/i, `${MINE}.xml`)
-})
-const planPath = computed(() => {
-  const a = active.value ?? ''
-  const plan = a.replace(new RegExp(`${MINE.replace(/[()]/g, '\\$&')}\\.xml$`, 'i'), '.xml')
-  return builds.value.includes(plan) ? plan : a
-})
-const mineExists = computed(() => builds.value.some(b => b.toLowerCase() === minePath.value.toLowerCase()))
-let manageId = 0
-const lsManage = Host.onEvent('MAIN->CLIENT::pob-manage-build', (e) => {
-  if (e.requestId !== manageId) return
-  busy.value = false
-  if (!e.ok) { error.value = e.error ?? 'Unknown error'; return }
-  if (e.list) builds.value = e.list.builds
-  openPob()
-})
+const SETUP_KEY = 'deathloom.compare-setup.v1'
+const setupPref = ref<boolean | null>((() => { try { const v = localStorage.getItem(SETUP_KEY); return v == null ? null : v === '1' } catch { return null } })())
+// open by default until it's set up, then closed unless you open it
+const setupOpen = computed(() => setupPref.value ?? !mineExists.value)
+function toggleSetup () {
+  setupPref.value = !setupOpen.value
+  try { localStorage.setItem(SETUP_KEY, setupPref.value ? '1' : '0') } catch {}
+}
+// Deathloom fork (Gerhard 19 Nov 2026): "My characters/<character>.xml", linked per character
+const me = useMyCharacter()
+me.refresh()
+const nameDraft = ref('')
+const mineExists = computed(() => !!me.minePath.value)
+const minePath = computed(() => me.minePath.value ?? me.targetPath.value)
+const planPath = me.planPath
 function makeMine () {
-  if (!active.value) return
-  busy.value = true
   error.value = ''
-  manageId = next()
-  const name = minePath.value.split(/[\\/]/).pop()!.replace(/\.xml$/i, '')
-  Host.sendEvent({ name: 'CLIENT->MAIN::pob-manage-build', payload: { requestId: manageId, op: 'duplicate', path: active.value, name } })
+  me.makeFile(() => {
+    Host.sendEvent({ name: 'CLIENT->MAIN::pob-builds', payload: { requestId: next() } })
+    openPob()
+  })
 }
 function openPob () {
-  Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob' } })
+  Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-pob', build: mineExists.value ? me.minePath.value ?? undefined : undefined } })
 }
 function compareMine () {
   // left = your character, right = the build you follow: green + = your upgrades
@@ -199,7 +240,7 @@ const ranB = ref('')
 function run () {
   // your character always on the left (blue), whatever order the pickers are in,
   // so green + is always what the build has that you don't (Gerhard 17 Nov)
-  const isMine = (p: string) => mineExists.value && p.toLowerCase() === minePath.value.toLowerCase()
+  const isMine = (p: string) => mineExists.value && samePath(p, minePath.value)
   if (isMine(pathB.value) && !isMine(pathA.value)) [pathA.value, pathB.value] = [pathB.value, pathA.value]
   ranA.value = pathA.value
   ranB.value = pathB.value
@@ -211,11 +252,13 @@ function run () {
 // names instead of A / B: "Your character", "Build you follow", or the file name
 function sideName (p: string) {
   if (!p) return ''
-  if (p.toLowerCase() === minePath.value.toLowerCase() && mineExists.value) return 'Your character'
-  if (p === planPath.value && mineExists.value) return 'Build you follow'
+  if (mineExists.value && samePath(p, minePath.value)) return 'Your character'
+  if (mineExists.value && samePath(p, planPath.value)) return 'Build you follow'
   return label(p).split('/').pop() ?? p
 }
 const nameA = computed(() => sideName(ranA.value))
+// your character on the left: word it as "still need" / "already have"
+const charMode = computed(() => nameA.value === 'Your character')
 const nameB = computed(() => sideName(ranB.value))
 const label = (p: string) => p.replace(/\.xml$/i, '').replace(/\\/g, '/')
 function who (s: PobBuildSummary) {

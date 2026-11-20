@@ -7,16 +7,16 @@
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t shrink-0">
       <span class="text-gray-500 shrink-0"><i class="fas fa-people-carry mr-1" />Friends' board</span>
       <div class="flex gap-px shrink-0">
-        <button v-for="k of KINDS" :key="k.key" class="px-2 rounded" :title="k.hint"
-          :class="tab === k.key ? 'bg-gray-700 text-gray-100' : 'text-gray-500 hover:text-gray-200'"
+        <button v-for="k of KINDS" :key="k.key" class="ui-tab" :title="k.hint"
+          :class="{ 'ui-tab-on': tab === k.key }"
           @click="tab = k.key"><i class="fas mr-1" :class="k.icon" />{{ k.label }}<span v-if="count(k.key)" class="text-yellow-400"> {{ count(k.key) }}</span></button>
       </div>
       <label class="text-xs text-gray-400 shrink-0 cursor-pointer" title="Only your own listings">
         <input v-model="onlyMine" type="checkbox" class="mr-1 align-middle">Mine</label>
       <span class="ml-auto text-xs text-gray-500 truncate" :title="statusTitle">{{ statusText }}</span>
-      <button class="text-gray-400 hover:text-gray-100 shrink-0" title="Refresh" :disabled="!!state.busy" @click="refreshBoard">
+      <button class="ui-btn ui-btn-quiet shrink-0" title="Refresh" :disabled="!!state.busy" @click="refreshBoard">
         <i class="fas fa-sync-alt" :class="{ 'fa-spin': state.busy === 'Loading…' }" /></button>
-      <button v-if="state.signedIn" class="px-2 rounded bg-blue-700 hover:bg-blue-600 text-white shrink-0" @click="openForm()">
+      <button v-if="state.signedIn" class="ui-btn ui-btn-primary shrink-0" @click="openForm()">
         <i class="fas fa-plus mr-1" />Post</button>
     </div>
 
@@ -24,7 +24,7 @@
 
     <div v-if="state.signedIn === false" class="p-2 text-gray-400">
       The board uses your GitHub sign-in (the same as build sync). Sign in under
-      Settings → Path of Building → Build sync, then come back here.
+      Build panel → ⋯ → Build sharing (GitHub sync), then come back here.
     </div>
 
     <!-- post form -->
@@ -53,9 +53,9 @@
       </div>
       <div v-if="formProblem" class="text-xs text-yellow-400">{{ formProblem }}</div>
       <div class="flex items-center gap-x-2 pt-1">
-        <button class="px-3 rounded bg-blue-700 hover:bg-blue-600 text-white disabled:opacity-40" :disabled="!!formProblem || !!state.busy" @click="submit">
+        <button class="ui-btn ui-btn-primary" :disabled="!!formProblem || !!state.busy" @click="submit">
           {{ state.busy === 'Posting…' ? 'Posting…' : 'Post to the board' }}</button>
-        <button class="px-2 rounded text-gray-400 hover:text-gray-100" @click="form = null">Cancel</button>
+        <button class="ui-btn ui-btn-quiet" @click="form = null">Cancel</button>
         <span class="ml-auto text-xs text-gray-500">Only your group (POE-Builds members) sees it.</span>
       </div>
     </div>
@@ -77,7 +77,7 @@
           <span :title="`GitHub: ${l.author}`"><i class="fab fa-github mr-0.5" />{{ l.author }}</span>
           <span v-if="l.character" class="text-gray-300">@{{ l.character }}</span>
           <span v-if="l.league" :class="l.league === league ? 'text-gray-500' : 'text-orange-400'" :title="l.league === league ? 'Your league' : 'Another league than yours'">{{ l.league }}</span>
-          <button v-if="l.item" class="text-gray-500 hover:text-gray-200" @click="toggle(l.number)">{{ open.has(l.number) ? 'hide item' : 'item text' }}</button>
+          <button v-if="l.item" class="ui-btn ui-btn-quiet" @click="toggle(l.number)">{{ open.has(l.number) ? 'hide item' : 'item text' }}</button>
         </div>
         <div v-if="l.note" class="text-xs text-gray-300 break-words">"{{ l.note }}"</div>
         <pre v-if="l.item && open.has(l.number)" class="text-xs text-gray-300 bg-gray-950 rounded p-1 mt-1 whitespace-pre-wrap break-words">{{ l.item }}</pre>
@@ -89,29 +89,29 @@
           <span v-if="c.character" class="text-gray-300 shrink-0">@{{ c.character }}</span>
           <span class="truncate text-gray-400" :title="c.text">{{ c.type === 'claim' ? 'wants it' : c.type === 'have' ? 'has one' : '' }}{{ c.text ? ` "${c.text}"` : '' }}</span>
           <template v-if="l.mine && c.character && c.author !== state.login">
-            <button class="ml-auto bg-gray-700 hover:bg-gray-600 rounded px-1 shrink-0" :title="replyWhisper(l, c.character)"
+            <button class="ml-auto ui-btn shrink-0" :title="replyWhisper(l, c.character)"
               @click="chat(`${l.number}-${i}-w`, replyWhisper(l, c.character))"><i v-if="pressed === `${l.number}-${i}-w`" class="fas fa-check text-green-400" /> Whisper</button>
-            <button v-if="l.kind !== 'wanted'" class="bg-gray-700 hover:bg-gray-600 rounded px-1 shrink-0" :title="inviteCommand(c.character)"
+            <button v-if="l.kind !== 'wanted'" class="ui-btn shrink-0" :title="inviteCommand(c.character)"
               @click="chat(`${l.number}-${i}-i`, inviteCommand(c.character))"><i v-if="pressed === `${l.number}-${i}-i`" class="fas fa-check text-green-400" /> Invite</button>
           </template>
         </div>
 
         <div class="flex flex-wrap items-center gap-1 pt-1">
           <template v-if="!l.mine">
-            <button v-if="l.kind === 'give'" class="bg-green-800 hover:bg-green-700 rounded px-1.5 disabled:opacity-40"
+            <button v-if="l.kind === 'give'" class="ui-btn ui-btn-primary"
               :disabled="hasMine(l, 'claim') || !!state.busy || !myCharacter" :title="myCharacter ? 'Tell the poster you want it (shows on the listing)' : 'Fill in your character first (Post → Whisper me as)'"
               @click="react(l, 'claim')">{{ hasMine(l, 'claim') ? 'Claimed' : 'Claim' }}</button>
-            <button v-if="l.kind === 'wanted'" class="bg-green-800 hover:bg-green-700 rounded px-1.5 disabled:opacity-40"
+            <button v-if="l.kind === 'wanted'" class="ui-btn ui-btn-primary"
               :disabled="hasMine(l, 'have') || !!state.busy || !myCharacter" :title="myCharacter ? 'Tell them you have one (shows on the listing)' : 'Fill in your character first (Post → Whisper me as)'"
               @click="react(l, 'have')">{{ hasMine(l, 'have') ? 'Offered' : 'I have one' }}</button>
-            <button v-if="whisperFor(l)" class="bg-gray-700 hover:bg-gray-600 rounded px-1.5" :title="whisperFor(l)"
+            <button v-if="whisperFor(l)" class="ui-btn" :title="whisperFor(l)"
               @click="chat(`${l.number}-w`, whisperFor(l)!)"><i v-if="pressed === `${l.number}-w`" class="fas fa-check text-green-400" /> Whisper</button>
           </template>
           <template v-else>
-            <button class="bg-gray-700 hover:bg-gray-600 rounded px-1.5" :disabled="!!state.busy"
+            <button class="ui-btn" :disabled="!!state.busy"
               :title="l.kind === 'wanted' ? 'Got it: take it off the board' : 'Handed over / sold: take it off the board'"
               @click="close(l, 'completed')">{{ l.kind === 'wanted' ? 'Got it' : l.kind === 'sell' ? 'Sold' : 'Given' }}</button>
-            <button class="rounded px-1.5" :class="confirmRemove === l.number ? 'bg-red-700 text-white' : 'text-gray-400 hover:text-gray-100'"
+            <button class="ui-btn" :class="confirmRemove === l.number ? 'ui-btn-danger' : 'ui-btn-quiet'"
               :disabled="!!state.busy" @click="close(l, 'not_planned')">{{ confirmRemove === l.number ? 'Remove? Click again' : 'Remove' }}</button>
           </template>
           <span class="ml-auto text-xs text-gray-600">#{{ l.number }}</span>

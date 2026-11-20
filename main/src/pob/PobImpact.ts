@@ -13,7 +13,7 @@ import { applyBuildOp, type BuildFileOp } from './BuildFiles'
 import { parseBuildXml } from './build-xml'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
-import type { PobEditOp, PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan, PobBuildSummary } from '../../../ipc/types'
+import type { PobEditOp, PobConfig, PobBuildInfo, PobImpactResult, PobEquippedInfo, PobGearItem, PobLoadoutChoice, PobBuildList, PobLoadouts, PobSocketGroup, PobSocketedItem, PobCharacterEntry, PobTreeSummary, PobTreeAlloc, PobTreeMapLayout, PobPlan, PobBuildSummary, PobSetSelection } from '../../../ipc/types'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import { CharacterBuilds, scanLog, type LogScanState } from './ActiveCharacter'
@@ -24,6 +24,9 @@ import { isCodeError } from '../ErrorReporter'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
+// Deathloom fork (Gerhard 19 Nov 2026): loading a big build right after PoB starts (cold
+// data caches) can take well over 30 s, which showed as an error in the app
+const LOAD_TIMEOUT = 150_000
 const REPLY_PREFIX = '@pob '
 
 interface Pending {
@@ -100,13 +103,13 @@ export class PobImpact {
     // Deathloom fork: price checks in quick succession: only the newest waiting item is
     // calculated (each one is a full PoB calculation; the overlay shows only the last)
     let impactSeq = 0
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear }) => {
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-impact', ({ requestId, itemText, refreshGear, myCharacter }) => {
       const send = this.server.replyTo()
       const seq = ++impactSeq
       this.queue = this.queue
         .then(async () => {
           if (seq !== impactSeq) throw new Error('A newer item is being checked.')
-          return await this.impact(itemText, refreshGear === true)
+          return await this.impact(itemText, refreshGear === true, myCharacter)
         })
         .then(({ build, result }) => {
           send({
@@ -140,10 +143,10 @@ export class PobImpact {
       this.reply('MAIN->CLIENT::pob-tree-map', requestId, async () =>
         await this.treeMap(refreshGear === true, typeof haveVersion === 'string' ? haveVersion.slice(0, 32) : undefined))
     })
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-compare', ({ requestId, a, b }) => {
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-compare', ({ requestId, a, b, selA, selB }) => {
       this.reply('MAIN->CLIENT::pob-compare', requestId, async () => ({
-        a: await this.readBuildSummary(a),
-        b: await this.readBuildSummary(b)
+        a: await this.readBuildSummary(a, selA),
+        b: await this.readBuildSummary(b, selB)
       }))
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-timeless', (req) => {
@@ -265,6 +268,27 @@ export class PobImpact {
       // overlay started (maybe while already playing): fill the list, pick the last played
       this.scheduleResolve(1500, false)
     }
+    if (cfg?.enabled && (!same || !this.warmedUp)) this.warmUp()
+  }
+
+  // Deathloom fork (Gerhard 19 Nov 2026): start the headless PoB and load the active build
+  // in the background when Orbhoarder starts (or PoB settings change), so the first build
+  // panel / price check doesn't wait for a cold start. Runs in the queue like any request;
+  // failures are only logged (the next real request tries again and shows the error).
+  private warmedUp = false
+  private warmTimer: ReturnType<typeof setTimeout> | null = null
+  private warmUp () {
+    this.warmedUp = true
+    if (this.warmTimer) clearTimeout(this.warmTimer)
+    this.warmTimer = setTimeout(() => {
+      this.warmTimer = null
+      if (!this.cfg?.enabled) return
+      const t0 = Date.now()
+      this.queue = this.queue
+        .then(async () => { await this.ensureBuild() })
+        .then(() => { this.logger.write(`info [PoB] warmed up in ${Math.round((Date.now() - t0) / 1000)} s`) })
+        .catch((err: Error) => { this.logger.write(`warn [PoB] warm-up: ${err.message}`) })
+    }, 4000)
   }
 
   private liveTarget () {
@@ -424,6 +448,7 @@ export class PobImpact {
     this.appliedLoadout = ''
     this.sentGearAt = 0
     this.pobHasGear = false
+    this.fileGearKey = ''
     this.stdoutBuf = ''
     for (const p of this.pending.values()) {
       clearTimeout(p.timer)
@@ -603,6 +628,7 @@ export class PobImpact {
       if (this.pobHasGear && this.sentGearAt === 0) {
         await this.call('clearEquipped')
         this.pobHasGear = false
+        this.fileGearKey = ''
       }
     }
     if (!this.liveTarget()) {
@@ -681,12 +707,13 @@ export class PobImpact {
     // Going back to PoB's own sets needs a fresh load
     if (this.appliedLoadout && !choice) this.loadedKey = null
     if (key !== this.loadedKey || !this.loadedBuild) {
-      const reply = await this.call('load', { path: buildPath })
+      const reply = await this.call('load', { path: buildPath }, LOAD_TIMEOUT)
       this.loadedKey = key
       this.loadedBuild = reply.build as PobBuildInfo
       // Loading drops PoB's live gear set
       this.sentGearAt = 0
       this.pobHasGear = false
+      this.fileGearKey = ''
       this.appliedLoadout = ''
       this.loadedRel = rel
       this.logger.write(`info [PoB] loaded build "${this.loadedBuild.name}"`)
@@ -703,6 +730,7 @@ export class PobImpact {
       // setLoadout drops PoB's live gear set
       this.sentGearAt = 0
       this.pobHasGear = false
+      this.fileGearKey = ''
     }
     return this.loadedBuild
   }
@@ -880,7 +908,7 @@ export class PobImpact {
 
   // Deathloom fork (idea 6): one build of the player folder, read from the file
   // (no PoB needed). Only .xml files inside the player folder, at most 8 MB.
-  private async readBuildSummary (rel: unknown): Promise<PobBuildSummary> {
+  private async readBuildSummary (rel: unknown, sel?: PobSetSelection): Promise<PobBuildSummary> {
     if (typeof rel !== 'string' || !rel.toLowerCase().endsWith('.xml')) throw new Error('Pick two builds')
     const root = path.resolve(this.playerDir())
     const full = path.resolve(root, rel)
@@ -888,7 +916,8 @@ export class PobImpact {
     const st = await fs.stat(full).catch(() => null)
     if (!st?.isFile()) throw new Error(`Build not found: ${path.basename(rel)}`)
     if (st.size > 8 * 1024 * 1024) throw new Error(`Build file too big: ${path.basename(rel)}`)
-    return parseBuildXml(await fs.readFile(full, 'utf8'))
+    const clean = (n: unknown) => (typeof n === 'number' && Number.isInteger(n) && n > 0 && n < 1000) ? n : undefined
+    return parseBuildXml(await fs.readFile(full, 'utf8'), sel ? { spec: clean(sel.spec), itemSet: clean(sel.itemSet), skillSet: clean(sel.skillSet) } : {})
   }
 
   // All PoB builds in the player's folder (relative paths), newest folders first as PoB sorts them
@@ -918,7 +947,7 @@ export class PobImpact {
       if (op.op === 'newLoadout') return { ...op, spec: op.spec ?? active.spec, itemSet: op.itemSet ?? active.itemSet, skillSet: op.skillSet ?? active.skillSet }
       return op
     })
-    const reply = await this.call('edit', { path: buildPath, ops: filled })
+    const reply = await this.call('edit', { path: buildPath, ops: filled }, LOAD_TIMEOUT)
     const xml = reply.xml
     if (typeof xml !== 'string' || !xml.includes('<PathOfBuilding')) throw new Error("Path of Building didn't return the build")
     // backup of the file as it was (one per build, replaced on each edit)
@@ -1221,16 +1250,71 @@ export class PobImpact {
     }
   }
 
-  async impact (itemText: string, refreshGear = false): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
+  // Deathloom fork (19 Nov 2026): "vs character" from your character's file. Path of Building's
+  // own Import character filled it (the player clicked it); Orbhoarder only reads the saved
+  // file, so no GGG character pages are called. Sent again when the file or the build changes.
+  private fileGearKey = ''
+  private fileGearInfo: { name: string, mtime: number } | null = null
+  private async syncFileGear (my?: { name: string, file?: string }): Promise<{ error?: string }> {
+    const clear = async () => {
+      if (this.fileGearKey) {
+        await this.call('clearEquipped')
+        this.pobHasGear = false
+        this.fileGearKey = ''
+        this.fileGearInfo = null
+      }
+    }
+    const setUp = 'To compare with your character, set up your character file once: Build panel → Gems → Equipped from: my character.'
+    if (!my || typeof my.name !== 'string' || !my.name) { await clear(); return { error: setUp } }
+    const root = path.resolve(this.playerDir())
+    const inRoot = (rel: unknown) => {
+      if (typeof rel !== 'string' || !rel.toLowerCase().endsWith('.xml')) return null
+      const full = path.resolve(root, rel)
+      return full.startsWith(root + path.sep) ? full : null
+    }
+    const safe = my.name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').replace(/[. ]+$/, '').trim()
+    let file: string | null = null
+    let mtime = 0
+    for (const cand of [inRoot(my.file), inRoot(path.join('My characters', `${safe}.xml`))]) {
+      if (!cand) continue
+      const st = await fs.stat(cand).catch(() => null)
+      if (st?.isFile()) { file = cand; mtime = st.mtimeMs; break }
+    }
+    if (!file) { await clear(); return { error: setUp } }
+    const key = `${file}|${mtime}`
+    if (key !== this.fileGearKey) {
+      try {
+        await this.call('equipped', { file, name: my.name })
+      } catch (err) {
+        this.fileGearKey = ''
+        this.fileGearInfo = null
+        this.pobHasGear = false
+        const msg = (err as Error).message.replace(/^.*ImpactServer\.lua:\d+: /, '')
+        // PoB from before the fork's character-file support (#42): its update waits until the PoB window is closed
+        if (/equipped needs 'items'/.test(msg)) {
+          return { error: 'Path of Building needs an update for "vs character". Close the Path of Building window: Orbhoarder updates it within a minute, then price check again.' }
+        }
+        return { error: msg }
+      }
+      this.fileGearKey = key
+      this.fileGearInfo = { name: my.name, mtime }
+      this.pobHasGear = true
+    }
+    return {}
+  }
+
+  async impact (itemText: string, refreshGear = false, myCharacter?: { name: string, file?: string }): Promise<{ build: PobBuildInfo, result: PobImpactResult }> {
     await this.ensureBuild()
-    const live = await this.syncLiveGear(refreshGear)
+    // live gear from GGG's pages is off (LIVE_CHARACTER_DATA): use your character file
+    const live = this.liveTarget() ? await this.syncLiveGear(refreshGear) : await this.syncFileGear(myCharacter)
     const reply = await this.call('impact', { item: itemText })
     const result: PobImpactResult = { item: reply.item, compares: reply.compares, lines: reply.lines }
     if (reply.equipped) {
       const info = reply.equipped.info as PobEquippedInfo | undefined
       if (info) {
-        info.fetchedAt = this.sentGearAt
-        info.passivesError = this.passivesError
+        info.fetchedAt = this.fileGearKey ? this.fileGearInfo?.mtime : this.sentGearAt
+        info.passivesError = this.fileGearKey ? undefined : this.passivesError
+        if (this.fileGearKey) info.fromFile = true
         if (!Array.isArray(info.skipped)) info.skipped = []
         if (!Array.isArray(info.summary)) info.summary = []
       }

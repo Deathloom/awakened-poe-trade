@@ -9,7 +9,7 @@
         <button v-for="m of MODES" :key="m.id" class="mk-tab" :class="{ 'mk-tab-on': mode === m.id }" :title="m.tip"
           @click="mode = m.id">{{ m.label }}</button>
       </div>
-      <button class="ml-auto text-gray-500 hover:text-gray-200" title="Reload prices from poe.ninja" :disabled="ninja.isLoading.value"
+      <button class="ui-btn ui-btn-quiet ml-auto" title="Reload prices from poe.ninja" :disabled="ninja.isLoading.value"
         @click="ninja.queuePricesFetch()"><i class="fas fa-sync-alt" :class="{ 'fa-spin': ninja.isLoading.value }" /></button>
     </div>
     <div class="flex flex-wrap items-center gap-2 px-2 py-1 shrink-0 text-xs">
@@ -22,8 +22,12 @@
       </label>
     </div>
     <div v-if="mode === 'outlook'" class="px-2 pb-1 text-xs text-gray-500 shrink-0">
-      Items whose price climbed steadily this week, with where it lands in 3 days if the trend holds.
-      It's a projection from poe.ninja's last 7 days, not a promise: patches, streamers and big sellers change prices fast.
+      Steady climbers this week and where they land in 3 days if the trend holds. A projection from poe.ninja's
+      last 7 days, not a promise. Items moving more than {{ WILD_PCT }}% are too fast to call: see Rising.
+      <div v-if="backtest" class="mt-0.5 text-gray-300" title="Projected from the days up to 3 days ago, compared with what the price did since. Only the items this tab would have listed then.">
+        <i class="fas fa-vial mr-1" />Tried on this week: {{ backtest.rose }} of {{ backtest.n }} picks really rose;
+        {{ backtest.within }} landed within 15 points of the projection; typical miss {{ Math.round(backtest.medianMiss) }} points.</div>
+      <div v-else-if="!shortHistory" class="mt-0.5 text-gray-500">Not enough picks in this group to check the outlook against this week.</div>
     </div>
     <div class="overflow-y-auto min-h-0 flex-1 px-1">
       <div v-if="shortHistory && mode !== 'prices'" class="px-1 pb-1 text-xs text-orange-300">
@@ -33,7 +37,7 @@
         {{ ninja.isLoading.value || !all.length ? 'Loading prices from poe.ninja…' : (mode === 'outlook' && shortHistory ? 'No outlook yet (not enough days of prices).' : 'Nothing matches.') }}
       </div>
       <table v-else class="w-full text-xs">
-        <thead class="text-gray-500 sticky top-0 bg-gray-800">
+        <thead class="text-gray-500 sticky top-0 z-10 mo-head">
           <tr>
             <th class="text-left font-normal py-0.5">Item</th>
             <th class="text-right font-normal">Price</th>
@@ -53,7 +57,7 @@
             <td class="text-right whitespace-nowrap pr-1" :class="pctClass(r.trend?.change)">{{ pct(r.trend?.change) }}</td>
             <td v-if="mode === 'outlook'" class="text-right whitespace-nowrap pr-1" :class="pctClass(r.trend?.outlook)"
               :title="r.trend ? `Steadiness ${Math.round(r.trend.fit * 100)}% · last 2 days ${pct(r.trend.recent)}` : ''">
-              {{ pct(r.trend?.outlook) }}</td>
+              {{ r.trend?.wild ? 'too fast' : pct(r.trend?.outlook) }}</td>
             <td class="px-1"><svg v-if="r.trend" width="60" height="16" class="block">
               <polyline :points="spark(r.trend.series)" fill="none" stroke-width="1.2"
                 :stroke="(r.trend.change ?? 0) >= 0 ? '#48bb78' : '#f56565'" /></svg></td>
@@ -61,7 +65,7 @@
               <button class="px-1" :class="isWatched(r.watchKey) ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'"
                 :title="isWatched(r.watchKey) ? 'Stop watching' : 'Watch (left panel)'" @click="watchRow(r)">
                 <i :class="isWatched(r.watchKey) ? 'fas fa-star' : 'far fa-star'" /></button>
-              <button class="px-1 text-gray-500 hover:text-gray-200" title="Open on poe.ninja" @click="open(r.item.url)">
+              <button class="ui-btn ui-btn-quiet px-1" title="Open on poe.ninja" @click="open(r.item.url)">
                 <i class="fas fa-external-link-alt" /></button>
             </td>
           </tr>
@@ -78,7 +82,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { usePoeninja, type NinjaListing } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
 import { isWatched, toggleWatch, watchKey } from './watchlist'
-import { MARKET_GROUPS, OUTLOOK_MIN_DAYS, trendOf, type Trend } from './market-trends'
+import { MARKET_GROUPS, OUTLOOK_MIN_DAYS, WILD_PCT, trendOf, isSteadyClimber, backtestSummary, type Trend } from './market-trends'
 
 type Mode = 'prices' | 'rising' | 'falling' | 'outlook'
 const MODES: Array<{ id: Mode, label: string, tip: string }> = [
@@ -125,6 +129,15 @@ const all = computed<Row[]>(() => {
   }))
 })
 
+// Deathloom fork (20 Nov 2026): how the outlook did on this week's own prices, for
+// the picked group and minimum price (shown above the Outlook list)
+const backtest = computed(() => {
+  if (mode.value !== 'outlook') return null
+  const g = MARKET_GROUPS.find(x => x.id === group.value) ?? MARKET_GROUPS[0]
+  const min = Number(minChaos.value) || 0
+  return backtestSummary(all.value.filter(r => g.match(r.item.category) && r.item.chaos >= min).map(r => r.item))
+})
+
 const filtered = computed(() => {
   const g = MARKET_GROUPS.find(x => x.id === group.value) ?? MARKET_GROUPS[0]
   const q = search.value.trim().toLowerCase()
@@ -143,7 +156,7 @@ const filtered = computed(() => {
       break
     case 'outlook':
       // steady climbers: rising, a good fit and not just one spike
-      list = list.filter(r => r.trend && r.trend.outlook > 1 && r.trend.fit >= 0.75 && r.trend.slope > 0)
+      list = list.filter(r => r.trend && isSteadyClimber(r.trend))
         .sort((a, b) => b.trend!.outlook - a.trend!.outlook)
       break
   }
@@ -184,6 +197,8 @@ function open (url: string) { window.open(url) }
 </script>
 
 <style lang="postcss" scoped>
+/* sticky header: cells need their own background or the first row shows through */
+.mo-head th { background-color: rgb(var(--g-800)); }
 .mk-tab { @apply px-2 rounded text-xs text-gray-400 bg-gray-800; }
 .mk-tab:hover { @apply text-gray-100; }
 .mk-tab-on { @apply bg-gray-700 text-gray-100; }

@@ -14,7 +14,7 @@ export interface AllPanelDef {
   id: AllPanelId
   label: string
   icon: string
-  // panels with a "Orbhoarder window" toggle in Settings → Where panels show
+  // panels with a "Orbhoarder window" toggle in Settings → Panels → Where panels show
   settingsKey?: PanelKey
 }
 
@@ -191,7 +191,7 @@ export function panelDef (id: AllPanelId) {
   return ALL_PANELS.find(p => p.id === id)!
 }
 
-// switched off for the window in Settings → Where panels show
+// switched off for the window in Settings → Panels → Where panels show
 export function shownBySettings (id: AllPanelId) {
   const k = panelDef(id).settingsKey
   return k ? inWindow(k) : true
@@ -265,7 +265,7 @@ export function resize (sizes: number[], i: number, j: number, deltaPx: number, 
   sizes[j] -= d
 }
 
-// Settings → Where panels show → Orbhoarder window switched back on: put the
+// Settings → Panels → Where panels show → Orbhoarder window switched back on: put the
 // panel back on the All tab if it was taken off
 export function useSettingsSync () {
   for (const p of ALL_PANELS) {

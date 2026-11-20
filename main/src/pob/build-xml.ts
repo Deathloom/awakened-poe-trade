@@ -2,7 +2,7 @@
 // running PoB, for "Compare builds". Read-only, tolerant: anything it can't
 // read is left out. Pure (no fs), so it's unit-tested in tests/.
 
-import type { PobBuildSummary } from '../../../ipc/types'
+import type { PobBuildSummary, PobSetSelection } from '../../../ipc/types'
 
 const ENTITIES: Record<string, string> = { quot: '"', amp: '&', lt: '<', gt: '>', apos: "'" }
 
@@ -40,7 +40,7 @@ function blocks (xml: string, name: string): Array<{ attrs: Record<string, strin
 const META = /^[A-Za-z][\w ']*:\s*\S/
 const FLAGS = /^(Shaper|Elder|Crusader|Redeemer|Hunter|Warlord|Synthesised|Fractured|Searing Exarch|Eater of Worlds) Item$|^(Corrupted|Mirrored|Split|Unidentified|Foulborn)$/i
 
-export interface ParsedItemText { rarity: string, name: string, base: string, mods: string[] }
+export interface ParsedItemText { rarity: string, name: string, base: string, mods: string[], sockets?: string }
 
 export function parseItemText (text: string): ParsedItemText {
   const lines = decodeXml(text).split(/\r?\n/).map(l => l.trim()).filter(Boolean)
@@ -52,19 +52,21 @@ export function parseItemText (text: string): ParsedItemText {
   const name = rest[0] ?? ''
   const base = named ? (rest[1] ?? '') : name
   const mods: string[] = []
+  // Deathloom fork: sockets for the Gems tab ("Sockets: R-G-B B")
+  const sockets = lines.find(l => /^Sockets:/i.test(l))?.replace(/^Sockets:\s*/i, '').trim() || undefined
   for (const l of rest.slice(named ? 2 : 1)) {
     if (META.test(l) || FLAGS.test(l)) continue
     // PoB tags: {crafted}{range:0.5}{variant:1,2}{tags:...}
     const t = l.replace(/\{[^}]*\}/g, '').trim()
     if (t && !mods.includes(t)) mods.push(t)
   }
-  return { rarity: rarity ? rarity[0].toUpperCase() + rarity.slice(1).toLowerCase() : '', name, base, mods }
+  return { rarity: rarity ? rarity[0].toUpperCase() + rarity.slice(1).toLowerCase() : '', name, base, mods, ...(sockets ? { sockets } : {}) }
 }
 
 const MAX_ITEMS = 60
 const MAX_GROUPS = 60
 
-export function parseBuildXml (xml: string): PobBuildSummary {
+export function parseBuildXml (xml: string, sel: PobSetSelection = {}): PobBuildSummary {
   if (!/<PathOfBuilding[\s>]/.test(xml)) throw new Error('Not a Path of Building build file')
   const b = block(xml, 'Build')
   const stats: Record<string, number> = {}
@@ -75,11 +77,14 @@ export function parseBuildXml (xml: string): PobBuildSummary {
 
   // Gems: active skill set (older builds: skills straight under <Skills>)
   const skillsEl = block(xml, 'Skills')
+  let skillTitle: string | undefined
   let skillXml = skillsEl?.body ?? ''
   const sets = blocks(skillXml, 'SkillSet')
   if (sets.length) {
-    const want = skillsEl?.attrs.activeSkillSet ?? '1'
-    skillXml = (sets.find(s => s.attrs.id === want) ?? sets[0]).body
+    const want = sel.skillSet != null ? String(sel.skillSet) : (skillsEl?.attrs.activeSkillSet ?? '1')
+    const chosen = sets.find(s => s.attrs.id === want) ?? sets[0]
+    skillXml = chosen.body
+    skillTitle = chosen.attrs.title || undefined
   }
   const groups: PobBuildSummary['groups'] = []
   for (const sk of blocks(skillXml, 'Skill').slice(0, MAX_GROUPS)) {
@@ -98,7 +103,7 @@ export function parseBuildXml (xml: string): PobBuildSummary {
   // Tree: active spec
   const treeEl = block(xml, 'Tree')
   const specs = blocks(treeEl?.body ?? '', 'Spec')
-  const spec = specs[(Number(treeEl?.attrs.activeSpec) || 1) - 1] ?? specs[0]
+  const spec = specs[(sel.spec ?? (Number(treeEl?.attrs.activeSpec) || 1)) - 1] ?? specs[0]
   const nodes = (spec?.attrs.nodes ?? '').split(',').map(n => Number(n)).filter(n => Number.isInteger(n) && n > 0)
   const masteries: Record<string, string> = {}
   for (const m of (spec?.attrs.masteryEffects ?? '').matchAll(/\{(\d+),(\d+)\}/g)) masteries[m[1]] = m[2]
@@ -110,7 +115,8 @@ export function parseBuildXml (xml: string): PobBuildSummary {
     if (it.attrs.id) itemText.set(it.attrs.id, it.body.replace(/<ModRange[^>]*\/>/g, ''))
   }
   const itemSets = blocks(itemsEl?.body ?? '', 'ItemSet')
-  const set = itemSets.find(s => s.attrs.id === itemsEl?.attrs.activeItemSet) ?? itemSets[0]
+  const wantSet = sel.itemSet != null ? String(sel.itemSet) : itemsEl?.attrs.activeItemSet
+  const set = itemSets.find(s => s.attrs.id === wantSet) ?? itemSets[0]
   const slotEls = set ? blocks(set.body, 'Slot') : blocks(itemsEl?.body ?? '', 'Slot')
   const items: PobBuildSummary['items'] = []
   for (const s of slotEls) {
@@ -128,6 +134,14 @@ export function parseBuildXml (xml: string): PobBuildSummary {
     stats,
     groups,
     items,
-    tree: { version: spec?.attrs.treeVersion || undefined, nodes, masteries }
+    tree: {
+      version: spec?.attrs.treeVersion || undefined,
+      nodes,
+      masteries,
+      title: spec?.attrs.title || undefined,
+      classId: spec?.attrs.classId != null ? Number(spec.attrs.classId) : undefined,
+      ascendClassId: spec?.attrs.ascendClassId != null ? Number(spec.attrs.ascendClassId) : undefined
+    },
+    sets: { spec: spec?.attrs.title || undefined, itemSet: set?.attrs.title || undefined, skillSet: skillTitle }
   }
 }

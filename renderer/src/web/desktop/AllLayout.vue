@@ -7,6 +7,7 @@
          taken (game log) and the next passives; the tree map follows it. Without the
          Levelling guide panel (Mapping layout) it runs hidden so the tree still updates. -->
     <div v-if="needPlanner" class="hidden"><PobNext /></div>
+    <mapping-loadout-prompt />
     <div v-if="editing" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 mx-2 mt-2 rounded bg-blue-900 text-sm shrink-0">
       <i class="fas fa-arrows-alt text-blue-300" />
       <span class="text-blue-100">Drag a panel by its bar to move it. Drop it on the left or right edge of a column for a new column.</span>
@@ -48,7 +49,7 @@
                 <div class="relative flex-1 min-h-0 rounded-b border border-dashed border-gray-600 overflow-hidden">
                   <div class="absolute inset-0 z-10 bg-gray-900/60" />
                   <div v-if="!shownBySettings(cols[c].items[r].id)" class="absolute inset-0 z-20 flex items-center justify-center p-2 text-center text-gray-400 text-sm">
-                    Switched off for the window in Settings → Path of Building → Where panels show
+                    Switched off for the window in Settings → Panels → Where panels show
                   </div>
                   <!-- drop: top half before, bottom half after -->
                   <div v-if="dragId && dragId !== cols[c].items[r].id" class="absolute inset-x-0 top-0 h-1/2 z-30"
@@ -67,7 +68,7 @@
       </template>
       <div v-if="!visCols.length" class="m-auto text-gray-500 text-center">
         No panels to show. Use <b>Edit layout</b> → Add panel, or switch panels back on in
-        Settings → Path of Building → Where panels show.
+        Settings → Panels → Where panels show.
       </div>
     </div>
   </div>
@@ -80,6 +81,7 @@ import PobGearBody from '../pob/PobGearBody.vue'
 import PobTreeMap from '../pob/PobTreeMap.vue'
 import LevellingBody from './LevellingBody.vue'
 import PobNext from '../pob/PobNext.vue'
+import MappingLoadoutPrompt from './MappingLoadoutPrompt.vue'
 import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
 import MoneyToolsBody from '../money/MoneyToolsBody.vue'

@@ -1,7 +1,7 @@
 // Deathloom fork: gems menu. Compares the build's socket groups with the
 // character's (both come from PoB: the build file and the live character).
 
-import type { PobGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
+import type { PobBuildSummary, PobGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
 
 export type GemStatus = 'ok' | 'low' | 'missing' | 'unknown'
 
@@ -303,4 +303,20 @@ export function bySlot (
     }
   })
   return { slots, hidden }
+}
+
+// Deathloom fork (Gerhard 19 Nov 2026): your character from their file
+// ("My characters/<name>.xml", my-character.ts) that Path of Building imported, in the same shape as PoB's live gems.
+// Orbhoarder only reads the saved file; PoB did the import.
+export function liveFromSummary (s: PobBuildSummary): { groups: PobSocketGroup[], items: PobSocketedItem[] } {
+  return {
+    groups: s.groups.map((g, index) => ({
+      index,
+      label: g.label,
+      slot: g.slot,
+      enabled: g.enabled,
+      gems: g.gems.map(x => ({ name: x.name, level: x.level, quality: x.quality, enabled: x.enabled, support: false }))
+    })),
+    items: s.items.filter(i => i.sockets).map(i => ({ slot: i.slot, name: i.name, baseName: i.base, sockets: i.sockets! }))
+  }
 }

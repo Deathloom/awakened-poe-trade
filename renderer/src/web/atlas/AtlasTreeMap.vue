@@ -11,25 +11,19 @@
         </optgroup>
       </select>
       <i v-if="synced" class="fas fa-cloud text-gray-600" title="Atlas builds are saved in your builds folder (Atlas) and sync with your builds: friends who can see your builds see them too" />
-      <button class="text-gray-400 hover:text-gray-100" title="Add an atlas build from a link or code" @click="importOpen = !importOpen; genOpen = false"><i class="fas fa-file-import" /></button>
-      <button class="hover:text-gray-100" :class="genOpen ? 'text-yellow-300' : 'text-gray-400'" title="Ready-made atlas tree: pick the content you farm"
-        @click="genOpen = !genOpen; importOpen = false"><i class="fas fa-magic" /></button>
       <template v-if="activeBuild && renaming">
         <input v-model="renameText" class="w-36 px-1 rounded bg-gray-800" spellcheck="false" @keydown.enter="rename" @keydown.esc="renaming = false">
-        <button class="text-green-400" title="Save the name" @click="rename"><i class="fas fa-check" /></button>
+        <button class="ui-btn ui-btn-primary" title="Save the name" @click="rename">Save</button>
+        <button class="ui-btn ui-btn-quiet" @click="renaming = false">Cancel</button>
       </template>
       <template v-else-if="activeBuild && deleting">
         <span class="text-red-300">Delete "{{ activeBuild.name }}"{{ synced ? '' : ' from this PC' }}?</span>
-        <button class="px-2 rounded bg-red-700 hover:bg-red-600 text-white" @click="remove">Delete</button>
-        <button class="text-gray-400 hover:text-gray-100" @click="deleting = false">Keep</button>
+        <button class="ui-btn ui-btn-danger" @click="remove">Delete</button>
+        <button class="ui-btn" @click="deleting = false">Keep</button>
       </template>
       <template v-else-if="activeBuild">
         <span v-if="!activeBuild.own" class="text-gray-500" :title="`${activeBuild.owner}'s atlas build (from build sync): read-only, copy it to change it`"><i class="fas fa-user-friends" /> {{ activeBuild.owner }}</span>
-        <button v-if="!activeBuild.own" class="text-gray-400 hover:text-gray-100" title="Copy to your atlas builds (then you can edit it)" @click="copyToMine(activeBuild.id)"><i class="fas fa-copy" /></button>
-        <button v-if="activeBuild.own" class="text-gray-400 hover:text-gray-100" title="Rename" @click="renameText = activeBuild.name; renaming = true"><i class="fas fa-i-cursor" /></button>
-        <button class="text-gray-400 hover:text-gray-100" title="Copy the atlas tree link (share it with friends)" @click="copyLink"><i class="fas" :class="copied ? 'fa-check text-green-400' : 'fa-link'" /></button>
-        <button class="text-gray-400 hover:text-gray-100" title="Open on pathofexile.com (your browser)" @click="openSite"><i class="fas fa-external-link-alt" /></button>
-        <button v-if="activeBuild.own" class="text-gray-400 hover:text-red-400" :title="synced ? 'Delete this atlas build (moves to Deleted builds; the next sync removes it on GitHub)' : 'Delete this atlas build (from this PC)'" @click="deleting = true"><i class="fas fa-trash" /></button>
+        <span v-if="copied" class="text-green-400"><i class="fas fa-check" /> Link copied</span>
         <span class="text-gray-500">{{ points }} / {{ ATLAS.points ?? '?' }} points</span>
       </template>
       <template v-if="spec">
@@ -48,21 +42,21 @@
       </span>
       <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200" :class="compact ? 'w-28' : 'w-36'" placeholder="Search atlas" spellcheck="false"
         @keydown.enter="nextHit" @keydown.esc="search = ''">
-      <button v-if="activeBuild?.own" class="hover:text-gray-200" :class="editMode ? 'text-yellow-300' : 'text-gray-500'"
+      <button v-if="activeBuild?.own" class="ui-btn" :class="{ 'ui-btn-on': editMode }"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
-        @click="editMode = !editMode"><i class="fas fa-pen mr-1" />{{ editMode ? 'Editing' : 'Edit' }}</button>
-      <button class="text-gray-500 hover:text-gray-200" title="Taken on your atlas: jump to the whole build or to nothing"
-        @click="trackOpen = !trackOpen"><i class="fas fa-check-double" /></button>
-      <button v-if="spec" class="text-gray-500 hover:text-gray-200" :title="nextIds.length ? 'Zoom to the next passives to take' : 'Zoom to this atlas build'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
-      <button class="text-gray-500 hover:text-gray-200" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
-      <button class="hover:text-gray-200" :class="statsOpen ? 'text-yellow-300' : 'text-gray-500'" title="Stats: everything the passives in this build add up to"
-        @click="toggleStats"><i class="fas fa-list-ul" /></button>
+        @click="editMode = !editMode"><i class="fas fa-pen" />{{ editMode ? 'Editing' : 'Edit' }}</button>
+      <button v-if="spec" class="ui-btn ui-btn-quiet" :title="nextIds.length ? 'Zoom to the next passives to take' : 'Zoom to this atlas build'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
+      <button class="ui-btn ui-btn-quiet" title="Fit the atlas in the window" @click="fit"><i class="fas fa-expand" /></button>
+      <button class="ui-btn" :class="{ 'ui-btn-on': statsOpen }" title="Stats: everything the passives in this build add up to"
+        @click="toggleStats"><i class="fas fa-list-ul" />Stats</button>
+      <UiMenu :items="menuItems" title="More: add, rename, share, delete" align-right />
     </div>
 
     <div v-if="importOpen" class="flex flex-wrap items-center gap-1 px-2 pb-1 text-xs shrink-0">
       <input v-model="importText" class="flex-1 min-w-[14rem] px-1 rounded bg-gray-800" placeholder="pathofexile.com atlas tree link or code" spellcheck="false" @keydown.enter="doImport">
       <input v-model="importName" class="w-36 px-1 rounded bg-gray-800" placeholder="Name (e.g. Strongbox farm)" spellcheck="false" @keydown.enter="doImport">
-      <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" @click="doImport">Add</button>
+      <button class="ui-btn ui-btn-primary" @click="doImport">Add</button>
+      <button class="ui-btn ui-btn-quiet" @click="importOpen = false">Cancel</button>
       <span v-if="importError" class="text-red-400 w-full">{{ importError }}</span>
     </div>
     <div v-if="genOpen" class="px-2 pb-1 text-xs shrink-0">
@@ -82,7 +76,7 @@
       <div class="flex flex-wrap items-center gap-2">
         <label class="flex items-center gap-1"><input v-model="genSustain" type="checkbox"> Map sustain</label>
         <label class="flex items-center gap-1">Points <input v-model.number="genBudget" type="number" min="10" :max="ATLAS.points ?? 150" class="w-14 px-1 rounded bg-gray-800"></label>
-        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" :disabled="!genPick.length && !genSustain" @click="doGenerate">Make atlas build</button>
+        <button class="ui-btn ui-btn-primary" :disabled="!genPick.length && !genSustain" @click="doGenerate">Make atlas build</button>
       </div>
       <div v-if="genResult" class="pt-1 text-gray-400">
         Made "{{ genResult.name }}": {{ genResult.points }} points, {{ genResult.notables.length }} notables. It's a normal atlas build: Edit it, copy the link to use it in game.
@@ -108,12 +102,12 @@
     </div>
     <div v-if="trackOpen" class="px-2 pb-1 text-xs text-gray-400 shrink-0">
       Step along the build with the arrows as you take passives in game. Or jump:
-      <button v-if="spec" class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setAtlasStep(true)">I have this whole build</button>
-      <button class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="setAtlasStep(false)">I have nothing (respecced / new league)</button>
+      <button v-if="spec" class="ml-1 ui-btn" @click="setAtlasStep(true); trackOpen = false">I have this whole build</button>
+      <button class="ml-1 ui-btn" @click="setAtlasStep(false); trackOpen = false">I have nothing (respecced / new league)</button>
     </div>
     <div v-if="spec?.unknown" class="px-2 pb-1 text-xs text-gray-500">{{ spec.unknown }} passives in this code aren't on the {{ ATLAS.version }} atlas tree (older or newer tree).</div>
     <div v-if="!store.builds.length && !importOpen && !genOpen" class="px-2 pb-1 text-xs text-gray-500">
-      No atlas build yet: press <i class="fas fa-file-import" /> and paste an atlas tree link. Atlas guides (Help tab) link their trees; or start empty with a link to your own tree from pathofexile.com.
+      No atlas build yet: <button class="ui-btn ui-btn-primary" @click="importOpen = true; genOpen = false">Add from a link</button> or <button class="ui-btn" @click="genOpen = true; importOpen = false">Ready-made tree</button> (also in the ⋯ menu). Atlas guides (Help tab) link their trees; or start empty with a link to your own tree from pathofexile.com.
     </div>
 
     <div class="flex flex-1 min-h-0 gap-1">
@@ -161,6 +155,7 @@ import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, de
 import { orderKey, leadingTaken } from '../pob/tree-step-logic'
 import { getStep, moveStep } from '../pob/tree-steps'
 import TreeStepper from '../ui/TreeStepper.vue'
+import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
 import { sumStats, cleanStat } from './atlas-stats'
 import { CONTENTS, CONTENT_NOTABLES, SUSTAIN, generateAtlas, type GenResult } from './atlas-generator'
@@ -284,6 +279,32 @@ async function copyLink () {
   try { await navigator.clipboard.writeText(atlasUrl(b.code)); copied.value = true; setTimeout(() => { copied.value = false }, 1500) } catch {}
 }
 function openSite () { if (activeBuild.value) window.open(atlasUrl(activeBuild.value.code)) }
+// one ⋯ menu for the rare actions (calmer header, 20 Nov 2026)
+const menuItems = computed<UiMenuItem[]>(() => {
+  const b = activeBuild.value
+  const items: UiMenuItem[] = [
+    { label: 'Add from a link or code…', icon: 'fas fa-file-import', checked: importOpen.value, action: () => { importOpen.value = !importOpen.value; genOpen.value = false } },
+    { label: 'Ready-made atlas tree…', icon: 'fas fa-magic', hint: 'Pick the content you farm', checked: genOpen.value, action: () => { genOpen.value = !genOpen.value; importOpen.value = false } }
+  ]
+  if (!b) return items
+  items.push({ divider: true })
+  if (!b.own) items.push({ label: 'Copy to my atlas builds', icon: 'fas fa-copy', hint: 'Then you can edit it', action: () => copyToMine(b.id) })
+  else items.push({ label: 'Rename…', icon: 'fas fa-i-cursor', action: () => { renameText.value = b.name; renaming.value = true } })
+  items.push(
+    { label: 'Copy atlas tree link', icon: 'fas fa-link', hint: 'Share it with friends', action: () => { copyLink().catch(() => {}) } },
+    { label: 'Open on pathofexile.com', icon: 'fas fa-external-link-alt', action: openSite }
+  )
+  if (spec.value) items.push({ label: 'Taken: jump to all or nothing…', icon: 'fas fa-check-double', checked: trackOpen.value, action: () => { trackOpen.value = !trackOpen.value } })
+  if (b.own) {
+    items.push({ divider: true }, {
+      label: 'Delete…',
+      icon: 'fas fa-trash',
+      hint: synced.value ? 'Moves to Deleted builds; the next sync removes it on GitHub' : 'From this PC',
+      action: () => { deleting.value = true }
+    })
+  }
+  return items
+})
 
 // ---- state ----
 const KIND_RADIUS = [10, 16, 22, 14, 14, 30, 16]

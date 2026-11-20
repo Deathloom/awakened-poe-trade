@@ -4,8 +4,8 @@
   <div class="flex flex-col h-full min-h-0 rounded bg-gray-800 text-xs">
     <div class="flex flex-wrap items-center gap-1 px-2 py-1 border-b border-gray-700 shrink-0">
       <span class="lg-head mr-1"><i class="fas fa-piggy-bank mr-1 text-gray-500" />Money tools</span>
-      <button v-for="t of TABS" :key="t.id" class="px-2 rounded"
-        :class="tab === t.id ? 'bg-gray-600 text-gray-100' : 'text-gray-400 hover:bg-gray-700'" @click="setTab(t.id)">{{ t.label }}</button>
+      <button v-for="t of TABS" :key="t.id" class="ui-tab"
+        :class="{ 'ui-tab-on': tab === t.id }" @click="setTab(t.id)">{{ t.label }}</button>
       <span class="ml-auto text-gray-500">{{ league ?? 'no league' }}<span v-if="divine"> · 1 div = {{ Math.round(divine) }} c</span></span>
     </div>
 
@@ -48,7 +48,7 @@
         <span class="text-gray-300">Total:</span>
         <span class="text-yellow-300 text-sm">{{ money(total.chaos) }}</span>
         <span v-if="divine && total.chaos >= divine" class="text-gray-500">({{ Math.round(total.chaos) }} c)</span>
-        <button class="ml-auto text-gray-500 hover:text-gray-200" title="Set all counts to 0" @click="clearAll"><i class="fas fa-undo mr-1" />Clear</button>
+        <button class="ui-btn ui-btn-quiet ml-auto" title="Set all counts to 0" @click="clearAll"><i class="fas fa-undo mr-1" />Clear</button>
       </div>
       <div class="flex-1 min-h-0 overflow-y-auto px-2 space-y-0.5">
         <div class="flex items-center gap-2">
@@ -63,14 +63,14 @@
           <input :value="counter.counts[name] || ''" type="number" min="0" class="w-16 bg-gray-900 rounded px-1 text-right" placeholder="0"
             @input="setCount(name, ($event.target as HTMLInputElement).valueAsNumber)">
           <span class="w-16 text-right text-gray-500 font-mono">{{ counter.counts[name] && price(name) != null ? money(price(name)! * counter.counts[name]) : '' }}</span>
-          <button v-if="counter.extra.includes(name)" class="w-4 text-gray-600 hover:text-red-300" title="Remove" @click="removeExtra(name)"><i class="fas fa-times" /></button>
+          <button v-if="counter.extra.includes(name)" class="ui-btn ui-btn-quiet px-1" title="Remove" @click="removeExtra(name)"><i class="fas fa-times" /></button>
           <span v-else class="w-4" />
         </div>
         <div class="flex items-center gap-2 pt-1">
           <input v-model="addName" list="money-item-names" class="flex-1 min-w-0 bg-gray-900 rounded px-1" placeholder="Add another item (thread, fossil, essence…)" spellcheck="false"
             @keydown.enter="addExtra">
           <datalist id="money-item-names"><option v-for="n of itemNames" :key="n" :value="n" /></datalist>
-          <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" :disabled="!addName.trim()" @click="addExtra">Add</button>
+          <button class="ui-btn" :disabled="!addName.trim()" @click="addExtra">Add</button>
         </div>
       </div>
       <div class="px-2 py-1 text-gray-500 shrink-0">

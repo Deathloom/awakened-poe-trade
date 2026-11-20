@@ -6,7 +6,7 @@ import { uIOhook } from 'uiohook-napi'
 import os from 'node:os'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { startServer, eventPipe, server } from './server'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
@@ -239,7 +239,15 @@ app.on('ready', async () => {
       // Trade site tab: open GGG trade pages from the overlay in the window
       eventPipe.onEventAnyClient('CLIENT->MAIN::user-action', (e) => {
         if (e.action === 'open-pob') {
-          tray.openPob()
+          let file: string | undefined
+          if (typeof e.build === 'string' && e.build.toLowerCase().endsWith('.xml')) {
+            try {
+              const root = path.resolve(pobImpact.playerDir())
+              const full = path.resolve(root, e.build)
+              if (full.startsWith(root + path.sep) && existsSync(full)) file = full
+            } catch {}
+          }
+          void tray.openPob(file)
           return
         }
         if (e.action === 'open-window-view') {
@@ -254,7 +262,7 @@ app.on('ready', async () => {
       })
       const shortcuts = await Shortcuts.create(logger, overlay, poeWindow, gameConfig, eventPipe)
       shortcuts.hud = hud
-      shortcuts.openPob = () => { tray.openPob() }
+      shortcuts.openPob = () => { void tray.openPob() }
       shortcuts.openWindowView = (view) => {
         desktop.openView(view, (v) => {
           eventPipe.sendEventTo('broadcast', { name: 'MAIN->CLIENT::desktop-view', payload: { view: v } })

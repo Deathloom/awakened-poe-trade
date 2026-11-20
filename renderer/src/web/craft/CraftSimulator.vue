@@ -68,7 +68,7 @@
         <div v-if="planFor" class="craft-panel">
           <div class="flex items-baseline gap-2">
             <h3 class="text-sm font-semibold text-gray-100 flex-1 min-w-0 truncate"><i class="fas fa-flask mr-1.5" />How to craft {{ planFor.name }}</h3>
-            <button class="text-xs text-gray-500 hover:text-gray-200" title="Close the plan" @click="closePlan"><i class="fas fa-times" /></button>
+            <button class="ui-btn ui-btn-quiet text-xs" title="Close the plan" @click="closePlan"><i class="fas fa-times" /></button>
           </div>
           <p v-if="planBusy" class="text-xs text-gray-400 mt-1">Working out the cheapest way…</p>
           <ol v-else class="mt-2 space-y-1.5 text-sm list-decimal pl-5">

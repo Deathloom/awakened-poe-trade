@@ -1,5 +1,5 @@
 import path from 'path'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs'
 import { spawn } from 'child_process'
 import { issueUrl } from './ErrorReporter'
 import { app, Tray, Menu, shell, nativeImage, dialog } from 'electron'
@@ -78,7 +78,7 @@ export class AppTray {
       },
       {
         label: 'Open Path of Building',
-        click: () => { this.openPob() }
+        click: () => { void this.openPob() }
       },
       {
         // Deathloom fork: problem reports go to the group's private builds repo
@@ -108,8 +108,11 @@ export class AppTray {
     void shell.openExternal(issueUrl('bug', '', ''))
   }
 
-  // Deathloom fork: starts the PoB window (same as runtime\Path of Building.exe from the PoB folder)
-  openPob () {
+  // Deathloom fork: starts the PoB window (same as runtime\Path of Building.exe from the PoB folder).
+  // With a build file and a PoB fork that knows --orbhoarder-import: opens that build on the
+  // Import tab. A running PoB picks it up from runtime\orbhoarder-open.txt (checked once a
+  // second); if nobody took it after a moment, PoB isn't running and is started with it.
+  async openPob (buildFile?: string) {
     const dir = this.pobDir()
     // the git repo (and so the bundled copy) names it "Path{space}of{space}Building.exe";
     // PoB's own installer renames it to "Path of Building.exe"
@@ -123,8 +126,19 @@ export class AppTray {
       })
       return
     }
+    let args: string[] = []
+    if (buildFile && pobOpensImport(dir)) {
+      const request = path.join(path.dirname(exe), 'orbhoarder-open.txt')
+      try {
+        writeFileSync(request, buildFile + '\n', 'utf8')
+        await new Promise(resolve => setTimeout(resolve, 2500))
+        if (!existsSync(request)) return // a running PoB opened it
+        unlinkSync(request)
+      } catch {}
+      args = ['--orbhoarder-import', buildFile]
+    }
     try {
-      const proc = spawn(exe, [], { cwd: path.dirname(exe), detached: true, stdio: 'ignore' })
+      const proc = spawn(exe, args, { cwd: path.dirname(exe), detached: true, stdio: 'ignore' })
       proc.on('error', (err) => {
         dialog.showMessageBox({ title: 'Path of Building', message: `Can't start Path of Building: ${err.message}` })
       })
@@ -133,4 +147,12 @@ export class AppTray {
       dialog.showMessageBox({ title: 'Path of Building', message: `Can't start Path of Building: ${(err as Error).message}` })
     }
   }
+}
+
+// Deathloom fork: does this PoB know --orbhoarder-import (PoB fork, Nov 2026 or newer)?
+// Older PoBs and PoB Community would treat it as a build link, so they just get opened.
+function pobOpensImport (dir: string): boolean {
+  try {
+    return readFileSync(path.join(dir, 'src', 'Modules', 'Main.lua'), 'utf8').includes('--orbhoarder-import')
+  } catch { return false }
 }

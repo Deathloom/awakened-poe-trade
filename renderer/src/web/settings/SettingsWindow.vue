@@ -20,8 +20,8 @@
         </div>
         <div class="border-t bg-gray-900 border-gray-600 p-2 flex justify-end gap-x-2">
           <!-- Deathloom fork: Save is the main action, tinted with the accent (readable with any theme) -->
-          <button @click="save" class="px-3 rounded text-gray-100 bg-accent/25 ring-1 ring-accent/70 hover:bg-accent/40">{{ t('Save') }}</button>
-          <button @click="cancel" class="px-3">{{ t('Cancel') }}</button>
+          <button @click="save" class="ui-btn ui-btn-primary px-3">{{ t('Save') }}</button>
+          <button @click="cancel" class="ui-btn ui-btn-quiet px-3">{{ t('Cancel') }}</button>
         </div>
       </div>
     </div>
@@ -213,8 +213,10 @@ function flatJoin<T, J> (arr: T[][], joinEl: () => J) {
   }
 
   &.active {
-    @apply text-gray-400;
+    /* Deathloom fork: picked page readable, with an accent mark */
+    @apply text-gray-100;
     @apply bg-gray-800;
+    box-shadow: inset 2px 0 0 rgb(var(--accent));
   }
 }
 

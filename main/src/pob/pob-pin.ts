@@ -3,7 +3,7 @@
 // a PR here moves the pin (the "PoB pin" workflow opens one when PoB's master
 // changes). Running apps read this file from this repo (stable builds: master,
 // test builds x.y.z-beta.N: dev, see pobPinUrl) and fall back to the value built in.
-export const POB_PIN = 'cf8079f495816d0f0ea061dfb99b526fc75eea2c'
+export const POB_PIN = '73764c81fe6b98684bdc14f3549f02261881c7a1'
 
 export const POB_PIN_URL = 'https://raw.githubusercontent.com/Deathloom/awakened-poe-trade/master/main/src/pob/pob-pin.ts'
 export const POB_PIN_URL_TESTING = 'https://raw.githubusercontent.com/Deathloom/awakened-poe-trade/dev/main/src/pob/pob-pin.ts'

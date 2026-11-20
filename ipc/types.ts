@@ -388,6 +388,8 @@ export interface PobEquippedInfo {
   items: number
   skipped: string[]
   summary: PobImpactCompare['summary']
+  // Deathloom fork: gear came from your character file (PoB's Import character), not GGG's pages
+  fromFile?: boolean
   // What came from the character (false: the build's tree/skills were used)
   tree: boolean
   skills: boolean
@@ -420,9 +422,14 @@ export interface PobBuildSummary {
   // PoB's saved PlayerStat values (Life, CombinedDPS, FireResist, …)
   stats: Record<string, number>
   groups: Array<{ label?: string, slot?: string, enabled: boolean, gems: Array<{ name: string, level?: number, quality?: number, enabled: boolean }> }>
-  items: Array<{ slot: string, rarity: string, name: string, base: string, mods: string[] }>
-  tree: { version?: string, nodes: number[], masteries: Record<string, string> }
+  items: Array<{ slot: string, rarity: string, name: string, base: string, mods: string[], sockets?: string }>
+  tree: { version?: string, nodes: number[], masteries: Record<string, string>, title?: string, classId?: number, ascendClassId?: number }
+  // Deathloom fork: which sets were read (titles as PoB shows them)
+  sets?: { spec?: string, itemSet?: string, skillSet?: string }
 }
+
+// Deathloom fork: read these sets instead of the build's active ones (PoB ids)
+export interface PobSetSelection { spec?: number, itemSet?: number, skillSet?: number }
 
 export interface PobImpactCompare {
   header: string
@@ -832,8 +839,11 @@ type IpcUserAction =
   Event<'CLIENT->MAIN::user-action', {
     action: 'check-for-update' | 'update-and-restart' | 'quit'
   } | {
-    // Deathloom fork: start the Path of Building window (tray's Open Path of Building)
+    // Deathloom fork: start the Path of Building window (tray's Open Path of Building).
+    // build: a .xml in your player folder (as the builds list spells it): PoB opens it
+    // on the Import tab (PoB fork with --orbhoarder-import; else just opens PoB)
     action: 'open-pob'
+    build?: string
   } | {
     action: 'stash-search'
     text: string
@@ -871,6 +881,10 @@ type IpcPobImpactRequest =
     itemText: string
     // Fetch equipped gear now instead of using the cached copy (still rate-limited)
     refreshGear?: boolean
+    // Deathloom fork: your character's file (PoB's own Import character filled it), as linked
+    // in the Gems tab / Compare: name + linked path (player folder); main falls back to
+    // "My characters/<name>.xml". "vs character" compares with its gear.
+    myCharacter?: { name: string, file?: string }
   }>
 
 type IpcPobImpactResult =
@@ -1489,6 +1503,9 @@ type IpcPobCompareRequest =
     // paths relative to the player folder (from pob-builds)
     a: string
     b: string
+    // Deathloom fork: compare loadouts (sets) instead of the active ones
+    selA?: PobSetSelection
+    selB?: PobSetSelection
   }>
 
 type IpcPobCompareResult =
