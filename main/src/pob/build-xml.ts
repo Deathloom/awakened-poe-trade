@@ -2,7 +2,7 @@
 // running PoB, for "Compare builds". Read-only, tolerant: anything it can't
 // read is left out. Pure (no fs), so it's unit-tested in tests/.
 
-import type { PobBuildSummary, PobSetSelection } from '../../../ipc/types'
+import type { BuildMapProfile, PobBuildSummary, PobSetSelection } from '../../../ipc/types'
 
 const ENTITIES: Record<string, string> = { quot: '"', amp: '&', lt: '<', gt: '>', apos: "'" }
 
@@ -145,3 +145,35 @@ export function parseBuildXml (xml: string, sel: PobSetSelection = {}): PobBuild
     sets: { spec: spec?.attrs.title || undefined, itemSet: set?.attrs.title || undefined, skillSet: skillTitle }
   }
 }
+
+// Deathloom fork (Q4): the part of a build the map check uses (build-aware map
+// mod warnings). Caps everything: friends' builds are someone else's data.
+const MAX_PROFILE_GEMS = 80
+const MAX_PROFILE_MODS = 20
+export function buildMapProfile (sum: PobBuildSummary): BuildMapProfile {
+  const stats: Record<string, number> = {}
+  for (const [k, v] of Object.entries(sum.stats)) {
+    if (/^[A-Za-z]{1,60}$/.test(k) && Number.isFinite(v)) stats[k] = v
+  }
+  const enabledGems = (g: PobBuildSummary['groups'][number]) => g.enabled ? g.gems.filter(x => x.enabled).map(x => x.name.slice(0, 80)) : []
+  // the group parseBuildXml took the main skill from
+  const main = sum.mainSkill ? sum.groups.find(g => g.gems.some(x => x.enabled && x.name === sum.mainSkill)) : undefined
+  const gems: string[] = []
+  for (const g of sum.groups) {
+    for (const n of enabledGems(g)) if (!gems.includes(n) && gems.length < MAX_PROFILE_GEMS) gems.push(n)
+  }
+  const itemMods: string[] = []
+  for (const it of sum.items) {
+    for (const m of it.mods) {
+      if (/curse|exposure/i.test(m) && itemMods.length < MAX_PROFILE_MODS) itemMods.push(m.slice(0, 120))
+    }
+  }
+  return {
+    mainSkill: sum.mainSkill?.slice(0, 80),
+    stats,
+    mainGems: main ? enabledGems(main) : (sum.mainSkill ? [sum.mainSkill.slice(0, 80)] : []),
+    gems,
+    itemMods
+  }
+}
+

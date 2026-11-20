@@ -1,7 +1,7 @@
 // Deathloom fork: notes of the active build (main: pob/BuildNotes.ts). Shared by
 // the Build panel's Notes tab and the map check in the same window.
 import { shallowRef } from 'vue'
-import type { BuildNotesData } from '@ipc/types'
+import type { BuildMapProfile, BuildNotesData } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 
 export interface BuildNotesState {
@@ -9,6 +9,8 @@ export interface BuildNotesState {
   player: string
   own: boolean
   data: BuildNotesData
+  // Deathloom fork (Q4): the build's saved stats for build-aware map mod warnings
+  profile?: BuildMapProfile
 }
 
 export const notesState = shallowRef<BuildNotesState | null>(null)
@@ -27,7 +29,7 @@ function listen () {
     notesBusy.value = false
     if (!e.ok) { notesError.value = e.error ?? 'Unknown error'; return }
     notesError.value = null
-    notesState.value = { build: e.build ?? '', player: e.player ?? '', own: Boolean(e.own), data: e.data ?? { text: '', mapMods: [], filter: '' } }
+    notesState.value = { build: e.build ?? '', player: e.player ?? '', own: Boolean(e.own), data: e.data ?? { text: '', mapMods: [], filter: '' }, profile: e.profile }
   })
 }
 
