@@ -89,7 +89,7 @@ import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import MarketOverview from '../market-history/MarketOverview.vue'
 import MarketSearchBody from '../market-search/MarketSearchBody.vue'
-import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
+import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
 import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
 import {
   ALL_PANELS, layout, saveLayout, resetLayout, panelDef, shownBySettings, inLayout,

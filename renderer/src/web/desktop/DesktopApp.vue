@@ -93,7 +93,7 @@ import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
 import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
 import type { LayoutPref } from './layout-phase'
-import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
+import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
 import CraftBody from '../craft/CraftBody.vue'
 
 // Deathloom fork: moving backgrounds pause while you play (the window is drawn without
