@@ -129,9 +129,16 @@ export class PobImpact {
         if (typeof setPlayer === 'string') await this.setViewPlayer(setPlayer)
         return await this.builds(setActive, setLoadout, setCharacter)
       })
+      // Deathloom fork (user report 20 Nov 2026): the reply only reaches the
+      // panel that asked, so tell every panel (tree map, tree, gems, other
+      // windows) that the build, loadout, character or player changed
+      if (setActive || setLoadout || setCharacter || typeof setPlayer === 'string') this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-edit', ({ requestId, ops }) => {
       this.reply('MAIN->CLIENT::pob-edit', requestId, async () => await this.editLoadouts(ops))
+      // set changes (new, copy, delete loadout) can change the active tree;
+      // single passive / gem edits answer the panel that made them
+      if (Array.isArray(ops) && ops.some(o => o && (o.op === 'newLoadout' || o.op === 'copySet' || o.op === 'deleteSet'))) this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-manage-build', (req) => {
       this.reply('MAIN->CLIENT::pob-manage-build', req.requestId, async () => await this.manageBuild(req))
@@ -402,6 +409,11 @@ export class PobImpact {
       this.liveRetryTimer = null
       this.announceCharacter()
     }, wait)
+  }
+
+  // After the queued reply went out (the asking panel has the new state first)
+  private announceAfterQueue () {
+    this.queue = this.queue.then(() => { this.announceCharacter() }, () => { this.announceCharacter() })
   }
 
   // Tell the panels (list or character changed)
