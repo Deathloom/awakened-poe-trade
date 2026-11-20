@@ -212,7 +212,9 @@ export const CRAFT_CURRENCY = [
   'Orb of Transmutation', 'Orb of Augmentation', 'Orb of Alteration', 'Regal Orb', 'Orb of Alchemy',
   'Chaos Orb', 'Exalted Orb', 'Divine Orb', 'Orb of Annulment', 'Orb of Scouring', 'Blessed Orb',
   'Chromatic Orb', "Jeweller's Orb", 'Orb of Fusing', 'Vaal Orb', 'Veiled Chaos Orb', 'Orb of Dominance',
-  "Awakener's Orb", 'Eldritch Chaos Orb', 'Eldritch Exalted Orb', 'Orb of Conflict', 'Fracturing Orb'
+  "Awakener's Orb", 'Eldritch Chaos Orb', 'Eldritch Exalted Orb', 'Orb of Conflict', 'Fracturing Orb',
+  // 3.30.0d (Gerhard 20 Nov 2026: patch notes check)
+  "Originator's Exalted Orb", 'Primordial Exalted Orb'
 ]
 export interface CraftRow { name: string, count: number }
 export const CRAFT_COST_KEY = 'deathloom.craft-cost.v1'
