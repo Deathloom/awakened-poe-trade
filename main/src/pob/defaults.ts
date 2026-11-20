@@ -16,6 +16,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
 import { isInstalled } from './PobDownload'
+import { safeSegment } from './BuildFiles'
 import type { PobConfig } from '../../../ipc/types'
 
 export interface PobDefaults {
@@ -105,11 +106,18 @@ export function pobDefaults (env: PobDefaultsEnv, pobDir = ''): PobDefaults {
 }
 
 // Fills empty fields with the defaults
+export function usablePlayer (name: string | undefined): string {
+  const n = (name ?? '').trim()
+  return n && safeSegment(n) ? n : ''
+}
+
 export function withDefaults (cfg: PobConfig, defaults: PobDefaults): PobConfig {
   return {
     ...cfg,
     pobDir: cfg.pobDir || defaults.pobDir,
     buildsDir: cfg.buildsDir || defaults.buildsDir,
-    player: cfg.player || defaults.player
+    // Deathloom fork (F1 review): the player name becomes a folder name; one that
+    // isn't a plain folder name ("..", "a/b", "C:") falls back to the builds folder
+    player: usablePlayer(cfg.player || defaults.player)
   }
 }
