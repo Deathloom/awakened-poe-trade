@@ -344,6 +344,20 @@ test('campaign guide: per-character step, campaign done, endgame areas', async (
   assert.equal(route.campaignDone({ kitava: ['cruel'] }), false)
   assert.equal(route.campaignDone({ kitava: ['cruel', 'merciless'] }), true)
   assert.equal(route.campaignDone({ endgame: true }), true)
+  // the route is loaded on first need (F4): before that nothing moves or gets saved
+  assert.equal(route.routeLoaded(), false)
+  assert.equal(route.findStep('The Coast', 0), -1)
+  assert.equal(route.loadCampaignStep(), 0)
+  route.saveStepForChar('Early', 3)
+  assert.deepEqual(route.loadStepByChar(), {})
+  const p = route.loadRoute()
+  assert.equal(route.loadRoute(), p)
+  await p
+  assert.ok(route.routeLoaded() && route.STEPS.length > 100)
+  const n = route.STEPS.length
+  await route.loadRoute()
+  assert.equal(route.STEPS.length, n)
+  assert.equal(route.questPassivesTotal('BANDIT_KILL'), 24)
   const a10 = route.firstStepOfAct(10)
   assert.ok(a10 > 0 && route.STEPS[a10].act === 10 && route.STEPS[a10 - 1].act === 9)
   assert.equal(route.firstStepOfAct(12), -1)
@@ -1150,4 +1164,121 @@ test('thread planner: review fixes (gate wording, unstated steps, general notabl
   // #294: the generator itself now matches Bestiary / Betrayal Threads for Beasts / Syndicate
   assert.ok(gen.CONTENTS.find(c => c.id === 'beasts').re.test('Bestiary'))
   assert.ok(gen.CONTENTS.find(c => c.id === 'syndicate').re.test('Betrayal'))
+})
+
+test('lazy data: loads once, a failed load is tried again (then on the next ask)', async () => {
+  const { lazyOnce } = await import('./.build/lazy-data.mjs')
+  let calls = 0
+  const ok = lazyOnce(async () => { calls++; return 'data' }, 1, 1)
+  assert.equal(ok(), ok())
+  assert.equal(await ok(), 'data')
+  assert.equal(calls, 1)
+  // fails once, the retry works
+  let tries = 0
+  const flaky = lazyOnce(async () => { if (++tries === 1) throw new Error('chunk'); return 'x' }, 1, 1)
+  assert.equal(await flaky(), 'x')
+  assert.equal(tries, 2)
+  // fails every time: rejected, and the next ask starts over
+  let n = 0
+  const bad = lazyOnce(async () => { n++; throw new Error('gone') }, 1, 1)
+  await assert.rejects(bad(), /gone/)
+  assert.equal(n, 2)
+  await assert.rejects(bad(), /gone/)
+  assert.equal(n, 4)
+})
+
+test('lazy data: the level recorder waits for the route, batches stay in order', async () => {
+  const { afterReady } = await import('./.build/lazy-data.mjs')
+  let open
+  const ready = new Promise(resolve => { open = resolve })
+  const seen = []
+  const record = afterReady(ready, x => { seen.push(x) })
+  record('a'); record('b')
+  await new Promise(resolve => setTimeout(resolve, 5))
+  assert.deepEqual(seen, [])
+  open()
+  record('c')
+  await new Promise(resolve => setTimeout(resolve, 5))
+  assert.deepEqual(seen, ['a', 'b', 'c'])
+  // a route that failed to load still lets the lines through; an error in one batch doesn't stop the next
+  const seen2 = []
+  const errors = []
+  const rec2 = afterReady(Promise.reject(new Error('no route')), x => { if (x === 1) throw new Error('bad'); seen2.push(x) }, e => errors.push(e.message))
+  rec2(1); rec2(2)
+  await new Promise(resolve => setTimeout(resolve, 5))
+  assert.deepEqual(seen2, [2])
+  assert.deepEqual(errors, ['bad'])
+})
+
+test('challenge tracker: ticks per league, SC/HC/SSF share, toggling, counts, filters', async () => {
+  const ch = await import('./.build/cheat-challenges.mjs')
+  const K = ch.CHALLENGE_TICKS_KEY
+  localStorage.removeItem(K)
+  assert.equal(K, 'deathloom.cheats.challenges.v1')
+  // league keying
+  assert.equal(ch.challengeLeagueKey('Covens'), 'Covens')
+  assert.equal(ch.challengeLeagueKey('Hardcore Covens'), 'Covens')
+  assert.equal(ch.challengeLeagueKey('SSF Covens'), 'Covens')
+  assert.equal(ch.challengeLeagueKey('HC SSF Covens'), 'Covens')
+  assert.equal(ch.challengeLeagueKey('Ruthless Covens'), 'Ruthless Covens')
+  assert.equal(ch.challengeLeagueKey('HC Ruthless Covens'), 'Ruthless Covens')
+  assert.equal(ch.challengeLeagueKey('Standard'), 'Standard')
+  assert.equal(ch.challengeLeagueKey('  '), '')
+  assert.equal(ch.challengeLeagueKey(undefined), '')
+  assert.equal(ch.challengeLeagueKey('Ruthless'), 'Ruthless')
+  assert.equal(ch.challengeLeagueKey('Hardcore Ruthless'), 'Ruthless')
+  assert.equal(ch.challengeLeagueKey('Hardcore'), 'Hardcore')
+  assert.equal(ch.challengeLeagueKey('SSF Hardcore Covens'), 'Covens')
+  assert.equal(ch.challengeLeagueKey('Hardcore SSF Covens'), 'Covens')
+  assert.equal(ch.challengeLeagueKey('SSF Ruthless Covens'), 'Ruthless Covens')
+  // no league (list not loaded / failed): fall back to the saved setting, else no ticking
+  assert.equal(ch.challengeLeague(undefined, 'Covens'), 'Covens')
+  assert.equal(ch.challengeLeague('Hardcore Covens', 'Covens'), 'Hardcore Covens')
+  assert.equal(ch.challengeLeague(undefined, undefined), '')
+  assert.equal(ch.challengeLeague(' ', ''), '')
+  assert.equal(ch.canTickChallenges(''), false)
+  assert.equal(ch.canTickChallenges('Covens'), true)
+  ch.saveChallengeTicks('', new Set(['lost']))
+  assert.equal(localStorage.getItem(K), null, 'nothing saved without a league')
+  assert.equal(ch.loadChallengeTicks('').size, 0)
+  // toggling is pure
+  const a = new Set(['x'])
+  const b = ch.toggleTick(a, 'y')
+  assert.deepEqual([...a], ['x'])
+  assert.deepEqual([...b].sort(), ['x', 'y'])
+  assert.deepEqual([...ch.toggleTick(b, 'x')], ['y'])
+  // save / load per league; a new league starts empty; HC sees the SC ticks
+  const [c1, c2, c3] = ch.CHALLENGES
+  assert.equal(ch.loadChallengeTicks('Covens').size, 0)
+  ch.saveChallengeTicks('Covens', new Set([c1.id, ch.stepId(c2, 0)]))
+  assert.deepEqual([...ch.loadChallengeTicks('Hardcore Covens')].sort(), [c1.id, ch.stepId(c2, 0)].sort())
+  assert.equal(ch.loadChallengeTicks('NextLeague').size, 0)
+  assert.equal(ch.loadChallengeTicks('Ruthless Covens').size, 0)
+  ch.saveChallengeTicks('NextLeague', new Set([c3.id]))
+  assert.equal(ch.loadChallengeTicks('Covens').size, 2, 'saving another league keeps this one')
+  ch.saveChallengeTicks('Covens', new Set())
+  assert.equal(ch.loadChallengeTicks('Covens').size, 0)
+  assert.deepEqual(Object.keys(JSON.parse(localStorage.getItem(K))), ['NextLeague'], 'empty league dropped')
+  // counts and filters
+  const t = new Set([c1.id, c3.id, ch.stepId(c2, 0), ch.stepId(c2, 1)])
+  assert.equal(ch.doneCount(t), 2)
+  assert.equal(ch.stepsDone(t, c2), 2)
+  assert.equal(ch.filterChallenges(t, 'done').length, 2)
+  assert.equal(ch.filterChallenges(t, 'todo').length, ch.CHALLENGES.length - 2)
+  assert.equal(ch.filterChallenges(t, 'all').length, ch.CHALLENGES.length)
+  assert.ok(!ch.filterChallenges(t, 'todo').some(c => c.id === c1.id))
+  assert.equal(ch.stepsNeeded(ch.CHALLENGES.find(c => c.id === 'atlas-additions')), 5)
+  assert.equal(ch.stepsNeeded(ch.CHALLENGES.find(c => c.id === 'beginners-basics')), 4)
+  assert.equal(ch.stepsNeeded(ch.CHALLENGES.find(c => c.id === 'tangled-threads')), 0)
+  // broken or odd storage: empty, no throw, no prototype tricks
+  localStorage.setItem(K, 'not json')
+  assert.equal(ch.loadChallengeTicks('Covens').size, 0)
+  localStorage.setItem(K, JSON.stringify({ Covens: [1, 2] }))
+  assert.equal(ch.loadChallengeTicks('Covens').size, 0)
+  localStorage.setItem(K, '[]')
+  ch.saveChallengeTicks('Covens', new Set(['b']))
+  assert.deepEqual([...ch.loadChallengeTicks('Covens')], ['b'])
+  assert.equal(ch.loadChallengeTicks('constructor').size, 0)
+  assert.equal(ch.loadChallengeTicks('toString').size, 0)
+  localStorage.removeItem(K)
 })

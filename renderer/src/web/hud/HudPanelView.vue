@@ -11,7 +11,7 @@
       <i class="fas fa-grip-lines" />
       <span>{{ playing ? '' : 'Drag to move' }}</span>
     </div>
-    <CampaignGuideBody v-if="panel === 'guide'" :tall="Boolean(dims)" />
+    <LazyCampaignGuide v-if="panel === 'guide'" :tall="Boolean(dims)" />
     <TradeCompanionBody v-else-if="panel === 'trades'" compact @incoming="showTrades" @empty="hideTradesIfAuto" />
     <PobGearBody v-else-if="panel === 'gear'" :active="!hidden.gear" hud />
     <!-- panels added in 1.0.63 (tree map, atlas, session, market history, market overview) -->
@@ -31,7 +31,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
-import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
+import { LazyCampaignGuide } from '../companion/LazyLevelling'
 import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
 import PobGearBody from '../pob/PobGearBody.vue'
 import { PANEL_BODY_BY_PANEL } from '../overlay/panel-widgets'

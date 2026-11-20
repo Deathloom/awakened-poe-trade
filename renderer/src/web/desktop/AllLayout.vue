@@ -6,7 +6,7 @@
     <!-- Deathloom fork (Gerhard 17 Nov): the levelling planner works out what you've
          taken (game log) and the next passives; the tree map follows it. Without the
          Levelling guide panel (Mapping layout) it runs hidden so the tree still updates. -->
-    <div v-if="needPlanner" class="hidden"><PobNext /></div>
+    <div v-if="needPlanner" class="hidden"><LazyPobNext /></div>
     <mapping-loadout-prompt />
     <div v-if="editing" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 mx-2 mt-2 rounded bg-blue-900 text-sm shrink-0">
       <i class="fas fa-arrows-alt text-blue-300" />
@@ -80,7 +80,7 @@ import SplitGutter from './SplitGutter.vue'
 import PobGearBody from '../pob/PobGearBody.vue'
 import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
 import LevellingBody from './LevellingBody.vue'
-import PobNext from '../pob/PobNext.vue'
+import { LazyPobNext } from '../companion/LazyLevelling'
 import MappingLoadoutPrompt from './MappingLoadoutPrompt.vue'
 import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'

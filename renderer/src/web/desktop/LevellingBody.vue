@@ -3,16 +3,15 @@
        window): where to go, which quest gem to take, gem swaps and the next passives.
        Drag the line between them to resize. -->
   <div ref="box" class="flex flex-col h-full min-h-0">
-    <div class="levelling-guide min-h-0 overflow-hidden" :style="{ flex: `${sizes[0]} 1 0` }"><CampaignGuideBody tall /></div>
+    <div class="levelling-guide min-h-0 overflow-hidden" :style="{ flex: `${sizes[0]} 1 0` }"><LazyCampaignGuide tall /></div>
     <SplitGutter dir="y" @drag="d => drag(0, d, box?.clientHeight ?? 0)" @end="save" @reset="reset" />
-    <div class="min-h-0" :style="{ flex: `${sizes[1]} 1 0` }"><PobNext /></div>
+    <div class="min-h-0" :style="{ flex: `${sizes[1]} 1 0` }"><LazyPobNext /></div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import CampaignGuideBody from '../companion/CampaignGuideBody.vue'
-import PobNext from '../pob/PobNext.vue'
+import { LazyCampaignGuide, LazyPobNext } from '../companion/LazyLevelling'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
 

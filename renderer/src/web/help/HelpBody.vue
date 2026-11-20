@@ -70,7 +70,9 @@
             <li><b>Cheat sheets</b>: short sheets for league mechanics (Covens, Betrayal, Heist, Delve, Sanctum, map mechanics), vendor recipes and a league checklist.
               <b>Thread planner</b>: pick a Thread and how many you put in the map device (1–8) to see the guaranteed Thread mods, which 3 / 6 / 8 bonus you get and the next one,
               the area level the strongest effects need, the cost per map at poe.ninja prices (chaos and divine) and the atlas notables that help that Thread
-              (which option to choose on Dextral / Sinistral Threads, which type to rule out on Threadbare / Unthreaded). <b>?</b> says where the numbers come from.</li>
+              (which option to choose on Dextral / Sinistral Threads, which type to rule out on Threadbare / Unthreaded). <b>?</b> says where the numbers come from.
+              <b>Challenges</b>: this league's 40 challenges with their steps, a tip and a link to the cheat sheet that helps. Tick them yourself (the app doesn't read your account):
+              saved on this PC for the league picked in Settings, so a new league starts empty; Hardcore and SSF share the list, Ruthless has its own. <b>⋯</b> unticks them all.</li>
             <li><b>Post to the friends' board</b>: set a hotkey in Settings → Hotkeys, hover an item and press it. The board opens in the overlay with the item filled in.</li>
             <li><b>Chat buttons</b> (trade companion, market search, friends' board) copy the command, or send one chat message per click (setting). Nothing is ever sent by itself.</li>
           </ul>

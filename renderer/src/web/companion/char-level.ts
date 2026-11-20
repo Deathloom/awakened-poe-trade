@@ -8,7 +8,8 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { applySessionLines, loadPlaySession, savePlaySession } from './play-session'
-import { STEPS, loadCampaignStep, actFromAreaCode, findStep, onlyActive, isEndgameArea } from './campaign-route'
+import { afterReady } from './lazy-data'
+import { STEPS, loadRoute, loadCampaignStep, actFromAreaCode, findStep, onlyActive, isEndgameArea } from './campaign-route'
 
 export interface CharLevel { name: string, cls: string, level: number, at: number }
 // Campaign progress from Client.txt, per character: quest rewards received and
@@ -316,9 +317,11 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
   return v
 }
 
-// Called once in the overlay window
+// Called once in the overlay window. The campaign route is loaded on first
+// need (F4): log lines wait for it (in order), so quest and boss ticks and the
+// guide position use the route. If it can't be loaded, levels etc. still count.
 export function startLevelRecorder () {
-  const record = (e: { lines: string[] }) => {
+  const recordNow = (e: { lines: string[] }) => {
     const session = loadSession()
     const before = JSON.stringify(session)
     const v = applyLogLines(loadCharLevels(), e.lines, AppConfig().language, loadCampaignStep(), session)
@@ -328,6 +331,7 @@ export function startLevelRecorder () {
     const play = applySessionLines(loadPlaySession(), e.lines, AppConfig().language, currentChar(levels)?.name ?? '')
     if (play) savePlaySession(play)
   }
+  const record = afterReady(loadRoute(), recordNow)
   Host.onEvent('MAIN->CLIENT::game-log', record)
   // lines written while Orbhoarder was closed (an update or restart): levels,
   // passives and atlas allocations made meanwhile still count
