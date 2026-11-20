@@ -46,7 +46,9 @@ const MODULES = {
   'tree-step-logic': 'renderer/src/web/pob/tree-step-logic.ts',
   'item-defences': 'renderer/src/web/pob/item-defences.ts',
   'loadout-steps': 'renderer/src/web/pob/loadout-steps.ts',
-  'market-tools': 'renderer/src/web/market-history/market-tools.ts'
+  'market-tools': 'renderer/src/web/market-history/market-tools.ts',
+  'atlas-generator': 'renderer/src/web/atlas/atlas-generator.ts',
+  'atlas-tree-test': 'renderer/src/web/atlas/atlas-tree.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
