@@ -1,7 +1,10 @@
 // Deathloom fork: cheat sheets (Cheat sheets panel). Our own short text, written
 // for this fork from how the mechanics work; no third-party text or images.
 // Only things that rarely change; GGG reworks league mechanics now and then, so
-// each sheet says where to check in game. Vendor recipes come from vendor-recipes.ts.
+// each sheet says where to check in game. Vendor recipes come from vendor-recipes.ts,
+// the Thread facts from threads.ts (shared with the Thread planner).
+
+import { THREAD_SHEET_LINES } from './threads'
 
 export interface SheetSection { title: string, lines: string[], focus?: string }
 
@@ -229,11 +232,11 @@ export const SHEETS: Sheet[] = [
         title: 'Threads of Creation (3.30: replace Scarabs)',
         lines: [
           'Scarabs are gone. Old ones turned into a matching Thread, or a Frayed Thread (Veiled Scarabs too). A Frayed Thread gives a random Thread when used or vendored.',
-          'Ten Threads: Abyss, Bestiary, Betrayal, Blight, Breach, Expedition, Incursion, Legion, Ritual, Ultimatum.',
+          'Ten Threads: Abyss, Bestiary, Betrayal, Blight, Breach, Expedition, Incursion, Legion, Ritual, Ultimatum. The Thread planner tab works out a map\'s Threads: mods, bonus, cost and atlas notables.',
           'Put Threads in the map device: each adds its mechanic to the map; up to 8 of one kind, and each extra one makes random powerful effects on that mechanic more likely.',
-          'The strongest Thread effects need 2+ Threads and a high area level (3.30.0b): area 73+ for the Blight Pantheon god, Double Down Ultimatum and the extra Breach mod; area 80+ for the extra Abyss mod, wisp beasts, Catarina joining Betrayal and rare Syndicate members.',
-          'Guaranteed Thread mods (3.30.0c): 1–3 Threads at least 1 mod, 4–7 at least 2, 8+ at least 3.',
-          'Bonus stat at 3 / 6 / 8 Threads (3.30.0c): Abyss +1/2/3 pits · Breach 20/40/60% more magic monsters · Blight +40/80/120% chance a lane is at least magic · Legion +1/2/3 encounters · Expedition 15/30/50% chance remnants get an extra suffix · Ultimatum more rares, from 6 rewards as one extra round · Ritual 20/40/60% more favours · Bestiary +2/3/4 red beasts · Betrayal 30/60/90% more reinforcements · Incursion 20/30/40% pack size.',
+          THREAD_SHEET_LINES.gates,
+          THREAD_SHEET_LINES.guaranteed,
+          THREAD_SHEET_LINES.bonuses,
           '3.30.0c added vendor recipes for Threads and for Viscera; GGG didn\'t say what they take yet: put them in a vendor\'s sell window to see what you\'d get.',
           'Map Item Quantity is now Atlas Drops (more maps and Threads). Monster rarity now decides which loot can drop: higher rarity, better currency.',
           'New Thread mods (3.30.0d): Abyss, rare Abyssal monsters get an extra Abyssal mod; Incursion, one room holds only Architects, who drop an Itemised Temple of the current layout (random room tiers). The Breach mod that makes every rare Breach monster drop a Wombgift is rarer now; the Genesis Tree Sapling from Breach Threads gives a lot of Hiveblood.',

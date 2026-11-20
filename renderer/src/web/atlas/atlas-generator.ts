@@ -22,10 +22,10 @@ export const CONTENTS: AtlasContent[] = [
   { id: 'blight', label: 'Blight', re: /Blight/i },
   { id: 'delirium', label: 'Delirium', re: /Delirium/i },
   { id: 'abyss', label: 'Abyss', re: /Abyss/i },
-  { id: 'beasts', label: 'Beasts (Bestiary)', re: /Beast|Einhar/i },
+  { id: 'beasts', label: 'Beasts (Bestiary)', re: /Beast|Einhar|Bestiary/i },
   { id: 'ultimatum', label: 'Ultimatum', re: /Ultimatum/i },
   { id: 'incursion', label: 'Incursion', re: /Incursion/i },
-  { id: 'syndicate', label: 'Syndicate', re: /Syndicate/i },
+  { id: 'syndicate', label: 'Syndicate', re: /Syndicate|Betrayal/i },
   { id: 'torment', label: 'Tormented Spirits', re: /Tormented Spirit|haunted/i },
   { id: 'exiles', label: 'Rogue Exiles', re: /Rogue Exile/i },
   { id: 'mercenaries', label: 'Mercenaries', re: /Mercenar/i },
@@ -212,3 +212,35 @@ export function generateAtlas (opts: GenOptions): GenResult {
 // how many notables each content has (to show next to the choice)
 export const CONTENT_NOTABLES: Record<string, number> = Object.fromEntries(CONTENTS.map(c => [c.id,
   ATLAS.nodes.filter(n => n[3] === 1 && (isTypePicker(n) ? variantFor(n, c.re) != null : (c.re.test(textOf(n)) || variantFor(n, c.re) != null))).length]))
+
+// Deathloom fork (Q3): atlas notables that help one kind of Thread (Cheat sheets →
+// Thread planner). Same rules as the ready-made tree: a "more likely to be of type"
+// picker counts with your type chosen, a "cannot be of type" one when its group
+// holds your type (rule out another), plus notables for Threads in general
+// ("per different Thread" ones work against stacking one kind: left out).
+export interface ThreadNotable { name: string, how: string, kind: 'type' | 'exclude' | 'general' }
+const THREAD_RE = /\bThreads?\b/i
+export function threadNotables (contentId: string): ThreadNotable[] {
+  const c = CONTENTS.find(x => x.id === contentId)
+  if (!c) return []
+  const out: ThreadNotable[] = []
+  const seen = new Set<string>()
+  for (const n of ATLAS.nodes) {
+    if (n[3] !== 1) continue
+    const name = n[6].trim()
+    if (seen.has(name)) continue
+    const own = clean(n[8].join(' '))
+    if (isTypePicker(n)) {
+      const opts = (ATLAS.variants[String(n[0])] ?? []).map(([, lines]) => clean(lines.join(' ')).trim())
+      const mine = opts.find(t => c.re.test(t))
+      if (!mine || !THREAD_RE.test(own)) continue
+      if (AGAINST.test(own)) out.push({ name, kind: 'exclude', how: `rule out one of ${opts.filter(t => t !== mine).join(' / ')}` })
+      else out.push({ name, kind: 'type', how: `set to ${mine}` })
+    } else if (THREAD_RE.test(own) && !AGAINST.test(own) && !/different Thread/i.test(own)) {
+      out.push({ name, kind: 'general', how: own.trim() })
+    } else continue
+    seen.add(name)
+  }
+  const order = { type: 0, exclude: 1, general: 2 }
+  return out.sort((a, b) => order[a.kind] - order[b.kind])
+}

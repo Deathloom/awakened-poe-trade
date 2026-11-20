@@ -67,6 +67,10 @@
             <li><b>Panels over the game</b>: pin any panel (build, guide, trade companion, tree map, atlas, session, market, cheat sheets, money) with Settings → Panels → Where panels show.
               Drag them by the top bar, resize from the bottom-right corner. A panel set to click-through can't be dragged while you play: press Shift+Space first.</li>
             <li><b>Panels in the overlay</b>: hover a panel, click <b>Move</b> and drag one of the corner squares. A panel's hotkey pressed in game shows only that panel; Shift+Space shows the menu and every open panel.</li>
+            <li><b>Cheat sheets</b>: short sheets for league mechanics (Covens, Betrayal, Heist, Delve, Sanctum, map mechanics), vendor recipes and a league checklist.
+              <b>Thread planner</b>: pick a Thread and how many you put in the map device (1–8) to see the guaranteed Thread mods, which 3 / 6 / 8 bonus you get and the next one,
+              the area level the strongest effects need, the cost per map at poe.ninja prices (chaos and divine) and the atlas notables that help that Thread
+              (which option to choose on Dextral / Sinistral Threads, which type to rule out on Threadbare / Unthreaded). <b>?</b> says where the numbers come from.</li>
             <li><b>Post to the friends' board</b>: set a hotkey in Settings → Hotkeys, hover an item and press it. The board opens in the overlay with the item filled in.</li>
             <li><b>Chat buttons</b> (trade companion, market search, friends' board) copy the command, or send one chat message per click (setting). Nothing is ever sent by itself.</li>
           </ul>
