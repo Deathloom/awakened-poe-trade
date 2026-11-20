@@ -63,7 +63,7 @@
             <li><b>Price check</b>: hover an item and press the price check key. You see prices and what the item does to your PoB build.</li>
             <li><b>Map check</b>: hover a map and press the item check key. Mods you coloured (Settings → Maps) and the ones in your build's Notes show as always.
               With a PoB build active, mods dangerous for it get a red edge and <i class="fas fa-hammer" /> (hover for why: reflect for melee, no regen for regen builds, less max res when your over-cap is low, curses unless you're curse immune, …)
-              and mods that don't affect it are greyed. It uses the stats PoB saved in the build file, so save the build in PoB after big changes. <b>?</b> on the map check shows the legend; Settings → Maps → Warn for my PoB build turns it off.</li>
+              and mods that are fine for it (or have no build-specific rule) are greyed; mods dangerous for every build (more monster damage or crit, penetration, poison on hit, …) never are. It uses the stats PoB saved in the build file, so save the build in PoB after big changes. <b>?</b> on the map check shows the legend; Settings → Maps → Warn for my PoB build turns it off.</li>
             <li><b>Market search</b> (overlay menu, <i class="fas fa-search-dollar" />, or its hotkey from Settings → Hotkeys): type an item name, pick it, and see who sells it, cheapest first.
               <b>Whisper</b> uses GGG's own buy message, <b>Hideout</b> is <code>/hideout name</code> (works when the seller lets visitors in).
               Instant buyout listings open in the Trade site tab, where you click GGG's "Travel to Hideout".</li>

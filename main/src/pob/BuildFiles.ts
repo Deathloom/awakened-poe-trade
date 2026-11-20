@@ -20,6 +20,17 @@ const BAD_CHARS = /[<>:"|?*\u0000-\u001f]/
 const RESERVED = /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³]|conin\$|conout\$)(\..*)?$/i
 
 // one path segment: no separators, no reserved names, no trailing dot/space
+// Deathloom fork (Q4 review): the real path of rel inside root, following links
+// and junctions on both sides, or null when the file isn't really inside root
+// (a link in the folder pointing elsewhere). Throws when the file doesn't exist.
+export async function realFileInside (root: string, rel: string): Promise<string | null> {
+  const realRoot = await fs.realpath(path.resolve(root))
+  const full = path.resolve(root, rel)
+  if (!full.startsWith(path.resolve(root) + path.sep)) return null
+  const realFull = await fs.realpath(full)
+  return realFull.startsWith(realRoot + path.sep) ? realFull : null
+}
+
 export function safeSegment (name: string): boolean {
   return name.length > 0 && name.length <= 120 &&
     !BAD_CHARS.test(name) && !/[\\/]/.test(name) &&

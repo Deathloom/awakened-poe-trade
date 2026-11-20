@@ -10,7 +10,7 @@ import { promises as fs } from 'fs'
 import type { ServerEvents } from '../server'
 import type { Logger } from '../RemoteLogger'
 import type { BuildMapProfile, BuildNotesData } from '../../../ipc/types'
-import { safeSegment } from './BuildFiles'
+import { safeSegment, realFileInside } from './BuildFiles'
 import { parseBuildXml, buildMapProfile } from './build-xml'
 
 const DIR = 'Build notes'
@@ -138,19 +138,23 @@ export class BuildNotes {
   // from the file (only inside the player folder, size-capped, parsed as data).
   // undefined when it can't be read: the map check then works as before.
   private async profile (a: ActiveBuild): Promise<BuildMapProfile | undefined> {
+    let key = `${a.playerDir}|${a.rel}`
     try {
-      const root = path.resolve(a.playerDir)
-      const full = path.resolve(root, a.rel)
-      if (!full.startsWith(root + path.sep) || !/\.xml$/i.test(full)) return undefined
+      const full = await realFileInside(a.playerDir, a.rel)
+      if (!full || !/\.xml$/i.test(full)) return undefined
       const st = await fs.stat(full)
       if (!st.isFile() || st.size > MAX_BUILD_BYTES) return undefined
-      const key = `${full}|${st.mtimeMs}|${st.size}`
+      key = `${full}|${st.mtimeMs}|${st.size}`
       if (this.profileCache?.key === key) return this.profileCache.profile
       const profile = buildMapProfile(parseBuildXml(await fs.readFile(full, 'utf8')))
       this.profileCache = { key, profile }
       return profile
     } catch (e) {
-      this.logger.write(`warn [Build notes] build stats for the map check: ${(e as Error).message}`)
+      // once per build file, not on every map check
+      if (this.profileCache?.key !== key) {
+        this.logger.write(`warn [Build notes] build stats for the map check: ${(e as Error).message}`)
+        this.profileCache = { key, profile: undefined }
+      }
       return undefined
     }
   }

@@ -41,6 +41,8 @@ export interface BuildModFlag {
   // true: dangerous for this build; false: known mod, fine for it
   danger: boolean
   reason: string
+  // dangerous for every build (never greyed, no build mark)
+  general?: true
 }
 
 const has = (names: string[], re: RegExp) => names.some(n => re.test(n))
@@ -235,13 +237,47 @@ export const MAP_MOD_RULES: Record<string, Rule> = {
   },
   'Monsters deal #% extra Physical Damage as Fire': extraAsRule('fire'),
   'Monsters deal #% extra Physical Damage as Cold': extraAsRule('cold'),
-  'Monsters deal #% extra Physical Damage as Lightning': extraAsRule('lightning')
+  'Monsters deal #% extra Physical Damage as Lightning': extraAsRule('lightning'),
+  // over-cap doesn't help against penetration (it lowers the capped value), so this
+  // checks uncapped resistances and whether an elemental hit is already your weakest
+  'Monster Damage Penetrates #% Elemental Resistances': (t) => {
+    const low = (['fire', 'cold', 'lightning'] as const).filter(e => t.res[e] != null && t.res[e]! < 75)
+    const weakEle = t.weakestHit === 'Fire' || t.weakestHit === 'Cold' || t.weakestHit === 'Lightning'
+    return flag(low.length > 0 || weakEle,
+      low.length ? `Your ${low.join(' and ')} resistance isn't capped; penetration lowers it further.` : `${t.weakestHit} is already your weakest hit; penetration makes elemental hits bigger.`,
+      'Your elemental resistances are capped and elemental hits aren\'t your weakest.')
+  },
+  'Monsters Poison on Hit': (t) => {
+    const r = t.res.chaos
+    return flag(r == null || r < 0,
+      r == null ? 'Your build file has no chaos resistance saved; poison stacks chaos damage.' : `Your chaos resistance is ${r}%: poison stacks hurt.`,
+      `Your chaos resistance is ${r}%.`)
+  }
 }
 
-// null: the rules don't know this mod (shown greyed as "doesn't affect your build")
+// mods dangerous for every build: never greyed, whatever the build. The test says
+// which way the mod hurts (value as in MAP_MOD_RULES).
+export const ALWAYS_DANGEROUS: Record<string, (value: number) => boolean> = {
+  '+#% to Monster Critical Strike Multiplier': (v) => v > 0,
+  '#% increased Monster Damage': (v) => v > 0,
+  'Monster Damage Penetrates #% Elemental Resistances': () => true,
+  'Monsters Poison on Hit': () => true,
+  'All Monster Damage from Hits always Ignites': () => true,
+  'Buffs on Players expire #% faster': (v) => v > 0,
+  'Players gain #% reduced Flask Charges': (v) => v < 0,
+  'Unique Boss deals #% increased Damage': (v) => v > 0
+}
+
+// null: no build-specific rule for this mod (shown greyed, "no build-specific rule")
 export function checkMapMod (ref: string, value: number | undefined, traits: BuildTraits): BuildModFlag | null {
+  const v = value ?? 0
   const rule = MAP_MOD_RULES[ref]
-  return rule ? rule(traits, value ?? 0) : null
+  const res = rule ? rule(traits, v) : null
+  if (res?.danger) return res
+  if (ALWAYS_DANGEROUS[ref]?.(v)) {
+    return { danger: false, general: true, reason: res ? `Dangerous for every build. ${res.reason}` : 'Dangerous for every build.' }
+  }
+  return res
 }
 
 // one line about the build for the legend

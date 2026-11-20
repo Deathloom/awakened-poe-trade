@@ -19,7 +19,7 @@
     <div v-if="buildTraits && showLegend" class="px-8 py-1 bg-gray-900 text-xs text-gray-400 border-t border-gray-800">
       Checked against <b class="text-gray-300">{{ buildName }}</b><template v-if="traitsLine"> ({{ traitsLine }})</template>:
       <i class="fas fa-hammer text-red-400" /> = dangerous for this build (hover a mod for why) ·
-      greyed = doesn't affect it. Your own colours stay. Uses the stats PoB saved in the build file.
+      greyed = fine for it or no build-specific rule. Mods dangerous for every build and your own colours stay as they are. Uses the stats PoB saved in the build file.
       Turn off in Settings → Maps.
     </div>
     <FullscreenImage v-if="image"

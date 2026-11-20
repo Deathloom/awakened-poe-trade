@@ -1286,6 +1286,9 @@ test('map check: build-aware map mod warnings (Q4)', async () => {
     { Life: 4000, CombinedDPS: 1e6, TotalDPS: 2e5, IgniteDPS: 8e5, TotemPlacementTime: 0.5, FireResist: 75, ColdResist: 60, LightningResist: 75, FireResistOverCap: 30, ColdResistOverCap: 0, LightningResistOverCap: 30 },
     ['Fireball', 'Spell Totem', 'Burning Damage']))
 
+  const allRefs = new Map(readFileSync(new URL('../renderer/public/data/en/stats.ndjson', import.meta.url), 'utf8')
+    .split('\n').filter(Boolean).map(l => JSON.parse(l)).map(s => [s.ref, s]))
+  const refsOk = (ref) => Boolean(allRefs.get(ref)?.fromAreaMods)
   const check = (t, ref, value) => r.checkMapMod(ref, value, t)
   const danger = (t, ref, value) => check(t, ref, value)?.danger
 
@@ -1349,8 +1352,31 @@ test('map check: build-aware map mod warnings (Q4)', async () => {
   assert.equal(danger(arc, 'Monsters gain #% of their Physical Damage as Extra Chaos Damage'), false)
   assert.equal(danger(ignite, 'Monsters deal #% extra Physical Damage as Cold'), true)
   assert.equal(danger(ignite, 'Monsters deal #% extra Physical Damage as Fire'), false)
-  // mods the rules don't know: null (greyed as "doesn't affect your build")
+  // mods the rules don't know: null (greyed, "no build-specific rule")
   assert.equal(check(slam, '#% increased Pack size', 20), null)
+  // penetration vs uncapped res / elemental weakest hit; poison on hit vs chaos res
+  const pen = 'Monster Damage Penetrates #% Elemental Resistances'
+  assert.equal(danger(ignite, pen, 10), true, 'cold uncapped')
+  assert.equal(danger(slam, pen, 10), false, 'capped, chaos is the weakest hit')
+  assert.equal(check(slam, pen, 10).general, true, 'still never greyed')
+  assert.equal(danger(slam, 'Monsters Poison on Hit'), true, 'chaos res -20')
+  assert.equal(danger(arc, 'Monsters Poison on Hit'), false)
+  assert.equal(check(arc, 'Monsters Poison on Hit').general, true)
+  // dangerous for every build: never greyed (general), only in the harmful direction
+  for (const [ref, v] of [['+#% to Monster Critical Strike Multiplier', 40], ['#% increased Monster Damage', 20], ['All Monster Damage from Hits always Ignites', undefined],
+    ['Buffs on Players expire #% faster', 50], ['Players gain #% reduced Flask Charges', -40], ['Unique Boss deals #% increased Damage', 25]]) {
+    for (const t of [slam, arc, minion, ignite]) {
+      const f = check(t, ref, v)
+      assert.ok(f && !f.danger && f.general, ref)
+      assert.match(f.reason, /every build/)
+    }
+    assert.ok(r.ALWAYS_DANGEROUS[ref], ref)
+  }
+  assert.equal(check(slam, 'Players gain #% reduced Flask Charges', 20), null, 'more flask charges: not general')
+  assert.equal(check(slam, 'Buffs on Players expire #% faster', -30), null, 'buffs slower: not general')
+  for (const ref of Object.keys(r.ALWAYS_DANGEROUS)) {
+    assert.ok(refsOk(ref), `map mod stat missing: ${ref}`)
+  }
   assert.match(r.describeTraits(slam), /melee/)
 
   // every rule names a real map mod stat (an upstream data refresh can't silently break them)
@@ -1358,6 +1384,27 @@ test('map check: build-aware map mod warnings (Q4)', async () => {
     .split('\n').filter(Boolean).map(l => JSON.parse(l)).map(s => [s.ref, s]))
   for (const ref of Object.keys(r.MAP_MOD_RULES)) {
     assert.ok(refs.get(ref)?.fromAreaMods, `map mod stat missing: ${ref}`)
+  }
+})
+
+test('build files: real path must stay inside the player folder (Q4 review)', async () => {
+  const fs = await import('node:fs/promises')
+  const os = await import('node:os')
+  const path = await import('node:path')
+  const base = await fs.mkdtemp(path.join(os.tmpdir(), 'q4-'))
+  try {
+    const root = path.join(base, 'player')
+    await fs.mkdir(path.join(root, 'sub'), { recursive: true })
+    await fs.writeFile(path.join(root, 'sub', 'a.xml'), 'x')
+    await fs.writeFile(path.join(base, 'outside.xml'), 'x')
+    assert.equal(await buildFiles.realFileInside(root, 'sub/a.xml'), await fs.realpath(path.join(root, 'sub', 'a.xml')))
+    assert.equal(await buildFiles.realFileInside(root, '../outside.xml'), null)
+    let linked = true
+    try { await fs.symlink(path.join(base, 'outside.xml'), path.join(root, 'link.xml')) } catch { linked = false }
+    if (linked) assert.equal(await buildFiles.realFileInside(root, 'link.xml'), null, 'a link out of the folder is refused')
+    await assert.rejects(buildFiles.realFileInside(root, 'missing.xml'))
+  } finally {
+    await fs.rm(base, { recursive: true, force: true })
   }
 })
 

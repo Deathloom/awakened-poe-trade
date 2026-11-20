@@ -54,11 +54,13 @@ const decision = computed<string>({
 })
 
 // grey what doesn't affect the build, unless you coloured it yourself
-const greyed = computed(() => props.buildFlag !== undefined && !props.buildFlag?.danger &&
+// (mods dangerous for every build are never greyed)
+const greyed = computed(() => props.buildFlag !== undefined && !props.buildFlag?.danger && !props.buildFlag?.general &&
   (decision.value === '-' || decision.value === 's'))
 const buildTitle = computed(() => {
   if (props.buildFlag === undefined) return undefined
-  if (props.buildFlag === null) return "PoB: doesn't affect your build"
+  if (props.buildFlag === null) return 'PoB: no build-specific rule for this mod'
+  if (props.buildFlag.general) return `PoB: ${props.buildFlag.reason}`
   return `PoB: ${props.buildFlag.danger ? 'dangerous for your build' : 'fine for your build'}. ${props.buildFlag.reason}`
 })
 
