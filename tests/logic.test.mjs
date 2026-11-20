@@ -758,3 +758,23 @@ test('market tools: shopping list, sell list, farming, crafting, divine', async 
   assert.equal(mt.convert(2, 'div', undefined), null)
   assert.equal(mt.divineSeries(items[6]).length, 7)
 })
+
+test('market outlook: no cap; too-fast items flagged and left out; backtest on the week', async () => {
+  const mt = await import('./.build/market-trends.mjs')
+  // graph = % vs 7 days ago, oldest first; chaos = today
+  const item = (chaos, graph) => ({ chaos, graph, name: 'x', ns: 'GEM', category: 'skill-gems', url: '' })
+  // 1c → 15c in a week: too fast to call, not a steady climber
+  const wild = mt.trendOf(item(15, [0, 100, 300, 600, 900, 1200, 1400]))
+  assert.equal(wild.wild, true)
+  assert.equal(mt.isSteadyClimber(wild), false)
+  // steady +3%/day: a real number, not 60
+  const g = [0, 1, 2, 3, 4, 5, 6].map(d => (1.03 ** d - 1) * 100)
+  const steady = mt.trendOf(item(10 * 1.03 ** 6, g))
+  assert.equal(steady.wild, false)
+  assert.ok(steady.outlook > 3 && steady.outlook < 12, String(steady.outlook))
+  assert.equal(mt.isSteadyClimber(steady), true)
+  // backtest: steady climbers that kept climbing count as rose and within
+  const s = mt.backtestSummary(Array.from({ length: 6 }, () => item(10 * 1.03 ** 6, g)))
+  assert.equal(s.n, 6); assert.equal(s.rose, 6); assert.equal(s.within, 6)
+  assert.ok(s.medianMiss < 5)
+})

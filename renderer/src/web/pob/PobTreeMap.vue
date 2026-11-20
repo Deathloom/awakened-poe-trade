@@ -16,6 +16,9 @@
         <span><i class="fas fa-circle text-green-500" /> taken by now</span>
         <span><i class="fas fa-circle text-cyan-300" /> next ({{ levelPlan.next.length }})</span>
         <tree-stepper v-if="planStep" :pos="planStep.pos" :len="planStep.len" @step="stepPlan" />
+        <button v-if="planStep && planStep.pos !== planStep.byLevel" class="ui-btn ui-btn-quiet"
+          :title="`Jump to where your level and quest points say you are (${planStep.byLevel}/${planStep.len}, same as Next steps)`"
+          @click="stepPlan(planStep.byLevel - planStep.pos)"><i class="fas fa-user-check" />My level</button>
         <span><i class="fas fa-circle text-orange-400" /> later</span>
       </template>
       <template v-else-if="live">
@@ -36,8 +39,9 @@
       <button class="ui-btn ui-btn-quiet" title="Reload (and fetch the character again, rate-limited)"
         :disabled="loading" @click="request(true)"><i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
     </div>
+    <!-- the fixed "live character is turned off" notice only where it explains a missing view (not over the levelling / switch maps) -->
     <div v-if="error" class="px-2 text-gray-400">{{ error }}</div>
-    <div v-else-if="liveError" class="px-2 pb-1 text-xs text-gray-500">{{ liveError }}</div>
+    <div v-else-if="liveError && !levelPlan && !fromOn" class="px-2 pb-1 text-xs text-gray-500">{{ liveError }}</div>
     <div v-if="!compact && alloc && otherBuilds.length" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 pb-1 text-xs shrink-0">
       <span class="text-gray-400" title="Moving on from another build? Pick it: passives only in that one turn red (refund them: one Orb of Regret each), the ones in both stay green. Fills in by itself when you switch your active build.">Switching from</span>
       <select class="rounded bg-gray-800 px-1 max-w-[16rem]" :value="fromPath ?? ''" @change="setFrom(($event.target as HTMLSelectElement).value || null)">
@@ -215,12 +219,16 @@ const planStep = computed(() => {
   if (!p || !key) return null
   const len = p.order.length
   let pos = getStep(key)
+  // Deathloom fork (Gerhard 20 Nov 2026: switching to the next tree in PoB showed 5/88,
+  // far behind his character): a tree seen for the first time starts where your level
+  // and quest points say you are (same number as Next steps), not at the game log's
+  // unbroken run, which is short once a new tree reorders things
+  const byLevel = Math.min(len, Math.max(0, p.taken ?? 0))
   if (pos == null) {
-    // first time: start where the old automatic tracking had you
     const taken = takenSet.value
-    pos = leadingTaken(len, i => taken ? taken.has(i) : i < p.taken)
+    pos = Math.max(byLevel, leadingTaken(len, i => taken ? taken.has(i) : false))
   }
-  return { key, len, pos: Math.min(pos, len) }
+  return { key, len, pos: Math.min(pos, len), byLevel }
 })
 const levelPlan = computed(() => {
   const p = plan.value; const st = planStep.value

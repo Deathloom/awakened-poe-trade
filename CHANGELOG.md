@@ -8,6 +8,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#261): easier to read, less crowded; tree map starts at your level
+- **Easier-to-read small print** (on by default) now also brightens greyed text: three text levels instead of six, faded rows (done steps, taken passives) less faded, a bit more space between lines, and the levelling section headers follow the theme.
+- **Campaign guide** (window): the act's finished steps fold into one "N steps done" line (click to show); more space between steps; the colour legend moved to ⋯ → What the colours mean.
+- **Next steps**: roomier sections; the long "one tree only" note is one line (hover for the rest).
+- **Cheat sheets**: normal-size text, bold section titles, more space.
+- **Tree map, levelling**: a tree you haven't stepped through yet starts where your level and quest points say you are (same number as Next steps), not at the game log's short run (switching to the next tree in PoB showed 5/88). New **My level** button jumps back there. The "live character is turned off" notice no longer sits over the levelling and switch maps.
+- **Market → Outlook**: no more +60% on everything (that was a cap). The real 3-day projection is shown; items moving over 100% (thin markets, e.g. 1c gems bought out) say "too fast" and stay out of Outlook (see Rising). New line on top checks the outlook against this week's own prices: how many picks really rose and the typical miss. The sticky table header no longer lets the first row show through.
+- **Levelling order** (PoB fork #43): finishes a branch before starting another, so the next 5 passives no longer jump across the tree.
+
 ### Changed (#260): Calmer panels part 3
 - **Atlas**: header is now build picker, Edit, zoom, fit, Stats and one ⋯ menu (add from a link, ready-made tree, copy to mine, rename, copy link, open on pathofexile.com, taken all/nothing, delete). Rename has Save/Cancel; empty atlas shows Add buttons.
 - **This session**: stopwatch play/pause stays; Reset stopwatch and Start a new session moved to ⋯. Loot buttons use the shared button look.
