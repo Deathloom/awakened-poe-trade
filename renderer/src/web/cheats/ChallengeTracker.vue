@@ -14,7 +14,7 @@
         Softcore, Hardcore and SSF share one list (like in game); Ruthless has its own.</div>
       <div>Click a name for the steps and a tip; tick steps to keep count. <i class="fas fa-arrow-right" /> opens the cheat sheet with the matching facts.</div>
       <div>List cross-checked on {{ CHALLENGES_CHECKED }} between
-        <template v-for="(s, k, i) in CHALLENGE_SOURCES" :key="k"><template v-if="i">, </template><a :href="s.url" target="_blank" rel="noopener noreferrer" class="underline">{{ s.label }}</a></template>.
+        <template v-for="(s, k, i) in CHALLENGE_SOURCES" :key="k"><template v-if="i"> and </template><a v-if="s.url" :href="s.url" target="_blank" rel="noopener noreferrer" class="underline">{{ s.label }}</a><span v-else>{{ s.label }}</span></template>.
         Tips are ours. GGG can change challenges; their own challenge page in game wins.</div>
     </div>
     <div v-if="confirmClear" class="flex flex-wrap items-center gap-1 text-gray-300">
@@ -22,12 +22,13 @@
       <button class="ui-btn" @click="clearLeague">Untick all</button>
       <button class="ui-btn ui-btn-quiet" @click="confirmClear = false">Keep</button>
     </div>
+    <div v-if="!canTick" class="text-gray-300"><i class="fas fa-info-circle mr-1 text-gray-500" />No league picked yet (Settings → Price check → League), so ticks can't be saved yet.</div>
     <div v-if="otherLeague" class="text-gray-500"><i class="fas fa-info-circle mr-1" />These are the {{ CHALLENGE_LEAGUE }} challenges; ticks are saved for {{ leagueKey }}.</div>
     <div v-if="missing" class="text-gray-500"><i class="fas fa-info-circle mr-1" />{{ missing }} of the {{ CHALLENGE_TOTAL }} challenges aren't in this list yet.</div>
 
     <div v-for="c of shown" :key="c.id" class="border-t border-gray-700 pt-1">
       <div class="flex items-baseline gap-x-1.5">
-        <input type="checkbox" :checked="ticks.has(c.id)" :title="ticks.has(c.id) ? 'Done (click to untick)' : 'Tick when done'" @change="toggle(c.id)">
+        <input type="checkbox" :checked="ticks.has(c.id)" :disabled="!canTick" :title="ticks.has(c.id) ? 'Done (click to untick)' : 'Tick when done'" @change="toggle(c.id)">
         <button class="text-left flex-1" :class="ticks.has(c.id) ? 'text-gray-500 line-through' : 'text-gray-100'" :aria-expanded="open.has(c.id)" @click="flip(c.id)">
           <span class="text-gray-500 no-underline">{{ CHALLENGES.indexOf(c) + 1 }}.</span> {{ c.name }}
         </button>
@@ -38,7 +39,7 @@
         <div class="text-gray-300">{{ c.req }}</div>
         <label v-for="(s, i) of c.steps ?? []" :key="i" class="flex items-baseline gap-x-1.5 cursor-pointer"
           :class="ticks.has(stepId(c, i)) ? 'text-gray-500 line-through' : 'text-gray-400'">
-          <input type="checkbox" :checked="ticks.has(stepId(c, i))" @change="toggle(stepId(c, i))">
+          <input type="checkbox" :checked="ticks.has(stepId(c, i))" :disabled="!canTick" @change="toggle(stepId(c, i))">
           <span>{{ s }}</span>
         </label>
         <div v-if="c.tip" class="text-gray-400"><i class="fas fa-lightbulb mr-1 text-gray-500" />{{ c.tip }}</div>
@@ -53,13 +54,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { useLeagues } from '@/web/background/Leagues'
+import { AppConfig, type Config } from '@/web/Config'
 import { SHEETS, OWN_TABS } from './sheets'
 import {
   CHALLENGES, CHALLENGE_TOTAL, CHALLENGE_LEAGUE, CHALLENGE_LEAGUE_LABEL, CHALLENGE_SOURCES, CHALLENGES_CHECKED,
-  type ChallengeFilter, challengeLeagueKey, challengesMissing, doneCount, filterChallenges,
+  CHALLENGE_TICKS_KEY, type ChallengeFilter, canTickChallenges, challengeLeague, challengeLeagueKey, challengesMissing, doneCount, filterChallenges,
   loadChallengeTicks, saveChallengeTicks, stepId, stepsDone, stepsNeeded, toggleTick
 } from './challenges'
 
@@ -77,12 +79,21 @@ function setFilter (f: ChallengeFilter) {
 const helpOpen = ref(false)
 
 const leagues = useLeagues()
-const league = computed(() => leagues.selectedId.value ?? '')
+// the picked league once the list has loaded, else the saved setting; none = no ticking
+const league = computed(() => challengeLeague(leagues.selectedId.value, (AppConfig() as Config | null)?.leagueId))
 const leagueKey = computed(() => challengeLeagueKey(league.value))
+const canTick = computed(() => canTickChallenges(league.value))
 const otherLeague = computed(() => !!leagueKey.value && leagueKey.value !== CHALLENGE_LEAGUE)
 const ticks = ref(loadChallengeTicks(league.value))
 watch(league, (l) => { ticks.value = loadChallengeTicks(l) })
+// another window (overlay / desktop) ticked something: show it here too
+function onStorage (e: StorageEvent) {
+  if (e.key === CHALLENGE_TICKS_KEY || e.key === null) ticks.value = loadChallengeTicks(league.value)
+}
+onMounted(() => { window.addEventListener('storage', onStorage) })
+onUnmounted(() => { window.removeEventListener('storage', onStorage) })
 function toggle (id: string) {
+  if (!canTick.value) return
   // re-read first: another window (overlay / desktop) may have ticked something
   ticks.value = toggleTick(loadChallengeTicks(league.value), id)
   saveChallengeTicks(league.value, ticks.value)
@@ -112,6 +123,6 @@ const menu = computed<UiMenuItem[]>(() => [
   { label: 'Open all', icon: 'fas fa-folder-open', action: () => { open.value = new Set(shown.value.map(c => c.id)) } },
   { label: 'Close all', icon: 'fas fa-folder', action: () => { open.value = new Set() } },
   { divider: true },
-  { label: 'Untick all for this league', icon: 'fas fa-undo', disabled: !ticks.value.size, action: () => { confirmClear.value = true } }
+  { label: 'Untick all for this league', icon: 'fas fa-undo', disabled: !canTick.value || !ticks.value.size, action: () => { confirmClear.value = true } }
 ])
 </script>

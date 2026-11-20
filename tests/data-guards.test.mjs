@@ -210,7 +210,8 @@ test('challenge list: 40 Covens challenges, unique, sourced, links go to real ta
   for (const c of list) {
     assert.match(c.id, /^[a-z0-9-]+$/, c.id)
     assert.ok(c.name && c.req, c.id)
-    assert.ok(c.sources.length > 0 && c.sources.every(s => ch.CHALLENGE_SOURCES[s]?.url.startsWith('https://')), `${c.id}: source`)
+    assert.ok(c.sources.length > 0 && c.sources.every(s => ch.CHALLENGE_SOURCES[s]?.label), `${c.id}: source`)
+    assert.ok(c.sources.some(s => ch.CHALLENGE_SOURCES[s].url?.startsWith('https://')), `${c.id}: a linked source`)
     if (c.tab) assert.ok(CHEAT_TAB_IDS.includes(c.tab), `${c.id}: tab ${c.tab}`)
     if (c.steps) {
       assert.ok(c.steps.length > 0 && c.steps.every(s => typeof s === 'string' && s), `${c.id}: steps`)
@@ -220,6 +221,9 @@ test('challenge list: 40 Covens challenges, unique, sourced, links go to real ta
       assert.ok(c.steps && Number.isInteger(c.need) && c.need >= 1 && c.need <= c.steps.length, `${c.id}: need`)
     }
   }
+  // never link a real-money-trading shop (GGG forbids RMT): AOEAH is named only
+  for (const s of Object.values(ch.CHALLENGE_SOURCES)) assert.ok(!/aoeah|mmojugg|u4gm|mulefactory|igvault|playerauctions/i.test(s.url ?? ''), s.label)
+  assert.equal(ch.CHALLENGE_SOURCES.aoeah.url, undefined)
   assert.ok(CHEAT_TAB_IDS.includes('challenges'))
   assert.equal(new Set(CHEAT_TAB_IDS).size, CHEAT_TAB_IDS.length, 'duplicate cheat sheet tab id')
   // anchors both sources agree on

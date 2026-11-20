@@ -12,10 +12,11 @@ import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 export const CHALLENGE_LEAGUE = 'Covens'
 export const CHALLENGE_LEAGUE_LABEL = 'Covens of Umbra (3.30)'
 
-export const CHALLENGE_SOURCES = {
-  aoeah: { label: 'AOEAH: PoE 3.30 Challenge Rewards & Complete Guide', url: 'https://www.aoeah.com/news/4936--poe-330-challenge-rewards--complete-guide-covens-of-umbra' },
+// AOEAH is named only, never linked: it's a real-money-trading shop (GGG forbids RMT)
+export const CHALLENGE_SOURCES: Record<'aoeah' | 'poepsn', { label: string, url?: string }> = {
+  aoeah: { label: 'AOEAH\'s 3.30 challenge guide' },
   poepsn: { label: 'PoE - PSN: Covens of Umbra Challenges Planner', url: 'https://poepsn.blogspot.com/2026/11/pathofexile-covens-of-umbra-league-330-challenges-guide-planner.html' }
-} as const
+}
 export type ChallengeSource = keyof typeof CHALLENGE_SOURCES
 export const CHALLENGES_CHECKED = '2026-11-20'
 
@@ -51,7 +52,7 @@ export function peddlerSteps (name: string): string[] {
 export const CHALLENGES: Challenge[] = [
   { id: 'beginners-basics', name: 'Beginner\'s Basics', req: 'Use each of these currency items.', steps: ['Orb of Transmutation', 'Orb of Augmentation', 'Orb of Alteration', 'Orb of Alchemy'], tip: 'Crafting bench options count too.', sources: BOTH },
   { id: 'witchs-wishes', name: 'Witch\'s Wishes', req: 'Do each of these Covens encounters.', steps: ['Kill a Unique Monster empowered by at least 1 Fate', 'Place a Viscera in your Wickerman'], tab: 'covens', sources: BOTH },
-  { id: 'peddlers-produce-1', name: 'Peddler\'s Produce I', req: 'Get each of these items from a vendor recipe (buying them doesn\'t count).', steps: peddlerSteps('Peddler\'s Produce I'), tip: 'Easy while levelling: the trophy recipes in Vendor recipes.', tab: 'recipes', sources: BOTH },
+  { id: 'peddlers-produce-1', name: 'Peddler\'s Produce I', req: 'Get each of these items from a vendor recipe.', steps: peddlerSteps('Peddler\'s Produce I'), tip: 'Easy while levelling: the trophy recipes in Vendor recipes.', tab: 'recipes', sources: BOTH },
   { id: 'act-adversaries-1', name: 'Act Adversaries I', req: 'Defeat the act bosses of acts 1–5.', steps: ['Act 1: Merveil, the Twisted', 'Act 2: Vaal Oversoul', 'Act 3: Dominus, Ascendant', 'Act 4: Malachai, The Nightmare', 'Act 5: Kitava, the Insatiable'], where: 'Campaign guide panel', sources: BOTH },
   { id: 'gifted-gods', name: 'Gifted Gods', req: 'Defeat each of these Pantheon gods while empowered by at least 1 Fate.', steps: ['Tukohama', 'Abberath', 'Ryslatha', 'Ralakesh', 'Gruthkul', 'Yugul', 'Shakari', 'Garukhan'], tab: 'covens', sources: BOTH },
   { id: 'equipped-effigy', name: 'Equipped Effigy', req: 'Have a Viscera in every slot of your Wickerman.', tab: 'covens', sources: BOTH },
@@ -59,7 +60,7 @@ export const CHALLENGES: Challenge[] = [
   { id: 'atlas-additions', name: 'Atlas Additions', req: 'Do any five of these the number of times shown.', need: 5, steps: ['Complete Ore Deposits (30)', 'Open Strongboxes (30)', 'Defeat Mercenaries (30)', 'Defeat Rogue Exiles (30)', 'Activate Shrines (30)', 'Defeat monsters with Essences (30)', 'Defeat Possessed monsters (30)', 'Have Sacred Flora spread Wisps (30)'], tip: 'Comes by itself while mapping; Strongboxes, Shrines and Essences are the quickest.', tab: 'leagues', sources: BOTH },
   { id: 'atlas-authorities', name: 'Atlas Authorities', req: 'Do any five of these league mechanics the number of times shown.', need: 5, steps: ['Complete Rituals (50)', 'Complete Ultimatum waves (50)', 'Defeat Incursion Architects (50)', 'Complete Expeditions (30)', 'Complete Unstable Breaches or Hives (30)', 'Complete Legion encounters (30)', 'Complete Syndicate member encounters (80)', 'Complete Blights (30)', 'Capture red beasts (100)', 'Complete Abysses (30)'], tip: 'Pick the five your atlas tree already runs; Threads of that mechanic add more per map.', tab: 'leagues', where: 'Atlas tree panel → ⋯ → ready-made tree', sources: BOTH },
   { id: 'foretold-foes', name: 'Foretold Foes', req: 'Defeat 50 Fate-empowered unique map bosses.', tab: 'covens', sources: BOTH },
-  { id: 'intrepid-investigator', name: 'Intrepid Investigator', req: 'Complete all non-unique maps on the Atlas.', tip: 'Also gives atlas bonus points: tick off maps as you go.', sources: BOTH },
+  { id: 'intrepid-investigator', name: 'Intrepid Investigator', req: 'Complete all non-unique maps on the Atlas (the game counts them to 100).', sources: BOTH },
   { id: 'agonising-adversaries', name: 'Agonising Adversaries', req: 'Do any five of these endgame encounters the number of times shown.', need: 5, steps: ['Claim rewards from rare maps your Atlas Runners completed (30)', 'Open Unique Strongboxes (5)', 'Defeat Infamous Mercenaries (5)', 'Defeat Possessed Rogue Exiles (10)', 'Activate Apparition or Evolving Shrines (10)', 'Defeat an Essence monster with Hysteria, Horror, Delirium or Insanity (1)', 'Defeat Possessed map bosses (10)', 'Defeat bosses from Sacred Flora in maps (3)'], tab: 'leagues', sources: BOTH },
   { id: 'fundamental-foes', name: 'Fundamental Foes', req: 'Do any five of these the number of times shown, at area level 81+ where possible.', need: 5, steps: ['Complete all Rituals in maps with a Blood-filled Vessel (10)', 'Fully complete Ultimatums (10)', 'Defeat Queen Atziri in the Temple of Atzoatl (5)', 'Complete Logbooks with 10+ Remnants (5)', 'Complete Hive Fortresses or defeat Breach Marshals (5)', 'Domain of Timeless Conflict with 25+ reward crystals shattered (3)', 'Complete Syndicate Safehouses (5)', 'Complete Blighted or Blight-ravaged maps (5)', 'Defeat Bestiary bosses (3)', 'Complete Abyssal Depths (5)'], tab: 'leagues', sources: BOTH },
   { id: 'sigil-slayer', name: 'Sigil Slayer', req: 'Kill unique map bosses in red-tier maps with 400 invoked Fate tiers in total on them.', tab: 'covens', sources: BOTH },
@@ -101,13 +102,22 @@ export const challengesMissing = () => Math.max(0, CHALLENGE_TOTAL - CHALLENGES.
 export const CHALLENGE_TICKS_KEY = 'deathloom.cheats.challenges.v1'
 
 // Softcore, Hardcore and SSF share one set of challenges in PoE; Ruthless has its own.
+// "" when there's no league: nothing can be ticked then (it would be lost).
 export function challengeLeagueKey (league: string | null | undefined): string {
   const l = (league ?? '').trim()
   if (!l) return ''
   const ruthless = /\bRuthless\b/i.test(l)
-  const base = l.replace(/\b(Hardcore|HC|SSF|Solo Self-Found|Ruthless)\b/gi, ' ').replace(/\s+/g, ' ').trim() || l
+  const base = l.replace(/\b(Hardcore|HC|SSF|Solo Self-Found|Ruthless)\b/gi, ' ').replace(/\s+/g, ' ').trim()
+  if (!base) return ruthless ? 'Ruthless' : l.replace(/\s+/g, ' ')
   return ruthless ? `Ruthless ${base}` : base
 }
+
+// the league to tick for: the one picked in Settings once the league list has
+// loaded, else the saved setting (list not loaded or failed); "" = none
+export function challengeLeague (selected: string | null | undefined, configured: string | null | undefined): string {
+  return (selected ?? '').trim() || (configured ?? '').trim()
+}
+export const canTickChallenges = (league: string | null | undefined) => challengeLeagueKey(league) !== ''
 
 // a step tick id: "<challenge id>:<step index>"
 export const stepId = (c: Challenge, i: number) => `${c.id}:${i}`
@@ -116,6 +126,7 @@ const isStrList = (v: unknown): v is string[] => Array.isArray(v) && v.every(x =
 
 export function loadChallengeTicks (league: string): Set<string> {
   const key = challengeLeagueKey(league)
+  if (!key) return new Set()
   try {
     const all = JSON.parse(localStorage.getItem(CHALLENGE_TICKS_KEY) ?? '{}')
     const list = all && typeof all === 'object' && Object.prototype.hasOwnProperty.call(all, key) ? all[key] : null
@@ -126,6 +137,7 @@ export function loadChallengeTicks (league: string): Set<string> {
 
 export function saveChallengeTicks (league: string, ticks: Set<string>) {
   const key = challengeLeagueKey(league)
+  if (!key) return
   try {
     let all: Record<string, string[]> = {}
     try {
