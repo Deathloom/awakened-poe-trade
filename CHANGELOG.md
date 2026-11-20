@@ -31,12 +31,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - With **Settings → Tools → Phone or other devices** on, another device on the network could reach the local server without the key by sending a made-up `Host: 127.0.0.1` header. The server now checks where the connection really comes from; this PC still needs no key, phones still use the QR link.
 - A malformed message from a window is ignored instead of raising an error report.
 
-### Fixed (#272): tree map didn't follow a build switch
-- Switching build, character, loadout or player in the Build panel (or making, copying or deleting a loadout) now reloads the tree map, passive tree and gems in every panel and window, e.g. the tree on the right of the Levelling layout. Before, only the panel you clicked in got the new build.
-
 ### Security (F2 review): installed app and test releases
 - The installed app can no longer be started as a plain Node.js runner or with a debug port (`ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS`, `--inspect`), so other programs can't use it to run their own code. The app itself works as before.
 - Test releases can only be built from dev (or master), never from another branch.
+
+## [1.0.95] - 2026-11-20
+
+Hotfix: only this fix on top of 1.0.94 (the rest of dev ships later).
+
+### Fixed (#272): tree map didn't follow a build switch
+- Switching build, character, loadout or player in the Build panel (or making, copying or deleting a loadout) now reloads the tree map, passive tree and gems in every panel and window, e.g. the tree on the right of the Levelling layout. Before, only the panel you clicked in got the new build.
 
 ## [1.0.94] - 2026-11-20
 
