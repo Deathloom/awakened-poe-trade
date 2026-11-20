@@ -3,7 +3,7 @@
 import type { Component } from 'vue'
 import type { WidgetSpec } from './interfaces'
 import type { Widget as WidgetT, Anchor } from './widgets'
-import PobTreeMap from '../pob/PobTreeMap.vue'
+import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
 import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
 import PlaySessionBody from '../companion/PlaySessionBody.vue'
 import MarketOverview from '../market-history/MarketOverview.vue'

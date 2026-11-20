@@ -104,7 +104,8 @@ const player = ref('')
 const showLines = ref(false)
 const copied = ref(false)
 const now = ref(Date.now())
-const clock = setInterval(() => { now.value = Date.now() }, 1000)
+// "… ago" ticks only while the window is shown (F4)
+const clock = setInterval(() => { if (document.visibilityState === 'visible') now.value = Date.now() }, 1000)
 
 const listener = Host.onEvent('MAIN->CLIENT::pob-sync-state', (e) => {
   const prevLast = state.value.last?.time

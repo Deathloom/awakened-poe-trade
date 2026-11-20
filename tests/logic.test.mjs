@@ -1051,3 +1051,103 @@ test('proxy cache: a failed download frees the slot, huge bodies and expired ent
   cache.set('C', ok(1))
   assert.equal(cache.size, 1)
 })
+
+test('quest gems: data loads on demand (once), then plans picks and vendor buys for the class', async () => {
+  const qg = await import('./.build/quest-gems.mjs')
+  const p1 = qg.loadQuestGemData()
+  assert.equal(qg.loadQuestGemData(), p1)
+  const data = await p1
+  assert.ok(data.classes.includes('Witch') && data.quests.length > 10)
+
+  const fake = {
+    classes: ['Marauder', 'Witch'],
+    start: { Witch: ['Fireball'] },
+    quests: [
+      { quest: 'Q1', id: 'a1q1', act: 1, npc: 'T', take: { 'Freezing Pulse': 2, 'Ground Slam': 1 }, buy: { 'Arcane Surge Support': [2, 'Nessa'], Fireball: [0, 'Nessa'] } }
+    ]
+  }
+  const wanted = [
+    { name: 'Freezing Pulse', reqLevel: 1, support: false },
+    { name: 'Arcane Surge', reqLevel: 1, support: true },
+    { name: 'Fireball', reqLevel: 1, support: false },
+    { name: 'Spark', reqLevel: 1, support: false }
+  ]
+  const plan = qg.planQuestGems(fake, 'Witch', wanted)
+  assert.equal(plan.steps[0].take.name, 'Freezing Pulse')
+  // "X Support" in the data = "X" in PoB; the start gem is not bought again
+  assert.deepEqual(plan.steps[0].buy.map(g => g.name), ['Arcane Surge'])
+  assert.deepEqual(plan.notFromQuests.map(g => g.name), ['Spark'])
+  assert.equal(qg.planQuestGems(fake, 'Ranger', wanted), null)
+})
+
+test('thread planner: guaranteed mods, 3/6/8 bonus, cost, sheet lines', async () => {
+  const th = await import('./.build/cheat-threads.mjs')
+  assert.equal(th.THREADS.length, 10)
+  assert.deepEqual([0, 1, 3, 4, 7, 8].map(th.guaranteedMods), [0, 1, 1, 2, 2, 3])
+  const breach = th.THREADS.find(t => t.id === 'breach')
+  let b = th.bonusState(breach, 2)
+  assert.equal(b.active, null)
+  assert.deepEqual(b.next, { at: 3, text: '20% more magic monsters', more: 1 })
+  b = th.bonusState(breach, 6)
+  assert.equal(b.active.at, 6)
+  assert.equal(b.next.at, 8)
+  b = th.bonusState(breach, 8)
+  assert.equal(b.active.text, '60% more magic monsters')
+  assert.equal(b.next, null)
+  assert.deepEqual(th.threadCost(4, 5, 200), { chaos: 20, div: 0.1 })
+  assert.deepEqual(th.threadCost(4, 5, undefined), { chaos: 20, div: null })
+  assert.equal(th.threadCost(4, null, 200), null)
+  assert.match(th.gateNote(breach, 1), /73\+.*Needs 2\+/)
+  assert.equal(th.gateNote(th.THREADS.find(t => t.id === 'legion'), 4), null)
+  // the cheat sheet takes its Thread lines from the same data
+  const sec = sheets.SHEETS.find(s => s.id === 'leagues').sections.find(x => /Threads of Creation/.test(x.title))
+  for (const l of Object.values(th.THREAD_SHEET_LINES)) assert.ok(sec.lines.includes(l))
+  for (const t of th.THREADS) assert.ok(th.THREAD_SHEET_LINES.bonuses.includes(t.summary))
+})
+
+test('thread planner: atlas notables per Thread kind (reuses the generator rules)', async () => {
+  const th = await import('./.build/cheat-threads.mjs')
+  const { threadNotables, CONTENTS } = await import('./.build/atlas-generator.mjs')
+  for (const t of th.THREADS) assert.ok(CONTENTS.some(c => c.id === t.atlas), `${t.id} → ${t.atlas}`)
+  const ab = threadNotables('abyss')
+  assert.deepEqual(ab.find(n => n.name === 'Sinistral Threads'), { name: 'Sinistral Threads', kind: 'type', how: 'set to Abyss' })
+  assert.ok(!ab.some(n => n.name === 'Dextral Threads'), 'Dextral has no Abyss option')
+  assert.match(ab.find(n => n.name === 'Unthreaded').how, /rule out one of .*Legion/)
+  assert.ok(!ab.find(n => n.name === 'Unthreaded').how.includes('Abyss'))
+  assert.ok(!ab.some(n => n.name === 'Multiplying Modifiers'), '"per different Thread" works against stacking')
+  // Bestiary / Betrayal Threads match the Beasts / Syndicate content
+  assert.equal(threadNotables('beasts')[0].how, 'set to Bestiary')
+  assert.equal(threadNotables('syndicate')[0].how, 'set to Betrayal')
+  assert.equal(threadNotables('ultimatum')[0].name, 'Dextral Threads')
+  assert.deepEqual(threadNotables('nope'), [])
+})
+
+test('thread planner: review fixes (gate wording, unstated steps, general notables, tree unchanged)', async () => {
+  const th = await import('./.build/cheat-threads.mjs')
+  const gen = await import('./.build/atlas-generator.mjs')
+  // area-gate line: original sheet wording and order, last item joined with "and"
+  assert.equal(th.THREAD_SHEET_LINES.gates, 'The strongest Thread effects need 2+ Threads and a high area level (3.30.0b): area 73+ for the Blight Pantheon god, Double Down Ultimatum and the extra Breach mod; area 80+ for the extra Abyss mod, wisp beasts, Catarina joining Betrayal and rare Syndicate members.')
+  assert.equal(th.joinAnd(['a']), 'a')
+  assert.equal(th.joinAnd(['a', 'b', 'c']), 'a, b and c')
+  assert.equal(th.joinAnd(['a', 'c and d']), 'a, c and d')
+  // Ultimatum: 8 has the same text as 6, so no "Next at 8" and 8 is marked unstated
+  const ult = th.THREADS.find(t => t.id === 'ultimatum')
+  assert.equal(th.bonusState(ult, 6).next, null)
+  assert.equal(th.bonusState(ult, 6).active.unstated, false)
+  assert.equal(th.bonusState(ult, 8).active.unstated, true)
+  assert.equal(th.bonusState(ult, 4).next.at, 6)
+  assert.equal(th.bonusState(th.THREADS.find(t => t.id === 'breach'), 8).active.unstated, false)
+  // a "general" notable naming another kind of Thread is not shown for every kind
+  assert.ok(gen.namesOtherThread('Breach Threads drop more often', /Abyss/i))
+  assert.ok(!gen.namesOtherThread('Abyss Threads drop more often', /Abyss/i))
+  assert.ok(!gen.namesOtherThread('Map Device has 20% chance not to consume Threads', /Abyss/i))
+  assert.equal(gen.threadNotables('abyss').filter(x => x.kind === 'general').length, 4, 'Thread drop / keep notables still listed')
+  for (const c of gen.CONTENTS) {
+    for (const n of gen.threadNotables(c.id).filter(x => x.kind === 'general')) {
+      assert.ok(!/Abyss|Bestiary|Betrayal|Blight|Breach|Expedition|Incursion|Legion|Ritual|Ultimatum/i.test(n.how) || c.re.test(n.how), `${c.id}: ${n.name}`)
+    }
+  }
+  // #294: the generator itself now matches Bestiary / Betrayal Threads for Beasts / Syndicate
+  assert.ok(gen.CONTENTS.find(c => c.id === 'beasts').re.test('Bestiary'))
+  assert.ok(gen.CONTENTS.find(c => c.id === 'syndicate').re.test('Betrayal'))
+})

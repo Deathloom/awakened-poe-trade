@@ -8,7 +8,8 @@
       <PatchNotesLink class="ml-auto" show-title />
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-3">
-      <template v-if="tab === 'progress'">
+      <ThreadPlanner v-if="tab === 'threads'" />
+      <template v-else-if="tab === 'progress'">
         <div class="text-gray-400">League start, then endgame: tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
         <div v-for="g of PROGRESS" :key="g.title">
           <div class="text-gray-100 font-semibold mb-0.5">{{ g.title }} <span class="text-gray-500">{{ g.items.filter(i => ticks.has(i.id)).length }}/{{ g.items.length }}</span></div>
@@ -49,21 +50,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { PROGRESS, loadProgress, saveProgress } from './progress'
 import { SHEETS, sectionsFor } from './sheets'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 
-const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Checklist' }]
+// Thread planner brings the atlas tree data (~170 kB): loaded when its tab opens
+const ThreadPlanner = defineAsyncComponent(() => import('./ThreadPlanner.vue'))
+
+const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'threads', label: 'Thread planner' }, { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Checklist' }]
+const OWN_TABS = ['threads', 'recipes', 'progress']
 const KEY = 'deathloom.cheats.tab.v1'
 const tab = ref((() => { try { return localStorage.getItem(KEY) ?? 'betrayal' } catch { return 'betrayal' } })())
 function setTab (id: string) {
   tab.value = id
   try { localStorage.setItem(KEY, id) } catch {}
 }
-const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (tab.value === 'recipes' || tab.value === 'progress' ? null : SHEETS[0]))
+const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (OWN_TABS.includes(tab.value) ? null : SHEETS[0]))
 
 // per-sheet focus switch (Covens: levelling / mapping profit / bosses)
 const FOCUS_KEY = 'deathloom.cheats.focus.v1'

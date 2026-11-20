@@ -31,6 +31,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Performance (F4): one price download for all windows
 - The poe.ninja price list (several MB) is now downloaded once and shared by the price check, Money tools, Market overview and Market history for up to 10 minutes, instead of each window downloading it on its own. Same prices, less waiting and less data.
 
+### Performance (F4b): lighter windows, part 2
+- Windows start with a little less code again (1.57 MB → 1.43 MB): the build panel's Gems, Tree, Tree map and Compare and the quest-gem data load the first time you open them, and the Lab and build-sync clocks rest while their window is hidden. Nothing else changes.
+
+### Added (Q3): Thread planner
+- **Cheat sheets → Thread planner**: pick a Thread (Abyss … Ultimatum) and how many you use (1–8) to see the guaranteed Thread mods, the 3 / 6 / 8 bonus you get and the next one, area-level notes, the cost per map at poe.ninja prices (chaos and divine, from the price list the app already downloads) and the atlas notables that help that Thread. The Map mechanics sheet and the planner now read the same Thread facts.
+
 ### Changed: Beasts / Syndicate atlas trees take Thread type notables
 - Ready-made atlas tree: picking **Beasts** or **Syndicate** now also takes Sinistral Threads (set to Bestiary / Betrayal) and Unthreaded (ruling out another type), which were missed before.
 
