@@ -271,3 +271,12 @@ export const SHEETS: Sheet[] = [
     check: 'Your Threads and atlas passive tree decide how much of each you meet. Exact numbers: GGG\'s 3.30.0 patch notes.'
   }
 ]
+
+// Cheat sheets tabs that aren't a SHEETS entry (own components), in tab order
+export const OWN_TABS = [
+  { id: 'threads', label: 'Thread planner' },
+  { id: 'recipes', label: 'Vendor recipes' },
+  { id: 'challenges', label: 'Challenges' },
+  { id: 'progress', label: 'Checklist' }
+]
+export const CHEAT_TAB_IDS = [...SHEETS.map(s => s.id), ...OWN_TABS.map(t => t.id)]

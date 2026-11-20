@@ -195,3 +195,48 @@ test('market: saved crafting and sell lists ignore broken rows', async () => {
   assert.deepEqual(mt.loadSellList(), [])
   localStorage.clear()
 })
+
+// ---- league challenges (Cheat sheets → Challenges) --------------------------
+
+test('challenge list: 40 Covens challenges, unique, sourced, links go to real tabs', async () => {
+  const ch = await import('./.build/cheat-challenges.mjs')
+  const { CHEAT_TAB_IDS } = await import('./.build/sheets.mjs')
+  const list = ch.CHALLENGES
+  assert.equal(ch.CHALLENGE_TOTAL, 40)
+  assert.equal(list.length, 40, 'challenges missing: the panel says so, but fix the list')
+  assert.equal(ch.challengesMissing(), 0)
+  assert.equal(new Set(list.map(c => c.name)).size, list.length, 'duplicate challenge name')
+  assert.equal(new Set(list.map(c => c.id)).size, list.length, 'duplicate challenge id')
+  for (const c of list) {
+    assert.match(c.id, /^[a-z0-9-]+$/, c.id)
+    assert.ok(c.name && c.req, c.id)
+    assert.ok(c.sources.length > 0 && c.sources.every(s => ch.CHALLENGE_SOURCES[s]?.label), `${c.id}: source`)
+    assert.ok(c.sources.some(s => ch.CHALLENGE_SOURCES[s].url?.startsWith('https://')), `${c.id}: a linked source`)
+    if (c.tab) assert.ok(CHEAT_TAB_IDS.includes(c.tab), `${c.id}: tab ${c.tab}`)
+    if (c.steps) {
+      assert.ok(c.steps.length > 0 && c.steps.every(s => typeof s === 'string' && s), `${c.id}: steps`)
+      assert.equal(new Set(c.steps).size, c.steps.length, `${c.id}: duplicate step`)
+    }
+    if (c.need != null) {
+      assert.ok(c.steps && Number.isInteger(c.need) && c.need >= 1 && c.need <= c.steps.length, `${c.id}: need`)
+    }
+  }
+  // never link a real-money-trading shop (GGG forbids RMT): AOEAH is named only
+  for (const s of Object.values(ch.CHALLENGE_SOURCES)) assert.ok(!/aoeah|mmojugg|u4gm|mulefactory|igvault|playerauctions/i.test(s.url ?? ''), s.label)
+  assert.equal(ch.CHALLENGE_SOURCES.aoeah.url, undefined)
+  assert.ok(CHEAT_TAB_IDS.includes('challenges'))
+  assert.equal(new Set(CHEAT_TAB_IDS).size, CHEAT_TAB_IDS.length, 'duplicate cheat sheet tab id')
+  // anchors both sources agree on
+  assert.equal(list[0].name, 'Beginner\'s Basics')
+  assert.equal(list[19].name, 'Peddler\'s Produce II')
+  assert.equal(list[39].name, 'Grand Goal Grind')
+  // Peddler's Produce steps come from the vendor recipe list (not a second copy)
+  const { VENDOR_RECIPES } = await import('./.build/vendor-recipes.mjs')
+  for (const n of ['Peddler\'s Produce I', 'Peddler\'s Produce II']) {
+    const c = list.find(x => x.name === n)
+    assert.equal(c.tab, 'recipes')
+    assert.equal(c.steps.length, VENDOR_RECIPES.filter(r => r.challenge?.name === n).length, n)
+    assert.ok(c.steps.length >= 3, n)
+  }
+  assert.ok(VENDOR_RECIPES.filter(r => r.challenge).every(r => list.some(c => c.name === r.challenge.name)), 'recipe challenge name not in the list')
+})
