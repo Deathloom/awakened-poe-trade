@@ -1168,3 +1168,26 @@ test('lazy data: loads once, a failed load is tried again (then on the next ask)
   await assert.rejects(bad(), /gone/)
   assert.equal(n, 4)
 })
+
+test('lazy data: the level recorder waits for the route, batches stay in order', async () => {
+  const { afterReady } = await import('./.build/lazy-data.mjs')
+  let open
+  const ready = new Promise(resolve => { open = resolve })
+  const seen = []
+  const record = afterReady(ready, x => { seen.push(x) })
+  record('a'); record('b')
+  await new Promise(resolve => setTimeout(resolve, 5))
+  assert.deepEqual(seen, [])
+  open()
+  record('c')
+  await new Promise(resolve => setTimeout(resolve, 5))
+  assert.deepEqual(seen, ['a', 'b', 'c'])
+  // a route that failed to load still lets the lines through; an error in one batch doesn't stop the next
+  const seen2 = []
+  const errors = []
+  const rec2 = afterReady(Promise.reject(new Error('no route')), x => { if (x === 1) throw new Error('bad'); seen2.push(x) }, e => errors.push(e.message))
+  rec2(1); rec2(2)
+  await new Promise(resolve => setTimeout(resolve, 5))
+  assert.deepEqual(seen2, [2])
+  assert.deepEqual(errors, ['bad'])
+})

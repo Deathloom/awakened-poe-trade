@@ -38,7 +38,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - **Cheat sheets → Thread planner**: pick a Thread (Abyss … Ultimatum) and how many you use (1–8) to see the guaranteed Thread mods, the 3 / 6 / 8 bonus you get and the next one, area-level notes, the cost per map at poe.ninja prices (chaos and divine, from the price list the app already downloads) and the atlas notables that help that Thread. The Map mechanics sheet and the planner now read the same Thread facts.
 
 ### Performance (F4c): lighter windows, part 3
-- Windows start with a little less code again (1.44 MB → 1.35 MB): the campaign route, the campaign guide and the levelling planner load the first time one of them is shown; the level recorder waits for the route instead of needing it at start. If the route or the quest-gem data fails to load, it is tried once more and again the next time you open the panel, instead of staying empty. Nothing else changes.
+- Windows start with a little less code again (1.44 MB → 1.35 MB): the campaign route, the campaign guide and the levelling planner load the first time one of them is shown; the level recorder waits for the route instead of needing it at start. If the route or the quest-gem data fails to load, it is tried once more; the guide then says "Couldn't load this panel" with a **Retry** button, and opening the panel again tries again, instead of staying empty. The levelling planner works without the route (act 1, no guide points). Nothing else changes.
 
 ## [1.0.97] - 2026-11-20
 

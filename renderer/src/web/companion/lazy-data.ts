@@ -24,3 +24,10 @@ export function lazyOnce<T> (load: () => Promise<T>, retries = 1, waitMs = 300):
     return pending
   }
 }
+
+// fn, but every call waits for ready first (calls stay in order). A failed
+// ready still lets the calls through; an error in fn goes to onError.
+export function afterReady<T> (ready: Promise<unknown>, fn: (x: T) => void, onError: (err: unknown) => void = console.error): (x: T) => void {
+  const gate = ready.then(() => {}, () => {})
+  return (x: T) => { gate.then(() => { fn(x) }).catch(onError) }
+}
