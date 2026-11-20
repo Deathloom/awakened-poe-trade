@@ -152,6 +152,8 @@ export interface PobConfig {
   window2?: { enabled: boolean, atStart?: boolean }
   // First-run setup guide was shown (absent = show it the next time the overlay opens)
   setupDone?: boolean
+  // Check GGG's Patch Notes forum and notify about new notes (absent = on)
+  patchNotesAlert?: boolean
 }
 
 export interface PobLoadoutChoice {
