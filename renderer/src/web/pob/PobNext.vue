@@ -47,14 +47,12 @@
               :title="ph.level ? `Followed up to level ${ph.level}` : 'End goal: the loadout picked in the Build tab'">{{ ph.title }}</span>
           </template>
         </div>
-        <div v-if="plan.phases.length === 1" class="px-1 pb-1 text-xs text-gray-600">
-          One tree only (e.g. a poe.ninja character): the levelling order is worked out from this final tree, so early
-          picks can feel odd. A guide's levelling tree works better, or name extra trees in Path of Building after a level
-          ("Level 12", "Level 30", …) to plan step by step.
-        </div>
+        <div v-if="plan.phases.length === 1" class="px-1 pb-1 text-xs text-gray-600"
+          title="The levelling order is worked out from the final tree, so early picks can feel odd. A guide's levelling tree works better, or name extra trees in Path of Building after a level (&quot;Level 12&quot;, &quot;Level 30&quot;, …) to plan step by step.">
+          One tree only: order worked out from the final tree <i class="fas fa-question-circle" /></div>
 
         <!-- passives -->
-        <div class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <div class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head flex items-baseline"><i class="fas fa-shoe-prints mr-1 text-gray-500" />
             <span>Next passives</span>
             <span class="ml-2 text-gray-600">{{ Math.min(plan.taken, plan.order.length) + plan.kept }} / {{ plan.order.length + plan.kept }} of this tree by now</span>
@@ -62,7 +60,7 @@
           </div>
           <div v-if="!plan.order.length" class="text-gray-500">This tree adds no passives over the previous one.</div>
           <div v-else-if="!showAll && plan.taken >= plan.order.length" class="text-green-500">All passives of this tree should be taken by now.</div>
-          <div v-for="row of passiveRows" :key="row.i" class="flex items-baseline gap-x-2"
+          <div v-for="row of passiveRows" :key="row.i" class="flex items-baseline gap-x-2 py-px"
             :class="isTaken(row.i) ? 'opacity-40' : ''">
             <span class="w-6 text-right text-xs text-gray-600 shrink-0">{{ row.i + 1 + plan.kept }}</span>
             <i v-if="takenByLog?.has(row.i)" class="fas fa-check text-green-500 text-xs" title="Taken (game log)" />
@@ -72,18 +70,18 @@
           </div>
         </div>
 
-        <div v-if="plan.refund.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <div v-if="plan.refund.length" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head"><i class="fas fa-undo mr-1 text-gray-500" />Refund when you switch to this tree ({{ plan.refund.length }})</div>
           <div class="text-xs text-gray-500">{{ plan.refund.map(n => n.name).join(', ') }}</div>
         </div>
 
-        <div v-if="plan.ascendancy.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <div v-if="plan.ascendancy.length" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head"><i class="fas fa-crown mr-1 text-gray-500" />Ascendancy in this tree{{ plan.ascendancyClass ? ` (${plan.ascendancyClass})` : '' }}</div>
           <div class="text-blue-300">{{ plan.ascendancy.map(a => a.name).join(', ') }}</div>
         </div>
 
         <!-- gems: swap at the next step -->
-        <div v-if="swap" class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <div v-if="swap" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head"><i class="fas fa-exchange-alt mr-1 text-gray-500" />At level {{ swap.level }} (next tree "{{ swap.title }}"<template v-if="plan.nextSkillSet">, skill set "{{ plan.nextSkillSet }}"</template>)</div>
           <div v-if="swap.add.length" class="flex flex-wrap gap-x-3"><span class="text-xs text-green-500 w-10">add</span>
             <span v-for="g of swap.add" :key="'s+' + g.name" :class="gemClass(g)" :title="gemTitle(g)">{{ g.name }}</span></div>
@@ -93,7 +91,7 @@
         </div>
 
         <!-- gems the build keeps below max level (folds away; collapsed by default) -->
-        <div v-if="holds.length" class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <div v-if="holds.length" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <button class="lg-head w-full flex items-baseline text-left hover:text-gray-100" @click="toggleHolds">
             <i class="fas fa-hand-paper mr-1 text-gray-500" />Hold gem levels
             <span class="ml-2 text-gray-600 normal-case">{{ holds.length }} gems<template v-if="holdsNow.length">, {{ holdsNow.length }} usable now</template></span>
@@ -111,7 +109,7 @@
         </div>
 
         <!-- gems from quests and vendors -->
-        <div v-if="questGems" class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <div v-if="questGems" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head flex items-baseline"><i class="fas fa-gem mr-1 text-gray-500" />
             <span>Quest gems for this build ({{ questGems.className }})</span>
             <span class="ml-2 text-gray-600">act {{ guideAct }}</span>
@@ -131,7 +129,7 @@
         </div>
 
         <!-- gems -->
-        <div class="rounded px-1 py-1 mb-1 bg-gray-900">
+        <div class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head"><i class="fas fa-gem mr-1 text-gray-500" />Gems<span v-if="plan.skillSet" class="text-gray-600"> · skill set "{{ plan.skillSet }}"</span></div>
           <div v-if="newGems.length" class="pb-1">
             <div class="lg-sub">New in this step</div>

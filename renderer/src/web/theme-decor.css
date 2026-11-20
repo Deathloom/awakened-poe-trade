@@ -175,5 +175,19 @@ html.lg-readable .text-xs {
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   font-variant-caps: normal;
 }
-html.lg-readable .text-gray-600 { color: rgb(var(--g-500)); }
-html.lg-readable .text-gray-500 { color: rgb(var(--g-400)); }
+/* Deathloom fork (Gerhard 20 Nov 2026: panels too grey and too crowded): three text
+   levels instead of six. Main text (gray-50..200) unchanged; gray-300..500 are all
+   "secondary" (g-300); gray-600 is the one "faint" level (g-400). Faded rows
+   (done steps, taken passives) stay visibly faded but readable. */
+html.lg-readable .text-gray-600 { color: rgb(var(--g-400)); }
+html.lg-readable .text-gray-500,
+html.lg-readable .text-gray-400 { color: rgb(var(--g-300)); }
+html.lg-readable .opacity-40,
+html.lg-readable .opacity-50 { opacity: 0.62; }
+/* more air between lines in panels (leading-tight was 1.25) */
+html.lg-readable .widget-default-style.leading-tight { line-height: 1.4; }
+html.lg-readable .widget-default-style .text-xs { line-height: 1.3rem; }
+/* section headers and sub-notes in the levelling / gems panes used fixed greys */
+html.lg-readable .lg-head { font-size: 0.75rem; color: rgb(var(--g-300)); border-bottom-color: rgb(var(--g-700)); padding-bottom: 3px; margin-bottom: 5px; }
+html.lg-readable .lg-sub { font-size: 0.8125rem; color: rgb(var(--g-400)); margin-top: 4px; }
+html.lg-readable .guide-task::before { color: rgb(var(--g-400)); }
