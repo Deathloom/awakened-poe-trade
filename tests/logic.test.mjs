@@ -887,9 +887,11 @@ test('phone key: sealed with Windows encryption, plain file migrated once', asyn
   m = mk()
   ks.saveKey(m.files, { available: () => true, encrypt: () => { throw new Error('x') }, decrypt: () => '' }, KEY)
   assert.equal(m.disk[ks.PLAIN_FILE].toString(), KEY)
+})
+
 test('atlas generator: type pickers only for picked content (Threads ≠ Ultimatum)', async () => {
   const { generateAtlas } = await import('./.build/atlas-generator.mjs')
-  const { decodeAtlas, ATLAS_BY_ID, ATLAS } = await import('./.build/atlas-tree-test.mjs')
+  const { decodeAtlas, ATLAS_BY_ID } = await import('./.build/atlas-tree-test.mjs')
   const r = generateAtlas({ contents: ['strongbox', 'abyss', 'threads', 'divination'], sustain: false, budget: 150 })
   const spec = decodeAtlas(r.code)
   const name = id => ATLAS_BY_ID.get(id)?.[6].trim()
