@@ -848,3 +848,43 @@ test('problem reports: home folder and secrets scrubbed in any spelling', async 
   assert.equal(scrubText('POESESSID=abc123def', home), 'POESESSID=<session>')
   assert.equal(scrubText('{"refresh_token":"r-123"}', home), '{"refresh_token":"<secret>"}')
 })
+
+test('phone key: sealed with Windows encryption, plain file migrated once', async () => {
+  const ks = await import('./.build/remote-key-store.mjs')
+  const KEY = 'abcdefghijklmnopqrstuvwxyz012345678_-AB'
+  const mk = (init = {}) => {
+    const disk = { ...init }
+    return {
+      disk,
+      files: {
+        read: n => disk[n] === undefined ? undefined : Buffer.from(disk[n]),
+        write: (n, d) => { disk[n] = Buffer.from(d) },
+        remove: n => { delete disk[n] }
+      }
+    }
+  }
+  const sealer = { available: () => true, encrypt: s => Buffer.from('X' + s), decrypt: b => { const s = b.toString(); if (s[0] !== 'X') throw new Error('bad'); return s.slice(1) } }
+  const none = { available: () => false, encrypt: () => { throw new Error('no') }, decrypt: () => { throw new Error('no') } }
+  // old plain file → same key, now sealed, plain file gone
+  let m = mk({ [ks.PLAIN_FILE]: KEY + '\n' })
+  assert.equal(ks.loadKey(m.files, sealer), KEY)
+  assert.equal(m.disk[ks.PLAIN_FILE], undefined)
+  assert.equal(m.disk[ks.SEALED_FILE].toString(), 'X' + KEY)
+  assert.equal(ks.loadKey(m.files, sealer), KEY)
+  // no encryption (some Linux): plain file kept and read as before
+  m = mk({ [ks.PLAIN_FILE]: KEY })
+  assert.equal(ks.loadKey(m.files, none), KEY)
+  assert.equal(m.disk[ks.SEALED_FILE], undefined)
+  ks.saveKey(m.files, none, KEY.replace('a', 'b'))
+  assert.equal(m.disk[ks.PLAIN_FILE].toString(), KEY.replace('a', 'b'))
+  // sealed file that can't be opened (other Windows user) and no plain file → new key
+  m = mk({ [ks.SEALED_FILE]: 'garbage' })
+  assert.equal(ks.loadKey(m.files, sealer), undefined)
+  // invalid content never accepted
+  m = mk({ [ks.PLAIN_FILE]: 'short' })
+  assert.equal(ks.loadKey(m.files, sealer), undefined)
+  // encryption throws while saving → falls back to the plain file
+  m = mk()
+  ks.saveKey(m.files, { available: () => true, encrypt: () => { throw new Error('x') }, decrypt: () => '' }, KEY)
+  assert.equal(m.disk[ks.PLAIN_FILE].toString(), KEY)
+})

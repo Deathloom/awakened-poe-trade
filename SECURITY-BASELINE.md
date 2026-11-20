@@ -36,6 +36,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 3.2 | GitHub sign-in token kept by the OS (Windows Credential Manager), not in config files or logs | ✅ |
 | 3.3 | Sign-ins (trade site tab, incl. Steam / Epic / Xbox / PlayStation) happen on the provider's own pages in an isolated session; Orbhoarder never reads passwords. Same rule for the planned Discord / Steam friend sign-in | ✅ |
 | 3.4 | Logs and error reports don't include tokens | ✅ (review on every new sign-in feature) |
+| 3.5 | Phone link key kept with Windows' own encryption (Electron safeStorage / DPAPI, this Windows user only); plain file only where the OS offers none | ✅ `remote-key.ts`, `remote-key-store.ts` |
 
 ## 4. Input validation (ASVS V5)
 
@@ -67,7 +68,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 
 | # | Item | Status |
 |---|------|--------|
-| 7.1 | GitHub Actions pinned to full commit SHAs | ✅ release, security, scorecard, PoB pin workflows |
+| 7.1 | GitHub Actions pinned to full commit SHAs | ✅ build, release, security, scorecard, PoB pin workflows |
 | 7.2 | Workflows run with least `permissions` | ✅ |
 | 7.3 | Dependabot alerts and updates on | ✅ |
 | 7.4 | Branch protection on master (ruleset "protect master") | ✅ |

@@ -17,6 +17,7 @@ const MODULES = {
   'request-guard': 'main/src/request-guard.ts',
   'build-files': 'main/src/pob/BuildFiles.ts',
   'report-scrub': 'main/src/report-scrub.ts',
+  'remote-key-store': 'main/src/remote-key-store.ts',
   'pob-pin': 'main/src/pob/pob-pin.ts',
   'play-session': 'renderer/src/web/companion/play-session.ts',
   money: 'renderer/src/web/money/money.ts',
