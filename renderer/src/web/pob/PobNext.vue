@@ -245,7 +245,7 @@ import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf, rebuildFromLo
 import { AppConfig } from '@/web/Config'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
-import { planQuestGems } from '../companion/quest-gems'
+import { loadQuestGemData, planQuestGems, type QuestGemData } from '../companion/quest-gems'
 import { currentPlan, currentTaken, mapHave, treeLayout } from './plan-store'
 
 const levels = ref<CharLevels>(loadCharLevels())
@@ -575,11 +575,14 @@ const swap = computed(() => {
 
 const guideAct = computed(() => STEPS[guideStep.value]?.act ?? 1)
 const allActs = ref(false)
+// quest reward data: loaded on first use (F4); the box appears once it is in
+const questData = shallowRef<QuestGemData | null>(null)
+loadQuestGemData().then(d => { questData.value = d }, () => {})
 const questGems = computed(() => {
   const p = plan.value
-  if (!p) return null
+  if (!p || !questData.value) return null
   const wanted = [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])]
-  return planQuestGems(p.className, wanted)
+  return planQuestGems(questData.value, p.className, wanted)
 })
 const questRows = computed(() => {
   const q = questGems.value

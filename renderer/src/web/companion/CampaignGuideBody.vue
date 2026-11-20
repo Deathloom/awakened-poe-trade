@@ -122,13 +122,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore, loadStepByChar, saveStepForChar, firstStepOfAct, campaignDone } from './campaign-route'
-import { planQuestGems, type QuestGemStep } from './quest-gems'
+import { loadQuestGemData, planQuestGems, type QuestGemData, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
 
@@ -207,10 +207,13 @@ function showTasks (i: number) {
 
 // which quest reward / vendor gems the build wants (Orbhoarder window, where the
 // levelling planner has the build's gems)
+// (the reward data is loaded on first use, F4)
+const questData = shallowRef<QuestGemData | null>(null)
+loadQuestGemData().then(d => { questData.value = d }, () => {})
 const questGems = computed(() => {
   const p = currentPlan.value
-  if (!p) return new Map<string, QuestGemStep>()
-  const plan = planQuestGems(p.className, [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])])
+  if (!p || !questData.value) return new Map<string, QuestGemStep>()
+  const plan = planQuestGems(questData.value, p.className, [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])])
   return new Map((plan?.steps ?? []).map(st => [st.id, st]))
 })
 // what a hand-in is worth: 'skip' (only gems the build doesn't use), 'items', 'gems' (build unknown here)
@@ -221,6 +224,8 @@ function questTag (p: Exclude<RoutePart, string>): 'skip' | 'items' | 'gems' | n
   if (r.includes('items')) return 'items'
   if (!r.length) return null
   if (!currentPlan.value) return 'gems'
+  // no tag for the moment the reward data is still loading
+  if (!questData.value) return null
   return gemsFor(p).some(g => g.take || g.buy.length) ? null : 'skip'
 }
 // optional quests on/off (remembered; shared with the other windows)

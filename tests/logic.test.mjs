@@ -1033,3 +1033,31 @@ test('proxy cache: a failed download frees the slot, huge bodies and expired ent
   cache.set('C', ok(1))
   assert.equal(cache.size, 1)
 })
+
+test('quest gems: data loads on demand (once), then plans picks and vendor buys for the class', async () => {
+  const qg = await import('./.build/quest-gems.mjs')
+  const p1 = qg.loadQuestGemData()
+  assert.equal(qg.loadQuestGemData(), p1)
+  const data = await p1
+  assert.ok(data.classes.includes('Witch') && data.quests.length > 10)
+
+  const fake = {
+    classes: ['Marauder', 'Witch'],
+    start: { Witch: ['Fireball'] },
+    quests: [
+      { quest: 'Q1', id: 'a1q1', act: 1, npc: 'T', take: { 'Freezing Pulse': 2, 'Ground Slam': 1 }, buy: { 'Arcane Surge Support': [2, 'Nessa'], Fireball: [0, 'Nessa'] } }
+    ]
+  }
+  const wanted = [
+    { name: 'Freezing Pulse', reqLevel: 1, support: false },
+    { name: 'Arcane Surge', reqLevel: 1, support: true },
+    { name: 'Fireball', reqLevel: 1, support: false },
+    { name: 'Spark', reqLevel: 1, support: false }
+  ]
+  const plan = qg.planQuestGems(fake, 'Witch', wanted)
+  assert.equal(plan.steps[0].take.name, 'Freezing Pulse')
+  // "X Support" in the data = "X" in PoB; the start gem is not bought again
+  assert.deepEqual(plan.steps[0].buy.map(g => g.name), ['Arcane Surge'])
+  assert.deepEqual(plan.notFromQuests.map(g => g.name), ['Spark'])
+  assert.equal(qg.planQuestGems(fake, 'Ranger', wanted), null)
+})

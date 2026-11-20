@@ -31,6 +31,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Performance (F4): one price download for all windows
 - The poe.ninja price list (several MB) is now downloaded once and shared by the price check, Money tools, Market overview and Market history for up to 10 minutes, instead of each window downloading it on its own. Same prices, less waiting and less data.
 
+### Performance (F4b): lighter windows, part 2
+- Windows start with a little less code again (1.57 MB → 1.43 MB): the build panel's Gems, Tree, Tree map and Compare and the quest-gem data load the first time you open them, and the Lab and build-sync clocks rest while their window is hidden. Nothing else changes.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

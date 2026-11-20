@@ -78,7 +78,7 @@
 import { computed, ref, type Component } from 'vue'
 import SplitGutter from './SplitGutter.vue'
 import PobGearBody from '../pob/PobGearBody.vue'
-import PobTreeMap from '../pob/PobTreeMap.vue'
+import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
 import LevellingBody from './LevellingBody.vue'
 import PobNext from '../pob/PobNext.vue'
 import MappingLoadoutPrompt from './MappingLoadoutPrompt.vue'

@@ -136,16 +136,17 @@ import { requestCraft } from '../craft/craft-request'
 import { useCopyFeedback } from './market'
 import BuildPicker from './BuildPicker.vue'
 import BuildManager from './BuildManager.vue'
-import BuildCompare from './BuildCompare.vue'
 import LoadoutEditor from './LoadoutEditor.vue'
 import LoadoutChanges from './LoadoutChanges.vue'
 import WickermanCard from './WickermanCard.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import BuildSync from './BuildSync.vue'
 import BuildImport from './BuildImport.vue'
-import PobGems from './PobGems.vue'
-import PobTree from './PobTree.vue'
-import PobTreeMap from './PobTreeMap.vue'
+// Gems, Tree, Tree map and Compare load the first time they are shown (F4)
+import type PobGemsPanel from './PobGems.vue'
+import type PobTreePanel from './PobTree.vue'
+import type PobTreeMapPanel from './PobTreeMap.vue'
+import { LazyBuildCompare as BuildCompare, LazyPobGems as PobGems, LazyPobTree as PobTree, LazyPobTreeMap as PobTreeMap } from './LazyPobPanels'
 import PobNotes from './PobNotes.vue'
 import { notesState, loadNotes, buildLabel } from './build-notes'
 import { pobText } from './labels'
@@ -205,9 +206,9 @@ const headerMenu = computed<UiMenuItem[]>(() => [
 const showSync = ref(false)
 const showImport = ref(false)
 const pickerRef = ref<InstanceType<typeof BuildPicker> | null>(null)
-const gemsRef = ref<InstanceType<typeof PobGems> | null>(null)
-const treeRef = ref<InstanceType<typeof PobTree> | null>(null)
-const mapRef = ref<InstanceType<typeof PobTreeMap> | null>(null)
+const gemsRef = ref<InstanceType<typeof PobGemsPanel> | null>(null)
+const treeRef = ref<InstanceType<typeof PobTreePanel> | null>(null)
+const mapRef = ref<InstanceType<typeof PobTreeMapPanel> | null>(null)
 const notesRef = ref<InstanceType<typeof PobNotes> | null>(null)
 const visible = computed(() => props.active)
 
@@ -233,10 +234,11 @@ function onBuildChanged (b: PobBuildInfo | null) {
   stepsRef.value?.request()
   wickRef.value?.request()
   if (tab.value === 'gear') request()
-  else if (tab.value === 'gems') gemsRef.value?.request()
-  else if (tab.value === 'map') mapRef.value?.request()
+  // (a panel still loading has no request() yet; it asks on its own when it mounts)
+  else if (tab.value === 'gems') gemsRef.value?.request?.()
+  else if (tab.value === 'map') mapRef.value?.request?.()
   else if (tab.value === 'notes') notesRef.value?.request()
-  else treeRef.value?.request()
+  else treeRef.value?.request?.()
   // loot filter reminder for the new build (any tab)
   if (tab.value !== 'notes') loadNotes()
 }
