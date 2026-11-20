@@ -11,6 +11,7 @@ globalThis.localStorage = {
 }
 
 const guard = await import('./.build/request-guard.mjs')
+const buildFiles = await import('./.build/build-files.mjs')
 const session = await import('./.build/play-session.mjs')
 const money = await import('./.build/money.mjs')
 const tools = await import('./.build/settings-tools.mjs')
@@ -809,4 +810,16 @@ test('market outlook: no cap; too-fast items flagged and left out; backtest on t
   const s = mt.backtestSummary(Array.from({ length: 6 }, () => item(10 * 1.03 ** 6, g)))
   assert.equal(s.n, 6); assert.equal(s.rose, 6); assert.equal(s.within, 6)
   assert.ok(s.medianMiss < 5)
+})
+
+test('player folder name must be one plain folder (F1 review)', () => {
+  const ok = buildFiles.safeSegment
+  assert.equal(ok('Gerhard'), true)
+  assert.equal(ok('deathloom-builds'), true)
+  assert.equal(ok('..'), false)
+  assert.equal(ok('a/b'), false)
+  assert.equal(ok('..\\Windows'), false)
+  assert.equal(ok('C:'), false)
+  assert.equal(ok('.hidden'), false)
+  assert.equal(ok('con'), false)
 })
