@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (F1 follow-up): overlay browser and DevTools
+- The overlay's web browser no longer downloads files (like the Trade site and Lab tabs); open the page in your own browser to download. Redirects are held to web links like normal links.
+- DevTools (Ctrl+Shift+I) is off in the installed app; start Orbhoarder with `--devtools` if support needs it.
+
 ### Security (F1 follow-up): what a phone can do
 - A phone or other device on the phone link can use the panels as before, but can no longer change settings, folders, PoB install, sign-in or phone access, or send anything to the game (chat commands, stash search). Those stay on this PC.
 - Settings → Tools says the phone link isn't encrypted: home Wi-Fi only, turn it off or press New key on shared networks.
