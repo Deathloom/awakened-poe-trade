@@ -35,6 +35,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - The installed app can no longer be started as a plain Node.js runner or with a debug port (`ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS`, `--inspect`), so other programs can't use it to run their own code. The app itself works as before.
 - Test releases can only be built from dev (or master), never from another branch.
 
+### Changed (#278): ready-made atlas tree previews first
+- Atlas → ⋯ → Ready-made atlas tree: **Generate** now only shows the tree on the atlas (with its stats), nothing is saved. Change the picks or points and **Generate again** as often as you like, then **Save** it once (or **Discard**). Closing the panel or picking another atlas build discards the preview.
+
 ## [1.0.95] - 2026-11-20
 
 Hotfix: only this fix on top of 1.0.94 (the rest of dev ships later).

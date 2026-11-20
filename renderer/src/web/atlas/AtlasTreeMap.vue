@@ -42,7 +42,8 @@
       </span>
       <input v-model="search" class="px-1 rounded bg-gray-800 text-gray-200" :class="compact ? 'w-28' : 'w-36'" placeholder="Search atlas" spellcheck="false"
         @keydown.enter="nextHit" @keydown.esc="search = ''">
-      <button v-if="activeBuild?.own" class="ui-btn" :class="{ 'ui-btn-on': editMode }"
+      <span v-if="preview" class="text-yellow-300" title="Generated tree, not saved yet: Save or Discard below">Preview</span>
+      <button v-if="activeBuild?.own && !preview" class="ui-btn" :class="{ 'ui-btn-on': editMode }"
         title="Edit: click a passive to take it (with the path to it) or refund it (with what hangs off it)"
         @click="editMode = !editMode"><i class="fas fa-pen" />{{ editMode ? 'Editing' : 'Edit' }}</button>
       <button v-if="spec" class="ui-btn ui-btn-quiet" :title="nextIds.length ? 'Zoom to the next passives to take' : 'Zoom to this atlas build'" @click="focusTarget"><i class="fas fa-crosshairs" /></button>
@@ -76,10 +77,15 @@
       <div class="flex flex-wrap items-center gap-2">
         <label class="flex items-center gap-1"><input v-model="genSustain" type="checkbox"> Map sustain</label>
         <label class="flex items-center gap-1">Points <input v-model.number="genBudget" type="number" min="10" :max="ATLAS.points ?? 150" class="w-14 px-1 rounded bg-gray-800"></label>
-        <button class="ui-btn ui-btn-primary" :disabled="!genPick.length && !genSustain" @click="doGenerate">Make atlas build</button>
+        <button class="ui-btn" :class="preview ? '' : 'ui-btn-primary'" :disabled="!genPick.length && !genSustain" title="Show the tree on the atlas without saving it" @click="doGenerate">{{ preview ? 'Generate again' : 'Generate' }}</button>
+        <template v-if="preview">
+          <button class="ui-btn ui-btn-primary" title="Save it as an atlas build (then Edit it, copy the link to use it in game)" @click="savePreview"><i class="fas fa-save" />Save</button>
+          <button class="ui-btn ui-btn-quiet" title="Throw this tree away and go back to your atlas build" @click="preview = null">Discard</button>
+        </template>
       </div>
+      <div v-if="savedName && !preview" class="pt-1 text-green-400">Saved "{{ savedName }}": it's a normal atlas build now (Edit it, copy the link to use it in game).</div>
       <div v-if="genResult" class="pt-1 text-gray-400">
-        Made "{{ genResult.name }}": {{ genResult.points }} points, {{ genResult.notables.length }} notables. It's a normal atlas build: Edit it, copy the link to use it in game.
+        <span class="text-yellow-300">Preview, not saved:</span> "{{ genResult.name }}", {{ genResult.points }} points, {{ genResult.notables.length }} notables. Change the picks or points and Generate again until you like it, then Save.
         <span v-if="genResult.missed.length" class="text-orange-300">Content notables that didn't fit: {{ genResult.missed.join(', ') }}.</span>
         <span v-if="genResult.missedSustain.length" class="text-orange-300">Map sustain that didn't fit: {{ genResult.missedSustain.join(', ') }}.</span>
         <span v-if="genResult.missed.length || genResult.missedSustain.length" class="text-gray-500">More points or fewer contents fits more.</span>
@@ -156,7 +162,7 @@ import { orderKey, leadingTaken } from '../pob/tree-step-logic'
 import { getStep, moveStep } from '../pob/tree-steps'
 import TreeStepper from '../ui/TreeStepper.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
-import { store, activeBuild, activeSpec as spec, addBuild, setActive, renameBuild, deleteBuild, updateCode, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
+import { store, activeBuild, activeSpec as storeSpec, addBuild, setActive, renameBuild, deleteBuild, updateCode, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
 import { sumStats, cleanStat } from './atlas-stats'
 import { CONTENTS, CONTENT_NOTABLES, SUSTAIN, generateAtlas, type GenResult } from './atlas-generator'
 import { contentValues, NINJA_ATLAS_URL } from './atlas-value'
@@ -174,6 +180,7 @@ const copied = ref(false)
 function onPick (e: Event) {
   const prev = store.value.active
   const next = (e.target as HTMLSelectElement).value || null
+  preview.value = null
   // moving on to another build: show what to remove from the one you had
   if (prev && next && prev !== next) setFrom(prev)
   else if (next && fromId.value === next) setFrom(null)
@@ -228,13 +235,24 @@ const genOpen = ref(false)
 const genPick = ref<string[]>([])
 const genSustain = ref(true)
 const genBudget = ref<number>(ATLAS.points ?? 150)
-const genResult = ref<GenResult | null>(null)
+// Deathloom fork (Gerhard 20 Nov 2026): Generate only previews the tree on the
+// atlas; nothing is saved until Save, so you can try picks and points first
+const preview = ref<GenResult | null>(null)
+const genResult = preview
+const savedName = ref('')
+const spec = computed(() => {
+  if (!preview.value) return storeSpec.value
+  try { return decodeAtlas(preview.value.code) } catch { return storeSpec.value }
+})
 // what pays (poe.ninja economy prices the app already downloads for price checks)
 const ninja = usePoeninja()
 const VALUE_KEY = 'deathloom.atlas-gen-by-value.v1'
 const genByValue = ref((() => { try { return localStorage.getItem(VALUE_KEY) === '1' } catch { return false } })())
 watch(genByValue, v => { try { localStorage.setItem(VALUE_KEY, v ? '1' : '0') } catch {} })
-watch(genOpen, open => { if (open) ninja.queuePricesFetch() })
+watch(genOpen, open => {
+  if (open) ninja.queuePricesFetch()
+  else preview.value = null
+})
 const values = computed(() => (ninja.dbVersion.value >= 0 ? contentValues(ninja.allItems()) : {}))
 const hasValues = computed(() => Object.keys(values.value).length > 0)
 const genContents = computed(() => genByValue.value
@@ -256,8 +274,17 @@ function togglePick (id: string) {
 }
 function doGenerate () {
   const r = generateAtlas({ contents: genPick.value, sustain: genSustain.value, budget: Number(genBudget.value) || (ATLAS.points ?? 150) })
+  preview.value = r
+  savedName.value = ''
+  editMode.value = false
+  nextTick(() => fit()).catch(() => {})
+}
+function savePreview () {
+  const r = preview.value
+  if (!r) return
   addBuild(r.name, r.code)
-  genResult.value = r
+  savedName.value = r.name
+  preview.value = null
 }
 watch(() => activeBuild.value?.own, (own) => { if (own === false) editMode.value = false })
 const renaming = ref(false)
@@ -286,7 +313,7 @@ const menuItems = computed<UiMenuItem[]>(() => {
     { label: 'Add from a link or code…', icon: 'fas fa-file-import', checked: importOpen.value, action: () => { importOpen.value = !importOpen.value; genOpen.value = false } },
     { label: 'Ready-made atlas tree…', icon: 'fas fa-magic', hint: 'Pick the content you farm', checked: genOpen.value, action: () => { genOpen.value = !genOpen.value; importOpen.value = false } }
   ]
-  if (!b) return items
+  if (!b || preview.value) return items
   items.push({ divider: true })
   if (!b.own) items.push({ label: 'Copy to my atlas builds', icon: 'fas fa-copy', hint: 'Then you can edit it', action: () => copyToMine(b.id) })
   else items.push({ label: 'Rename…', icon: 'fas fa-i-cursor', action: () => { renameText.value = b.name; renaming.value = true } })
