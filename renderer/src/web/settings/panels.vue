@@ -70,7 +70,7 @@
         </div>
         <div class="flex items-center gap-2">
           <span class="flex-1">Drag a panel's top bar to move it, its bottom-right corner to resize it.</span>
-          <button type="button" class="px-2 bg-gray-800 rounded" @click="resetHudPositions">Reset positions and sizes</button>
+          <button type="button" class="ui-btn" @click="resetHudPositions">Reset positions and sizes</button>
         </div>
       </template>
     </div>

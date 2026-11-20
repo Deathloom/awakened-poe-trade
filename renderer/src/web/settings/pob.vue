@@ -14,7 +14,7 @@
       <div class="flex gap-1">
         <input v-model.trim="pob.pobDir"
         class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" :placeholder="defaults.pobDir ? `Default: ${defaults.pobDir}` : 'e.g. C:\\Games\\PathOfBuilding'">
-        <button type="button" @click="browsePobDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
+        <button type="button" @click="browsePobDir" class="ui-btn shrink-0">Browse…</button>
       </div>
       <div class="text-gray-500 text-sm mt-1">
         The folder that contains <code>src</code> and <code>runtime\PoBHeadless.exe</code>.
@@ -32,8 +32,8 @@
           where they are, builds with the same name are skipped. With build sync on, they're uploaded too.
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <button type="button" class="px-2 bg-gray-800 rounded" :disabled="copying || !existingPob" @click="copyBuilds()">{{ copying ? 'Copying…' : 'Copy builds' }}</button>
-          <button type="button" class="px-2 bg-gray-800 rounded" :disabled="copying" @click="copyFromFolder">Choose folder…</button>
+          <button type="button" class="ui-btn" :disabled="copying || !existingPob" @click="copyBuilds()">{{ copying ? 'Copying…' : 'Copy builds' }}</button>
+          <button type="button" class="ui-btn" :disabled="copying" @click="copyFromFolder">Choose folder…</button>
           <span v-if="copyResult" class="text-sm" :class="copyResult.ok ? 'text-green-500' : 'text-red-400'">{{ copyResult.text }}</span>
         </div>
       </div>
@@ -43,7 +43,7 @@
       <div class="flex gap-1">
         <input v-model.trim="pob.buildsDir"
         class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" :placeholder="defaults.buildsDir ? `Default: ${defaults.buildsDir}` : 'e.g. C:\\Games\\poe-builds\\poe1'">
-        <button type="button" @click="browseBuildsDir" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
+        <button type="button" @click="browseBuildsDir" class="ui-btn shrink-0">Browse…</button>
       </div>
       <div class="text-gray-500 text-sm mt-1">Leave empty for the builds folder of Orbhoarder's own Path of Building.</div>
     </div>
@@ -52,7 +52,7 @@
       <div class="flex gap-1">
         <input v-model.trim="pob.player"
         class="rounded bg-gray-900 px-1 flex-1 min-w-0 font-sans placeholder:text-gray-600 placeholder:italic" :placeholder="defaults.player ? `Default: ${defaults.player}` : 'your GitHub name (empty: no player folder)'">
-        <button type="button" @click="browsePlayer" class="px-2 bg-gray-800 rounded shrink-0">Browse…</button>
+        <button type="button" @click="browsePlayer" class="ui-btn shrink-0">Browse…</button>
       </div>
       <div class="text-gray-500 text-sm mt-1">
         Your folder in the builds folder (Browse… picks it and fills in the name). Its <code>active.txt</code> names the build to compare against.
