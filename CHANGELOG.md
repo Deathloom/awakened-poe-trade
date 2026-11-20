@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (#282): price check couldn't be clicked (1.0.96)
+- A 1.0.96 security change dropped the overlay's own messages to the app (where the price check is on screen, and "back to the game"), so the price check window couldn't be clicked. They work again; phones still can't send them.
+
 ## [1.0.96] - 2026-11-20
 
 ### Security (F1 follow-up): Content-Security-Policy
