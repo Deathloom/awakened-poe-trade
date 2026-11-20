@@ -15,6 +15,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Performance (F3): lighter windows
 - The chart library (price check trend line, Market history sparklines) loads the first time a chart is shown instead of with every window: each panel and window starts with about a quarter less code to load (2.4 MB → 1.9 MB).
 
+### Fixed (#287): ready-made atlas tree took other content's notables
+- Picking **Threads** no longer takes "Threads are more likely to be of type …" notables (Dextral / Sinistral Threads) set to a type you didn't pick (e.g. Ultimatum): they're only taken, with your type chosen, when one of their options is a content you picked. "Cannot be of type" ones rule out a type you didn't pick.
+- A notable that works inside another content (Trialmaster's Boon is Ultimatum even when it rewards Divination cards; Faith in Arms is Mercenaries) is only taken when that content is picked. Each stat line counts as the content it names first.
+
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
