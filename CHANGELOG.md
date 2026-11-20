@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Security (F1 follow-up): what a phone can do
+- A phone or other device on the phone link can use the panels as before, but can no longer change settings, folders, PoB install, sign-in or phone access, or send anything to the game (chat commands, stash search). Those stay on this PC.
+- Settings → Tools says the phone link isn't encrypted: home Wi-Fi only, turn it off or press New key on shared networks.
+
 ### Security (F1 review): phone access key can't be skipped
 - With **Settings → Tools → Phone or other devices** on, another device on the network could reach the local server without the key by sending a made-up `Host: 127.0.0.1` header. The server now checks where the connection really comes from; this PC still needs no key, phones still use the QR link.
 - A malformed message from a window is ignored instead of raising an error report.
