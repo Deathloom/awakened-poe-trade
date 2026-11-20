@@ -75,6 +75,10 @@ jobs:
         if [[ "$CHANNEL" == "stable" && "$GITHUB_REF" != "refs/heads/master" ]]; then
           echo "Stable releases only run from master (merge dev into master first)."; exit 1
         fi
+        # Testing copies install every test release: only from dev (or master), never a stray branch
+        if [[ "$CHANNEL" == "testing" && "$GITHUB_REF" != "refs/heads/dev" && "$GITHUB_REF" != "refs/heads/master" ]]; then
+          echo "Test releases only run from dev or master."; exit 1
+        fi
         if [[ "$CHANNEL" == "testing" ]]; then
           full="$V-beta.$(( ${last:-0} + 1 ))"
         else
