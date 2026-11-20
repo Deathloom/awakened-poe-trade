@@ -46,18 +46,19 @@ onUnmounted(() => { window.removeEventListener(CRAFT_REQUEST_EVENT, toCraft); wi
   border: 1px solid theme('colors.gray.700'); border-radius: 0.375rem;
   padding: 0.3rem 0.5rem; font-size: 0.875rem; outline: none;
 }
-.craft-input:focus { border-color: theme('colors.blue.500'); }
+.craft-input:focus { border-color: rgb(var(--accent)); }
 .craft-btn, .craft-btn-primary {
   border-radius: 0.375rem; padding: 0.35rem 0.85rem; font-size: 0.875rem; white-space: nowrap;
 }
-.craft-btn { background: theme('colors.gray.700'); color: theme('colors.gray.100'); }
-.craft-btn:hover:not(:disabled) { background: theme('colors.gray.600'); }
-.craft-btn-primary { background: theme('colors.blue.600'); color: white; }
-.craft-btn-primary:hover:not(:disabled) { background: theme('colors.blue.500'); }
+.craft-btn { background: rgb(var(--g-700)); color: rgb(var(--g-100)); }
+.craft-btn:hover:not(:disabled) { background: rgb(var(--g-600)); }
+/* same look as .ui-btn-primary (accent tint), so the main action matches the rest of the app */
+.craft-btn-primary { background: rgb(var(--accent) / 0.25); box-shadow: inset 0 0 0 1px rgb(var(--accent) / 0.6); color: rgb(var(--g-100)); }
+.craft-btn-primary:hover:not(:disabled) { background: rgb(var(--accent) / 0.4); }
 .craft-btn:disabled, .craft-btn-primary:disabled { opacity: 0.45; cursor: default; }
-.craft-subtab { padding: 0.35rem 0.85rem; border-radius: 0.375rem; color: theme('colors.gray.400'); }
-.craft-subtab:hover { color: theme('colors.gray.100'); background: theme('colors.gray.700'); }
-.craft-subtab-on { background: theme('colors.gray.700'); color: theme('colors.gray.100'); }
+.craft-subtab { padding: 0.35rem 0.85rem; border-radius: 0.375rem; color: rgb(var(--g-500)); }
+.craft-subtab:hover { color: rgb(var(--g-200)); }
+.craft-subtab-on, .craft-subtab-on:hover { background: rgb(var(--g-700)); color: rgb(var(--g-100)); }
 .craft-panel { background: theme('colors.gray.900'); border-radius: 0.5rem; padding: 0.75rem; }
 .craft-card { background: theme('colors.gray.900'); border-radius: 0.5rem; padding: 0.6rem 0.75rem; border: 1px solid transparent; }
 .craft-card-mine { border-color: theme('colors.green.700'); }

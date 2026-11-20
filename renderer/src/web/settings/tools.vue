@@ -5,7 +5,7 @@
     <div class="mb-4">
       <div class="flex items-center mb-1">
         <span class="text-base">Health check</span>
-        <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600" :disabled="busy === 'health'" @click="runHealth">
+        <button class="ml-auto ui-btn" :disabled="busy === 'health'" @click="runHealth">
           <i class="fas fa-stethoscope mr-1" :class="{ 'fa-spin': busy === 'health' }" />{{ health ? 'Check again' : 'Check now' }}</button>
       </div>
       <div class="text-gray-500 mb-1">Checks what Orbhoarder needs: the game's files, Path of Building, sign-in, internet and hotkeys. Use it when something doesn't work, or a friend asks why.</div>
@@ -21,8 +21,8 @@
       <div class="text-base mb-1">Settings backup</div>
       <div class="text-gray-500 mb-2">One file with all settings, hotkeys, panel layouts, notes, ticks and session data, to move to a new PC or share your setup with a friend. Your builds stay in their folder (build sync shares those).</div>
       <div class="flex gap-2">
-        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" :disabled="busy === 'backup'" @click="saveBackup"><i class="fas fa-file-export mr-1" />Save backup…</button>
-        <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" :disabled="busy === 'backup'" @click="openBackup"><i class="fas fa-file-import mr-1" />Restore…</button>
+        <button class="ui-btn" :disabled="busy === 'backup'" @click="saveBackup"><i class="fas fa-file-export mr-1" />Save backup…</button>
+        <button class="ui-btn" :disabled="busy === 'backup'" @click="openBackup"><i class="fas fa-file-import mr-1" />Restore…</button>
       </div>
       <div v-if="backupMsg" class="mt-1" :class="backupErr ? 'text-red-400' : 'text-green-400'">{{ backupMsg }}</div>
     </div>
@@ -35,7 +35,7 @@
       <ui-toggle :modelValue="remote?.enabled === true" @update:modelValue="setRemote">Allow my phone or other devices on my network</ui-toggle>
       <div v-if="remote && remote.enabled !== remote.listening" class="text-yellow-300 mt-1">
         {{ remote.enabled ? 'Orbhoarder makes the phone link after a restart.' : 'Phone access stops after a restart.' }}
-        <button class="ml-1 px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" @click="restart">Restart now</button>
+        <button class="ml-1 ui-btn ui-btn-primary" @click="restart">Restart now</button>
         <div v-if="remote.enabled" class="text-gray-500">Windows may ask to allow it through the firewall: allow Private networks only.</div>
       </div>
       <div v-if="remote?.listening && !remote.urls.length" class="text-yellow-300 mt-1">No network address found: is this PC on Wi-Fi or a network cable?</div>
@@ -44,8 +44,8 @@
         <div v-for="u of remote.urls" :key="u" class="mt-1">
           <div class="flex items-center gap-2">
             <code class="flex-1 min-w-0 truncate bg-gray-900 rounded px-1" :title="u">{{ u }}</code>
-            <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" @click="copy(u)">{{ copied === u ? 'Copied' : 'Copy' }}</button>
-            <button class="px-2 rounded bg-gray-700 hover:bg-gray-600" @click="qrFor = qrFor === u ? '' : u">{{ qrFor === u ? 'Hide QR' : 'QR code' }}</button>
+            <button class="ui-btn" @click="copy(u)">{{ copied === u ? 'Copied' : 'Copy' }}</button>
+            <button class="ui-btn" @click="qrFor = qrFor === u ? '' : u">{{ qrFor === u ? 'Hide QR' : 'QR code' }}</button>
           </div>
           <!-- eslint-disable-next-line vue/no-v-html -->
           <div v-if="qrFor === u" class="mt-2 inline-block bg-white p-2 rounded" style="width: 14rem;" v-html="qrSvg(u)" />

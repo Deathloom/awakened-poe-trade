@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (#260): Calmer panels part 3
+- **Atlas**: header is now build picker, Edit, zoom, fit, Stats and one ⋯ menu (add from a link, ready-made tree, copy to mine, rename, copy link, open on pathofexile.com, taken all/nothing, delete). Rename has Save/Cancel; empty atlas shows Add buttons.
+- **This session**: stopwatch play/pause stays; Reset stopwatch and Start a new session moved to ⋯. Loot buttons use the shared button look.
+- **Craft**: main buttons, tabs and input focus use the theme accent like the rest of the app.
+- **Settings**: Save/Cancel, Tools, Path of Building, Panels and Appearance buttons use the shared button look; the picked settings page is easier to read (accent mark). Theme touches (Potato, Comic, Vendor, Mirror) now apply to the shared buttons too.
+- Help: Atlas entry updated (⋯ menu, step arrows instead of auto-ticking).
+
 ### Added (#259): Market tools
 - **Shopping**: your followed build's uniques and gems with the cheapest poe.ninja price, a total of what's still to buy, and got-it ticks (uniques share the Build panel's tick).
 - **Sell list**: add what you plan to sell; today's value, a week of prices, a sell-soon / can-wait hint, and a copy button for a `~price` note.

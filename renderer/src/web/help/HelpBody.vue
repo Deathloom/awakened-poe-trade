@@ -31,15 +31,15 @@
               <b>Build</b> (top right) picks the build and loadout; the <b>⋯</b> menu next to it has Import a build, Build sharing, What changes between stages,
               Compare, Edit loadouts and Manage builds. In the overlay and in game, Compare / Edit / Manage open this window.</li>
             <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take.</li>
-            <li><b>Atlas</b>: the atlas passive tree. <i class="fas fa-file-import" /> adds an atlas build from a pathofexile.com atlas tree link or code
-              (poeplanner links use their own format), the drop-down picks one, <i class="fas fa-link" /> copies its link to share with friends.
-              Green = taken, orange = still to take. Orbhoarder ticks atlas passives as you allocate them in game; it can't see what you took
-              before, so use <i class="fas fa-check-double" /> → "I have this whole build" (or "I have nothing" after a respec or in a new league).
+            <li><b>Atlas</b>: the atlas passive tree. The drop-down picks an atlas build; the <b>⋯</b> menu adds one from a pathofexile.com atlas tree link or code
+              (poeplanner links use their own format) or makes a ready-made tree, and copies the link to share with friends, renames or deletes it.
+              Green = taken, orange = still to take. Step along the build with the arrows (1 or 5 passives) as you take passives in game;
+              ⋯ → "Taken: jump to all or nothing" sets "I have this whole build" (or "I have nothing" after a respec or in a new league).
               <b>Edit</b>: click a passive to take it with the path to it, or refund it with what hangs off it; notables with a choice let you pick the effect.
-              <i class="fas fa-magic" /> makes a ready-made tree: pick the content you farm (one or more), keep Map sustain on and set the points;
+              <b>Stats</b> adds up everything the passives give. Ready-made tree: pick the content you farm (one or more), keep Map sustain on and set the points;
               Orbhoarder takes that content's notables by the shortest path from the start, using only GGG's own atlas data.
               Atlas builds are saved in your builds folder (Atlas) and sync with your builds, so friends who can see your builds see your atlas builds too
-              (listed under their name, read-only: <i class="fas fa-copy" /> copies one to yours). Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
+              (listed under their name, read-only: ⋯ → Copy to my atlas builds). Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
             <li><b>Trades</b>: incoming and outgoing trade whispers and your ledger.</li>
             <li><b>Board</b>: the friends' trade board, only for your group (POE-Builds members, GitHub sign-in).
               <b>Give</b>: free items, press <b>Claim</b> and the poster invites you. <b>Sell</b>: priced items for friends first, press <b>Whisper</b>.
