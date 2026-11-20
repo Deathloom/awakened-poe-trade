@@ -14,6 +14,13 @@ appId: "com.deathloom.loot-goblin"
 productName: "Loot Goblin"
 artifactName: "Orbhoarder-Setup-${version}.${ext}"
 npmRebuild: false
+# Deathloom fork (F2 security review): the installed exe can't be turned into a
+# plain Node runner (ELECTRON_RUN_AS_NODE), take NODE_OPTIONS, or open a debug
+# port (--inspect). Cookies and asar loading are left as they were.
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
 toolsets:
   appimage: 1.0.3
 artifactBuildCompleted: "build/apprun-patch.test.mjs"

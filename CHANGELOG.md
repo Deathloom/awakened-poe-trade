@@ -34,6 +34,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Fixed (#272): tree map didn't follow a build switch
 - Switching build, character, loadout or player in the Build panel (or making, copying or deleting a loadout) now reloads the tree map, passive tree and gems in every panel and window, e.g. the tree on the right of the Levelling layout. Before, only the panel you clicked in got the new build.
 
+### Security (F2 review): installed app and test releases
+- The installed app can no longer be started as a plain Node.js runner or with a debug port (`ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS`, `--inspect`), so other programs can't use it to run their own code. The app itself works as before.
+- Test releases can only be built from dev (or master), never from another branch.
+
 ## [1.0.94] - 2026-11-20
 
 ### Changed (#264): Shopping list you can shop from
