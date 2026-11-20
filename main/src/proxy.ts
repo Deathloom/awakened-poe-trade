@@ -19,10 +19,30 @@ const PROXY_HOSTS = [
 ]
 
 const ninjaCache = new ResponseCache()
+const DOWNLOAD_TIMEOUT_MS = 60 * 1000
 
 function downloadToMemory (options: Electron.ClientRequestConstructorOptions): Promise<CachedResponse> {
   return new Promise((resolve, reject) => {
     const proxyReq = net.request(options)
+    // a stalled download must not keep the shared in-flight entry forever
+    let settled = false
+    const timer = setTimeout(() => {
+      fail(new Error('poe.ninja download timed out'))
+      proxyReq.abort()
+    }, DOWNLOAD_TIMEOUT_MS)
+    function fail (err: Error) {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      reject(err)
+    }
+    function done (value: CachedResponse) {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      resolve(value)
+    }
+    proxyReq.addListener('abort', () => { fail(new Error('poe.ninja download aborted')) })
     proxyReq.addListener('response', (proxyRes) => {
       const headers = { ...proxyRes.headers }
       // `net.request` returns an already decoded body; the length is set when sent
@@ -35,16 +55,17 @@ function downloadToMemory (options: Electron.ClientRequestConstructorOptions): P
       const chunks: Buffer[] = []
       proxyRes.on('data', (chunk) => { chunks.push(chunk) })
       proxyRes.on('end', () => {
-        resolve({
+        done({
           statusCode: proxyRes.statusCode,
           statusMessage: proxyRes.statusMessage,
           headers,
           body: Buffer.concat(chunks)
         })
       })
-      proxyRes.on('error', reject)
+      proxyRes.on('aborted', () => { fail(new Error('poe.ninja download aborted')) })
+      proxyRes.on('error', fail)
     })
-    proxyReq.addListener('error', reject)
+    proxyReq.addListener('error', fail)
     proxyReq.end()
   })
 }

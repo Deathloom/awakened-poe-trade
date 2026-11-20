@@ -6,6 +6,7 @@
 
 export const NINJA_CACHE_TTL_MS = 10 * 60 * 1000
 export const NINJA_CACHE_MAX_ENTRIES = 8
+export const NINJA_CACHE_MAX_BODY_BYTES = 50 * 1024 * 1024
 
 export interface CachedResponse {
   statusCode: number
@@ -53,8 +54,14 @@ export class ResponseCache {
   set (key: string, value: CachedResponse) {
     // only successful responses are kept (errors and rate limits are retried)
     if (value.statusCode !== 200) return
+    // something this big isn't the price list: pass it on, don't keep it
+    if (value.body.byteLength > NINJA_CACHE_MAX_BODY_BYTES) return
+    const now = this.now()
+    for (const [k, entry] of this.entries) {
+      if (now - entry.at >= this.ttlMs) this.entries.delete(k)
+    }
     this.entries.delete(key)
-    this.entries.set(key, { at: this.now(), value })
+    this.entries.set(key, { at: now, value })
     while (this.entries.size > this.maxEntries) {
       const oldest = this.entries.keys().next().value as string
       this.entries.delete(oldest)

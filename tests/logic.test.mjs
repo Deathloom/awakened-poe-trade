@@ -1005,3 +1005,31 @@ test('proxy cache: keeps 200s for the TTL, bounded size, shares one download', a
   assert.ok(cache.get('F'))
   assert.ok(cache.get('G'))
 })
+
+test('proxy cache: a failed download frees the slot, huge bodies and expired entries are not kept', async () => {
+  let t = 0
+  const cache = new pc.ResponseCache(1000, 8, () => t)
+  const ok = (n) => ({ statusCode: 200, statusMessage: 'OK', headers: {}, body: new Uint8Array(n) })
+
+  // a download that fails (timeout / aborted) while another window waits on it
+  let fail
+  const first = cache.fetch('A', () => new Promise((resolve, reject) => { fail = reject }))
+  const joined = cache.fetch('A', async () => ok(1))
+  fail(new Error('timed out'))
+  await assert.rejects(first)
+  await assert.rejects(joined)
+  // the next request starts a new download instead of joining the dead one
+  let loads = 0
+  await cache.fetch('A', async () => { loads++; return ok(1) })
+  assert.equal(loads, 1)
+
+  // bodies over the limit are passed on but not kept
+  const big = ok(pc.NINJA_CACHE_MAX_BODY_BYTES + 1)
+  assert.equal(await cache.fetch('B', async () => big), big)
+  assert.equal(cache.get('B'), undefined)
+
+  // set() drops expired entries
+  t = 1000
+  cache.set('C', ok(1))
+  assert.equal(cache.size, 1)
+})
