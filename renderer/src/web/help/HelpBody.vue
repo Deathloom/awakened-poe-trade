@@ -47,7 +47,7 @@
               or type a name. Mark yours <b>Sold</b> / <b>Given</b> / <b>Got it</b> when done. Also in the overlay menu (<i class="fas fa-people-carry" />)
               and on the All tab (Edit layout → Add panel).</li>
             <li><b>Market</b>: your watchlist and a poe.ninja market overview, plus tools (tabs on the left):
-              <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, rares are left to the Build panel's Trade button),
+              <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, every row has Trade and gear rows ↑ to open the trade site; click a gear row for its mods; rares are listed without a price),
               <b>Sell list</b> (what you plan to sell: value now, a week of prices, "Falling: sell soon" or "Rising: can wait", and a copy button for a <code>~price</code> note),
               <b>Farming</b> (name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
               <b>Crafting</b> (crafting currency prices with a week's trend, and a sum of what your craft costs).

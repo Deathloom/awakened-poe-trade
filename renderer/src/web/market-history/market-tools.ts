@@ -47,13 +47,15 @@ export function sellHint (item: NinjaListing | null): SellHint | null {
 
 // ---- build shopping list ----------------------------------------------------
 
-export interface ShopGear { slot: string, name: string, unique: boolean, owned: boolean }
+export interface ShopGear { slot: string, name: string, unique: boolean, owned: boolean, id?: string }
 export interface ShopGem { name: string, level?: number, quality?: number, enabled: boolean }
 export interface ShopRow {
   kind: 'unique' | 'gem' | 'rare'
   key: string
   label: string
   slots: string[]
+  // the build's gear slots behind this row (ShopGear.id), for mods and Trade buttons
+  ids: string[]
   owned: boolean
   listing: NinjaListing | null
 }
@@ -65,30 +67,35 @@ export function shoppingList (gear: ShopGear[], gems: ShopGem[], items: NinjaLis
   const rows = new Map<string, ShopRow>()
   let rares = 0
   for (const g of gear) {
+    // Deathloom fork (Gerhard 20 Nov 2026): rares get a row too (mods + Trade
+    // buttons in the panel); no price, so they stay out of the total
     if (!g.unique) {
       if (!g.owned) rares++
+      const key = `r|${g.id ?? g.slot}`
+      rows.set(key, { kind: 'rare', key, label: g.name, slots: [g.slot], ids: g.id ? [g.id] : [], owned: g.owned, listing: null })
       continue
     }
     const key = `u|${g.name.toLowerCase()}`
     const row = rows.get(key)
     if (row) {
       row.slots.push(g.slot)
+      if (g.id) row.ids.push(g.id)
       row.owned = row.owned && g.owned
     } else {
-      rows.set(key, { kind: 'unique', key, label: g.name, slots: [g.slot], owned: g.owned, listing: cheapestByName(items, 'UNIQUE', g.name) })
+      rows.set(key, { kind: 'unique', key, label: g.name, slots: [g.slot], ids: g.id ? [g.id] : [], owned: g.owned, listing: cheapestByName(items, 'UNIQUE', g.name) })
     }
   }
   for (const gem of gems) {
     if (!gem.enabled || !gem.name) continue
     const key = `g|${gem.name.toLowerCase()}`
     if (rows.has(key)) continue
-    rows.set(key, { kind: 'gem', key, label: gem.name, slots: [], owned: ownedGems.has(gem.name.toLowerCase()), listing: cheapestByName(items, 'GEM', gem.name) })
+    rows.set(key, { kind: 'gem', key, label: gem.name, slots: [], ids: [], owned: ownedGems.has(gem.name.toLowerCase()), listing: cheapestByName(items, 'GEM', gem.name) })
   }
   const list = [...rows.values()].sort((a, b) => Number(a.owned) - Number(b.owned) || (b.listing?.chaos ?? -1) - (a.listing?.chaos ?? -1))
   let total = 0
   let missing = 0
   for (const r of list) {
-    if (r.owned) continue
+    if (r.owned || r.kind === 'rare') continue
     if (r.listing) total += r.listing.chaos
     else missing++
   }
