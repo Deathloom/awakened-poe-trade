@@ -1101,3 +1101,33 @@ test('thread planner: atlas notables per Thread kind (reuses the generator rules
   assert.equal(threadNotables('ultimatum')[0].name, 'Dextral Threads')
   assert.deepEqual(threadNotables('nope'), [])
 })
+
+test('thread planner: review fixes (gate wording, unstated steps, general notables, tree unchanged)', async () => {
+  const th = await import('./.build/cheat-threads.mjs')
+  const gen = await import('./.build/atlas-generator.mjs')
+  // area-gate line: original sheet wording and order, last item joined with "and"
+  assert.equal(th.THREAD_SHEET_LINES.gates, 'The strongest Thread effects need 2+ Threads and a high area level (3.30.0b): area 73+ for the Blight Pantheon god, Double Down Ultimatum and the extra Breach mod; area 80+ for the extra Abyss mod, wisp beasts, Catarina joining Betrayal and rare Syndicate members.')
+  assert.equal(th.joinAnd(['a']), 'a')
+  assert.equal(th.joinAnd(['a', 'b', 'c']), 'a, b and c')
+  assert.equal(th.joinAnd(['a', 'c and d']), 'a, c and d')
+  // Ultimatum: 8 has the same text as 6, so no "Next at 8" and 8 is marked unstated
+  const ult = th.THREADS.find(t => t.id === 'ultimatum')
+  assert.equal(th.bonusState(ult, 6).next, null)
+  assert.equal(th.bonusState(ult, 6).active.unstated, false)
+  assert.equal(th.bonusState(ult, 8).active.unstated, true)
+  assert.equal(th.bonusState(ult, 4).next.at, 6)
+  assert.equal(th.bonusState(th.THREADS.find(t => t.id === 'breach'), 8).active.unstated, false)
+  // a "general" notable naming another kind of Thread is not shown for every kind
+  assert.ok(gen.namesOtherThread('Breach Threads drop more often', /Abyss/i))
+  assert.ok(!gen.namesOtherThread('Abyss Threads drop more often', /Abyss/i))
+  assert.ok(!gen.namesOtherThread('Map Device has 20% chance not to consume Threads', /Abyss/i))
+  assert.equal(gen.threadNotables('abyss').filter(x => x.kind === 'general').length, 4, 'Thread drop / keep notables still listed')
+  for (const c of gen.CONTENTS) {
+    for (const n of gen.threadNotables(c.id).filter(x => x.kind === 'general')) {
+      assert.ok(!/Abyss|Bestiary|Betrayal|Blight|Breach|Expedition|Incursion|Legion|Ritual|Ultimatum/i.test(n.how) || c.re.test(n.how), `${c.id}: ${n.name}`)
+    }
+  }
+  // the planner's Bestiary / Betrayal names don't change the ready-made trees
+  assert.ok(!gen.CONTENTS.find(c => c.id === 'beasts').re.test('Bestiary'))
+  assert.ok(!gen.CONTENTS.find(c => c.id === 'syndicate').re.test('Betrayal'))
+})

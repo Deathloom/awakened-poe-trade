@@ -19,7 +19,7 @@
       <div class="text-gray-100 font-semibold mb-0.5">In the map</div>
       <ul class="list-disc pl-4 text-gray-300 space-y-1">
         <li>At least <b class="text-gray-100">{{ mods }}</b> {{ kind.label }} Thread mod{{ mods > 1 ? 's' : '' }}<span v-if="modsNext" class="text-gray-500"> · {{ modsNext.at }} Threads for {{ modsNext.mods }}</span></li>
-        <li v-if="bonus.active">Bonus ({{ bonus.active.at }}): <span class="text-gray-100">{{ bonus.active.text }}</span></li>
+        <li v-if="bonus.active">Bonus ({{ bonus.active.at }}): <span class="text-gray-100">{{ bonus.active.text }}</span><span v-if="bonus.active.unstated" class="text-gray-500"> · same text as the step before: a gain at {{ bonus.active.at }} is not stated by GGG</span></li>
         <li v-else class="text-gray-400">No 3 / 6 / 8 bonus yet</li>
         <li v-if="bonus.next" class="text-gray-400">Next at {{ bonus.next.at }} (+{{ bonus.next.more }}): {{ bonus.next.text }}</li>
         <li v-if="gate" class="text-gray-400">{{ gate }}</li>

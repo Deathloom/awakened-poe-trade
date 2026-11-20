@@ -22,10 +22,10 @@ export const CONTENTS: AtlasContent[] = [
   { id: 'blight', label: 'Blight', re: /Blight/i },
   { id: 'delirium', label: 'Delirium', re: /Delirium/i },
   { id: 'abyss', label: 'Abyss', re: /Abyss/i },
-  { id: 'beasts', label: 'Beasts (Bestiary)', re: /Beast|Einhar|Bestiary/i },
+  { id: 'beasts', label: 'Beasts (Bestiary)', re: /Beast|Einhar/i },
   { id: 'ultimatum', label: 'Ultimatum', re: /Ultimatum/i },
   { id: 'incursion', label: 'Incursion', re: /Incursion/i },
-  { id: 'syndicate', label: 'Syndicate', re: /Syndicate|Betrayal/i },
+  { id: 'syndicate', label: 'Syndicate', re: /Syndicate/i },
   { id: 'torment', label: 'Tormented Spirits', re: /Tormented Spirit|haunted/i },
   { id: 'exiles', label: 'Rogue Exiles', re: /Rogue Exile/i },
   { id: 'mercenaries', label: 'Mercenaries', re: /Mercenar/i },
@@ -220,9 +220,23 @@ export const CONTENT_NOTABLES: Record<string, number> = Object.fromEntries(CONTE
 // ("per different Thread" ones work against stacking one kind: left out).
 export interface ThreadNotable { name: string, how: string, kind: 'type' | 'exclude' | 'general' }
 const THREAD_RE = /\bThreads?\b/i
+// the ten Thread types (3.30)
+const THREAD_TYPES = ['Abyss', 'Bestiary', 'Betrayal', 'Blight', 'Breach', 'Expedition', 'Incursion', 'Legion', 'Ritual', 'Ultimatum']
+// Thread names that differ from the content's name: used only here (the planner),
+// so the ready-made tree's matching (CONTENTS) stays as it is
+const THREAD_ALIAS: Record<string, string> = { beasts: 'Bestiary', syndicate: 'Betrayal' }
+function threadRe (c: AtlasContent): RegExp {
+  const alias = THREAD_ALIAS[c.id]
+  return alias ? new RegExp(`${c.re.source}|${alias}`, 'i') : c.re
+}
+// a text naming another kind of Thread than `re`'s ("Breach Threads drop more")
+export function namesOtherThread (text: string, re: RegExp): boolean {
+  return THREAD_TYPES.some(t => !re.test(t) && new RegExp(`\\b${t}\\b`, 'i').test(text))
+}
 export function threadNotables (contentId: string): ThreadNotable[] {
   const c = CONTENTS.find(x => x.id === contentId)
   if (!c) return []
+  const re = threadRe(c)
   const out: ThreadNotable[] = []
   const seen = new Set<string>()
   for (const n of ATLAS.nodes) {
@@ -232,11 +246,11 @@ export function threadNotables (contentId: string): ThreadNotable[] {
     const own = clean(n[8].join(' '))
     if (isTypePicker(n)) {
       const opts = (ATLAS.variants[String(n[0])] ?? []).map(([, lines]) => clean(lines.join(' ')).trim())
-      const mine = opts.find(t => c.re.test(t))
+      const mine = opts.find(t => re.test(t))
       if (!mine || !THREAD_RE.test(own)) continue
       if (AGAINST.test(own)) out.push({ name, kind: 'exclude', how: `rule out one of ${opts.filter(t => t !== mine).join(' / ')}` })
       else out.push({ name, kind: 'type', how: `set to ${mine}` })
-    } else if (THREAD_RE.test(own) && !AGAINST.test(own) && !/different Thread/i.test(own)) {
+    } else if (THREAD_RE.test(own) && !AGAINST.test(own) && !/different Thread/i.test(own) && !namesOtherThread(own, re)) {
       out.push({ name, kind: 'general', how: own.trim() })
     } else continue
     seen.add(name)

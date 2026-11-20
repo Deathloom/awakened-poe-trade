@@ -43,8 +43,10 @@ export function guaranteedMods (count: number): number {
 }
 
 export interface BonusState {
-  // the 3 / 6 / 8 step reached (null below 3) and its bonus
-  active: { at: number, text: string } | null
+  // the 3 / 6 / 8 step reached (null below 3) and its bonus; `unstated` when GGG
+  // gave this step the same text as the one before (no gain stated, e.g. Ultimatum 8)
+  active: { at: number, text: string, unstated: boolean } | null
+  // the next step that changes the bonus text (null if none does)
   next: { at: number, text: string, more: number } | null
 }
 
@@ -52,8 +54,9 @@ export function bonusState (kind: ThreadKind, count: number): BonusState {
   let active: BonusState['active'] = null
   let next: BonusState['next'] = null
   THREAD_STEPS.forEach((at, i) => {
-    if (count >= at) active = { at, text: kind.tiers[i] }
-    else if (!next) next = { at, text: kind.tiers[i], more: at - count }
+    const unstated = i > 0 && kind.tiers[i] === kind.tiers[i - 1]
+    if (count >= at) active = { at, text: kind.tiers[i], unstated }
+    else if (!next && !unstated) next = { at, text: kind.tiers[i], more: at - count }
   })
   return { active, next }
 }
@@ -74,10 +77,19 @@ export function gateNote (kind: ThreadKind, count: number): string | null {
 
 // ---- cheat sheet lines (Map mechanics → Threads of Creation) ----------------
 
-const gateList = (level: number) => THREADS.filter(t => t.gate?.level === level).map(t => t.gate!.text)
+// the order the sheet has always listed them in
+const GATE_ORDER = ['blight', 'ultimatum', 'breach', 'abyss', 'bestiary', 'betrayal']
+const gateList = (level: number) => THREADS.filter(t => t.gate?.level === level)
+  .sort((a, b) => GATE_ORDER.indexOf(a.id) - GATE_ORDER.indexOf(b.id)).map(t => t.gate!.text)
+// "a, b and c" (a comma when the last item has its own "and": "a, b, c and d")
+export function joinAnd (items: string[]): string {
+  if (items.length < 2) return items.join('')
+  const last = items[items.length - 1]
+  return `${items.slice(0, -1).join(', ')}${/\band\b/.test(last) ? ',' : ' and'} ${last}`
+}
 
 export const THREAD_SHEET_LINES = {
-  gates: `The strongest Thread effects need 2+ Threads and a high area level (3.30.0b): area 73+ for ${gateList(73).join(', ')}; area 80+ for ${gateList(80).join(', ')}.`,
+  gates: `The strongest Thread effects need 2+ Threads and a high area level (3.30.0b): area 73+ for ${joinAnd(gateList(73))}; area 80+ for ${joinAnd(gateList(80))}.`,
   guaranteed: 'Guaranteed Thread mods (3.30.0c): 1–3 Threads at least 1 mod, 4–7 at least 2, 8+ at least 3.',
   bonuses: `Bonus stat at 3 / 6 / 8 Threads (3.30.0c): ${THREADS.map(t => t.summary).join(' · ')}.`
 }
