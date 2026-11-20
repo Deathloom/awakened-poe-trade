@@ -12,7 +12,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - **Market → Shopping**: every row has **Trade** (opens the trade site: uniques any copy, rares this base with these mods, gems cheapest first) and gear rows have **↑** (same unique with at least these rolls / any base with these mods), the same searches as the Build panel's Gear tab. Click a gear row to see its mods. Rares now get their own row (no price: it depends on the rolls).
 
 ### Added (#263): league challenge vendor recipes
-- **Cheat sheets → Vendor recipes** starts with this league's vendor-recipe challenges (Peddler's Produce I and II, Covens of Umbra) and a recipe for each item: life / mana flask, Ruby / Topaz / Sapphire ring, Agate / Turquoise / Citrine amulet, Tier 16 map, unique item, item with influence, Exalted Orb.
+- **Cheat sheets → Vendor recipes**: recipes that count for this league's vendor-recipe challenges (Peddler's Produce I and II, Covens of Umbra) carry a 🏆 line naming the challenge and item. New recipes for the challenge items the list didn't have: Ruby / Topaz / Sapphire ring, Agate / Turquoise / Citrine amulet, Tier 16 map, unique reroll, influenced Onyx Amulet. (#265: one list instead of separate challenge cards.)
 
 ### Changed (#262): 3.30.0c / 0d patch notes
 - **Atlas tree data 3.30.0c** (GGG's export, 19 Nov): new Celestial Presence and Runic Distortion notables, Bountiful Harvest / Ancient Writings / Phantom Anomalies wording.
