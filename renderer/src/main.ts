@@ -4,6 +4,8 @@ import * as I18n from './web/i18n'
 import * as Data from './assets/data'
 import { initConfig, AppConfig } from './web/Config'
 import { Host } from './web/background/IPC'
+import { startLevelRecorder } from './web/companion/char-level'
+import { startPatchNotesWatch } from './web/patch-notes/patch-notes-store'
 
 ;(async function () {
   await initConfig()
@@ -31,10 +33,8 @@ import { Host } from './web/background/IPC'
   // Deathloom fork: the overlay window runs as long as Orbhoarder does; it
   // records character levels from Client.txt for the levelling planner
   if (where === 'overlay') {
-    const { startLevelRecorder } = await import('./web/companion/char-level')
     startLevelRecorder()
     // and checks GGG's forum for new patch notes (one window only)
-    const { startPatchNotesWatch } = await import('./web/patch-notes/patch-notes-store')
     startPatchNotesWatch()
   }
 

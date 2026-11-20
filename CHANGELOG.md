@@ -25,6 +25,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Tests (Q1): data guards
 - The automatic checks now fail if price check loses our added exchange items (Frayed Thread, Engineer's Orbs, the new Exalted Orbs, shards, Breach Blessings and others), if the atlas tree loses its 3.30.0c notables, or if the Threads cheat sheet or vendor recipes go missing. Nothing changes in the app.
 
+### Performance (F4): even lighter windows
+- Each panel and window starts with about a sixth less code to load (1.9 MB → 1.6 MB): the Atlas tree loads the first time you open it, and unused leftovers are gone. Nothing else changes.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

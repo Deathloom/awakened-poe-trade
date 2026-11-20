@@ -20,10 +20,14 @@ export default defineConfig({
     makeIndexFilesPlugin()
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@ipc': path.resolve(__dirname, './src/../../ipc')
-    }
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      { find: '@ipc', replacement: path.resolve(__dirname, './src/../../ipc') },
+      // Deathloom fork (F4): vuedraggable's UMD build require()s 'vue', which
+      // resolves to the full build with the template compiler (~70 kB). All
+      // templates are compiled at build time (.vue files), so the runtime build is enough.
+      { find: /^vue$/, replacement: 'vue/dist/vue.runtime.esm-bundler.js' }
+    ]
   },
   server: {
     // Deathloom fork: the What's new popup reads ../CHANGELOG.md
