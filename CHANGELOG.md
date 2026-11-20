@@ -14,6 +14,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - **Next steps**: roomier sections; the long "one tree only" note is one line (hover for the rest).
 - **Cheat sheets**: normal-size text, bold section titles, more space.
 - **Tree map, levelling**: a tree you haven't stepped through yet starts where your level and quest points say you are (same number as Next steps), not at the game log's short run (switching to the next tree in PoB showed 5/88). New **My level** button jumps back there. The "live character is turned off" notice no longer sits over the levelling and switch maps.
+- **Market → Outlook**: no more +60% on everything (that was a cap). The real 3-day projection is shown; items moving over 100% (thin markets, e.g. 1c gems bought out) say "too fast" and stay out of Outlook (see Rising). New line on top checks the outlook against this week's own prices: how many picks really rose and the typical miss. The sticky table header no longer lets the first row show through.
 - **Levelling order** (PoB fork #43): finishes a branch before starting another, so the next 5 passives no longer jump across the tree.
 
 ### Changed (#260): Calmer panels part 3
