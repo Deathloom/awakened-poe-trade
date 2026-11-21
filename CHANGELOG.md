@@ -64,6 +64,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q7): Lab helper while levelling
 - **Levelling → Next steps → Labyrinth**: a checklist of the 12 Labyrinth trials (6 Normal, 3 Cruel, 3 Merciless), per character, ticked from your local Client.txt (a trial-completed message in that zone, or entering that lab) or by hand; labs done count from Izaro's "Triumphant at last" or entering a higher lab, or can be typed in; plus the next lab and the ascendancy notables your Path of Building levelling tree adds (not taken yet; PoB sets no order, so none is claimed). Replaces the "Ascendancy in this tree" box. The campaign guide ticks trials it knows are done, and in the Orbhoarder window its lab banner lists those notables too.
 
+### Added (Q9): bench recipe checklist
+- **Cheat sheets → Bench recipes**: the crafting bench recipes on the campaign route, by act and zone (the same places the campaign guide shows), with the next one ahead of the guide's step and a count of unticked ones in zones you're past. Click a recipe in the guide's "crafting recipe" line to tick it there; ticked ones are crossed out in both. Ticks are by hand (the game log doesn't say when you pick one up) and account-wide on this PC, like recipe unlocks in game.
+
 ### Security: Dependabot version updates
 - `.github/dependabot.yml`: weekly update PRs (Mondays) for main and renderer npm packages and the pinned GitHub Actions, all to **dev**; minor and patch bumps grouped, at most 3 open per folder. Nothing changes in the app.
 

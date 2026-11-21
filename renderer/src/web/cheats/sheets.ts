@@ -276,6 +276,7 @@ export const SHEETS: Sheet[] = [
 export const OWN_TABS = [
   { id: 'threads', label: 'Thread planner' },
   { id: 'recipes', label: 'Vendor recipes' },
+  { id: 'bench', label: 'Bench recipes' },
   { id: 'challenges', label: 'Challenges' },
   { id: 'progress', label: 'Checklist' }
 ]

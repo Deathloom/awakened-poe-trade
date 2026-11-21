@@ -33,6 +33,7 @@ const MODULES = {
   'craft-sim': 'renderer/src/web/craft/craft-sim.ts',
   changelog: 'renderer/src/web/whats-new/changelog.ts',
   'campaign-route': 'renderer/src/web/companion/campaign-route.ts',
+  'bench-recipes': 'renderer/src/web/companion/bench-recipes.ts',
   'taken-paths': 'renderer/src/web/pob/taken-paths.ts',
   'craft-plan': 'renderer/src/web/craft/craft-plan.ts',
   'timeless-find': 'renderer/src/web/craft/timeless-find.ts',

@@ -371,6 +371,59 @@ test('campaign guide: per-character step, campaign done, endgame areas', async (
   assert.equal(all.C24, 1)
 })
 
+test('bench recipes (Q9): places from the route, manual account-wide ticks', async () => {
+  const bench = await import('./.build/bench-recipes.mjs')
+  const { readFileSync } = await import('node:fs')
+  const { steps } = JSON.parse(readFileSync(new URL('../renderer/src/web/companion/campaign-route.json', import.meta.url), 'utf8'))
+  const spots = bench.benchRecipeSpots(steps)
+  // every recipe once, in route order, at a step that really lists it
+  assert.ok(spots.length >= 40)
+  assert.equal(new Set(spots.map(s => s.recipe)).size, spots.length)
+  for (let i = 1; i < spots.length; i++) assert.ok(spots[i].step >= spots[i - 1].step)
+  for (const s of spots) {
+    assert.ok(bench.stepRecipes(steps[s.step]).includes(s.recipe), s.recipe)
+    assert.equal(steps[s.step].zone, s.zone)
+  }
+  // the labyrinth's "crafting" parts carry no recipe
+  const lab = steps.find(st => st.areaId === 'Labyrinth_Airlock' && st.tasks.some(t => t.parts.some(p => p.k === 'crafting')))
+  assert.ok(lab)
+  assert.deepEqual(bench.stepRecipes(lab), [])
+  assert.deepEqual(bench.stepRecipes(undefined), [])
+  // optional quests switched off in the guide: their recipes aren't listed
+  const regen = 'Life and Mana Regeneration - Rank 1'
+  assert.ok(spots.some(s => s.recipe === regen && s.zone === 'The Archives'))
+  const noOptional = bench.benchRecipeSpots(steps, o => o !== 'OPTIONAL')
+  assert.ok(!noOptional.some(s => s.zone === 'The Archives'))
+  assert.ok(noOptional.length < spots.length && noOptional.length > 0)
+  const caverns = spots.find(s => s.recipe === 'Vaal Skill Damage - Rank 1')
+  assert.equal(caverns.zone, 'The Caverns')
+  assert.equal(caverns.act, 2)
+  // grouped per act; the route's act 11 is the epilogue town
+  const groups = bench.spotsByAct(spots)
+  assert.equal(groups.reduce((n, g) => n + g.spots.length, 0), spots.length)
+  assert.equal(bench.actLabel(11), 'Epilogue')
+  assert.equal(bench.actLabel(3), 'Act 3')
+  // next / passed relative to the guide's step
+  const none = new Set()
+  assert.equal(bench.nextUnfound(spots, none, 0), spots[0])
+  assert.deepEqual(bench.passedUnfound(spots, none, 0), [])
+  const at = spots[2].step
+  assert.equal(bench.nextUnfound(spots, new Set([spots[2].recipe]), at), spots[3])
+  assert.deepEqual(bench.passedUnfound(spots, new Set([spots[0].recipe]), at).map(s => s.recipe), [spots[1].recipe])
+  assert.equal(bench.nextUnfound(spots, new Set(spots.map(s => s.recipe)), 0), null)
+  // ticks: saved, toggled, junk dropped
+  assert.equal(bench.loadBenchTicks().size, 0)
+  assert.equal(bench.toggleBenchTick('Spell Damage - Rank 1').has('Spell Damage - Rank 1'), true)
+  assert.equal(bench.toggleBenchTick('Spell Damage - Rank 1').size, 0)
+  localStorage.setItem(bench.BENCH_KEY, JSON.stringify(['A', 5, '', 'A', 'x'.repeat(500), { a: 1 }, 'B']))
+  assert.deepEqual([...bench.loadBenchTicks()], ['A', 'B'])
+  localStorage.setItem(bench.BENCH_KEY, 'not json')
+  assert.equal(bench.loadBenchTicks().size, 0)
+  localStorage.setItem(bench.BENCH_KEY, '{"a":1}')
+  assert.equal(bench.loadBenchTicks().size, 0)
+  localStorage.removeItem(bench.BENCH_KEY)
+})
+
 test('passive tree: taken passives only get the path they need', async () => {
   const { fillTakenPaths } = await import('./.build/taken-paths.mjs')
   // start 0 - 1 - 2, and a loop 2 - 3 - 4 - 5 - 2 (3 and 5 both next to 4)
