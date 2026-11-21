@@ -26,7 +26,7 @@
       <div v-else-if="lf.error" class="text-red-400">{{ lf.error }}</div>
       <div v-if="lf.written" class="text-gray-200">
         Wrote <b>{{ lf.written }}</b>. In game: <b>Options → UI → Item filter</b>, pick <b>{{ lf.written.replace(/\.filter$/i, '') }}</b> (press the refresh button next to the list if it's not there yet).
-        <span v-if="lf.refused.length" class="text-gray-500"> Left out (odd characters): {{ lf.refused.join(', ') }}.</span>
+        <span v-if="lf.refused.length" class="text-gray-500"> Left out (not a known item name, or odd characters): {{ lf.refused.join(', ') }}.</span>
       </div>
       <div v-if="!lf.busy && !lf.written && lf.filters.length" class="flex flex-wrap gap-1">
         <button v-for="f of lf.filters" :key="f" class="ui-btn" :disabled="!wantsTotal" :title="`Make “${f.replace(/\.filter$/i, '')} + Orbhoarder” from this one`" @click="makeFilter(f)">{{ f.replace(/\.filter$/i, '') }}</button>
@@ -85,7 +85,8 @@ import { copyText } from '../pob/market'
 import { openTradeSearch, openTradeByType } from '../pob/gear-actions'
 import { shoppingList, type ShopRow } from './market-tools'
 import { IS_OTHER_DEVICE } from './price-alerts-store'
-import { wantsFromShop, wantsCount } from '@ipc/loot-filter'
+import { wantsFromShop, wantsCount, keepKnown } from '@ipc/loot-filter'
+import { ITEM_BY_REF } from '@/assets/data'
 
 const { all, money, open, ninja } = useMarket()
 ninja.queuePricesFetch()
@@ -215,20 +216,31 @@ const listMenu = computed((): UiMenuItem[] => [
     action: openLootFilter
   }
 ])
-const lootWants = computed(() => wantsFromShop(shop.value.rows.map(r => {
+// Q10 review: only names the price-check item data knows (PoE1 won't load a filter
+// whose BaseType == names an item that doesn't exist); transfigured gems drop as their normal gem
+const lootChecked = computed(() => keepKnown(wantsFromShop(shop.value.rows.map(r => {
   if (r.kind === 'gem') {
     const gem = groups.value.flatMap(g => g.gems).find(x => x.name.toLowerCase() === r.label.toLowerCase())
     return { kind: r.kind, owned: r.owned, name: r.label, support: gem?.support === true }
   }
   return { kind: r.kind, owned: r.owned, name: gearOf(r)?.baseName ?? '' }
-})))
+})), {
+  base: (n) => (ITEM_BY_REF('ITEM', n)?.length ?? 0) > 0,
+  gem: (n) => {
+    const g = ITEM_BY_REF('GEM', n)?.[0]
+    if (!g) return null
+    return g.gem?.transfigured ? (g.gem.normalVariant ?? null) : g.refName
+  }
+}))
+const lootWants = computed(() => lootChecked.value.wants)
 const wantsTotal = computed(() => wantsCount(lootWants.value))
 const wantsLine = computed(() => {
   const w = lootWants.value
   if (!wantsTotal.value) return 'Nothing left to buy on this list, so nothing to add.'
   const parts = [[w.uniqueBases.length, 'unique base'], [w.bases.length, 'rare base'], [w.gems.length, 'gem']]
     .filter(([n]) => n).map(([n, s]) => `${n} ${s}${n === 1 ? '' : 's'}`)
-  return `Adds: ${parts.join(', ')} (what's not ticked).`
+  const unknown = lootChecked.value.unknown.length
+  return `Adds: ${parts.join(', ')} (what's not ticked).${unknown ? ` ${unknown} left out: not a known item name.` : ''}`
 })
 const offLf = Host.onEvent('MAIN->CLIENT::loot-filter', (e) => {
   if (e.requestId !== lfId) return
@@ -236,7 +248,7 @@ const offLf = Host.onEvent('MAIN->CLIENT::loot-filter', (e) => {
   lf.error = e.ok ? '' : (e.error ?? 'Something went wrong.')
   if (e.folder) lf.folder = e.folder
   if (e.filters) lf.filters = e.filters
-  if (e.written) { lf.written = e.written; lf.refused = e.refused ?? [] }
+  if (e.written) { lf.written = e.written; lf.refused = [...lootChecked.value.unknown, ...(e.refused ?? [])].slice(0, 50) }
 })
 onUnmounted(() => { offLf.abort() })
 function openLootFilter () {

@@ -57,6 +57,9 @@ export class LootFilter {
           const res = await makeAddon(folder, req.source, req.wants, game, new Date().toISOString().slice(0, 10))
           if (res.ok) this.logger.write(`info [loot-filter] wrote ${res.written ?? ''} (${res.count ?? 0} names)`)
           reply({ ...res, folder })
+        } else {
+          // Q10 review: never leave the panel waiting
+          reply({ ok: false, error: 'Unknown request.' })
         }
       })().catch((err: Error) => {
         this.logger.write(`error [loot-filter] ${String(req.op)}: ${err.message}`)

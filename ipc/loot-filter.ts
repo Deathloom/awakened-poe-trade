@@ -14,6 +14,8 @@ export const ADDON_MARKER = '# Orbhoarder loot filter add-on'
 export const MAX_FILTER_BYTES = 8 * 1024 * 1024
 // names per kind (a build has far fewer; keeps the request small)
 export const MAX_NAMES = 200
+// at most this many left-out names are sent back / shown
+export const MAX_REFUSED = 50
 
 export interface LootFilterWants {
   // base types of the rares the build still needs ("Vaal Regalia")
@@ -86,7 +88,31 @@ export function cleanWants (w: unknown): { wants: LootFilterWants, refused: stri
   const gems = clean(o.gems)
   return {
     wants: { bases: bases.names, uniqueBases: uniqueBases.names, gems: gems.names },
-    refused: [...bases.refused, ...uniqueBases.refused, ...gems.refused]
+    refused: [...bases.refused, ...uniqueBases.refused, ...gems.refused].slice(0, MAX_REFUSED)
+  }
+}
+
+// PoE1 refuses to load a whole filter when a `BaseType ==` name matches no item, so
+// only names the app's own item data knows go in (the renderer passes lookups over its
+// price-check data). `gem` returns the game's base type for that gem (transfigured gems:
+// the normal gem they come from) or null. Unknown names come back in `unknown`.
+export function keepKnown (
+  w: LootFilterWants,
+  known: { base: (name: string) => boolean, gem: (name: string) => string | null }
+): { wants: LootFilterWants, unknown: string[] } {
+  const unknown: string[] = []
+  const keep = (list: string[], ok: (n: string) => string | null) => {
+    const out: string[] = []
+    for (const n of list) {
+      const real = ok(n)
+      if (real && isSafeItemName(real)) { if (!out.includes(real)) out.push(real) } else unknown.push(n)
+    }
+    return out
+  }
+  const base = (n: string) => known.base(n) ? n : null
+  return {
+    wants: { bases: keep(w.bases, base), uniqueBases: keep(w.uniqueBases, base), gems: keep(w.gems, known.gem) },
+    unknown: unknown.slice(0, MAX_REFUSED)
   }
 }
 

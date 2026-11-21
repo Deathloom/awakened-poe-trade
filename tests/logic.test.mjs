@@ -1729,6 +1729,22 @@ test('loot filter files: only the add-on is written, his filter untouched, no es
   }
 })
 
+test('loot filter: only names the item data knows; transfigured gems as their normal gem; capped lists', () => {
+  const lf = lootFilter
+  const bases = new Set(['Vaal Regalia', 'Leather Belt'])
+  const gems = { Arc: { refName: 'Arc' }, 'Arc of Surging': { refName: 'Arc of Surging', transfigured: true, normalVariant: 'Arc' }, 'Added Fire Damage Support': { refName: 'Added Fire Damage Support' } }
+  const known = {
+    base: n => bases.has(n),
+    gem: n => { const g = gems[n]; return !g ? null : (g.transfigured ? g.normalVariant ?? null : g.refName) }
+  }
+  const res = lf.keepKnown({ bases: ['Vaal Regalia', 'Made Up Base'], uniqueBases: ['Leather Belt', 'Nope Belt'], gems: ['Arc of Surging', 'Arc', 'Added Fire Damage Support', 'Fake Gem'] }, known)
+  assert.deepEqual(res.wants, { bases: ['Vaal Regalia'], uniqueBases: ['Leather Belt'], gems: ['Arc', 'Added Fire Damage Support'] })
+  assert.deepEqual(res.unknown, ['Made Up Base', 'Nope Belt', 'Fake Gem'])
+  const many = Array.from({ length: 120 }, (_, i) => `bad"${i}`)
+  assert.equal(lf.cleanWants({ bases: many }).refused.length, lf.MAX_REFUSED)
+  assert.equal(lf.keepKnown({ bases: Array.from({ length: 120 }, (_, i) => `Base ${i}`), uniqueBases: [], gems: [] }, known).unknown.length, lf.MAX_REFUSED)
+})
+
 test('request guard: phones cannot make or list loot filters', () => {
   assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::loot-filter', { op: 'list' }), false)
   assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::loot-filter', { op: 'make' }), false)
