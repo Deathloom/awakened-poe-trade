@@ -1451,7 +1451,7 @@ test('fate value: outcomes at poe.ninja prices, best marked, unknowns honest (Q5
   // every Promised Profits reward type is listed (count in brackets stripped)
   const pp = ch.CHALLENGES.find(c => c.id === 'promised-profits')
   const labels = new Set(f.FATE_OUTCOMES.map(o => o.label))
-  for (const s of pp.steps) assert.ok(labels.has(s.replace(/ \(\d+\)$/, '')) || /Divine|Annulment/.test(s), s)
+  for (const s of pp.steps) assert.ok(labels.has(s.replace(/ \(\d+\)$/, '')), s)
   // ids unique; only GGG-stated single outcomes say 'single' and need 2 copies
   assert.equal(new Set(f.FATE_OUTCOMES.map(o => o.id)).size, f.FATE_OUTCOMES.length)
   assert.deepEqual(f.FATE_OUTCOMES.filter(o => o.qty === 'single').map(o => o.id), ['divine', 'annul'])

@@ -3,8 +3,6 @@
 //  - reward types: the in-game "Promised Profits" challenge list (challenges.ts)
 //  - single Divine Orb / Orb of Annulment outcomes need 2 copies: GGG 3.30.0d
 //  - other repeats: 1st and 3rd copy triple, 2nd does nothing: GGG 3.30.0b
-//  - Dreadmaidens' Sacrament is a unique Basalt Flask, Hide of the Vendigo a
-//    unique Exquisite Leather (3.30 unique reveals)
 // How many items an outcome gives is not stated by GGG except the single
 // Divine / Annulment ones, so values are per item.
 
@@ -14,7 +12,8 @@ export interface PriceRef { ns: 'ITEM' | 'UNIQUE', name: string }
 
 export interface FateOutcome {
   id: string
-  // reward type as the game names it
+  // reward type as the game lists it ("Single Divine Orb" / "Single Orb of
+  // Annulment" are our labels for the 3.30.0d single-orb outcomes)
   label: string
   // poe.ninja lookups, tried in order; several names for a group (Threads) give a range
   prices?: PriceRef[]
@@ -34,8 +33,8 @@ export const THREAD_ITEMS = THREADS.map(t => t.item)
 export const FATE_OUTCOMES: FateOutcome[] = [
   { id: 'divine', label: 'Single Divine Orb', prices: [ITEM('Divine Orb')], qty: 'single', copies: 2, note: 'guaranteed with 2 copies (3.30.0d)' },
   { id: 'annul', label: 'Single Orb of Annulment', prices: [ITEM('Orb of Annulment')], qty: 'single', copies: 2, note: 'guaranteed with 2 copies (3.30.0d)' },
-  { id: 'dreadmaidens', label: 'Dreadmaidens\' Sacrament', prices: [UNIQUE('Dreadmaidens\' Sacrament')], qty: 'unstated', copies: 1, note: 'unique Basalt Flask' },
-  { id: 'vendigo', label: 'Hide of the Vendigo', prices: [UNIQUE('Hide of the Vendigo')], qty: 'unstated', copies: 1, note: 'unique body armour' },
+  { id: 'dreadmaidens', label: 'Dreadmaidens\' Sacrament', prices: [UNIQUE('Dreadmaidens\' Sacrament')], qty: 'unstated', copies: 1 },
+  { id: 'vendigo', label: 'Hide of the Vendigo', prices: [UNIQUE('Hide of the Vendigo')], qty: 'unstated', copies: 1 },
   { id: 'corpse-rose', label: 'Corpse Rose', prices: [ITEM('Corpse Rose'), UNIQUE('Corpse Rose')], qty: 'unstated', copies: 1, note: 'item type not stated by GGG' },
   { id: 'doedres-tongue', label: 'Doedre\'s Tongue', prices: [ITEM('Doedre\'s Tongue'), UNIQUE('Doedre\'s Tongue')], qty: 'unstated', copies: 1, note: 'item type not stated by GGG' },
   { id: 'ordered-fate', label: 'Ordered Fate', prices: [ITEM('Ordered Fate'), UNIQUE('Ordered Fate')], qty: 'unstated', copies: 1, note: 'item type not stated by GGG' },

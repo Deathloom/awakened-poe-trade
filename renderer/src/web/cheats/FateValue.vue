@@ -12,7 +12,7 @@
       isn't a promise the Fate pays more. Random drops (currency, uniques, gems, …) have no single price. {{ COPIES_RULE }}
     </div>
     <div v-if="best" class="text-gray-300">
-      Worth taking: <b class="text-gray-100">{{ best.outcome.label }}</b> ({{ money(best.low!) }}<template v-if="best.outcome.qty !== 'single'"> per item; how many is not stated by GGG</template>).
+      Highest per item: <b class="text-gray-100">{{ best.outcome.label }}</b> ({{ money(best.low!) }}<template v-if="best.outcome.qty !== 'single'"> per item; how many is not stated by GGG</template>).
     </div>
     <div v-else class="text-gray-500">No poe.ninja prices yet{{ ninja.isLoading.value ? ' (loading…)' : '' }}.</div>
     <table class="w-full">
