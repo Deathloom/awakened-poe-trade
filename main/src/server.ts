@@ -127,6 +127,27 @@ export function sendEventTo (
   }
 }
 
+// Deathloom fork (Q6 review): the server pings every socket; one that didn't answer
+// the previous ping (a locked phone, one that left the Wi-Fi) is dropped, so it
+// doesn't count as connected for long.
+export const HEARTBEAT_MS = 30 * 1000
+const notAnswered = new WeakSet<WebSocket>()
+setInterval(() => {
+  for (const client of websocketServer.clients) {
+    if (notAnswered.has(client)) {
+      client.terminate()
+      continue
+    }
+    notAnswered.add(client)
+    try { client.ping() } catch {}
+  }
+}, HEARTBEAT_MS).unref()
+
+// Deathloom fork (Q6 review): inside an onEventAnyClient handler: the event came from a phone / other device
+export function fromOtherDevice (): boolean {
+  return dispatchingSocket !== undefined && otherDeviceClients.has(dispatchingSocket)
+}
+
 // Deathloom fork (Q6): phones / other devices connected right now (price alerts
 // fall back to a Windows notification when there are none)
 export function otherDevicesConnected (): number {
@@ -182,6 +203,7 @@ export async function startServer (
     // phone connected last, the next price check went to the phone instead of the overlay.
     const isOtherDevice = otherDeviceClients.has(socket)
     if (!isHud && !isOtherDevice) lastActiveClient = socket
+    socket.on('pong', () => { notAnswered.delete(socket) })
     // Deathloom fork: a window that (re)connects gets the updater state now. It only
     // read it once at load, so a broadcast missed while its socket was reconnecting
     // left "Checking for updates" on screen for good.
@@ -216,11 +238,10 @@ export async function startServer (
         evBus.emit('CLIENT->MAIN::used-recently', { isOverlay: true })
       }
     })
-    if (!isHud) {
-      sendEventTo('last-active', {
-        name: 'MAIN->CLIENT::log-entry',
-        payload: { message: logger.history }
-      })
+    // the debug log goes to the window that just connected (not again to the
+    // overlay when a phone connects, and never to a phone)
+    if (!isHud && !isOtherDevice) {
+      socket.send(JSON.stringify({ name: 'MAIN->CLIENT::log-entry', payload: { message: logger.history } }))
     }
   })
 

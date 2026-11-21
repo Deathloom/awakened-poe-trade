@@ -1548,9 +1548,31 @@ test('price alerts: a fresh price list checks only that league, divine alerts us
   assert.equal(alerts.checkAlerts(state, NINJA_BLOB, 'Hardcore', 1000).changed, false)
 })
 
+test('price alerts: no duplicates, PC notified unless a phone confirmed, file read-back cleaned', () => {
+  const ok = { league: 'Keepers', type: 'UniqueAccessory', name: 'Mageblood', label: 'Mageblood', dir: 'above', value: 150, unit: 'div' }
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok }), true)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, value: 151 }), false)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, dir: 'below' }), false)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, variant: 'Relic' }), false)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: false, phoneAcked: false }), true)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: false, phoneAcked: true }), false)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: true, phoneAcked: true }), true)
+  assert.deepEqual(alerts.cleanAckIds(['a-1', '../x', 5, 'b_2']), ['a-1', 'b_2'])
+  assert.deepEqual(alerts.cleanAckIds('a'), [])
+  const fired = { id: 'r1-5', ruleId: 'r1', league: 'Keepers', label: 'Mage\nblood', dir: 'above', value: 1, unit: 'div', price: 2, chaos: 400, at: 5 }
+  const st = alerts.readAlertState({
+    rules: [{ ...ok, id: 'a' }, { ...ok, id: 'b' }],
+    fired: [fired, { ...fired, id: '<img>' }, { ...fired, label: 'x'.repeat(300) }, { ...fired, price: Infinity }]
+  })
+  assert.equal(st.rules.length, 1)
+  assert.equal(st.fired.length, 1)
+  assert.equal(st.fired[0].label, 'Mageblood')
+})
+
 test('request guard: phones see price alerts but cannot change them, nor take over the price check', () => {
   const ok = guard.allowedFromOtherDevice
   assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'list' }), true)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'ack', ids: ['a'] }), true)
   assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'add', rule: {} }), false)
   assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'remove', id: 'a' }), false)
   assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'settings', pcAlways: true }), false)

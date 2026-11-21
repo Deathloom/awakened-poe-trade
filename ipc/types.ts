@@ -1604,13 +1604,15 @@ type IpcStashSession =
     sessionId: string | null
   }>
 
-// Deathloom fork (Q6): price alerts (ipc/price-alerts.ts). Only 'list' is allowed
+// Deathloom fork (Q6): price alerts (ipc/price-alerts.ts). Only 'list' and 'ack' are allowed
 // from a phone (request-guard.ts); adding and removing happen on the PC.
 type IpcPriceAlertsRequest =
   Event<'CLIENT->MAIN::price-alerts', {
-    op: 'list' | 'add' | 'remove' | 'clear-fired' | 'settings'
+    op: 'list' | 'add' | 'remove' | 'clear-fired' | 'settings' | 'ack'
     rule?: PriceAlertInput
     id?: string
+    // ack: a phone got these fired alerts (so the PC needn't notify)
+    ids?: string[]
     pcAlways?: boolean
   }>
 

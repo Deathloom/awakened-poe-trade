@@ -101,6 +101,29 @@ export function validateAlertInput (input: unknown, existing: number): PriceAler
   return { league, type, name, variant, label, dir: o.dir, value, unit: o.unit }
 }
 
+// the same item, direction, price and unit is already an alert
+export function isDuplicateAlert (rules: PriceAlertInput[], input: PriceAlertInput): boolean {
+  return rules.some(r => r.league === input.league && r.type === input.type && r.name === input.name &&
+    (r.variant ?? '') === (input.variant ?? '') && r.dir === input.dir && r.unit === input.unit && r.value === input.value)
+}
+
+// how long main waits for a phone to say it got the alert before the PC notifies anyway
+export const PHONE_ACK_WAIT_MS = 8 * 1000
+
+// Windows notification on this PC? Yes unless a phone confirmed it got the alert
+// (a socket that looks connected may belong to a locked phone), or always when asked.
+export function shouldNotifyPc (o: { pcAlways: boolean, phoneAcked: boolean }): boolean {
+  return o.pcAlways || !o.phoneAcked
+}
+
+const ID_RE = /^[A-Za-z0-9_-]{1,60}$/
+
+// ids a phone sends back when it got alerts ('ack'); anything else dropped
+export function cleanAckIds (ids: unknown): string[] {
+  if (!Array.isArray(ids)) return []
+  return ids.slice(0, MAX_FIRED_KEPT).filter((x): x is string => typeof x === 'string' && ID_RE.test(x))
+}
+
 // `path` is the part after `/proxy/` of a poe.ninja price list download; the
 // league it is for (PoE 1 only), else null
 export function ninjaLeague (path: string): string | null {
@@ -249,6 +272,7 @@ export function readAlertState (raw: unknown): PriceAlertState {
       if (typeof input === 'string') continue
       const x = r as Record<string, unknown>
       if (typeof x.id !== 'string' || !/^[A-Za-z0-9_-]{1,40}$/.test(x.id)) continue
+      if (isDuplicateAlert(out.rules, input)) continue
       out.rules.push({
         ...input,
         id: x.id,
@@ -263,10 +287,13 @@ export function readAlertState (raw: unknown): PriceAlertState {
     for (const f of o.fired.slice(0, MAX_FIRED_KEPT)) {
       if (f == null || typeof f !== 'object') continue
       const x = f as Record<string, unknown>
-      if (typeof x.id !== 'string' || typeof x.ruleId !== 'string' || typeof x.label !== 'string' ||
-        typeof x.league !== 'string' || (x.dir !== 'above' && x.dir !== 'below') || (x.unit !== 'chaos' && x.unit !== 'div') ||
-        typeof x.value !== 'number' || typeof x.price !== 'number' || typeof x.chaos !== 'number' || typeof x.at !== 'number') continue
-      out.fired.push({ id: x.id, ruleId: x.ruleId, league: x.league, label: x.label, dir: x.dir, value: x.value, unit: x.unit, price: x.price, chaos: x.chaos, at: x.at })
+      const label = cleanText(x.label, 200)
+      const league = cleanText(x.league, 80)
+      const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v)
+      if (typeof x.id !== 'string' || !ID_RE.test(x.id) || typeof x.ruleId !== 'string' || !ID_RE.test(x.ruleId) || !label ||
+        !league || (x.dir !== 'above' && x.dir !== 'below') || (x.unit !== 'chaos' && x.unit !== 'div') ||
+        !num(x.value) || !num(x.price) || !num(x.chaos) || !num(x.at)) continue
+      out.fired.push({ id: x.id, ruleId: x.ruleId, league, label, dir: x.dir, value: x.value as number, unit: x.unit, price: x.price as number, chaos: x.chaos as number, at: x.at as number })
     }
   }
   return out

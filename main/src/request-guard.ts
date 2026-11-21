@@ -134,7 +134,7 @@ const NOT_FROM_OTHER_DEVICES = new Set([
 const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
 const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])
 // Deathloom fork (Q6): a phone sees price alerts but only the PC adds or removes them
-const PRICE_ALERTS_FROM_OTHER_DEVICES = new Set(['list'])
+const PRICE_ALERTS_FROM_OTHER_DEVICES = new Set(['list', 'ack'])
 
 // Events a window may send to main: CLIENT->MAIN:: and the overlay page's own
 // OVERLAY->MAIN:: (price check area, focus the game). Dropping the second kind in

@@ -12,7 +12,7 @@
     <div v-if="help" class="text-gray-400 py-1">
       Alerts are checked each time Orbhoarder refreshes poe.ninja prices (about every half hour while the price check, Market or Money tools is in use; no extra downloads).
       Each alert fires once when the price crosses your line, then waits until the price is back on the other side (and at most once an hour).
-      With the phone link on (Settings → Tools), a connected phone shows the alert; with no phone connected you get a Windows notification instead.
+      With the phone link on (Settings → Tools), a connected phone shows the alert; if no phone confirms it within a few seconds (none connected, or it's locked) you get a Windows notification instead.
       Add alerts on the PC: Market → Watched or Shopping → ⋯ → Price alert.
     </div>
     <div v-for="f of alerts.fresh.value" :key="f.id" class="flex items-center gap-x-2 py-px">

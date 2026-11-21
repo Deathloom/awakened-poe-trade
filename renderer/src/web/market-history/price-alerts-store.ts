@@ -38,7 +38,11 @@ export const usePriceAlerts = createGlobalState(() => {
     state.value = rest
     error.value = err ?? ''
   })
-  Host.onEvent('MAIN->CLIENT::price-alert-fired', () => { now.value = Date.now() })
+  Host.onEvent('MAIN->CLIENT::price-alert-fired', (e) => {
+    now.value = Date.now()
+    // a phone tells the PC it got them (else the PC shows a Windows notification)
+    if (IS_OTHER_DEVICE) Host.sendEvent({ name: 'CLIENT->MAIN::price-alerts', payload: { op: 'ack', ids: e.fired.map(f => f.id) } })
+  })
   Host.sendEvent({ name: 'CLIENT->MAIN::price-alerts', payload: { op: 'list' } })
 
   try {

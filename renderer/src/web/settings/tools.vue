@@ -31,7 +31,7 @@
     <!-- Phone or other devices -->
     <div class="mb-4">
       <div class="text-base mb-1">Phone or other devices</div>
-      <div class="text-gray-500 mb-2">Open the Orbhoarder window in a browser on your phone or another PC on the same Wi-Fi (campaign guide, build notes, cheat sheets on a second screen). Only devices that open the link with its key get in. Your price alerts (Market → Watched → ⋯ → Price alert) show on the connected phone too; add or remove them on this PC.</div>
+      <div class="text-gray-500 mb-2">Open the Orbhoarder window in a browser on your phone or another PC on the same Wi-Fi (campaign guide, build notes, cheat sheets on a second screen). Only devices that open the link with its key get in. Your price alerts (Market → Watched → ⋯ → Price alert) show on the connected phone too (if it doesn't confirm, e.g. it's locked, you get a Windows notification); add or remove them on this PC. Prices are only checked when Orbhoarder refreshes them anyway (price check, Market or Money tools in use).</div>
       <ui-toggle :modelValue="remote?.enabled === true" @update:modelValue="setRemote">Allow my phone or other devices on my network</ui-toggle>
       <div class="text-gray-500 mt-1">Settings, folders, sign-in, price alert changes and anything that types in the game only work on this PC. The link isn't encrypted: use it on your home Wi-Fi, and turn it off (or press New key) on shared networks such as a LAN party or café.</div>
       <div v-if="remote && remote.enabled !== remote.listening" class="text-yellow-300 mt-1">
