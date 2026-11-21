@@ -1629,3 +1629,107 @@ test('request guard: phones see price alerts but cannot change them, nor take ov
   assert.equal(guard.isClientEvent('CLIENT->MAIN::price-alerts'), true)
   assert.equal(guard.isClientEvent('OVERLAY->MAIN::track-area'), true)
 })
+
+// Deathloom fork (Q10): loot filter add-on
+const lootFilter = await import('./.build/loot-filter.mjs')
+const lootFiles = await import('./.build/loot-filter-files.mjs')
+
+test('loot filter: names that can go in quotes, file names, add-on name', () => {
+  const lf = lootFilter
+  assert.equal(lf.isSafeItemName("Kaom's Heart"), true)
+  assert.equal(lf.isSafeItemName('Maelström Staff'), true)
+  assert.equal(lf.isSafeItemName('Two-Toned Boots'), true)
+  assert.equal(lf.isSafeItemName('Bad"Name'), false)
+  assert.equal(lf.isSafeItemName('Line\nBreak'), false)
+  assert.equal(lf.isSafeItemName('# comment'), false)
+  assert.equal(lf.isSafeItemName('x'), false)
+  assert.equal(lf.isSafeItemName(5), false)
+  assert.equal(lf.isFilterFileName('NeverSink Strict.filter'), true)
+  assert.equal(lf.isFilterFileName('../evil.filter'), false)
+  assert.equal(lf.isFilterFileName('sub\\evil.filter'), false)
+  assert.equal(lf.isFilterFileName('C:evil.filter'), false)
+  assert.equal(lf.isFilterFileName('.hidden.filter'), false)
+  assert.equal(lf.isFilterFileName('notes.txt'), false)
+  assert.equal(lf.addonFileName('NeverSink Strict.filter'), 'NeverSink Strict + Orbhoarder.filter')
+  assert.equal(lf.addonFileName('NeverSink Strict + Orbhoarder.filter'), null)
+  assert.equal(lf.addonFileName('../x.filter'), null)
+  assert.equal(lf.gemBaseType('Added Fire Damage', true), 'Added Fire Damage Support')
+  assert.equal(lf.gemBaseType('Added Fire Damage Support', true), 'Added Fire Damage Support')
+  assert.equal(lf.gemBaseType('Arc', false), 'Arc')
+})
+
+test('loot filter: wants from Shopping rows, cleaned, blocks first', () => {
+  const lf = lootFilter
+  const w = lf.wantsFromShop([
+    { kind: 'unique', owned: false, name: 'Leather Belt' },
+    { kind: 'unique', owned: true, name: 'Heavy Belt' },
+    { kind: 'rare', owned: false, name: 'Vaal Regalia' },
+    { kind: 'gem', owned: false, name: 'Added Fire Damage', support: true },
+    { kind: 'gem', owned: false, name: 'Arc' }
+  ])
+  assert.deepEqual(w, { bases: ['Vaal Regalia'], uniqueBases: ['Leather Belt'], gems: ['Added Fire Damage Support', 'Arc'] })
+  const { wants, refused } = lf.cleanWants({ bases: ['Vaal Regalia', 'vaal regalia', 'x"y'], uniqueBases: 'nope', gems: [7, 'Arc'] })
+  assert.deepEqual(wants, { bases: ['Vaal Regalia'], uniqueBases: [], gems: ['Arc'] })
+  assert.deepEqual(refused, ['x"y'])
+  const text = lf.addonBlocks(w, { source: 'Mine.filter', game: 'poe1', when: '2026-11-21' })
+  assert.ok(text.startsWith(lf.ADDON_MARKER))
+  assert.ok(lf.isAddonText('﻿' + text))
+  assert.match(text, /Rarity Unique\r\n {2}BaseType == "Leather Belt"/)
+  assert.match(text, /BaseType == "Vaal Regalia"/)
+  assert.match(text, /Class == "Skill Gems" "Support Gems"\r\n {2}BaseType == "Added Fire Damage Support" "Arc"/)
+  assert.equal(/Gems/.test(lf.addonBlocks(w, { source: 'Mine.filter', game: 'poe2' })), false)
+  assert.equal(lf.isAddonText('Show\n'), false)
+})
+
+test('loot filter files: only the add-on is written, his filter untouched, no escapes', async () => {
+  const { mkdtempSync, writeFileSync, readFileSync, symlinkSync, existsSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const dir = mkdtempSync(join(tmpdir(), 'lf-'))
+  const outside = mkdtempSync(join(tmpdir(), 'lf-out-'))
+  const mine = '﻿Show\n  BaseType "Exalted Orb"\nHide\n'
+  writeFileSync(join(dir, 'Mine.filter'), mine)
+  writeFileSync(join(outside, 'Secret.filter'), 'secret')
+  let linked = true
+  try { symlinkSync(join(outside, 'Secret.filter'), join(dir, 'Link.filter')) } catch { linked = false }
+  const wants = { bases: ['Vaal Regalia'], uniqueBases: [], gems: [] }
+
+  // a link is not listed (only real files)
+  assert.deepEqual(await lootFiles.listFilters(dir), ['Mine.filter'])
+
+  const res = await lootFiles.makeAddon(dir, 'Mine.filter', wants, 'poe1', '2026-11-21')
+  assert.equal(res.ok, true)
+  assert.equal(res.written, 'Mine + Orbhoarder.filter')
+  const out = readFileSync(join(dir, 'Mine + Orbhoarder.filter'), 'utf8')
+  assert.ok(out.startsWith('# Orbhoarder loot filter add-on'))
+  assert.ok(out.endsWith('Show\n  BaseType "Exalted Orb"\nHide\n'))
+  assert.equal(readFileSync(join(dir, 'Mine.filter'), 'utf8'), mine)
+  // ours again: replaced; listed filters never include it
+  assert.equal((await lootFiles.makeAddon(dir, 'Mine.filter', wants, 'poe1')).ok, true)
+  assert.deepEqual(await lootFiles.listFilters(dir), ['Mine.filter'])
+
+  // refused: other folders, our own add-on as source, nothing to add, someone else's file of our name
+  assert.equal((await lootFiles.makeAddon(dir, '../x.filter', wants, 'poe1')).ok, false)
+  assert.equal((await lootFiles.makeAddon(dir, 'Mine + Orbhoarder.filter', wants, 'poe1')).ok, false)
+  assert.equal((await lootFiles.makeAddon(dir, 'Mine.filter', { bases: [], uniqueBases: [], gems: [] }, 'poe1')).ok, false)
+  writeFileSync(join(dir, 'Other.filter'), 'Show\n')
+  writeFileSync(join(dir, 'Other + Orbhoarder.filter'), 'his own file')
+  assert.equal((await lootFiles.makeAddon(dir, 'Other.filter', wants, 'poe1')).ok, false)
+  assert.equal(readFileSync(join(dir, 'Other + Orbhoarder.filter'), 'utf8'), 'his own file')
+  if (linked) {
+    // a link to a file outside the folder is not read
+    const r = await lootFiles.makeAddon(dir, 'Link.filter', wants, 'poe1')
+    assert.equal(r.ok, false)
+    assert.equal(existsSync(join(dir, 'Link + Orbhoarder.filter')), false)
+    // a link in place of the add-on is not followed
+    symlinkSync(join(outside, 'Secret.filter'), join(dir, 'Other2 + Orbhoarder.filter'))
+    writeFileSync(join(dir, 'Other2.filter'), 'Show\n')
+    assert.equal((await lootFiles.makeAddon(dir, 'Other2.filter', wants, 'poe1')).ok, false)
+    assert.equal(readFileSync(join(outside, 'Secret.filter'), 'utf8'), 'secret')
+  }
+})
+
+test('request guard: phones cannot make or list loot filters', () => {
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::loot-filter', { op: 'list' }), false)
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::loot-filter', { op: 'make' }), false)
+})

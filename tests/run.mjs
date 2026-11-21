@@ -59,7 +59,9 @@ const MODULES = {
   'lazy-data': 'renderer/src/web/companion/lazy-data.ts',
   'cheat-challenges': 'renderer/src/web/cheats/challenges.ts',
   'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts',
-  'price-alerts': 'ipc/price-alerts.ts'
+  'price-alerts': 'ipc/price-alerts.ts',
+  'loot-filter': 'ipc/loot-filter.ts',
+  'loot-filter-files': 'main/src/LootFilterFiles.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

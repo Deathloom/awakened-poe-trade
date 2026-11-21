@@ -129,7 +129,9 @@ const NOT_FROM_OTHER_DEVICES = new Set([
   // Deathloom fork (Q6 review): only this PC's overlay says it was used last
   // (that window gets the price check's item text); stash sign-in stays on the PC
   'CLIENT->MAIN::used-recently',
-  'CLIENT->MAIN::stash-session'
+  'CLIENT->MAIN::stash-session',
+  // Deathloom fork (Q10): reading / writing loot filter files stays on this PC
+  'CLIENT->MAIN::loot-filter'
 ])
 const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
 const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])

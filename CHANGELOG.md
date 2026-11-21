@@ -55,6 +55,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q6): price alerts on your phone
 - **Market → Watched / Shopping → ⋯ → Price alert above / below…**: pick a price in chaos or divine; when Orbhoarder's normal poe.ninja refresh crosses it, a phone connected with the QR link (Settings → Tools) shows the alert at the top of the page, otherwise (or if the phone doesn't confirm within a few seconds, e.g. it's locked) you get a Windows notification. Prices are only checked when Orbhoarder refreshes them anyway (about every half hour while the price check, Market or Money tools is in use), so with nothing like that open no alert fires. Each alert fires once per crossing (at most once an hour); add and remove alerts on the PC, the phone can only dismiss them. No extra downloads, nothing leaves your PC except to your own phone. Security: a connected phone can no longer become the window that gets the price check's item text (it could take over the next price check); connections that stop answering (a locked phone) are closed after about a minute.
 
+### Added (Q10): loot filter add-on
+- **Market → Shopping → ⋯ → Make loot filter add-on…**: pick your loot filter (a .filter file in Documents\My Games\Path of Exile) and Orbhoarder writes a new file next to it, "your filter + Orbhoarder.filter": big, highlighted Show blocks for what the list still needs (uniques by base type, the rares' bases, gems in PoE1), then your filter copied unchanged; pick it in game under Options → UI → Item filter. Your own filter file is never changed; make it again when the list changes. Security: only on the PC (not from a phone), only .filter files directly in that folder (links leading outside it are refused), at most 8 MB, and the only file ever written is the "+ Orbhoarder" one (a file of that name that Orbhoarder didn't make is left alone).
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

@@ -46,6 +46,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 4.1 | PoB code / build import: only allowed hosts, size limit | ✅ `PobImport.ts` (`isAllowedImportUrl`, `MAX_IMPORT_BYTES`) |
 | 4.2 | Files from friends' builds (Pull) treated as data, never run | ✅ |
 | 4.3 | Clipboard item text parsed as text only | ✅ |
+| 4.4 | Loot filter add-on (Q10): this PC only (refused from phones); only `.filter` files directly in Documents\My Games\Path of Exile[ 2] (real paths, links out refused), 8 MB cap; writes only `<his filter> + Orbhoarder.filter`, never over a file Orbhoarder didn't make, never through a link; names in quotes checked (no quotes, line breaks, `#`) | ✅ `LootFilterFiles.ts`, `ipc/loot-filter.ts`, `request-guard.ts` |
 
 ## 5. Network (ASVS V9)
 
