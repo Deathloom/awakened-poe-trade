@@ -1,6 +1,7 @@
 <template>
   <!-- Deathloom fork (Q7): Labyrinth while levelling. Trials per difficulty (ticked
-       from Client.txt or by hand) and the 2 ascendancy points the next lab gives. -->
+       from Client.txt or by hand), the next lab, and the ascendancy notables this
+       levelling tree adds (PoB gives no order for them, so none is claimed). -->
   <div class="rounded px-2 py-1.5 mb-2 bg-gray-900">
     <div class="lg-head flex items-baseline gap-x-2">
       <span><i class="fas fa-dungeon mr-1 text-gray-500" />Labyrinth</span>
@@ -16,18 +17,18 @@
       </div>
     </div>
 
-    <!-- next ascendancy pick -->
-    <div v-if="next" class="flex flex-wrap items-baseline gap-x-2">
-      <span class="text-xs text-gray-500 shrink-0">{{ LAB_LABEL[next.lab] }} lab, 2 points:</span>
-      <template v-if="next.picks.length">
-        <span v-for="(n, i) of next.picks" :key="n.id" class="text-blue-300"
-          :title="plan?.ascendancyClass ? `${plan.ascendancyClass} ascendancy passive` : 'Ascendancy passive'"><template v-if="i">+ </template>{{ n.name }}</span>
-      </template>
-      <span v-else-if="plan" class="text-gray-500 text-xs">none in this levelling tree (a later tree may have them)</span>
-      <span v-else class="text-gray-500 text-xs">needs a Path of Building build</span>
-    </div>
+    <!-- next lab + this tree's ascendancy notables -->
+    <div v-if="view.lab" class="text-xs text-gray-500">Next: {{ LAB_LABEL[view.lab] }} lab (2 ascendancy points)</div>
     <div v-else class="text-xs text-gray-500">All four labs done.</div>
-    <div v-if="laterPicks.length" class="text-xs text-gray-600">Then: {{ laterPicks.join(' · ') }}</div>
+    <div v-if="!plan" class="text-xs text-gray-500">Ascendancy: needs a Path of Building build</div>
+    <div v-else-if="view.adds.length" class="flex flex-wrap items-baseline gap-x-1">
+      <span class="text-xs text-gray-500 shrink-0">This tree adds:</span>
+      <span class="text-blue-300" :title="ascTitle">{{ view.adds.map(n => n.name).join(', ') }}</span>
+      <span class="text-xs text-gray-500">(order not set in PoB<template v-if="view.smalls"> · +{{ view.smalls }} small passive{{ view.smalls === 1 ? '' : 's' }} on the way</template>)</span>
+    </div>
+    <div v-else-if="view.taken.length" class="text-xs text-gray-500">This tree's ascendancy notables are taken ({{ view.taken.map(n => n.name).join(', ') }}).</div>
+    <div v-else class="text-xs text-gray-500">This levelling tree adds no ascendancy notable over the previous one.</div>
+    <div v-if="plan && view.adds.length && view.taken.length" class="text-xs text-gray-600">Taken already: {{ view.taken.map(n => n.name).join(', ') }}</div>
 
     <!-- trial checklist -->
     <div v-if="open" class="mt-1 space-y-0.5 text-xs">
@@ -50,41 +51,32 @@
     <div v-if="helpOpen" class="mt-1 text-xs text-gray-500 leading-snug">
       Trials tick from Client.txt: a "trial completed" game message in that trial's zone, or entering a Labyrinth
       (it only lets you in with all its trials done). The exact game message isn't confirmed yet, so tick by hand
-      if one stays open. Labs count when Izaro falls for good. The 2 points come from your Path of Building build's
-      ascendancy, in the order its levelling trees list them (PoB keeps no order); passives the game log shows taken
-      are skipped. With the tree map loaded the small passives on the way are counted too. Per character; nothing is sent anywhere.
+      if one stays open. A lab counts as done when Izaro says "Triumphant at last" or when you enter a higher lab;
+      he has other last lines too, so if the count is behind, set <i>Labs done</i> under <i class="fas fa-tasks" /> Trials.
+      "This tree adds" is what your Path of Building levelling tree for this level adds to the ascendancy over the
+      previous tree (notables only, sorted by name, multiple-choice options left out). PoB keeps no order, so pick
+      which to take first yourself. Notables the game log shows allocated are left out. With the tree map loaded
+      (and the start known) the small passives on the way are counted too. Per character; nothing is sent anywhere.
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { PobPlan } from '@ipc/types'
 import { treeLayout } from '../pob/plan-store'
-import {
-  LAB_LABEL, LAB_MANUAL_KEY, ascendancyPoints, labsDone, loadLabManual, nextAscendancy, saveLabManual, trialRows,
-  type LabManual, type LabProgress
-} from './lab-helper'
+import { LAB_LABEL, ascendancyView, labsDone, trialRows, type LabManual, type LabProgress } from './lab-helper'
+import { labManualAll, setLabManual } from './lab-store'
 
 const props = defineProps<{
   charName: string
-  progress: (LabProgress & { alloc?: Record<string, number> }) | null | undefined
+  progress: (LabProgress & { alloc?: Record<string, number>, firstLevel?: number }) | null | undefined
   plan: PobPlan | null
 }>()
 
-const all = ref(loadLabManual())
-const onStorage = (e: StorageEvent) => { if (e.key === LAB_MANUAL_KEY) all.value = loadLabManual() }
-window.addEventListener('storage', onStorage)
-onUnmounted(() => { window.removeEventListener('storage', onStorage) })
-
-const manual = computed<LabManual>(() => all.value[props.charName] ?? {})
+const manual = computed<LabManual>(() => labManualAll.value[props.charName] ?? {})
 const hasManual = computed(() => manual.value.labs != null || Object.keys(manual.value.trials ?? {}).length > 0)
-function change (m: LabManual) {
-  // this character last (the store keeps the 20 most recently changed)
-  const rest = Object.entries(all.value).filter(([k]) => k !== props.charName)
-  all.value = Object.fromEntries([...rest, [props.charName, m]])
-  saveLabManual(all.value)
-}
+function change (m: LabManual) { setLabManual(props.charName, m) }
 function toggleTrial (id: string, done: boolean) {
   change({ ...manual.value, trials: { ...manual.value.trials, [id]: done } })
 }
@@ -96,11 +88,13 @@ function clearManual () { change({}) }
 const rows = computed(() => trialRows(props.progress, manual.value))
 const logLabs = computed(() => labsDone(props.progress, undefined))
 const done = computed(() => labsDone(props.progress, manual.value))
-const points = computed(() => ascendancyPoints(props.plan?.ascendancy ?? [], treeLayout.value))
-// ascendancy passives taken (game log "Successfully allocated passive skill")
-const allocated = computed(() => new Set(Object.entries(props.progress?.alloc ?? {}).filter(([, c]) => c > 0).map(([k]) => k.trim().toLowerCase())))
-const next = computed(() => nextAscendancy(points.value, done.value, allocated.value))
-const laterPicks = computed(() => next.value?.later.map(n => n.name) ?? [])
+const view = computed(() => ascendancyView(props.plan?.ascendancy ?? [], done.value, {
+  alloc: props.progress?.alloc,
+  layout: treeLayout.value,
+  logComplete: Boolean(props.progress?.alloc) && (props.progress?.firstLevel ?? 99) <= 2,
+  ascendancyClass: props.plan?.ascendancyClass
+}))
+const ascTitle = computed(() => `${props.plan?.ascendancyClass ?? 'Ascendancy'} notables this levelling tree adds over the previous one (Path of Building)`)
 
 // checklist open / closed, remembered
 const OPEN_KEY = 'deathloom.next.lab-open.v1'

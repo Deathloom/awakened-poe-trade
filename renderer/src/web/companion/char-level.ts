@@ -288,7 +288,8 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
     } else if (ev.type === 'trialDone') {
       const cur = v ?? start
       const p0 = cur.progress[currentChar(cur)?.name ?? '']
-      if (p0?.lastArea) labOnTrialDone(prog())
+      // only touch the store when it ticks something (else nothing to save)
+      if (p0?.lastArea && labOnTrialDone({ ...p0 })) labOnTrialDone(prog())
     } else if (session && ev.type === 'afk') {
       session.afk = ev.on
     } else if (session && ev.type === 'disconnect') {

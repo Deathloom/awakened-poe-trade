@@ -18,9 +18,10 @@
     <!-- Labyrinth: shown while in the lab, closes after Izaro or on leaving -->
     <div v-if="lab" class="mx-1 mt-1 px-2 py-1 rounded bg-yellow-900 bg-opacity-40 border border-yellow-800 text-xs flex items-center gap-x-2">
       <i class="fas fa-dungeon text-yellow-400" />
-      <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${lab.name} Labyrinth` }}</span>
-      <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
-      <span v-if="!lab.done && labPicks.length" class="text-blue-300 truncate" :title="'Ascendancy points to take after this lab (your Path of Building build)'">take {{ labPicks.join(' + ') }}</span>
+      <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${LAB_LABEL[lab.lab]} Labyrinth` }}</span>
+      <span v-if="!lab.done && lab.level != null" class="text-gray-400">area level {{ lab.level }}</span>
+      <span v-if="!lab.done && labAsc.length" class="text-blue-300 truncate"
+        :title="'Ascendancy notables your Path of Building levelling tree adds (not taken yet). PoB sets no order: pick which first.'">tree adds: {{ labAsc.join(', ') }}</span>
       <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Orbhoarder window)"
         @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
       <button class="ui-btn ui-btn-quiet" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
@@ -133,7 +134,8 @@ import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional
 import { loadQuestGemData, planQuestGems, type QuestGemData, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
-import { LAB_MANUAL_KEY, LAB_ORDER, ascendancyPoints, labFromLevel, labsDone, loadLabManual, nextAscendancy, trialDone } from './lab-helper'
+import { LAB_LABEL, isIzaroDefeat, labBannerAscendancy, labBannerOnArea, labsDone, trialDone, type LabBanner } from './lab-helper'
+import { labManualAll } from './lab-store'
 import { treeLayout } from '../pob/plan-store'
 
 const index = ref(loadIndex())
@@ -178,12 +180,8 @@ const progress = computed(() => progressOf(levels.value, currentChar(levels.valu
 const doneQuests = computed(() => new Set(progress.value?.quests ?? []))
 const doneBosses = computed(() => new Set(progress.value?.bosses ?? []))
 // Labyrinth trials done (game log or ticked by hand in the levelling planner) (Q7)
-const labManual = ref(loadLabManual())
-const onLabManual = (e: StorageEvent) => { if (e.key === LAB_MANUAL_KEY) labManual.value = loadLabManual() }
-window.addEventListener('storage', onLabManual)
-onUnmounted(() => { window.removeEventListener('storage', onLabManual) })
 function trialIsDone (areaId: string) {
-  return trialDone(areaId, progress.value, labManual.value[currentChar(levels.value)?.name ?? ''])
+  return trialDone(areaId, progress.value, labManualAll.value[currentChar(levels.value)?.name ?? ''])
 }
 
 // Deathloom fork (Gerhard, 16 Nov 2026): follow the character. Each one keeps its
@@ -279,22 +277,13 @@ watch([index, () => props.tall], () => {
   }).catch(() => {})
 }, { immediate: true })
 
-// Labyrinth panel (difficulty from the area level)
-const lab = ref<{ name: string, level: number, done: boolean } | null>(null)
-function labName (level: number) {
-  return level >= 75 ? 'Eternal' : level >= 68 ? 'Merciless' : level >= 55 ? 'Cruel' : 'Normal'
-}
-// the 2 ascendancy points this lab gives (only where the levelling planner has the build: Orbhoarder window)
-const labPicks = computed(() => {
-  const l = lab.value; const p = currentPlan.value
-  if (!l || !p?.ascendancy.length) return []
-  const name = currentChar(levels.value)?.name ?? ''
-  const done = labsDone(progress.value, labManual.value[name])
-  const here = LAB_ORDER.indexOf(labFromLevel(l.level))
-  // the lab you're in, unless it's one done before (then the next one's)
-  const taken = new Set(Object.entries(progress.value?.alloc ?? {}).filter(([, c]) => c > 0).map(([k]) => k.trim().toLowerCase()))
-  return nextAscendancy(ascendancyPoints(p.ascendancy, treeLayout.value), Math.max(here, done), taken)?.picks.map(n => n.name) ?? []
-})
+// Labyrinth panel (difficulty from the first room's area level; in the plaza: the next lab not done)
+const lab = ref<LabBanner | null>(null)
+// ascendancy notables this levelling tree adds, not taken yet (only where the
+// levelling planner has the build: the Orbhoarder window)
+const labAsc = computed(() => lab.value
+  ? labBannerAscendancy(currentPlan.value?.ascendancy, progress.value?.alloc, treeLayout.value, currentPlan.value?.ascendancyClass)
+  : [])
 // the Orbhoarder window's Lab tab (opens the window without taking focus from the game)
 function openPoelab () {
   Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'lab' } })
@@ -325,14 +314,11 @@ const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
       areaAct = actFromAreaCode(ev.code)
       // only campaign zones: a map's level next to "Act 1" read as the guide's
       areaLevel.value = areaAct != null ? ev.level : null
-      // Labyrinth areas: "Labyrinth_Airlock" (plaza), "1_Labyrinth_…"
-      if (/Labyrinth/i.test(ev.code)) {
-        if (!lab.value || lab.value.done) lab.value = { name: labName(ev.level), level: ev.level, done: false }
-      } else if (lab.value) {
-        lab.value = null
-      }
+      // Labyrinth areas: "Labyrinth_Airlock" (plaza), "1_Labyrinth_…" (lab-helper.ts)
+      const done = labsDone(progress.value, labManualAll.value[charName.value])
+      lab.value = labBannerOnArea(lab.value, ev.code, ev.level, done)
     }
-    if (ev.type === 'speech' && ev.speaker === 'Izaro' && /^Triumphant at last/.test(ev.text) && lab.value) {
+    if (ev.type === 'speech' && isIzaroDefeat(ev.speaker, ev.text) && lab.value) {
       lab.value = { ...lab.value, done: true }
     }
     if (ev.type === 'zone') {

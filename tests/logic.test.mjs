@@ -1499,29 +1499,103 @@ test('lab helper: trial ticks from Client.txt (Q7)', async () => {
   assert.deepEqual(lab.loadLabManual(), {})
 })
 
-test('lab helper: next ascendancy pick (Q7)', async () => {
-  const lab = await import('./.build/lab-helper.mjs')
-  const listed = [{ id: 10, name: 'A' }, { id: 20, name: 'B' }, { id: 30, name: 'C' }, { id: 40, name: 'D' }, { id: 10, name: 'A' }]
-  // without the layout: as listed (duplicates out), 2 per lab
-  const pts = lab.ascendancyPoints(listed)
-  assert.deepEqual(pts.map(n => n.name), ['A', 'B', 'C', 'D'])
-  assert.deepEqual(lab.nextAscendancy(pts, 0).picks.map(n => n.name), ['A', 'B'])
-  assert.equal(lab.nextAscendancy(pts, 0).lab, 'normal')
-  assert.deepEqual(lab.nextAscendancy(pts, 1).picks.map(n => n.name), ['C', 'D'])
-  assert.equal(lab.nextAscendancy(pts, 1).lab, 'cruel')
-  assert.deepEqual(lab.nextAscendancy(pts, 2).picks, [])
-  assert.equal(lab.nextAscendancy(pts, 4), null)
-  // taken in the game log: the first two not taken, whatever the labs count says
-  assert.deepEqual(lab.nextAscendancy(pts, 0, new Set(['a', 'b'])).picks.map(n => n.name), ['C', 'D'])
-  assert.deepEqual(lab.nextAscendancy(pts, 1, new Set(['other'])).picks.map(n => n.name), ['C', 'D'])
 
-  // with the layout: small passives on the way come first, one point each
+test('lab helper: lab areas, higher lab implies lower ones done (Q7)', async () => {
+  const lab = await import('./.build/lab-helper.mjs')
+  // campaign / Eternal lab rooms only; map trials and other "Labyrinth" ids don't count
+  assert.ok(lab.isLabProper('1_Labyrinth_boss_3'))
+  assert.ok(lab.isLabProper('EndGame_Labyrinth_boss_1'))
+  assert.ok(!lab.isLabProper('EndGame_Labyrinth_trials_spikes'))
+  assert.ok(!lab.isLabProper('Labyrinth_Airlock'))
+  assert.ok(lab.isLabArea('Labyrinth_Airlock'))
+  assert.ok(!lab.isLabArea('MapWorldsLabyrinth'))
+  const t = {}
+  lab.labOnArea(t, 'EndGame_Labyrinth_trials_spikes', 75)
+  assert.equal(t.inLab, null)
+  assert.equal(t.labs, undefined)
+  // straight into Merciless: Normal and Cruel labs and all 12 trials are done
+  const p = {}
+  assert.ok(lab.labOnArea(p, '3_Labyrinth_1', 68))
+  assert.equal(p.inLab, 'merciless')
+  assert.deepEqual(p.labs, ['normal', 'cruel'])
+  assert.equal(lab.labsDone(p, undefined), 2)
+  assert.equal(p.trials.length, 12)
+  // the next room changes nothing but the area
+  lab.labOnArea(p, '3_Labyrinth_2', 68)
+  assert.deepEqual(p.labs, ['normal', 'cruel'])
+
+  // stored manual ticks: names that would reach the prototype are dropped
+  localStorage.setItem(lab.LAB_MANUAL_KEY, '{"__proto__":{"labs":2},"constructor":{"labs":1},"B":{"labs":2}}')
+  const m = lab.loadLabManual()
+  assert.deepEqual(Object.keys(m), ['B'])
+  assert.equal(Object.getPrototypeOf(m), Object.prototype)
+  assert.equal(m.labs, undefined)
+})
+
+test('lab helper: ascendancy from the levelling plan (Q7)', async () => {
+  const lab = await import('./.build/lab-helper.mjs')
+  // PobPlan.ascendancy as the PoB fork sends it: only what THIS levelling tree
+  // adds over the previous one, sorted by name, no multiple-choice options
+  const tree1 = [{ id: 1950, name: 'Bane of Legends' }, { id: 4917, name: 'Endless Hunger' }]
+  const tree2 = [{ id: 7136, name: 'Brutal Fervour' }, { id: 1950, name: 'Bane of Legends' }]
+
+  // first lab: what tree 1 adds, no order claimed
+  let v = lab.ascendancyView(tree1, 0)
+  assert.equal(v.lab, 'normal')
+  assert.deepEqual(v.adds.map(n => n.name), ['Bane of Legends', 'Endless Hunger'])
+  assert.deepEqual(v.taken, [])
+  assert.equal(v.smalls, null, 'no layout: small passives not known')
+
+  // after the Normal lab on the same tree: the log shows one taken, the other still to take
+  v = lab.ascendancyView(tree1, 1, { alloc: { 'Bane of Legends': 1, 'Iron Reflexes': 1 } })
+  assert.equal(v.lab, 'cruel')
+  assert.deepEqual(v.adds.map(n => n.name), ['Endless Hunger'])
+  assert.deepEqual(v.taken.map(n => n.name), ['Bane of Legends'])
+  // refunded in the log (count 0): not taken
+  v = lab.ascendancyView(tree1, 1, { alloc: { 'Bane of Legends': 0 } })
+  assert.equal(v.adds.length, 2)
+
+  // second tree: only its own additions (not tree 1's), duplicates out
+  v = lab.ascendancyView(tree2, 1, { alloc: { 'Bane of Legends': 1, 'Endless Hunger': 1 } })
+  assert.deepEqual(v.adds.map(n => n.name), ['Brutal Fervour'])
+  assert.deepEqual(v.taken.map(n => n.name), ['Bane of Legends'])
+  // all four labs done
+  assert.equal(lab.ascendancyView(tree2, 4).lab, null)
+  // nothing added by this tree
+  assert.deepEqual(lab.ascendancyView([], 2).adds, [])
+
+  // with the tree layout: a main-tree passive of the same name isn't taken as the
+  // ascendancy one; small passives on the way are counted from what's taken
   const N = (id, kind, name, asc = 'Slayer') => [id, 0, 0, kind, 0, 0, name, asc, []]
   const layout = {
-    nodes: [N(1, 6, 'start'), N(2, 0, 'small 1'), N(10, 1, 'A'), N(3, 0, 'small 2'), N(20, 1, 'B'), N(99, 1, 'Other', 'Berserker')],
-    links: [[1, 2], [2, 10], [1, 3], [3, 20], [20, 99]]
+    nodes: [
+      N(1, 6, 'Slayer'), N(2, 0, 'Damage'), N(1950, 1, 'Bane of Legends'), N(3, 0, 'Life Leech'), N(4917, 1, 'Endless Hunger'),
+      N(5, 0, 'Area of Effect'), N(7136, 1, 'Brutal Fervour'), N(500, 1, 'Endless Hunger', false), N(99, 1, 'Other', 'Berserker')
+    ],
+    links: [[1, 2], [2, 1950], [1, 3], [3, 4917], [2, 5], [5, 7136], [7136, 99]]
   }
-  const withLay = lab.ascendancyPoints([{ id: 10, name: 'A' }, { id: 20, name: 'B' }], layout)
-  assert.deepEqual(withLay.map(n => n.name), ['small 1', 'A', 'small 2', 'B'])
-  assert.deepEqual(lab.nextAscendancy(withLay, 1).picks.map(n => n.name), ['small 2', 'B'])
+  v = lab.ascendancyView(tree1, 0, { layout, alloc: { 'Endless Hunger': 1 } })
+  assert.deepEqual(v.taken, [], 'same name on the main tree: ambiguous, not counted')
+  assert.equal(v.smalls, 2, 'Damage + Life Leech from the start')
+  // tree 2 after Normal, log followed from level 2: Bane of Legends and its small
+  // passive are taken, so only Area of Effect is on the way to Brutal Fervour
+  v = lab.ascendancyView(tree2, 1, { layout, alloc: { 'Bane of Legends': 1, Damage: 1 }, logComplete: true })
+  assert.deepEqual(v.adds.map(n => n.name), ['Brutal Fervour'])
+  assert.equal(v.smalls, 1)
+  // start not known (labs done, log not from the start): no count claimed
+  assert.equal(lab.ascendancyView(tree2, 1, { layout, alloc: {} }).smalls, null)
+
+  // campaign guide's lab banner: the plaza guesses the next lab, the first room sets it
+  let b = lab.labBannerOnArea(null, 'Labyrinth_Airlock', 33, 1)
+  assert.deepEqual(b, { lab: 'cruel', level: null, done: false })
+  b = lab.labBannerOnArea(b, '2_Labyrinth_1', 55, 1)
+  assert.deepEqual(b, { lab: 'cruel', level: 55, done: false })
+  assert.equal(lab.labBannerOnArea(b, '2_Labyrinth_2', 55, 1), b)
+  const done = { ...b, done: true }
+  assert.equal(lab.labBannerOnArea(done, '2_Labyrinth_boss_3', 55, 2), done, 'treasure room keeps "done"')
+  assert.equal(lab.labBannerOnArea(b, '1_3_town', 30, 1), null)
+  assert.equal(lab.labBannerOnArea(null, 'EndGame_Labyrinth_trials_spikes', 75, 3), null)
+  // its ascendancy line: this tree's notables not taken yet; empty without a plan
+  assert.deepEqual(lab.labBannerAscendancy(tree1, { 'Bane of Legends': 1 }), ['Endless Hunger'])
+  assert.deepEqual(lab.labBannerAscendancy(undefined), [])
 })
