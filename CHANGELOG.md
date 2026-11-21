@@ -55,6 +55,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q6): price alerts on your phone
 - **Market → Watched / Shopping → ⋯ → Price alert above / below…**: pick a price in chaos or divine; when Orbhoarder's normal poe.ninja refresh crosses it, a phone connected with the QR link (Settings → Tools) shows the alert at the top of the page, otherwise (or if the phone doesn't confirm within a few seconds, e.g. it's locked) you get a Windows notification. Prices are only checked when Orbhoarder refreshes them anyway (about every half hour while the price check, Market or Money tools is in use), so with nothing like that open no alert fires. Each alert fires once per crossing (at most once an hour); add and remove alerts on the PC, the phone can only dismiss them. No extra downloads, nothing leaves your PC except to your own phone. Security: a connected phone can no longer become the window that gets the price check's item text (it could take over the next price check); connections that stop answering (a locked phone) are closed after about a minute.
 
+### Added (Q8): deaths and pace log
+- **Levelling → Pace**: each character you follow from level 2 is saved as a run (act splits, your level and deaths per act, levels per hour of campaign time; Client.txt has no experience numbers, so it's levels per hour, not XP/h) and compared with your best or last earlier start (⋯ to pick another or forget a run; **?** explains the numbers). Only your own character's deaths count. Up to 10 runs (newest, and always your best) are kept on this PC only; Rebuild from game log fills in older characters. Security: a connected phone can no longer take the lines written while Orbhoarder was closed (the PC then missed those levels, deaths and splits), and reading the whole game log runs once at a time instead of once per request.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

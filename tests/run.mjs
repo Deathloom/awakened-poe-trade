@@ -59,7 +59,9 @@ const MODULES = {
   'lazy-data': 'renderer/src/web/companion/lazy-data.ts',
   'cheat-challenges': 'renderer/src/web/cheats/challenges.ts',
   'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts',
-  'price-alerts': 'ipc/price-alerts.ts'
+  'price-alerts': 'ipc/price-alerts.ts',
+  'pace-log': 'renderer/src/web/companion/pace-log.ts',
+  'char-level': 'renderer/src/web/companion/char-level.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
@@ -69,12 +71,14 @@ const stubs = {
     b.onResolve({ filter: /^@\/assets\/data$/ }, () => ({ path: 'data', namespace: 'stub' }))
     b.onResolve({ filter: /^@\/web\/client-log\/client-log$/ }, () => ({ path: 'client-log', namespace: 'stub' }))
     b.onResolve({ filter: /^@\/web\/Config$/ }, () => ({ path: 'config', namespace: 'stub' }))
+    b.onResolve({ filter: /^@\/web\/background\/IPC$/ }, () => ({ path: 'ipc', namespace: 'stub' }))
     b.onResolve({ filter: /CHANGELOG\.md\?raw$/ }, () => ({ path: 'changelog-md', namespace: 'stub' }))
     b.onLoad({ filter: /.*/, namespace: 'stub' }, (a) => ({
       contents: {
         data: 'export const CLIENT_STRINGS = {}',
         'client-log': 'export const TRADE_WHISPER = []; export const TRADE_BULK_WHISPER = []',
         config: 'export const AppConfig = () => ({})',
+        ipc: 'export const Host = { onEvent: () => ({ abort () {} }), sendEvent () {} }',
         'changelog-md': 'export default ""'
       }[a.path],
       loader: 'js'

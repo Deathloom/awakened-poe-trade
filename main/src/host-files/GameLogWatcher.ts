@@ -143,11 +143,19 @@ export class GameLogWatcher {
   // Deathloom fork: the whole Client.txt, only the lines Orbhoarder reads
   // (levels, quest rewards, zones, passives, deaths, dialogue): the levelling
   // planner rebuilds every character's progress from them
-  async readHistory (): Promise<string[]> {
-    if (!this._state) throw new Error('Client.txt not found yet (start the game, or set the path in Settings → General)')
+  // Deathloom fork (Q8): one read at a time; asking again while it runs (several
+  // windows, a phone) gets the same result instead of another multi-GB read
+  private historyRead: Promise<string[]> | null = null
+  readHistory (): Promise<string[]> {
+    if (!this._state) return Promise.reject(new Error('Client.txt not found yet (start the game, or set the path in Settings → General)'))
+    this.historyRead ??= this.readWholeLog(this._state.path).finally(() => { this.historyRead = null })
+    return this.historyRead
+  }
+
+  private async readWholeLog (logPath: string): Promise<string[]> {
     // streamed line by line: Client.txt can be several GB
     const out: string[] = []
-    const lines = readline.createInterface({ input: createReadStream(this._state.path, { encoding: 'utf8' }), crlfDelay: Infinity })
+    const lines = readline.createInterface({ input: createReadStream(logPath, { encoding: 'utf8' }), crlfDelay: Infinity })
     for await (const line of lines) {
       if (KEEP.test(line)) out.push(line)
     }

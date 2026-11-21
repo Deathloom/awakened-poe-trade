@@ -30,7 +30,7 @@
             <li><b>Build</b>: gear, gems, tree and Tree map of the active build.
               <b>Build</b> (top right) picks the build and loadout; the <b>⋯</b> menu next to it has Import a build, Build sharing, What changes between stages,
               Compare, Edit loadouts and Manage builds. In the overlay and in game, Compare / Edit / Manage open this window.</li>
-            <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take.</li>
+            <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take. <b>Pace</b> (below the game log stats) shows when you reached each act, your level and deaths there, and levels per hour of campaign time next to an earlier fresh start on this PC (your best or last; ⋯ to pick another, or to forget a run). Client.txt has no experience numbers, so it's levels per hour, not XP/h.</li>
             <li><b>Atlas</b>: the atlas passive tree. The drop-down picks an atlas build; the <b>⋯</b> menu adds one from a pathofexile.com atlas tree link or code
               (poeplanner links use their own format) or makes a ready-made tree, and copies the link to share with friends, renames or deletes it.
               Green = taken, orange = still to take. Step along the build with the arrows (1 or 5 passives) as you take passives in game;
