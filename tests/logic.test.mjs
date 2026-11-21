@@ -1444,3 +1444,84 @@ test('build file: profile for the map check (Q4)', () => {
   assert.deepEqual(p.gems, ['Pride', 'Boneshatter', 'Brutality'])
   assert.deepEqual(p.itemMods, ['Immune to Curses'])
 })
+
+test('lab helper: trial ticks from Client.txt (Q7)', async () => {
+  const lab = await import('./.build/lab-helper.mjs')
+  assert.equal(lab.TRIALS.length, 12)
+  assert.equal(lab.TRIALS.filter(t => t.lab === 'normal').length, 6)
+  // system messages only, naming a trial and "complete"
+  assert.ok(lab.isTrialDoneText(': You have completed the Trial of Ascendancy.'))
+  assert.ok(lab.isTrialDoneText(': Trial of Piercing Truth completed'))
+  assert.ok(!lab.isTrialDoneText(': You have entered The Lower Prison.'))
+  assert.ok(!lab.isTrialDoneText('#Someone: trial complete lol'))
+  assert.ok(!lab.isTrialDoneText('Izaro: The trial is complete.'))
+
+  const p = {}
+  lab.labOnArea(p, '1_1_7_1', 9)
+  assert.ok(lab.labOnTrialDone(p))
+  assert.deepEqual(p.trials, ['1_1_7_1'])
+  assert.ok(!lab.labOnTrialDone(p), 'once')
+  // a trial message outside a trial zone ticks nothing
+  lab.labOnArea(p, '1_1_8', 10)
+  assert.ok(!lab.labOnTrialDone(p))
+  // the plaza says nothing about the difficulty
+  lab.labOnArea(p, 'Labyrinth_Airlock', 33)
+  assert.ok(!p.inLab)
+  // inside the Normal lab: all six normal trials are done
+  lab.labOnArea(p, '1_Labyrinth_boss_3', 33)
+  assert.equal(p.inLab, 'normal')
+  assert.equal(lab.trialRows(p, undefined)[0].done, 6)
+  assert.equal(lab.trialRows(p, undefined)[1].done, 0)
+  assert.equal(lab.labsDone(p, undefined), 0)
+  assert.ok(lab.isIzaroDefeat('Izaro', 'Triumphant at last! …'))
+  assert.ok(!lab.isIzaroDefeat('Someone', 'Triumphant at last!'))
+  assert.ok(lab.labOnIzaro(p))
+  assert.ok(!lab.labOnIzaro(p))
+  assert.equal(lab.labsDone(p, undefined), 1)
+  lab.labOnArea(p, '1_3_1', 30)
+  assert.equal(p.inLab, null)
+  assert.ok(!lab.labOnIzaro(p), 'not in a lab')
+
+  // manual ticks override the log
+  assert.equal(lab.trialDone('1_1_7_1', p, { trials: { '1_1_7_1': false } }), false)
+  assert.equal(lab.trialDone('2_6_7_1', p, { trials: { '2_6_7_1': true } }), true)
+  assert.equal(lab.labsDone(p, { labs: 3 }), 3)
+  // labs count in order (Cruel without Normal isn't counted)
+  assert.equal(lab.labsDone({ labs: ['cruel'] }, undefined), 0)
+  assert.equal(lab.labFromLevel(55), 'cruel')
+  assert.equal(lab.labFromLevel(68), 'merciless')
+  assert.equal(lab.labFromLevel(75), 'eternal')
+
+  // stored manual ticks are checked on load
+  localStorage.setItem(lab.LAB_MANUAL_KEY, JSON.stringify({ A: { trials: { '1_1_7_1': true, bogus: true, '2_7_4': 'x' }, labs: 9 }, B: 3 }))
+  assert.deepEqual(lab.loadLabManual(), { A: { trials: { '1_1_7_1': true }, labs: undefined } })
+  localStorage.setItem(lab.LAB_MANUAL_KEY, '[1]')
+  assert.deepEqual(lab.loadLabManual(), {})
+})
+
+test('lab helper: next ascendancy pick (Q7)', async () => {
+  const lab = await import('./.build/lab-helper.mjs')
+  const listed = [{ id: 10, name: 'A' }, { id: 20, name: 'B' }, { id: 30, name: 'C' }, { id: 40, name: 'D' }, { id: 10, name: 'A' }]
+  // without the layout: as listed (duplicates out), 2 per lab
+  const pts = lab.ascendancyPoints(listed)
+  assert.deepEqual(pts.map(n => n.name), ['A', 'B', 'C', 'D'])
+  assert.deepEqual(lab.nextAscendancy(pts, 0).picks.map(n => n.name), ['A', 'B'])
+  assert.equal(lab.nextAscendancy(pts, 0).lab, 'normal')
+  assert.deepEqual(lab.nextAscendancy(pts, 1).picks.map(n => n.name), ['C', 'D'])
+  assert.equal(lab.nextAscendancy(pts, 1).lab, 'cruel')
+  assert.deepEqual(lab.nextAscendancy(pts, 2).picks, [])
+  assert.equal(lab.nextAscendancy(pts, 4), null)
+  // taken in the game log: the first two not taken, whatever the labs count says
+  assert.deepEqual(lab.nextAscendancy(pts, 0, new Set(['a', 'b'])).picks.map(n => n.name), ['C', 'D'])
+  assert.deepEqual(lab.nextAscendancy(pts, 1, new Set(['other'])).picks.map(n => n.name), ['C', 'D'])
+
+  // with the layout: small passives on the way come first, one point each
+  const N = (id, kind, name, asc = 'Slayer') => [id, 0, 0, kind, 0, 0, name, asc, []]
+  const layout = {
+    nodes: [N(1, 6, 'start'), N(2, 0, 'small 1'), N(10, 1, 'A'), N(3, 0, 'small 2'), N(20, 1, 'B'), N(99, 1, 'Other', 'Berserker')],
+    links: [[1, 2], [2, 10], [1, 3], [3, 20], [20, 99]]
+  }
+  const withLay = lab.ascendancyPoints([{ id: 10, name: 'A' }, { id: 20, name: 'B' }], layout)
+  assert.deepEqual(withLay.map(n => n.name), ['small 1', 'A', 'small 2', 'B'])
+  assert.deepEqual(lab.nextAscendancy(withLay, 1).picks.map(n => n.name), ['small 2', 'B'])
+})

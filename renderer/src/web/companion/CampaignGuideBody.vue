@@ -20,6 +20,7 @@
       <i class="fas fa-dungeon text-yellow-400" />
       <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${lab.name} Labyrinth` }}</span>
       <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
+      <span v-if="!lab.done && labPicks.length" class="text-blue-300 truncate" :title="'Ascendancy points to take after this lab (your Path of Building build)'">take {{ labPicks.join(' + ') }}</span>
       <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Orbhoarder window)"
         @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
       <button class="ui-btn ui-btn-quiet" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
@@ -79,7 +80,8 @@
                 <span v-else-if="p.k === 'area'" class="g-area"><i class="fas fa-map-marker-alt" />{{ p.v }}</span>
                 <span v-else-if="p.k === 'waypoint'" class="text-blue-300"><i class="fas fa-dungeon" /> {{ p.v ?? 'waypoint' }}</span>
                 <span v-else-if="p.k === 'waypoint_get'" class="text-blue-300">waypoint</span>
-                <span v-else-if="p.k === 'trial'" class="text-yellow-500"><i class="fas fa-dungeon" /> the Labyrinth trial</span>
+                <span v-else-if="p.k === 'trial'" class="text-yellow-500" :class="{ 'line-through opacity-60': trialIsDone(s.areaId) }"><i class="fas fa-dungeon" /> the Labyrinth trial<i
+                  v-if="trialIsDone(s.areaId)" class="fas fa-check text-green-500 ml-1" title="Trial done (game log or ticked in the levelling planner)" /></span>
                 <span v-else-if="p.k === 'logout'" class="text-gray-400">log out</span>
                 <i v-else-if="p.k === 'dir'" class="fas fa-arrow-up text-gray-300 mx-px" :style="{ transform: `rotate(${Number(p.v)}deg)` }" :title="`direction ${p.v}°`" />
                 <span v-else-if="p.k === 'portal'" class="text-purple-300">{{ p.v === 'set' ? 'a portal' : 'the portal' }}</span>
@@ -131,6 +133,8 @@ import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional
 import { loadQuestGemData, planQuestGems, type QuestGemData, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
+import { LAB_MANUAL_KEY, LAB_ORDER, ascendancyPoints, labFromLevel, labsDone, loadLabManual, nextAscendancy, trialDone } from './lab-helper'
+import { treeLayout } from '../pob/plan-store'
 
 const index = ref(loadIndex())
 // Deathloom fork: overlay, HUD and desktop window each show the guide; keep them on the same step
@@ -173,6 +177,14 @@ onUnmounted(() => { window.removeEventListener('storage', onLevels) })
 const progress = computed(() => progressOf(levels.value, currentChar(levels.value)?.name ?? ''))
 const doneQuests = computed(() => new Set(progress.value?.quests ?? []))
 const doneBosses = computed(() => new Set(progress.value?.bosses ?? []))
+// Labyrinth trials done (game log or ticked by hand in the levelling planner) (Q7)
+const labManual = ref(loadLabManual())
+const onLabManual = (e: StorageEvent) => { if (e.key === LAB_MANUAL_KEY) labManual.value = loadLabManual() }
+window.addEventListener('storage', onLabManual)
+onUnmounted(() => { window.removeEventListener('storage', onLabManual) })
+function trialIsDone (areaId: string) {
+  return trialDone(areaId, progress.value, labManual.value[currentChar(levels.value)?.name ?? ''])
+}
 
 // Deathloom fork (Gerhard, 16 Nov 2026): follow the character. Each one keeps its
 // own step; one seen for the first time starts at the act it was last in
@@ -272,6 +284,17 @@ const lab = ref<{ name: string, level: number, done: boolean } | null>(null)
 function labName (level: number) {
   return level >= 75 ? 'Eternal' : level >= 68 ? 'Merciless' : level >= 55 ? 'Cruel' : 'Normal'
 }
+// the 2 ascendancy points this lab gives (only where the levelling planner has the build: Orbhoarder window)
+const labPicks = computed(() => {
+  const l = lab.value; const p = currentPlan.value
+  if (!l || !p?.ascendancy.length) return []
+  const name = currentChar(levels.value)?.name ?? ''
+  const done = labsDone(progress.value, labManual.value[name])
+  const here = LAB_ORDER.indexOf(labFromLevel(l.level))
+  // the lab you're in, unless it's one done before (then the next one's)
+  const taken = new Set(Object.entries(progress.value?.alloc ?? {}).filter(([, c]) => c > 0).map(([k]) => k.trim().toLowerCase()))
+  return nextAscendancy(ascendancyPoints(p.ascendancy, treeLayout.value), Math.max(here, done), taken)?.picks.map(n => n.name) ?? []
+})
 // the Orbhoarder window's Lab tab (opens the window without taking focus from the game)
 function openPoelab () {
   Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'lab' } })

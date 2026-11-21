@@ -57,7 +57,8 @@ const MODULES = {
   'cheat-threads': 'renderer/src/web/cheats/threads.ts',
   'lazy-data': 'renderer/src/web/companion/lazy-data.ts',
   'cheat-challenges': 'renderer/src/web/cheats/challenges.ts',
-  'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts'
+  'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts',
+  'lab-helper': 'renderer/src/web/companion/lab-helper.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

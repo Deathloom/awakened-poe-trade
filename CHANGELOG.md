@@ -49,6 +49,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Changed: Beasts / Syndicate atlas trees take Thread type notables
 - Ready-made atlas tree: picking **Beasts** or **Syndicate** now also takes Sinistral Threads (set to Bestiary / Betrayal) and Unthreaded (ruling out another type), which were missed before.
 
+### Added (Q7): Lab helper while levelling
+- **Levelling → Next steps → Labyrinth**: a checklist of the 12 Labyrinth trials (6 Normal, 3 Cruel, 3 Merciless), per character, ticked from your local Client.txt (a trial-completed message in that zone, or entering that lab) or by hand; plus the 2 ascendancy points your Path of Building build takes at the next lab (Normal → Cruel → Merciless → Eternal). Replaces the "Ascendancy in this tree" box. The campaign guide ticks trials it knows are done.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

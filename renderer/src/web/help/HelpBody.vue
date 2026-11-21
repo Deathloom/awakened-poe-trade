@@ -99,6 +99,7 @@
             <li>Moves on by itself when you enter the next zone on the route (from the game's log file). The arrows fix it by hand.</li>
             <li>Hand-ins show what to pick for your build ("take …") and what to buy after. <span class="tag">optional</span> quests can be hidden with <i class="fas fa-plus-square" />.</li>
             <li>Bandit choice comes from your PoB build's Configuration tab.</li>
+            <li><b>Labyrinth</b> (Levelling → Next steps): the 12 trials for Normal, Cruel and Merciless, ticked from the game's log (a trial-completed message in that zone, or entering that lab) or by hand with <i class="fas fa-tasks" /> Trials; and the 2 ascendancy points your PoB build takes at the next lab. The guide's trial lines get a tick too.</li>
           </ul>
         </section>
       </template>
