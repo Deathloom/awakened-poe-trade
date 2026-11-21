@@ -49,6 +49,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Changed: Beasts / Syndicate atlas trees take Thread type notables
 - Ready-made atlas tree: picking **Beasts** or **Syndicate** now also takes Sinistral Threads (set to Bestiary / Betrayal) and Unthreaded (ruling out another type), which were missed before.
 
+### Added (Q5): Fate reward values
+- **Cheat sheets → Covens → Fate reward values**: the Fate reward types with their poe.ninja price per item (from the price list the app already downloads), dearest first with a star, and how many copies of a Fate pay (2 for the single Divine Orb / Orb of Annulment outcomes, otherwise 1 or 3). Counts GGG hasn't stated are said so; random drops show no price. Closed until you open it.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

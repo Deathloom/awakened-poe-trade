@@ -1444,3 +1444,36 @@ test('build file: profile for the map check (Q4)', () => {
   assert.deepEqual(p.gems, ['Pride', 'Boneshatter', 'Brutality'])
   assert.deepEqual(p.itemMods, ['Immune to Curses'])
 })
+
+test('fate value: outcomes at poe.ninja prices, best marked, unknowns honest (Q5)', async () => {
+  const f = await import('./.build/cheat-fates.mjs')
+  const ch = await import('./.build/cheat-challenges.mjs')
+  // every Promised Profits reward type is listed (count in brackets stripped)
+  const pp = ch.CHALLENGES.find(c => c.id === 'promised-profits')
+  const labels = new Set(f.FATE_OUTCOMES.map(o => o.label))
+  for (const s of pp.steps) assert.ok(labels.has(s.replace(/ \(\d+\)$/, '')) || /Divine|Annulment/.test(s), s)
+  // ids unique; only GGG-stated single outcomes say 'single' and need 2 copies
+  assert.equal(new Set(f.FATE_OUTCOMES.map(o => o.id)).size, f.FATE_OUTCOMES.length)
+  assert.deepEqual(f.FATE_OUTCOMES.filter(o => o.qty === 'single').map(o => o.id), ['divine', 'annul'])
+  assert.deepEqual(f.FATE_OUTCOMES.filter(o => o.copies === 2).map(o => o.id), ['divine', 'annul'])
+  assert.equal(f.THREAD_ITEMS.length, 10)
+
+  const prices = { 'Divine Orb': 200, 'Orb of Annulment': 30, 'Stacked Deck': 4, 'Abyss Thread': 10, 'Legion Thread': 50, 'Hide of the Vendigo': 500 }
+  const rows = f.valueFates(f.FATE_OUTCOMES, r => prices[r.name] ?? null)
+  assert.equal(rows[0].outcome.id, 'vendigo')
+  assert.ok(rows[0].best)
+  assert.equal(rows.filter(r => r.best).length, 1)
+  assert.deepEqual(rows.slice(1, 5).map(r => r.outcome.id), ['divine', 'annul', 'threads', 'stacked-decks'])
+  const th = rows.find(r => r.outcome.id === 'threads')
+  assert.equal(th.low, 10); assert.equal(th.high, 50)
+  // unpriced named items before random drops; random drops last and never best
+  const dm = rows.findIndex(r => r.outcome.id === 'dreadmaidens')
+  const cur = rows.findIndex(r => r.outcome.id === 'currency')
+  assert.ok(dm < cur && rows[dm].low === null && !rows[dm].varies && rows[cur].varies)
+  // ITEM tried before UNIQUE; bad numbers ignored
+  const r2 = f.valueFates(f.FATE_OUTCOMES, r => r.name === 'Corpse Rose' ? (r.ns === 'UNIQUE' ? 7 : NaN) : -1)
+  assert.equal(r2[0].outcome.id, 'corpse-rose'); assert.equal(r2[0].low, 7)
+  // no prices at all: nothing best
+  assert.ok(f.valueFates(f.FATE_OUTCOMES, () => null).every(r => !r.best))
+  assert.ok(f.valueFates(f.FATE_OUTCOMES, () => 0).every(r => !r.best))
+})
