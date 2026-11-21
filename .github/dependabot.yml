@@ -1,0 +1,44 @@
+# Deathloom fork (Gerhard, 22 Nov 2026): weekly version updates, kept quiet.
+# PRs go to dev (never master); minor and patch bumps are grouped into one PR
+# per folder, majors come one by one. Security updates still open as needed.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /main
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    open-pull-requests-limit: 3
+    groups:
+      main-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /renderer
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    open-pull-requests-limit: 3
+    groups:
+      renderer-minor-patch:
+        update-types: [minor, patch]
+
+  # Actions are pinned to full SHAs; Dependabot moves the SHA and the version comment together
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ["*"]

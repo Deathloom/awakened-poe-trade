@@ -61,6 +61,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q10): loot filter add-on
 - **Market → Shopping → ⋯ → Make loot filter add-on…**: pick your loot filter (a .filter file in Documents\My Games\Path of Exile) and Orbhoarder writes a new file next to it, "your filter + Orbhoarder.filter": big, highlighted Show blocks for what the list still needs (uniques by base type, the rares' bases with every drop of that base highlighted, gems in PoE1; transfigured gems as their normal gem; names the app's item data doesn't know are left out, because the game won't load a filter with an unknown name), then your filter copied unchanged; pick it in game under Options → UI → Item filter. Your own filter file is never changed; make it again when the list changes. Security: only on the PC (not from a phone), only .filter files directly in that folder (links leading outside it are refused), at most 8 MB, and the only file ever written is the "+ Orbhoarder" one (a file of that name that Orbhoarder didn't make is left alone).
 
+### Security: Dependabot version updates
+- `.github/dependabot.yml`: weekly update PRs (Mondays) for main and renderer npm packages and the pinned GitHub Actions, all to **dev**; minor and patch bumps grouped, at most 3 open per folder. Nothing changes in the app.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
