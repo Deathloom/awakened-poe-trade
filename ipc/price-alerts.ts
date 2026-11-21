@@ -187,14 +187,14 @@ export function stepRule (rule: PriceAlertRule, price: number | null, now: numbe
   }
   if (rule.armed && past) {
     if (rule.firedAt != null && now - rule.firedAt < PRICE_ALERT_COOLDOWN_MS) {
-      return { rule: { ...rule, last: price }, fire: false }
+      return { rule: rule.last === price ? rule : { ...rule, last: price }, fire: false }
     }
     return { rule: { ...rule, armed: false, firedAt: now, last: price }, fire: true }
   }
   if (!rule.armed && backPast(rule.dir, price, rule.value)) {
     return { rule: { ...rule, armed: true, last: price }, fire: false }
   }
-  return { rule: { ...rule, last: price }, fire: false }
+  return { rule: rule.last === price ? rule : { ...rule, last: price }, fire: false }
 }
 
 // Check every alert of this league against a freshly downloaded price list
@@ -203,19 +203,25 @@ export function checkAlerts (
   blob: string,
   league: string,
   now: number
-): { state: PriceAlertState, fired: PriceAlertFired[], changed: boolean } {
+): { state: PriceAlertState, fired: PriceAlertFired[], changed: boolean, lastChanged: boolean } {
   const mine = state.rules.filter(r => r.league === league)
-  if (!mine.length) return { state, fired: [], changed: false }
+  if (!mine.length) return { state, fired: [], changed: false, lastChanged: false }
   const divine = ninjaDivine(blob)
   const fired: PriceAlertFired[] = []
+  // changed: something worth saving and showing (armed, fired); lastChanged: only
+  // the "now" price moved (kept in memory, saved now and then by main)
   let changed = false
+  let lastChanged = false
   const rules = state.rules.map(rule => {
     if (rule.league !== league) return rule
     const chaos = ninjaChaos(blob, rule.type, rule.name, rule.variant)
     let price: number | null = null
     if (chaos != null) price = rule.unit === 'div' ? (divine ? chaos / divine : null) : chaos
     const step = stepRule(rule, price, now)
-    if (step.rule !== rule) changed = true
+    if (step.rule !== rule) {
+      if (onlyLastDiffers(rule, step.rule)) lastChanged = true
+      else changed = true
+    }
     if (step.fire && price != null && chaos != null) {
       fired.push({
         id: `${rule.id}-${now}`,
@@ -232,13 +238,29 @@ export function checkAlerts (
     }
     return step.rule
   })
-  if (!changed) return { state, fired, changed }
+  if (!changed && !lastChanged) return { state, fired, changed, lastChanged }
   return {
-    state: { ...state, rules, fired: [...[...fired].reverse(), ...state.fired].slice(0, MAX_FIRED_KEPT) },
+    state: {
+      ...state,
+      rules,
+      fired: fired.length ? [...[...fired].reverse(), ...state.fired].slice(0, MAX_FIRED_KEPT) : state.fired
+    },
     fired,
-    changed
+    changed,
+    lastChanged
   }
 }
+
+function onlyLastDiffers (a: PriceAlertRule, b: PriceAlertRule): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)] as Array<keyof PriceAlertRule>)
+  for (const k of keys) {
+    if (k !== 'last' && a[k] !== b[k]) return false
+  }
+  return true
+}
+
+// how often main saves + shows a "now" price that moved on its own
+export const PRICE_ALERT_LAST_SAVE_MS = 60 * 60 * 1000
 
 export function fmtAlertPrice (n: number): string {
   if (n >= 100) return String(Math.round(n))

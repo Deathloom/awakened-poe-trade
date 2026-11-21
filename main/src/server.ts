@@ -143,6 +143,14 @@ setInterval(() => {
   }
 }, HEARTBEAT_MS).unref()
 
+// Deathloom fork (Q6 review): run for each window / phone that (re)connects, with a
+// function that sends to just that socket (a phone dropped by the heartbeat reconnects
+// on unlock and must get the current price alerts without asking)
+const connectListeners: Array<(send: (event: IpcEvent) => void) => void> = []
+export function onClientConnected (cb: (send: (event: IpcEvent) => void) => void) {
+  connectListeners.push(cb)
+}
+
 // Deathloom fork (Q6 review): inside an onEventAnyClient handler: the event came from a phone / other device
 export function fromOtherDevice (): boolean {
   return dispatchingSocket !== undefined && otherDeviceClients.has(dispatchingSocket)
@@ -208,6 +216,11 @@ export async function startServer (
     // read it once at load, so a broadcast missed while its socket was reconnecting
     // left "Checking for updates" on screen for good.
     socket.send(JSON.stringify({ name: 'MAIN->CLIENT::updater-state', payload: appUpdater.info }))
+    for (const cb of connectListeners) {
+      try {
+        cb((event) => { if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(event)) })
+      } catch {}
+    }
     socket.on('message', (bytes) => {
       // Deathloom fork (F1 review): a malformed message is dropped, not thrown in the
       // main process (it used to end up as an error report)

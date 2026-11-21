@@ -12,7 +12,7 @@ import type { ServerEvents } from './server'
 import type { Logger } from './RemoteLogger'
 import {
   checkAlerts, ninjaLeague, readAlertState, validateAlertInput, alertText, isDuplicateAlert,
-  shouldNotifyPc, cleanAckIds, PHONE_ACK_WAIT_MS,
+  shouldNotifyPc, cleanAckIds, PHONE_ACK_WAIT_MS, PRICE_ALERT_LAST_SAVE_MS,
   type PriceAlertState, type PriceAlertFired
 } from '../../ipc/price-alerts'
 
@@ -22,8 +22,11 @@ function file (): string {
 
 export class PriceAlerts {
   private state: PriceAlertState
-  // fired alert ids a phone said it got
+  // fired alert ids still waiting for a phone's ack (only these are accepted, so a
+  // late or made-up ack can't grow `acked`), and the ones a phone said it got
+  private awaiting = new Set<string>()
   private acked = new Set<string>()
+  private lastSavedAt = 0
 
   constructor (
     private server: ServerEvents,
@@ -42,7 +45,9 @@ export class PriceAlerts {
         case 'ack':
           // only a phone's word counts (the PC's own windows always get it)
           if (!this.fromOtherDevice()) return
-          for (const id of cleanAckIds(req.ids)) this.acked.add(id)
+          for (const id of cleanAckIds(req.ids)) {
+            if (this.awaiting.has(id)) this.acked.add(id)
+          }
           return
         case 'add': {
           const input = validateAlertInput(req.rule, this.state.rules.length)
@@ -81,9 +86,12 @@ export class PriceAlerts {
     if (!league || !this.state.rules.some(r => r.league === league)) return
     try {
       const blob = Buffer.from(body.buffer, body.byteOffset, body.byteLength).toString('utf8')
-      const res = checkAlerts(this.state, blob, league, Date.now())
-      if (!res.changed) return
+      const now = Date.now()
+      const res = checkAlerts(this.state, blob, league, now)
       this.state = res.state
+      // only the "now" prices moved: keep them in memory (a 'list' or a new
+      // connection gets them), save + show them at most once an hour
+      if (!res.changed && !(res.lastChanged && now - this.lastSavedAt >= PRICE_ALERT_LAST_SAVE_MS)) return
       this.save()
       this.broadcast()
       if (res.fired.length) this.announce(res.fired)
@@ -93,6 +101,7 @@ export class PriceAlerts {
   }
 
   private announce (fired: PriceAlertFired[]) {
+    for (const f of fired) this.awaiting.add(f.id)
     this.server.sendEventTo('broadcast', { name: 'MAIN->CLIENT::price-alert-fired', payload: { fired } })
     const phones = this.phonesConnected()
     this.logger.write(`info [price-alerts] ${fired.length} alert(s) fired; ${phones} phone(s) connected`)
@@ -100,7 +109,7 @@ export class PriceAlerts {
     // unless a phone confirms it got the alert within a few seconds
     const decide = () => {
       const phoneAcked = fired.some(f => this.acked.has(f.id))
-      for (const f of fired) this.acked.delete(f.id)
+      for (const f of fired) { this.acked.delete(f.id); this.awaiting.delete(f.id) }
       if (shouldNotifyPc({ pcAlways: this.state.pcAlways, phoneAcked })) this.notifyPc(fired)
     }
     if (phones > 0 && !this.state.pcAlways) setTimeout(decide, PHONE_ACK_WAIT_MS)
@@ -111,6 +120,11 @@ export class PriceAlerts {
     if (!Notification.isSupported()) return
     const body = fired.map(alertText).join('\n')
     new Notification({ title: 'Orbhoarder price alert', body }).show()
+  }
+
+  // a window / phone that (re)connected
+  sendStateTo (send: (event: { name: 'MAIN->CLIENT::price-alerts', payload: PriceAlertState }) => void) {
+    send({ name: 'MAIN->CLIENT::price-alerts', payload: this.state })
   }
 
   private broadcast () {
@@ -129,6 +143,7 @@ export class PriceAlerts {
     try {
       fs.mkdirSync(path.dirname(file()), { recursive: true })
       fs.writeFileSync(file(), JSON.stringify(this.state), 'utf8')
+      this.lastSavedAt = Date.now()
     } catch (err) {
       this.logger.write(`error [price-alerts] could not save: ${(err as Error).message}`)
     }

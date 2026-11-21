@@ -178,7 +178,7 @@ function trade (r: ShopRow, upgrade: boolean) {
 const alertOpen = ref<string | null>(null)
 function rowMenu (r: ShopRow): UiMenuItem[] {
   return [
-    { label: 'Price alert above / below…', icon: 'fas fa-bell', disabled: !r.listing || r.kind === 'rare', hint: 'Tell me (phone or Windows notification) when the price crosses a line', action: () => { alertOpen.value = alertOpen.value === r.key ? null : r.key } },
+    { label: 'Price line above / below…', icon: 'fas fa-bell', disabled: !r.listing || r.kind === 'rare', hint: 'Tell me (phone or Windows notification) when the price crosses a line', action: () => { alertOpen.value = alertOpen.value === r.key ? null : r.key } },
     { label: 'Copy name for the in-game market', icon: 'far fa-copy', hint: 'Press / in game, then Ctrl+V', action: () => copyText(gearOf(r)?.searchText ?? r.label) },
     { label: 'Open on poe.ninja', icon: 'fas fa-external-link-alt', disabled: !r.listing, action: () => { if (r.listing) open(r.listing.url) } }
   ]

@@ -1544,8 +1544,21 @@ test('price alerts: a fresh price list checks only that league, divine alerts us
   // the same list again: nothing new
   const again = alerts.checkAlerts(res.state, NINJA_BLOB, 'Keepers', 2000)
   assert.equal(again.fired.length, 0)
+  assert.equal(res.changed, true)
   // another league's list doesn't touch these
   assert.equal(alerts.checkAlerts(state, NINJA_BLOB, 'Hardcore', 1000).changed, false)
+  // only the "now" price moved: not a change worth saving/broadcasting, but kept in memory
+  const quiet = { ...res.state, rules: res.state.rules.map(r => ({ ...r, last: 1 })) }
+  const moved = alerts.checkAlerts(quiet, NINJA_BLOB, 'Keepers', 3000)
+  assert.equal(moved.changed, false)
+  assert.equal(moved.lastChanged, true)
+  assert.equal(moved.fired.length, 0)
+  assert.equal(moved.state.rules.find(r => r.id === 'a').last, 150)
+  assert.equal(moved.state.fired, quiet.fired)
+  // same prices again: nothing at all
+  const same = alerts.checkAlerts(moved.state, NINJA_BLOB, 'Keepers', 4000)
+  assert.equal(same.changed || same.lastChanged, false)
+  assert.equal(same.state, moved.state)
 })
 
 test('price alerts: no duplicates, PC notified unless a phone confirmed, file read-back cleaned', () => {

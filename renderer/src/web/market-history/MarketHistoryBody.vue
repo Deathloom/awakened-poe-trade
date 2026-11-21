@@ -36,8 +36,8 @@
             :title="w.alert ? `Alert when the price moves ${w.alert.pct}% from ${fmt(w.alert.base)} c (click to change)` : 'Price alert: tell me when the price moves (click: 10%, 20%, 50%, off)'"
             @click="cycleAlert(w)"><i class="fas fa-bell mr-1" />{{ w.alert ? w.alert.pct + '%' : 'Alert' }}</button>
           <button v-if="alertCount(w)" class="ui-btn ui-btn-quiet shrink-0" :class="{ 'ui-btn-on': alertOpen === w.key }"
-            :title="`${alertCount(w)} price alert(s) above / below a price (click to see)`" @click="toggleAlert(w.key)"><i class="fas fa-bell mr-1" />{{ alertCount(w) }}</button>
-          <ui-menu :items="rowMenu(w)" align-right title="More: price alert, open on poe.ninja, stop watching" button-class="ui-btn-quiet" />
+            :title="`${alertCount(w)} price line(s): tell me when the price goes above / below (click to see)`" @click="toggleAlert(w.key)"><i class="fas fa-bell mr-1" />{{ alertCount(w) }} {{ alertCount(w) === 1 ? 'line' : 'lines' }}</button>
+          <ui-menu :items="rowMenu(w)" align-right title="More: price line, open on poe.ninja, stop watching" button-class="ui-btn-quiet" />
         </div>
         <price-alert-form v-if="alertOpen === w.key && w.now" :item="{ type: w.now.type, name: w.name, variant: w.variant, label: w.label }" :chaos="w.now.chaos" />
         <div class="flex gap-x-2 items-end pt-1">
@@ -168,7 +168,7 @@ function alertCount (w: WatchedItem & { now: { type: string } | null }) {
 function open (url: string) { window.open(url) }
 function rowMenu (w: { key: string, now: { url: string } | null }): UiMenuItem[] {
   return [
-    { label: 'Price alert above / below…', icon: 'fas fa-bell', disabled: !w.now, hint: 'Tell me (phone or Windows notification) when the price crosses a line', action: () => { toggleAlert(w.key) } },
+    { label: 'Price line above / below…', icon: 'fas fa-bell', disabled: !w.now, hint: 'Tell me (phone or Windows notification) when the price crosses a line', action: () => { toggleAlert(w.key) } },
     { label: 'Open on poe.ninja (full history)', icon: 'fas fa-external-link-alt', disabled: !w.now, action: () => { if (w.now) open(w.now.url) } },
     { divider: true },
     { label: 'Stop watching', icon: 'fas fa-trash-alt', action: () => { removeWatch(w.key) } }
