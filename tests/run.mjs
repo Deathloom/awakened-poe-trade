@@ -55,6 +55,7 @@ const MODULES = {
   'cheat-progress': 'renderer/src/web/cheats/progress.ts',
   'quest-gems': 'renderer/src/web/companion/quest-gems.ts',
   'cheat-threads': 'renderer/src/web/cheats/threads.ts',
+  'cheat-fates': 'renderer/src/web/cheats/fates.ts',
   'lazy-data': 'renderer/src/web/companion/lazy-data.ts',
   'cheat-challenges': 'renderer/src/web/cheats/challenges.ts',
   'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts',
