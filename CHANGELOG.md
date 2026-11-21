@@ -55,6 +55,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q6): price alerts on your phone
 - **Market → Watched / Shopping → ⋯ → Price alert above / below…**: pick a price in chaos or divine; when Orbhoarder's normal poe.ninja refresh crosses it, a phone connected with the QR link (Settings → Tools) shows the alert at the top of the page, otherwise (or if the phone doesn't confirm within a few seconds, e.g. it's locked) you get a Windows notification. Prices are only checked when Orbhoarder refreshes them anyway (about every half hour while the price check, Market or Money tools is in use), so with nothing like that open no alert fires. Each alert fires once per crossing (at most once an hour); add and remove alerts on the PC, the phone can only dismiss them. No extra downloads, nothing leaves your PC except to your own phone. Security: a connected phone can no longer become the window that gets the price check's item text (it could take over the next price check); connections that stop answering (a locked phone) are closed after about a minute.
 
+### Added (Q9): bench recipe checklist
+- **Cheat sheets → Bench recipes**: the crafting bench recipes on the campaign route, by act and zone (the same places the campaign guide shows), with the next one ahead of the guide's step and a count of unticked ones in zones you're past. Click a recipe in the guide's "crafting recipe" line to tick it there; ticked ones are crossed out in both. Ticks are by hand (the game log doesn't say when you pick one up) and account-wide on this PC, like recipe unlocks in game.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
