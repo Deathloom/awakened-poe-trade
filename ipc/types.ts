@@ -1,4 +1,5 @@
 import type { Game } from './game'
+import type { PriceAlertInput, PriceAlertState, PriceAlertFired } from './price-alerts'
 
 export interface HostConfig {
   shortcuts: ShortcutAction[]
@@ -570,6 +571,9 @@ export type IpcEvent =
   IpcStashRequest |
   IpcStashResult |
   IpcStashSession |
+  IpcPriceAlertsRequest |
+  IpcPriceAlertsState |
+  IpcPriceAlertFired |
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
@@ -1599,6 +1603,27 @@ type IpcStashSession =
   Event<'CLIENT->MAIN::stash-session', {
     sessionId: string | null
   }>
+
+// Deathloom fork (Q6): price alerts (ipc/price-alerts.ts). Only 'list' is allowed
+// from a phone (request-guard.ts); adding and removing happen on the PC.
+type IpcPriceAlertsRequest =
+  Event<'CLIENT->MAIN::price-alerts', {
+    op: 'list' | 'add' | 'remove' | 'clear-fired' | 'settings'
+    rule?: PriceAlertInput
+    id?: string
+    pcAlways?: boolean
+  }>
+
+// the alerts and recently fired ones; sent to every window (and a paired phone) when they change
+type IpcPriceAlertsState =
+  Event<'MAIN->CLIENT::price-alerts', PriceAlertState & {
+    // why an 'add' was refused
+    error?: string
+  }>
+
+// alerts that just fired (after a poe.ninja price refresh)
+type IpcPriceAlertFired =
+  Event<'MAIN->CLIENT::price-alert-fired', { fired: PriceAlertFired[] }>
 
 interface Event<TName extends string, TPayload = undefined> {
   name: TName

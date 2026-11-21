@@ -125,10 +125,16 @@ const NOT_FROM_OTHER_DEVICES = new Set([
   'CLIENT->MAIN::hud-resize',
   'CLIENT->MAIN::hud-typing',
   'CLIENT->MAIN::hud-panel',
-  'CLIENT->MAIN::hud-gear-action'
+  'CLIENT->MAIN::hud-gear-action',
+  // Deathloom fork (Q6 review): only this PC's overlay says it was used last
+  // (that window gets the price check's item text); stash sign-in stays on the PC
+  'CLIENT->MAIN::used-recently',
+  'CLIENT->MAIN::stash-session'
 ])
 const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
 const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])
+// Deathloom fork (Q6): a phone sees price alerts but only the PC adds or removes them
+const PRICE_ALERTS_FROM_OTHER_DEVICES = new Set(['list'])
 
 // Events a window may send to main: CLIENT->MAIN:: and the overlay page's own
 // OVERLAY->MAIN:: (price check area, focus the game). Dropping the second kind in
@@ -144,5 +150,6 @@ export function allowedFromOtherDevice (name: string, payload: unknown): boolean
   const op = (key: string) => (payload != null && typeof payload === 'object') ? (payload as Record<string, unknown>)[key] : undefined
   if (name === 'CLIENT->MAIN::user-action') return USER_ACTIONS_FROM_OTHER_DEVICES.has(String(op('action')))
   if (name === 'CLIENT->MAIN::pob-sync') return POB_SYNC_FROM_OTHER_DEVICES.has(String(op('op')))
+  if (name === 'CLIENT->MAIN::price-alerts') return PRICE_ALERTS_FROM_OTHER_DEVICES.has(String(op('op')))
   return true
 }

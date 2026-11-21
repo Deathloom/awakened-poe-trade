@@ -51,7 +51,9 @@
               <b>Sell list</b> (what you plan to sell: value now, a week of prices, "Falling: sell soon" or "Rising: can wait", and a copy button for a <code>~price</code> note),
               <b>Farming</b> (name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
               <b>Crafting</b> (crafting currency prices with a week's trend, and a sum of what your craft costs).
-              The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Money tools → Currency counter).</li>
+              The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Money tools → Currency counter).
+              <b>Price alerts</b>: on a Watched or Shopping row, ⋯ → <b>Price alert above / below…</b>, then a price in chaos or divine. Each time Orbhoarder refreshes poe.ninja prices (no extra downloads) it checks them; an alert fires once when the price crosses your line.
+              With the phone link on (Settings → Tools) a connected phone shows it at the top of the page (dismiss there only hides it on the phone); with no phone connected you get a Windows notification. Add and remove alerts on the PC; <b>?</b> above the Watched list explains the rest.</li>
             <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
             <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide, What's new and <b>Patch notes</b> (GGG's PC patch notes; a yellow dot means new notes came out since you last opened them, with a Windows notification too: Settings → General to turn it off).</li>
           </ul>

@@ -35,6 +35,9 @@
       <button class="text-green-300 hover:text-white" title="Later (installs by itself when the game isn't running)" @click="dismissed = readyVersion">Later</button>
     </div>
 
+    <!-- Deathloom fork (Q6): price alerts that fired (also on a phone opened with the QR link) -->
+    <PriceAlertBanner />
+
     <!-- All: customisable (Edit layout in the top bar) -->
     <AllLayout v-if="view === 'overview'" class="lg-view" :editing="editLayout" @done="editLayout = false" />
     <div v-else-if="view !== 'trade' && view !== 'lab'" class="flex-1 min-h-0 p-2">
@@ -95,6 +98,7 @@ import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-lay
 import type { LayoutPref } from './layout-phase'
 import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
 import CraftBody from '../craft/CraftBody.vue'
+import PriceAlertBanner from '../market-history/PriceAlertBanner.vue'
 
 // Deathloom fork: moving backgrounds pause while you play (the window is drawn without
 // the GPU, so a constantly moving background under glass panels costs CPU the game wants)

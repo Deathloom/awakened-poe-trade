@@ -7,7 +7,8 @@ import os from 'node:os'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
-import { startServer, eventPipe, server } from './server'
+import { startServer, eventPipe, server, otherDevicesConnected } from './server'
+import { PriceAlerts } from './PriceAlerts'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
 import { OverlayWindow } from './windowing/OverlayWindow'
@@ -63,7 +64,9 @@ app.on('ready', async () => {
   const gameConfig = new GameConfig(eventPipe, logger)
   const poeWindow = new GameWindow()
   const appUpdater = new AppUpdater(eventPipe, logger)
-  const _httpProxy = new HttpProxy(server, logger)
+  // Deathloom fork (Q6): price alerts, checked on each shared poe.ninja download
+  const priceAlerts = new PriceAlerts(eventPipe, logger, otherDevicesConnected)
+  const _httpProxy = new HttpProxy(server, logger, (target, res) => { priceAlerts.onNinjaDownload(target, res.statusCode, res.body) })
   const pobImpact = new PobImpact(eventPipe, logger)
   tray.pobDir = () => pobImpact.pobDir()
   // Deathloom fork: tray "Restart to update" item
