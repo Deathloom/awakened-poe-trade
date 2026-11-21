@@ -53,6 +53,7 @@ const numMap = (o: unknown): Record<string, number> => {
   return out
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- untrusted stored value, every field checked below
 function cleanRun (r: any): PaceRun | null {
   if (!r || typeof r !== 'object' || typeof r.name !== 'string' || typeof r.id !== 'string') return null
   const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0) ? v : 0

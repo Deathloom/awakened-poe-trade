@@ -251,8 +251,7 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
       const base = v ?? start
       const known = base.chars.find(c => c.name === ev.char)
       if (known && known.level > ev.level && base.progress[ev.char]) {
-        const progress = { ...base.progress }
-        delete progress[ev.char]
+        const progress = Object.fromEntries(Object.entries(base.progress).filter(([k]) => k !== ev.char))
         v = { ...base, progress }
       }
       v = recordLevel(v ?? start, ev.char, ev.cls, ev.level)
