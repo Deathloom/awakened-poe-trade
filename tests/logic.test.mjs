@@ -1630,6 +1630,130 @@ test('request guard: phones see price alerts but cannot change them, nor take ov
   assert.equal(guard.isClientEvent('OVERLAY->MAIN::track-area'), true)
 })
 
+test('pace log (Q8): level times, deaths and act splits from Client.txt become a saved run', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  localStorage.removeItem(pace.PACE_KEY)
+  const L = (t, s) => `2026/11/14 10:${t} 123 abc [INFO Client 1] ${s}`
+  const lines = [
+    L('00:00', ': Hero (Witch) is now level 2'),
+    '2026/11/14 10:00:05 1 a [DEBUG Client 1] Generating level 2 area "1_1_2" with seed 1',
+    L('05:05', ': Hero (Witch) is now level 3'),
+    L('06:00', ': Hero has been slain.'),
+    L('06:30', ': Friend has been slain.'),
+    '2026/11/14 10:10:05 1 a [DEBUG Client 1] Generating level 12 area "1_2_1" with seed 2',
+    L('20:05', ': Hero (Witch) is now level 13'),
+    '2026/11/14 10:25:05 1 a [DEBUG Client 1] Generating level 22 area "1_3_1" with seed 3'
+  ]
+  let v = { chars: [], selected: '', manual: null, questPoints: null, progress: {} }
+  v = cl.applyLogLines(v, lines, 'en', 0)
+  const p = v.progress.Hero
+  assert.equal(p.firstLevel, 2)
+  assert.equal(p.deaths, 1, 'only our own death counts')
+  assert.equal(p.startAt, new Date(2026, 10, 14, 10, 0, 0).getTime())
+  assert.deepEqual(p.levelAt, { 2: 0, 3: 300000, 13: 1200000 })
+  assert.deepEqual(p.splits, { 1: 0, 2: 600000, 3: 1500000 })
+  cl.saveCharLevels(v)
+  const st = pace.loadPaceStore()
+  assert.equal(st.runs.length, 1)
+  const run = st.runs[0]
+  assert.equal(run.id, `Hero@${p.startAt}`)
+  assert.equal(run.cls, 'Witch')
+  assert.equal(run.level, 13)
+  assert.equal(run.deathsByAct[1], 1)
+  // 11 levels in 20 minutes of campaign time
+  assert.equal(pace.levelsPerHour(run), 33)
+  assert.equal(pace.levelsPerHour({ levelAt: { 2: 0, 3: 60000 } }), null, 'too little data')
+  // saving again without changes keeps the same store object
+  assert.equal(pace.syncRuns(st, v), st)
+})
+
+test('pace log (Q8): compare with best / last, cap, forget, bad data', async () => {
+  const pace = await import('./.build/pace-log.mjs')
+  const mk = (name, startAt, splits, extra = {}) => ({ id: `${name}@${startAt}`, name, cls: '', startAt, updatedAt: startAt, splits, actMs: {}, deaths: 0, deathsByAct: {}, levelAt: {}, level: 1, campaignMs: 0, endgame: false, ...extra })
+  const fast = mk('Fast', 1, { 1: 0, 2: 100, 3: 200 })
+  const slow = mk('Slow', 2, { 1: 0, 2: 300, 3: 500 })
+  const short = mk('Short', 3, { 1: 0, 2: 50 })
+  const runs = [fast, slow, short]
+  assert.equal(pace.bestRun(runs).id, fast.id, 'furthest act, then fastest')
+  assert.equal(pace.bestRun(runs, fast.id).id, slow.id)
+  assert.equal(pace.latestRun(runs).id, short.id)
+  const cur = mk('Now', 9, { 1: 0, 2: 150 }, { deathsByAct: { 2: 3 }, levelAt: { 2: 0, 10: 140 } })
+  const rows = pace.paceRows(cur, fast)
+  assert.deepEqual(rows.map(r => [r.act, r.delta]), [[1, 0], [2, 50], [3, null]])
+  assert.equal(rows[1].level, 10)
+  assert.equal(rows[1].deaths, 3)
+  // cap: newest runs, the best finished one kept
+  const many = Array.from({ length: 12 }, (_, i) => mk(`C${i}`, 100 + i, { 1: 0, 2: 1000 }))
+  const capped = pace.capRuns([...many, fast])
+  assert.equal(capped.length, pace.MAX_RUNS)
+  assert.ok(capped.some(r => r.id === fast.id))
+  // forget: gone and not brought back by the next sync
+  let st = pace.forgetRun({ runs: [fast, slow], forgotten: [] }, fast.id)
+  assert.deepEqual(st.runs.map(r => r.id), [slow.id])
+  const levels = { chars: [{ name: 'Fast', cls: 'Duelist', level: 5, at: 1 }], progress: { Fast: { firstLevel: 2, startAt: 1, splits: { 1: 0 }, passives: 0, respec: 0, quests: [], bosses: [] } } }
+  assert.equal(pace.syncRuns(st, levels), st)
+  // a run saved before its start was known is replaced, not duplicated
+  st = { runs: [mk('Fast', 0, { 1: 0 })], forgotten: [] }
+  assert.deepEqual(pace.syncRuns(st, levels).runs.map(r => r.id), ['Fast@1'])
+  // characters not followed from level 2 make no run
+  assert.equal(pace.runFromProgress('X', '', 50, { firstLevel: 40, splits: { 5: 1 } }, 0), null)
+  // stored junk is dropped
+  const bad = pace.parsePaceStore(JSON.stringify({ runs: [null, { id: 1 }, { id: 'a@1', name: 'A', splits: { 1: -5, x: 3, 2: 'y', 3: 7 } }], forgotten: [3, 'z'] }))
+  assert.equal(bad.runs.length, 1)
+  assert.deepEqual(bad.runs[0].splits, { 3: 7 })
+  assert.deepEqual(bad.forgotten, ['z'])
+  assert.deepEqual(pace.parsePaceStore('nope'), { runs: [], forgotten: [] })
+  assert.equal(pace.fmtDelta(-61000), '−1:01')
+  assert.equal(pace.fmtDelta(0), '±0:00')
+})
+
+test('pace log (Q8 fix): a character remade with the same name is a new run', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  const L = (d, t, s) => `2026/11/${d} 10:${t} 1 a [INFO Client 1] ${s}`
+  const A = (d, t, code) => `2026/11/${d} 10:${t} 1 a [DEBUG Client 1] Generating level 2 area "${code}" with seed 1`
+  const league1 = [L('01', '00:00', ': Hero (Witch) is now level 2'), A('01', '00:05', '1_1_2'), A('01', '30:05', '1_2_1'),
+    L('01', '40:00', ': Hero (Witch) is now level 20'), A('01', '45:05', '1_3_1')]
+  const league2 = [L('20', '00:00', ': Hero (Ranger) is now level 2'), A('20', '00:05', '1_1_2'), A('20', '05:05', '1_2_1')]
+  let v = { chars: [], selected: '', manual: null, questPoints: null, progress: {} }
+  v = cl.applyLogLines(v, league1, 'en', 0)
+  const first = { ...v.progress.Hero }
+  let st = pace.syncRuns({ runs: [], forgotten: [] }, v)
+  v = cl.applyLogLines(v, league2, 'en', 0)
+  const p = v.progress.Hero
+  assert.notEqual(p.startAt, first.startAt)
+  assert.deepEqual(p.levelAt, { 2: 0 })
+  assert.deepEqual(p.splits, { 1: 0, 2: 300000 })
+  st = pace.syncRuns(st, v)
+  assert.equal(st.runs.length, 2, 'the old run is kept, the new one added')
+  assert.equal(pace.bestRun(st.runs, pace.runId('Hero', p)).id, pace.runId('Hero', first))
+  // Rebuild over both leagues gives the same two runs
+  const rebuilt = cl.rebuildFromLog({ chars: [], selected: '', manual: null, questPoints: null, progress: {} }, [...league1, ...league2], 'en')
+  assert.equal(rebuilt.progress.Hero.startAt, p.startAt)
+  // a duplicate level line doesn't reset
+  const again = cl.applyLogLines(v, [L('20', '06:00', ': Hero (Ranger) is now level 2')], 'en', 0)
+  assert.deepEqual(again.progress.Hero.splits, p.splits)
+})
+
+test('pace log (Q8 fix): name-only match keeps a different earlier run; line without a time', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  const old = { id: 'Hero@0', name: 'Hero', cls: '', startAt: 0, updatedAt: 1, splits: { 1: 0, 2: 999 }, actMs: {}, deaths: 0, deathsByAct: {}, levelAt: {}, level: 30, campaignMs: 0, endgame: false }
+  const levels = { chars: [{ name: 'Hero', cls: 'Witch', level: 3, at: 1 }], progress: { Hero: { firstLevel: 2, startAt: 5, splits: { 1: 0, 2: 100 }, passives: 0, respec: 0, quests: [], bosses: [] } } }
+  const st = pace.syncRuns({ runs: [old], forgotten: [] }, levels)
+  assert.deepEqual(st.runs.map(r => r.id).sort(), ['Hero@0', 'Hero@5'])
+  // no timestamp on the line: "now" is used for the start
+  const v = cl.applyLogLines({ chars: [], selected: '', manual: null, questPoints: null, progress: {} }, ['[INFO Client 1] : Solo (Witch) is now level 2'], 'en', 0, undefined, 12345)
+  assert.equal(v.progress.Solo.startAt, 12345)
+  assert.deepEqual(v.progress.Solo.levelAt, { 2: 0 })
+})
+
+test('request guard (Q8): a phone cannot take the game log catch-up lines', () => {
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::game-log-catchup', {}), false)
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::read-game-log', { requestId: 1 }), true)
+})
+
 // Deathloom fork (Q10): loot filter add-on
 const lootFilter = await import('./.build/loot-filter.mjs')
 const lootFiles = await import('./.build/loot-filter-files.mjs')

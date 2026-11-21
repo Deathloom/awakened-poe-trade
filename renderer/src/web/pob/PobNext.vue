@@ -228,6 +228,9 @@
           <div v-else class="text-gray-600">Nothing yet for this character. Level up once, or Rebuild from game log.</div>
         </div>
 
+        <!-- Deathloom fork (Q8): deaths and pace vs earlier fresh starts -->
+        <PaceLog :levels="levels" :char-name="char?.name" />
+
         <div class="px-1 pt-1 text-xs text-gray-600">
           Assumes you took the passives in this order. Order: nearest notable, keystone or jewel socket first, with the
           small passives on the way. Points = level − 1 + quest points. Gem levels are the level-1 requirements.
@@ -247,6 +250,7 @@ import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
 import { loadQuestGemData, planQuestGems, type QuestGemData } from '../companion/quest-gems'
 import { currentPlan, currentTaken, mapHave, treeLayout } from './plan-store'
+import PaceLog from '../companion/PaceLog.vue'
 
 const levels = ref<CharLevels>(loadCharLevels())
 const guideStep = ref(loadCampaignStep())

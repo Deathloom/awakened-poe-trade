@@ -130,6 +130,10 @@ const NOT_FROM_OTHER_DEVICES = new Set([
   // (that window gets the price check's item text); stash sign-in stays on the PC
   'CLIENT->MAIN::used-recently',
   'CLIENT->MAIN::stash-session',
+  // Deathloom fork (Q8): the lines written while Orbhoarder was closed are handed
+  // out once; only this PC's level recorder may take them (a phone asking first
+  // left levels, deaths and act splits uncounted)
+  'CLIENT->MAIN::game-log-catchup',
   // Deathloom fork (Q10): reading / writing loot filter files stays on this PC
   'CLIENT->MAIN::loot-filter'
 ])
