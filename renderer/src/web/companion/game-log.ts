@@ -4,6 +4,7 @@
 
 import { CLIENT_STRINGS as _$ } from '@/assets/data'
 import { TRADE_WHISPER, TRADE_BULK_WHISPER } from '@/web/client-log/client-log'
+import { isTrialDoneText } from './lab-helper'
 
 export type LogEvent =
   | { type: 'trade', direction: 'from' | 'to', char: string, item: string, price: string, league: string, tab?: { name: string, left: number, top: number }, message?: string, bulk: boolean }
@@ -31,6 +32,8 @@ export type LogEvent =
   // "[LOADING SCREEN] (The Coast) Duration = 4.1 seconds"
   | { type: 'loading', zone: string, seconds: number }
   | { type: 'disconnect', reason: string }
+  // a game message about a Labyrinth trial being completed (lab-helper.ts)
+  | { type: 'trialDone' }
 
 // English only (the game client's language must be English for these)
 const JOINED = /^: (?<char>.+) has joined the area\.$/
@@ -83,6 +86,7 @@ export function parseLogLine (line: string, language = 'en'): LogEvent | null {
   if ((m = text.match(AFK))) return { type: 'afk', on: m.groups!.on === 'ON' }
   if ((m = text.match(LOADING))) return { type: 'loading', zone: m.groups!.zone, seconds: Number(m.groups!.s) }
   if (text.startsWith('Abnormal disconnect')) return { type: 'disconnect', reason: text.replace(/^Abnormal disconnect:?\s*/, '').trim() }
+  if (isTrialDoneText(text)) return { type: 'trialDone' }
   if ((m = text.match(JOINED))) return { type: 'joined', char: m.groups!.char }
   if ((m = text.match(LEFT))) return { type: 'left', char: m.groups!.char }
 
