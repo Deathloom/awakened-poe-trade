@@ -104,6 +104,7 @@
             <li>Moves on by itself when you enter the next zone on the route (from the game's log file). The arrows fix it by hand.</li>
             <li>Hand-ins show what to pick for your build ("take …") and what to buy after. <span class="tag">optional</span> quests can be hidden with <i class="fas fa-plus-square" />.</li>
             <li>Bandit choice comes from your PoB build's Configuration tab.</li>
+            <li><b>Labyrinth</b> (Levelling → Next steps): the 12 trials for Normal, Cruel and Merciless, ticked from the game's log (a trial-completed message in that zone, or entering that lab) or by hand with <i class="fas fa-tasks" /> Trials; labs done from Izaro's "Triumphant at last" or entering a higher lab (type it in under Trials if it's behind); and the ascendancy notables your PoB levelling tree adds over the previous tree, minus what the game log shows taken (PoB sets no order, so pick which first). The guide's trial lines get a tick too; its lab banner lists those notables only in the Orbhoarder window (where the build is loaded).</li>
           </ul>
         </section>
       </template>
