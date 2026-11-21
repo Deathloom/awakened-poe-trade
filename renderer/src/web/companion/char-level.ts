@@ -9,6 +9,7 @@ import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { applySessionLines, loadPlaySession, savePlaySession } from './play-session'
 import { afterReady } from './lazy-data'
+import { loadPaceStore, savePaceStore, syncRuns } from './pace-log'
 import { labOnArea, labOnIzaro, labOnTrialDone, isIzaroDefeat, type LabProgress } from './lab-helper'
 import { STEPS, loadRoute, loadCampaignStep, actFromAreaCode, findStep, onlyActive, isEndgameArea } from './campaign-route'
 
@@ -42,6 +43,10 @@ export interface CharProgress extends LabProgress {
   kitava?: Array<'cruel' | 'merciless'>
   // has been in an atlas map (campaign done, for the guide)
   endgame?: boolean
+  // Q8 pace log: PC time of the level 2 level-up, and the campaign time (ms)
+  // each level was reached (only for characters followed from level 2)
+  startAt?: number
+  levelAt?: Record<string, number>
   // where the character was and since when (for the act timer)
   lastAct?: number
   lastAt?: number
@@ -100,6 +105,12 @@ export function loadCharLevels (): CharLevels {
 
 export function saveCharLevels (v: CharLevels) {
   try { localStorage.setItem(CHAR_LEVELS_KEY, JSON.stringify(v)) } catch {}
+  // Q8: fresh starts are kept as pace runs (outlive the 20-character list)
+  try {
+    const pace = loadPaceStore()
+    const next = syncRuns(pace, v)
+    if (next !== pace) savePaceStore(next)
+  } catch {}
 }
 
 export function recordLevel (v: CharLevels, name: string, cls: string, level: number, at = Date.now()): CharLevels {
@@ -235,7 +246,26 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
       passivesList = null
     }
     if (ev.type === 'level') {
+      // a lower level than we have for this name: the character was deleted and
+      // made again with the same name. Its old progress would make the new run
+      // share the old one's start, splits and level times, so start afresh.
+      const base = v ?? start
+      const known = base.chars.find(c => c.name === ev.char)
+      if (known && known.level > ev.level && base.progress[ev.char]) {
+        const progress = Object.fromEntries(Object.entries(base.progress).filter(([k]) => k !== ev.char))
+        v = { ...base, progress }
+      }
       v = recordLevel(v ?? start, ev.char, ev.cls, ev.level)
+      // Q8 pace log: campaign time at each level, for characters followed from level 2
+      const lp = v.progress[ev.char]
+      if (lp && lp.firstLevel <= 2 && !lp.endgame && ev.level <= 100) {
+        const live = lp.lastAct && lp.lastAct <= 10 && lp.lastAt && ts > lp.lastAt && ts - lp.lastAt < ACT_GAP_MS ? ts - lp.lastAt : 0
+        v.progress[ev.char] = {
+          ...lp,
+          startAt: lp.startAt ?? (ev.level === 2 ? ts : undefined),
+          levelAt: { ...lp.levelAt, [ev.level]: lp.levelAt?.[ev.level] ?? campaignMs(lp) + live }
+        }
+      }
     } else if (ev.type === 'passivesTotal') {
       const p = prog()
       p.passivesSnap = { total: ev.total, allocated: ev.allocated, logCount: Object.values(p.alloc ?? {}).reduce((n, c) => n + c, 0) }

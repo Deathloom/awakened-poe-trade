@@ -1445,6 +1445,435 @@ test('build file: profile for the map check (Q4)', () => {
   assert.deepEqual(p.itemMods, ['Immune to Curses'])
 })
 
+test('fate value: outcomes at poe.ninja prices, best marked, unknowns honest (Q5)', async () => {
+  const f = await import('./.build/cheat-fates.mjs')
+  const ch = await import('./.build/cheat-challenges.mjs')
+  // every Promised Profits reward type is listed (count in brackets stripped)
+  const pp = ch.CHALLENGES.find(c => c.id === 'promised-profits')
+  const labels = new Set(f.FATE_OUTCOMES.map(o => o.label))
+  for (const s of pp.steps) assert.ok(labels.has(s.replace(/ \(\d+\)$/, '')), s)
+  // ids unique; only GGG-stated single outcomes say 'single' and need 2 copies
+  assert.equal(new Set(f.FATE_OUTCOMES.map(o => o.id)).size, f.FATE_OUTCOMES.length)
+  assert.deepEqual(f.FATE_OUTCOMES.filter(o => o.qty === 'single').map(o => o.id), ['divine', 'annul'])
+  assert.deepEqual(f.FATE_OUTCOMES.filter(o => o.copies === 2).map(o => o.id), ['divine', 'annul'])
+  assert.equal(f.THREAD_ITEMS.length, 10)
+
+  const prices = { 'Divine Orb': 200, 'Orb of Annulment': 30, 'Stacked Deck': 4, 'Abyss Thread': 10, 'Legion Thread': 50, 'Hide of the Vendigo': 500 }
+  const rows = f.valueFates(f.FATE_OUTCOMES, r => prices[r.name] ?? null)
+  assert.equal(rows[0].outcome.id, 'vendigo')
+  assert.ok(rows[0].best)
+  assert.equal(rows.filter(r => r.best).length, 1)
+  assert.deepEqual(rows.slice(1, 5).map(r => r.outcome.id), ['divine', 'annul', 'threads', 'stacked-decks'])
+  const th = rows.find(r => r.outcome.id === 'threads')
+  assert.equal(th.low, 10); assert.equal(th.high, 50)
+  // unpriced named items before random drops; random drops last and never best
+  const dm = rows.findIndex(r => r.outcome.id === 'dreadmaidens')
+  const cur = rows.findIndex(r => r.outcome.id === 'currency')
+  assert.ok(dm < cur && rows[dm].low === null && !rows[dm].varies && rows[cur].varies)
+  // ITEM tried before UNIQUE; bad numbers ignored
+  const r2 = f.valueFates(f.FATE_OUTCOMES, r => r.name === 'Corpse Rose' ? (r.ns === 'UNIQUE' ? 7 : NaN) : -1)
+  assert.equal(r2[0].outcome.id, 'corpse-rose'); assert.equal(r2[0].low, 7)
+  // no prices at all: nothing best
+  assert.ok(f.valueFates(f.FATE_OUTCOMES, () => null).every(r => !r.best))
+  assert.ok(f.valueFates(f.FATE_OUTCOMES, () => 0).every(r => !r.best))
+})
+
+// Deathloom fork (Q6): price alerts to the phone
+const alerts = await import('./.build/price-alerts.mjs')
+
+const NINJA_BLOB = '{"overviews":[' +
+  '{"type":"Currency","lines":[{"name":"Divine Orb","chaos":200,"graph":[1]},{"name":"Exalted Orb","chaos":12.5,"graph":[]}]},' +
+  '{"type":"UniqueAccessory","lines":[{"name":"Mageblood","chaos":30000,"graph":[]},{"name":"Headhunter","variant":"Relic","chaos":9000}]},' +
+  '{"type":"SkillGem","lines":[{"name":"Exalted Orb","chaos":1}]}]}'
+
+test('price alerts: poe.ninja lookup by section, name and variant', () => {
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'Currency', 'Exalted Orb'), 12.5)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'SkillGem', 'Exalted Orb'), 1)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'UniqueAccessory', 'Headhunter', 'Relic'), 9000)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'UniqueAccessory', 'Headhunter'), null)
+  // a name only in another section isn't taken
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'Currency', 'Mageblood'), null)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'Fossil', 'Exalted Orb'), null)
+  assert.equal(alerts.ninjaDivine(NINJA_BLOB), 200)
+  assert.equal(alerts.ninjaDivine('{"type":"Currency","lines":[{"name":"Divine Orb","chaos":3}]}'), null)
+})
+
+test('price alerts: league from the shared download path (PoE 1 price list only)', () => {
+  assert.equal(alerts.ninjaLeague('poe.ninja/poe1/api/economy/current/dense/overviews?league=Keepers&language=en'), 'Keepers')
+  assert.equal(alerts.ninjaLeague('poe.ninja/poe1/api/economy/current/dense/overviews?league=Hardcore%20Keepers&language=en'), 'Hardcore Keepers')
+  assert.equal(alerts.ninjaLeague('poe.ninja/poe2/api/economy/current/dense/overviews?league=X'), null)
+  assert.equal(alerts.ninjaLeague('poe.ninja.evil.com/poe1/api/economy/current/dense/overviews?league=X'), null)
+  assert.equal(alerts.ninjaLeague('www.pathofexile.com/api/trade?league=X'), null)
+})
+
+test('price alerts: only checked, sane input is added', () => {
+  const ok = { league: 'Keepers', type: 'UniqueAccessory', name: 'Mageblood', label: 'Mageblood', dir: 'above', value: 150, unit: 'div' }
+  assert.deepEqual(alerts.validateAlertInput(ok, 0), { ...ok, variant: undefined })
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, dir: 'sideways' }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, value: -1 }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, value: Infinity }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, type: 'Currency"},{"x' }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, name: 'x'.repeat(201) }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput(ok, alerts.MAX_PRICE_ALERTS), 'string')
+  assert.equal(alerts.validateAlertInput({ ...ok, label: 'Mage\nblood\u0007' }, 0).label, 'Mageblood')
+  // the file is read back the same careful way
+  const st = alerts.readAlertState({ rules: [{ ...ok, id: 'a1', createdAt: 1, armed: true }, { ...ok, id: '../x' }, { id: 'b' }], fired: [{ id: 1 }], pcAlways: 'yes' })
+  assert.equal(st.rules.length, 1)
+  assert.equal(st.rules[0].armed, true)
+  assert.deepEqual(st.fired, [])
+  assert.equal(st.pcAlways, false)
+  assert.deepEqual(alerts.readAlertState('nonsense'), alerts.emptyAlertState())
+})
+
+test('price alerts: fire once per crossing, re-arm past 3%, at most once an hour', () => {
+  const H = 60 * 60 * 1000
+  let rule = { id: 'r', league: 'L', type: 'Currency', name: 'X', label: 'X', dir: 'above', value: 100, unit: 'chaos', createdAt: 0 }
+  // first price only arms (already above: never fires for it)
+  let s = alerts.stepRule(rule, 120, 0)
+  assert.equal(s.fire, false); assert.equal(s.rule.armed, false)
+  s = alerts.stepRule(rule, 90, 0)
+  assert.equal(s.fire, false); assert.equal(s.rule.armed, true)
+  rule = s.rule
+  s = alerts.stepRule(rule, 105, 1 * H); assert.equal(s.fire, true); rule = s.rule
+  // stays above: no second alert
+  s = alerts.stepRule(rule, 130, 2 * H); assert.equal(s.fire, false); rule = s.rule
+  // dips just under the line (within 3%): not re-armed
+  s = alerts.stepRule(rule, 98, 3 * H); assert.equal(s.rule.armed, false); rule = s.rule
+  s = alerts.stepRule(rule, 101, 4 * H); assert.equal(s.fire, false); rule = s.rule
+  // well under: re-armed, fires on the next crossing
+  s = alerts.stepRule(rule, 90, 5 * H); assert.equal(s.rule.armed, true); rule = s.rule
+  s = alerts.stepRule(rule, 100, 6 * H); assert.equal(s.fire, true); rule = s.rule
+  // flapping inside the hour: re-armed but the cooldown holds it back
+  s = alerts.stepRule(rule, 50, 6 * H + 1000); rule = s.rule
+  s = alerts.stepRule(rule, 150, 6 * H + 2000); assert.equal(s.fire, false); assert.equal(s.rule.armed, true); rule = s.rule
+  s = alerts.stepRule(rule, 150, 7 * H + 1); assert.equal(s.fire, true)
+  // no price: nothing changes
+  assert.equal(alerts.stepRule(rule, null, 8 * H).rule, rule)
+  // below works the other way round
+  const below = { ...rule, dir: 'below', value: 10, armed: true, firedAt: undefined }
+  assert.equal(alerts.stepRule(below, 9.9, 0).fire, true)
+  assert.equal(alerts.stepRule(below, 10.1, 0).fire, false)
+})
+
+test('price alerts: a fresh price list checks only that league, divine alerts use the divine price', () => {
+  const base = { league: 'Keepers', type: 'UniqueAccessory', name: 'Mageblood', label: 'Mageblood', dir: 'above', unit: 'div', createdAt: 0 }
+  const state = {
+    pcAlways: false,
+    fired: [],
+    rules: [
+      { ...base, id: 'a', value: 140, armed: true },
+      { ...base, id: 'b', value: 160, armed: true },
+      { ...base, id: 'c', value: 1, armed: true, league: 'Standard' },
+      { ...base, id: 'd', name: 'Exalted Orb', type: 'Currency', label: 'Exalted Orb', unit: 'chaos', dir: 'below', value: 13, armed: true }
+    ]
+  }
+  const res = alerts.checkAlerts(state, NINJA_BLOB, 'Keepers', 1000)
+  assert.deepEqual(res.fired.map(f => f.ruleId), ['a', 'd'])
+  assert.equal(res.fired[0].price, 150)
+  assert.equal(res.fired[0].chaos, 30000)
+  assert.equal(alerts.alertText(res.fired[0]), 'Mageblood is above 140 div (now 150 div)')
+  assert.equal(res.state.rules.find(r => r.id === 'c'), state.rules[2])
+  assert.equal(res.state.fired.length, 2)
+  // the same list again: nothing new
+  const again = alerts.checkAlerts(res.state, NINJA_BLOB, 'Keepers', 2000)
+  assert.equal(again.fired.length, 0)
+  assert.equal(res.changed, true)
+  // another league's list doesn't touch these
+  assert.equal(alerts.checkAlerts(state, NINJA_BLOB, 'Hardcore', 1000).changed, false)
+  // only the "now" price moved: not a change worth saving/broadcasting, but kept in memory
+  const quiet = { ...res.state, rules: res.state.rules.map(r => ({ ...r, last: 1 })) }
+  const moved = alerts.checkAlerts(quiet, NINJA_BLOB, 'Keepers', 3000)
+  assert.equal(moved.changed, false)
+  assert.equal(moved.lastChanged, true)
+  assert.equal(moved.fired.length, 0)
+  assert.equal(moved.state.rules.find(r => r.id === 'a').last, 150)
+  assert.equal(moved.state.fired, quiet.fired)
+  // same prices again: nothing at all
+  const same = alerts.checkAlerts(moved.state, NINJA_BLOB, 'Keepers', 4000)
+  assert.equal(same.changed || same.lastChanged, false)
+  assert.equal(same.state, moved.state)
+})
+
+test('price alerts: no duplicates, PC notified unless a phone confirmed, file read-back cleaned', () => {
+  const ok = { league: 'Keepers', type: 'UniqueAccessory', name: 'Mageblood', label: 'Mageblood', dir: 'above', value: 150, unit: 'div' }
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok }), true)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, value: 151 }), false)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, dir: 'below' }), false)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, variant: 'Relic' }), false)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: false, phoneAcked: false }), true)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: false, phoneAcked: true }), false)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: true, phoneAcked: true }), true)
+  assert.deepEqual(alerts.cleanAckIds(['a-1', '../x', 5, 'b_2']), ['a-1', 'b_2'])
+  assert.deepEqual(alerts.cleanAckIds('a'), [])
+  const fired = { id: 'r1-5', ruleId: 'r1', league: 'Keepers', label: 'Mage\nblood', dir: 'above', value: 1, unit: 'div', price: 2, chaos: 400, at: 5 }
+  const st = alerts.readAlertState({
+    rules: [{ ...ok, id: 'a' }, { ...ok, id: 'b' }],
+    fired: [fired, { ...fired, id: '<img>' }, { ...fired, label: 'x'.repeat(300) }, { ...fired, price: Infinity }]
+  })
+  assert.equal(st.rules.length, 1)
+  assert.equal(st.fired.length, 1)
+  assert.equal(st.fired[0].label, 'Mageblood')
+})
+
+test('request guard: phones see price alerts but cannot change them, nor take over the price check', () => {
+  const ok = guard.allowedFromOtherDevice
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'list' }), true)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'ack', ids: ['a'] }), true)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'add', rule: {} }), false)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'remove', id: 'a' }), false)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'settings', pcAlways: true }), false)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', null), false)
+  assert.equal(ok('CLIENT->MAIN::used-recently', { isOverlay: false }), false)
+  assert.equal(ok('CLIENT->MAIN::stash-session', { sessionId: 'x' }), false)
+  // the PC's own windows still reach main (price check needs OVERLAY->MAIN)
+  assert.equal(guard.isClientEvent('CLIENT->MAIN::price-alerts'), true)
+  assert.equal(guard.isClientEvent('OVERLAY->MAIN::track-area'), true)
+})
+
+test('pace log (Q8): level times, deaths and act splits from Client.txt become a saved run', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  localStorage.removeItem(pace.PACE_KEY)
+  const L = (t, s) => `2026/11/14 10:${t} 123 abc [INFO Client 1] ${s}`
+  const lines = [
+    L('00:00', ': Hero (Witch) is now level 2'),
+    '2026/11/14 10:00:05 1 a [DEBUG Client 1] Generating level 2 area "1_1_2" with seed 1',
+    L('05:05', ': Hero (Witch) is now level 3'),
+    L('06:00', ': Hero has been slain.'),
+    L('06:30', ': Friend has been slain.'),
+    '2026/11/14 10:10:05 1 a [DEBUG Client 1] Generating level 12 area "1_2_1" with seed 2',
+    L('20:05', ': Hero (Witch) is now level 13'),
+    '2026/11/14 10:25:05 1 a [DEBUG Client 1] Generating level 22 area "1_3_1" with seed 3'
+  ]
+  let v = { chars: [], selected: '', manual: null, questPoints: null, progress: {} }
+  v = cl.applyLogLines(v, lines, 'en', 0)
+  const p = v.progress.Hero
+  assert.equal(p.firstLevel, 2)
+  assert.equal(p.deaths, 1, 'only our own death counts')
+  assert.equal(p.startAt, new Date(2026, 10, 14, 10, 0, 0).getTime())
+  assert.deepEqual(p.levelAt, { 2: 0, 3: 300000, 13: 1200000 })
+  assert.deepEqual(p.splits, { 1: 0, 2: 600000, 3: 1500000 })
+  cl.saveCharLevels(v)
+  const st = pace.loadPaceStore()
+  assert.equal(st.runs.length, 1)
+  const run = st.runs[0]
+  assert.equal(run.id, `Hero@${p.startAt}`)
+  assert.equal(run.cls, 'Witch')
+  assert.equal(run.level, 13)
+  assert.equal(run.deathsByAct[1], 1)
+  // 11 levels in 20 minutes of campaign time
+  assert.equal(pace.levelsPerHour(run), 33)
+  assert.equal(pace.levelsPerHour({ levelAt: { 2: 0, 3: 60000 } }), null, 'too little data')
+  // saving again without changes keeps the same store object
+  assert.equal(pace.syncRuns(st, v), st)
+})
+
+test('pace log (Q8): compare with best / last, cap, forget, bad data', async () => {
+  const pace = await import('./.build/pace-log.mjs')
+  const mk = (name, startAt, splits, extra = {}) => ({ id: `${name}@${startAt}`, name, cls: '', startAt, updatedAt: startAt, splits, actMs: {}, deaths: 0, deathsByAct: {}, levelAt: {}, level: 1, campaignMs: 0, endgame: false, ...extra })
+  const fast = mk('Fast', 1, { 1: 0, 2: 100, 3: 200 })
+  const slow = mk('Slow', 2, { 1: 0, 2: 300, 3: 500 })
+  const short = mk('Short', 3, { 1: 0, 2: 50 })
+  const runs = [fast, slow, short]
+  assert.equal(pace.bestRun(runs).id, fast.id, 'furthest act, then fastest')
+  assert.equal(pace.bestRun(runs, fast.id).id, slow.id)
+  assert.equal(pace.latestRun(runs).id, short.id)
+  const cur = mk('Now', 9, { 1: 0, 2: 150 }, { deathsByAct: { 2: 3 }, levelAt: { 2: 0, 10: 140 } })
+  const rows = pace.paceRows(cur, fast)
+  assert.deepEqual(rows.map(r => [r.act, r.delta]), [[1, 0], [2, 50], [3, null]])
+  assert.equal(rows[1].level, 10)
+  assert.equal(rows[1].deaths, 3)
+  // cap: newest runs, the best finished one kept
+  const many = Array.from({ length: 12 }, (_, i) => mk(`C${i}`, 100 + i, { 1: 0, 2: 1000 }))
+  const capped = pace.capRuns([...many, fast])
+  assert.equal(capped.length, pace.MAX_RUNS)
+  assert.ok(capped.some(r => r.id === fast.id))
+  // forget: gone and not brought back by the next sync
+  let st = pace.forgetRun({ runs: [fast, slow], forgotten: [] }, fast.id)
+  assert.deepEqual(st.runs.map(r => r.id), [slow.id])
+  const levels = { chars: [{ name: 'Fast', cls: 'Duelist', level: 5, at: 1 }], progress: { Fast: { firstLevel: 2, startAt: 1, splits: { 1: 0 }, passives: 0, respec: 0, quests: [], bosses: [] } } }
+  assert.equal(pace.syncRuns(st, levels), st)
+  // a run saved before its start was known is replaced, not duplicated
+  st = { runs: [mk('Fast', 0, { 1: 0 })], forgotten: [] }
+  assert.deepEqual(pace.syncRuns(st, levels).runs.map(r => r.id), ['Fast@1'])
+  // characters not followed from level 2 make no run
+  assert.equal(pace.runFromProgress('X', '', 50, { firstLevel: 40, splits: { 5: 1 } }, 0), null)
+  // stored junk is dropped
+  const bad = pace.parsePaceStore(JSON.stringify({ runs: [null, { id: 1 }, { id: 'a@1', name: 'A', splits: { 1: -5, x: 3, 2: 'y', 3: 7 } }], forgotten: [3, 'z'] }))
+  assert.equal(bad.runs.length, 1)
+  assert.deepEqual(bad.runs[0].splits, { 3: 7 })
+  assert.deepEqual(bad.forgotten, ['z'])
+  assert.deepEqual(pace.parsePaceStore('nope'), { runs: [], forgotten: [] })
+  assert.equal(pace.fmtDelta(-61000), '−1:01')
+  assert.equal(pace.fmtDelta(0), '±0:00')
+})
+
+test('pace log (Q8 fix): a character remade with the same name is a new run', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  const L = (d, t, s) => `2026/11/${d} 10:${t} 1 a [INFO Client 1] ${s}`
+  const A = (d, t, code) => `2026/11/${d} 10:${t} 1 a [DEBUG Client 1] Generating level 2 area "${code}" with seed 1`
+  const league1 = [L('01', '00:00', ': Hero (Witch) is now level 2'), A('01', '00:05', '1_1_2'), A('01', '30:05', '1_2_1'),
+    L('01', '40:00', ': Hero (Witch) is now level 20'), A('01', '45:05', '1_3_1')]
+  const league2 = [L('20', '00:00', ': Hero (Ranger) is now level 2'), A('20', '00:05', '1_1_2'), A('20', '05:05', '1_2_1')]
+  let v = { chars: [], selected: '', manual: null, questPoints: null, progress: {} }
+  v = cl.applyLogLines(v, league1, 'en', 0)
+  const first = { ...v.progress.Hero }
+  let st = pace.syncRuns({ runs: [], forgotten: [] }, v)
+  v = cl.applyLogLines(v, league2, 'en', 0)
+  const p = v.progress.Hero
+  assert.notEqual(p.startAt, first.startAt)
+  assert.deepEqual(p.levelAt, { 2: 0 })
+  assert.deepEqual(p.splits, { 1: 0, 2: 300000 })
+  st = pace.syncRuns(st, v)
+  assert.equal(st.runs.length, 2, 'the old run is kept, the new one added')
+  assert.equal(pace.bestRun(st.runs, pace.runId('Hero', p)).id, pace.runId('Hero', first))
+  // Rebuild over both leagues gives the same two runs
+  const rebuilt = cl.rebuildFromLog({ chars: [], selected: '', manual: null, questPoints: null, progress: {} }, [...league1, ...league2], 'en')
+  assert.equal(rebuilt.progress.Hero.startAt, p.startAt)
+  // a duplicate level line doesn't reset
+  const again = cl.applyLogLines(v, [L('20', '06:00', ': Hero (Ranger) is now level 2')], 'en', 0)
+  assert.deepEqual(again.progress.Hero.splits, p.splits)
+})
+
+test('pace log (Q8 fix): name-only match keeps a different earlier run; line without a time', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  const old = { id: 'Hero@0', name: 'Hero', cls: '', startAt: 0, updatedAt: 1, splits: { 1: 0, 2: 999 }, actMs: {}, deaths: 0, deathsByAct: {}, levelAt: {}, level: 30, campaignMs: 0, endgame: false }
+  const levels = { chars: [{ name: 'Hero', cls: 'Witch', level: 3, at: 1 }], progress: { Hero: { firstLevel: 2, startAt: 5, splits: { 1: 0, 2: 100 }, passives: 0, respec: 0, quests: [], bosses: [] } } }
+  const st = pace.syncRuns({ runs: [old], forgotten: [] }, levels)
+  assert.deepEqual(st.runs.map(r => r.id).sort(), ['Hero@0', 'Hero@5'])
+  // no timestamp on the line: "now" is used for the start
+  const v = cl.applyLogLines({ chars: [], selected: '', manual: null, questPoints: null, progress: {} }, ['[INFO Client 1] : Solo (Witch) is now level 2'], 'en', 0, undefined, 12345)
+  assert.equal(v.progress.Solo.startAt, 12345)
+  assert.deepEqual(v.progress.Solo.levelAt, { 2: 0 })
+})
+
+test('request guard (Q8): a phone cannot take the game log catch-up lines', () => {
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::game-log-catchup', {}), false)
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::read-game-log', { requestId: 1 }), true)
+})
+
+// Deathloom fork (Q10): loot filter add-on
+const lootFilter = await import('./.build/loot-filter.mjs')
+const lootFiles = await import('./.build/loot-filter-files.mjs')
+
+test('loot filter: names that can go in quotes, file names, add-on name', () => {
+  const lf = lootFilter
+  assert.equal(lf.isSafeItemName("Kaom's Heart"), true)
+  assert.equal(lf.isSafeItemName('Maelström Staff'), true)
+  assert.equal(lf.isSafeItemName('Two-Toned Boots'), true)
+  assert.equal(lf.isSafeItemName('Bad"Name'), false)
+  assert.equal(lf.isSafeItemName('Line\nBreak'), false)
+  assert.equal(lf.isSafeItemName('# comment'), false)
+  assert.equal(lf.isSafeItemName('x'), false)
+  assert.equal(lf.isSafeItemName(5), false)
+  assert.equal(lf.isFilterFileName('NeverSink Strict.filter'), true)
+  assert.equal(lf.isFilterFileName('../evil.filter'), false)
+  assert.equal(lf.isFilterFileName('sub\\evil.filter'), false)
+  assert.equal(lf.isFilterFileName('C:evil.filter'), false)
+  assert.equal(lf.isFilterFileName('.hidden.filter'), false)
+  assert.equal(lf.isFilterFileName('notes.txt'), false)
+  assert.equal(lf.addonFileName('NeverSink Strict.filter'), 'NeverSink Strict + Orbhoarder.filter')
+  assert.equal(lf.addonFileName('NeverSink Strict + Orbhoarder.filter'), null)
+  assert.equal(lf.addonFileName('../x.filter'), null)
+  assert.equal(lf.gemBaseType('Added Fire Damage', true), 'Added Fire Damage Support')
+  assert.equal(lf.gemBaseType('Added Fire Damage Support', true), 'Added Fire Damage Support')
+  assert.equal(lf.gemBaseType('Arc', false), 'Arc')
+})
+
+test('loot filter: wants from Shopping rows, cleaned, blocks first', () => {
+  const lf = lootFilter
+  const w = lf.wantsFromShop([
+    { kind: 'unique', owned: false, name: 'Leather Belt' },
+    { kind: 'unique', owned: true, name: 'Heavy Belt' },
+    { kind: 'rare', owned: false, name: 'Vaal Regalia' },
+    { kind: 'gem', owned: false, name: 'Added Fire Damage', support: true },
+    { kind: 'gem', owned: false, name: 'Arc' }
+  ])
+  assert.deepEqual(w, { bases: ['Vaal Regalia'], uniqueBases: ['Leather Belt'], gems: ['Added Fire Damage Support', 'Arc'] })
+  const { wants, refused } = lf.cleanWants({ bases: ['Vaal Regalia', 'vaal regalia', 'x"y'], uniqueBases: 'nope', gems: [7, 'Arc'] })
+  assert.deepEqual(wants, { bases: ['Vaal Regalia'], uniqueBases: [], gems: ['Arc'] })
+  assert.deepEqual(refused, ['x"y'])
+  const text = lf.addonBlocks(w, { source: 'Mine.filter', game: 'poe1', when: '2026-11-21' })
+  assert.ok(text.startsWith(lf.ADDON_MARKER))
+  assert.ok(lf.isAddonText('﻿' + text))
+  assert.match(text, /Rarity Unique\r\n {2}BaseType == "Leather Belt"/)
+  assert.match(text, /BaseType == "Vaal Regalia"/)
+  assert.match(text, /Class == "Skill Gems" "Support Gems"\r\n {2}BaseType == "Added Fire Damage Support" "Arc"/)
+  assert.equal(/Gems/.test(lf.addonBlocks(w, { source: 'Mine.filter', game: 'poe2' })), false)
+  assert.equal(lf.isAddonText('Show\n'), false)
+})
+
+test('loot filter files: only the add-on is written, his filter untouched, no escapes', async () => {
+  const { mkdtempSync, writeFileSync, readFileSync, symlinkSync, existsSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const dir = mkdtempSync(join(tmpdir(), 'lf-'))
+  const outside = mkdtempSync(join(tmpdir(), 'lf-out-'))
+  const mine = '﻿Show\n  BaseType "Exalted Orb"\nHide\n'
+  writeFileSync(join(dir, 'Mine.filter'), mine)
+  writeFileSync(join(outside, 'Secret.filter'), 'secret')
+  let linked = true
+  try { symlinkSync(join(outside, 'Secret.filter'), join(dir, 'Link.filter')) } catch { linked = false }
+  const wants = { bases: ['Vaal Regalia'], uniqueBases: [], gems: [] }
+
+  // a link is not listed (only real files)
+  assert.deepEqual(await lootFiles.listFilters(dir), ['Mine.filter'])
+
+  const res = await lootFiles.makeAddon(dir, 'Mine.filter', wants, 'poe1', '2026-11-21')
+  assert.equal(res.ok, true)
+  assert.equal(res.written, 'Mine + Orbhoarder.filter')
+  const out = readFileSync(join(dir, 'Mine + Orbhoarder.filter'), 'utf8')
+  assert.ok(out.startsWith('# Orbhoarder loot filter add-on'))
+  assert.ok(out.endsWith('Show\n  BaseType "Exalted Orb"\nHide\n'))
+  assert.equal(readFileSync(join(dir, 'Mine.filter'), 'utf8'), mine)
+  // ours again: replaced; listed filters never include it
+  assert.equal((await lootFiles.makeAddon(dir, 'Mine.filter', wants, 'poe1')).ok, true)
+  assert.deepEqual(await lootFiles.listFilters(dir), ['Mine.filter'])
+
+  // refused: other folders, our own add-on as source, nothing to add, someone else's file of our name
+  assert.equal((await lootFiles.makeAddon(dir, '../x.filter', wants, 'poe1')).ok, false)
+  assert.equal((await lootFiles.makeAddon(dir, 'Mine + Orbhoarder.filter', wants, 'poe1')).ok, false)
+  assert.equal((await lootFiles.makeAddon(dir, 'Mine.filter', { bases: [], uniqueBases: [], gems: [] }, 'poe1')).ok, false)
+  writeFileSync(join(dir, 'Other.filter'), 'Show\n')
+  writeFileSync(join(dir, 'Other + Orbhoarder.filter'), 'his own file')
+  assert.equal((await lootFiles.makeAddon(dir, 'Other.filter', wants, 'poe1')).ok, false)
+  assert.equal(readFileSync(join(dir, 'Other + Orbhoarder.filter'), 'utf8'), 'his own file')
+  if (linked) {
+    // a link to a file outside the folder is not read
+    const r = await lootFiles.makeAddon(dir, 'Link.filter', wants, 'poe1')
+    assert.equal(r.ok, false)
+    assert.equal(existsSync(join(dir, 'Link + Orbhoarder.filter')), false)
+    // a link in place of the add-on is not followed
+    symlinkSync(join(outside, 'Secret.filter'), join(dir, 'Other2 + Orbhoarder.filter'))
+    writeFileSync(join(dir, 'Other2.filter'), 'Show\n')
+    assert.equal((await lootFiles.makeAddon(dir, 'Other2.filter', wants, 'poe1')).ok, false)
+    assert.equal(readFileSync(join(outside, 'Secret.filter'), 'utf8'), 'secret')
+  }
+})
+
+test('loot filter: only names the item data knows; transfigured gems as their normal gem; capped lists', () => {
+  const lf = lootFilter
+  const bases = new Set(['Vaal Regalia', 'Leather Belt'])
+  const gems = { Arc: { refName: 'Arc' }, 'Arc of Surging': { refName: 'Arc of Surging', transfigured: true, normalVariant: 'Arc' }, 'Added Fire Damage Support': { refName: 'Added Fire Damage Support' } }
+  const known = {
+    base: n => bases.has(n),
+    gem: n => { const g = gems[n]; return !g ? null : (g.transfigured ? g.normalVariant ?? null : g.refName) }
+  }
+  const res = lf.keepKnown({ bases: ['Vaal Regalia', 'Made Up Base'], uniqueBases: ['Leather Belt', 'Nope Belt'], gems: ['Arc of Surging', 'Arc', 'Added Fire Damage Support', 'Fake Gem'] }, known)
+  assert.deepEqual(res.wants, { bases: ['Vaal Regalia'], uniqueBases: ['Leather Belt'], gems: ['Arc', 'Added Fire Damage Support'] })
+  assert.deepEqual(res.unknown, ['Made Up Base', 'Nope Belt', 'Fake Gem'])
+  const many = Array.from({ length: 120 }, (_, i) => `bad"${i}`)
+  assert.equal(lf.cleanWants({ bases: many }).refused.length, lf.MAX_REFUSED)
+  assert.equal(lf.keepKnown({ bases: Array.from({ length: 120 }, (_, i) => `Base ${i}`), uniqueBases: [], gems: [] }, known).unknown.length, lf.MAX_REFUSED)
+})
+
+test('request guard: phones cannot make or list loot filters', () => {
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::loot-filter', { op: 'list' }), false)
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::loot-filter', { op: 'make' }), false)
+})
+
 test('lab helper: trial ticks from Client.txt (Q7)', async () => {
   const lab = await import('./.build/lab-helper.mjs')
   assert.equal(lab.TRIALS.length, 12)

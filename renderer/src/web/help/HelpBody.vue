@@ -30,7 +30,7 @@
             <li><b>Build</b>: gear, gems, tree and Tree map of the active build.
               <b>Build</b> (top right) picks the build and loadout; the <b>⋯</b> menu next to it has Import a build, Build sharing, What changes between stages,
               Compare, Edit loadouts and Manage builds. In the overlay and in game, Compare / Edit / Manage open this window.</li>
-            <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take.</li>
+            <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take. <b>Pace</b> (below the game log stats) shows when you reached each act, your level and deaths there, and levels per hour of campaign time next to an earlier fresh start on this PC (your best or last; ⋯ to pick another, or to forget a run). Client.txt has no experience numbers, so it's levels per hour, not XP/h.</li>
             <li><b>Atlas</b>: the atlas passive tree. The drop-down picks an atlas build; the <b>⋯</b> menu adds one from a pathofexile.com atlas tree link or code
               (poeplanner links use their own format) or makes a ready-made tree, and copies the link to share with friends, renames or deletes it.
               Green = taken, orange = still to take. Step along the build with the arrows (1 or 5 passives) as you take passives in game;
@@ -47,11 +47,14 @@
               or type a name. Mark yours <b>Sold</b> / <b>Given</b> / <b>Got it</b> when done. Also in the overlay menu (<i class="fas fa-people-carry" />)
               and on the All tab (Edit layout → Add panel).</li>
             <li><b>Market</b>: your watchlist and a poe.ninja market overview, plus tools (tabs on the left):
-              <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, every row has Trade and gear rows ↑ to open the trade site; click a gear row for its mods; rares are listed without a price),
+              <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, every row has Trade and gear rows ↑ to open the trade site; click a gear row for its mods; rares are listed without a price;
+              ⋯ → <b>Make loot filter add-on…</b>: pick your loot filter and Orbhoarder writes a new file next to it, <i>"your filter + Orbhoarder.filter"</i>, with big, highlighted Show blocks for what's still to buy (uniques by base type, the rares' bases, gems in PoE1) first and then your filter unchanged (every drop of a listed rare base is highlighted, white, magic or rare; names the app doesn't know are left out, since the game refuses a filter with an unknown name); in game pick it in <b>Options → UI → Item filter</b>. Your own filter file is never changed; make it again when the list changes. Only on the PC, only in the game's Documents\My Games folder; website (online) filters can't be used, download the file first),
               <b>Sell list</b> (what you plan to sell: value now, a week of prices, "Falling: sell soon" or "Rising: can wait", and a copy button for a <code>~price</code> note),
               <b>Farming</b> (name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
               <b>Crafting</b> (crafting currency prices with a week's trend, and a sum of what your craft costs).
-              The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Money tools → Currency counter).</li>
+              The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Money tools → Currency counter).
+              <b>Price lines</b>: on a Watched or Shopping row, ⋯ → <b>Price line above / below…</b>, then a price in chaos or divine. Each time Orbhoarder refreshes poe.ninja prices (no extra downloads) it checks them; an alert fires once when the price crosses your line.
+              With the phone link on (Settings → Tools) a connected phone shows it at the top of the page (dismiss there only hides it on the phone); if no phone confirms it within a few seconds (none connected, or it's locked) you get a Windows notification. Prices are only checked while something that shows them (price check, Market, Money tools) is in use. Add and remove price lines on the PC; <b>?</b> above the Watched list explains the rest. (Not the same as the Watched row's <b>Alert</b> button, which tells you when the price moves by a percentage.)</li>
             <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
             <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide, What's new and <b>Patch notes</b> (GGG's PC patch notes; a yellow dot means new notes came out since you last opened them, with a Windows notification too: Settings → General to turn it off).</li>
           </ul>
@@ -71,6 +74,8 @@
               Drag them by the top bar, resize from the bottom-right corner. A panel set to click-through can't be dragged while you play: press Shift+Space first.</li>
             <li><b>Panels in the overlay</b>: hover a panel, click <b>Move</b> and drag one of the corner squares. A panel's hotkey pressed in game shows only that panel; Shift+Space shows the menu and every open panel.</li>
             <li><b>Cheat sheets</b>: short sheets for league mechanics (Covens, Betrayal, Heist, Delve, Sanctum, map mechanics), vendor recipes and a league checklist.
+              <b>Fate reward values</b> (button at the bottom of the Covens sheet): the Fate reward types with their poe.ninja price per item, dearest first, and how many copies of a Fate pay
+              (2 for the single Divine / Annulment outcomes, otherwise 1 or 3). GGG doesn't say how many items most rewards give, so the star only means "highest price per item"; random drops have no price.
               <b>Thread planner</b>: pick a Thread and how many you put in the map device (1–8) to see the guaranteed Thread mods, which 3 / 6 / 8 bonus you get and the next one,
               the area level the strongest effects need, the cost per map at poe.ninja prices (chaos and divine) and the atlas notables that help that Thread
               (which option to choose on Dextral / Sinistral Threads, which type to rule out on Threadbare / Unthreaded). <b>?</b> says where the numbers come from.

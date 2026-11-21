@@ -32,6 +32,10 @@
             <li v-for="l of sec.lines" :key="l">{{ l }}</li>
           </ul>
         </div>
+        <template v-if="sheet.id === 'covens'">
+          <FateValue v-if="fateOpen" />
+          <button class="ui-btn ui-btn-quiet" @click="toggleFate">{{ fateOpen ? 'Hide Fate reward values' : 'Fate reward values (poe.ninja)' }}</button>
+        </template>
         <div class="text-gray-500"><i class="fas fa-info-circle mr-1" />{{ sheet.check }} GGG changes mechanics now and then.</div>
       </template>
       <template v-else>
@@ -61,6 +65,14 @@ import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 
 // Thread planner brings the atlas tree data (~170 kB): loaded when its tab opens
 const ThreadPlanner = defineAsyncComponent(() => import('./ThreadPlanner.vue'))
+// Fate value helper (Covens sheet): closed by default, so prices only load when opened
+const FateValue = defineAsyncComponent(() => import('./FateValue.vue'))
+const FATE_KEY = 'deathloom.cheats.fateValue.v1'
+const fateOpen = ref((() => { try { return localStorage.getItem(FATE_KEY) === '1' } catch { return false } })())
+function toggleFate () {
+  fateOpen.value = !fateOpen.value
+  try { localStorage.setItem(FATE_KEY, fateOpen.value ? '1' : '0') } catch {}
+}
 
 const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), ...OWN_TABS]
 const KEY = 'deathloom.cheats.tab.v1'

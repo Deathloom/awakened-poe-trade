@@ -1,4 +1,6 @@
 import type { Game } from './game'
+import type { PriceAlertInput, PriceAlertState, PriceAlertFired } from './price-alerts'
+import type { LootFilterWants } from './loot-filter'
 
 export interface HostConfig {
   shortcuts: ShortcutAction[]
@@ -570,6 +572,9 @@ export type IpcEvent =
   IpcStashRequest |
   IpcStashResult |
   IpcStashSession |
+  IpcPriceAlertsRequest |
+  IpcPriceAlertsState |
+  IpcPriceAlertFired |
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
@@ -592,7 +597,9 @@ export type IpcEvent =
   IpcUserReport |
   IpcUserReportResult |
   IpcToolsRequest |
-  IpcToolsResult
+  IpcToolsResult |
+  IpcLootFilterRequest |
+  IpcLootFilterResult
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -701,6 +708,32 @@ type IpcToolsResult =
     health?: HealthItem[]
     remote?: RemoteInfo
     backup?: { ok: boolean, path?: string, text?: string, error?: string }
+  }>
+
+// Deathloom fork (Q10): loot filter add-on (Market → Shopping ⋯). Main lists the .filter
+// files in the game's My Games folder and writes "<name> + Orbhoarder.filter" next to
+// the one picked (his file is never changed). This PC only, not from phones.
+type IpcLootFilterRequest =
+  Event<'CLIENT->MAIN::loot-filter', {
+    requestId: number
+    op: 'list' | 'make'
+    // make: his filter's file name (no folder)
+    source?: string
+    wants?: LootFilterWants
+  }>
+
+type IpcLootFilterResult =
+  Event<'MAIN->CLIENT::loot-filter', {
+    requestId: number
+    ok: boolean
+    error?: string
+    // list: the filter folder and his filters (not our add-ons)
+    folder?: string
+    filters?: string[]
+    // make: the file written and what went in
+    written?: string
+    count?: number
+    refused?: string[]
   }>
 
 type IpcHudDims =
@@ -1599,6 +1632,29 @@ type IpcStashSession =
   Event<'CLIENT->MAIN::stash-session', {
     sessionId: string | null
   }>
+
+// Deathloom fork (Q6): price alerts (ipc/price-alerts.ts). Only 'list' and 'ack' are allowed
+// from a phone (request-guard.ts); adding and removing happen on the PC.
+type IpcPriceAlertsRequest =
+  Event<'CLIENT->MAIN::price-alerts', {
+    op: 'list' | 'add' | 'remove' | 'clear-fired' | 'settings' | 'ack'
+    rule?: PriceAlertInput
+    id?: string
+    // ack: a phone got these fired alerts (so the PC needn't notify)
+    ids?: string[]
+    pcAlways?: boolean
+  }>
+
+// the alerts and recently fired ones; sent to every window (and a paired phone) when they change
+type IpcPriceAlertsState =
+  Event<'MAIN->CLIENT::price-alerts', PriceAlertState & {
+    // why an 'add' was refused
+    error?: string
+  }>
+
+// alerts that just fired (after a poe.ninja price refresh)
+type IpcPriceAlertFired =
+  Event<'MAIN->CLIENT::price-alert-fired', { fired: PriceAlertFired[] }>
 
 interface Event<TName extends string, TPayload = undefined> {
   name: TName
