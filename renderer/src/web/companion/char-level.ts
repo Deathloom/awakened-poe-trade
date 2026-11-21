@@ -245,6 +245,16 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
       passivesList = null
     }
     if (ev.type === 'level') {
+      // a lower level than we have for this name: the character was deleted and
+      // made again with the same name. Its old progress would make the new run
+      // share the old one's start, splits and level times, so start afresh.
+      const base = v ?? start
+      const known = base.chars.find(c => c.name === ev.char)
+      if (known && known.level > ev.level && base.progress[ev.char]) {
+        const progress = { ...base.progress }
+        delete progress[ev.char]
+        v = { ...base, progress }
+      }
       v = recordLevel(v ?? start, ev.char, ev.cls, ev.level)
       // Q8 pace log: campaign time at each level, for characters followed from level 2
       const lp = v.progress[ev.char]

@@ -1708,6 +1708,47 @@ test('pace log (Q8): compare with best / last, cap, forget, bad data', async () 
   assert.equal(pace.fmtDelta(0), '±0:00')
 })
 
+test('pace log (Q8 fix): a character remade with the same name is a new run', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  const L = (d, t, s) => `2026/11/${d} 10:${t} 1 a [INFO Client 1] ${s}`
+  const A = (d, t, code) => `2026/11/${d} 10:${t} 1 a [DEBUG Client 1] Generating level 2 area "${code}" with seed 1`
+  const league1 = [L('01', '00:00', ': Hero (Witch) is now level 2'), A('01', '00:05', '1_1_2'), A('01', '30:05', '1_2_1'),
+    L('01', '40:00', ': Hero (Witch) is now level 20'), A('01', '45:05', '1_3_1')]
+  const league2 = [L('20', '00:00', ': Hero (Ranger) is now level 2'), A('20', '00:05', '1_1_2'), A('20', '05:05', '1_2_1')]
+  let v = { chars: [], selected: '', manual: null, questPoints: null, progress: {} }
+  v = cl.applyLogLines(v, league1, 'en', 0)
+  const first = { ...v.progress.Hero }
+  let st = pace.syncRuns({ runs: [], forgotten: [] }, v)
+  v = cl.applyLogLines(v, league2, 'en', 0)
+  const p = v.progress.Hero
+  assert.notEqual(p.startAt, first.startAt)
+  assert.deepEqual(p.levelAt, { 2: 0 })
+  assert.deepEqual(p.splits, { 1: 0, 2: 300000 })
+  st = pace.syncRuns(st, v)
+  assert.equal(st.runs.length, 2, 'the old run is kept, the new one added')
+  assert.equal(pace.bestRun(st.runs, pace.runId('Hero', p)).id, pace.runId('Hero', first))
+  // Rebuild over both leagues gives the same two runs
+  const rebuilt = cl.rebuildFromLog({ chars: [], selected: '', manual: null, questPoints: null, progress: {} }, [...league1, ...league2], 'en')
+  assert.equal(rebuilt.progress.Hero.startAt, p.startAt)
+  // a duplicate level line doesn't reset
+  const again = cl.applyLogLines(v, [L('20', '06:00', ': Hero (Ranger) is now level 2')], 'en', 0)
+  assert.deepEqual(again.progress.Hero.splits, p.splits)
+})
+
+test('pace log (Q8 fix): name-only match keeps a different earlier run; line without a time', async () => {
+  const cl = await import('./.build/char-level.mjs')
+  const pace = await import('./.build/pace-log.mjs')
+  const old = { id: 'Hero@0', name: 'Hero', cls: '', startAt: 0, updatedAt: 1, splits: { 1: 0, 2: 999 }, actMs: {}, deaths: 0, deathsByAct: {}, levelAt: {}, level: 30, campaignMs: 0, endgame: false }
+  const levels = { chars: [{ name: 'Hero', cls: 'Witch', level: 3, at: 1 }], progress: { Hero: { firstLevel: 2, startAt: 5, splits: { 1: 0, 2: 100 }, passives: 0, respec: 0, quests: [], bosses: [] } } }
+  const st = pace.syncRuns({ runs: [old], forgotten: [] }, levels)
+  assert.deepEqual(st.runs.map(r => r.id).sort(), ['Hero@0', 'Hero@5'])
+  // no timestamp on the line: "now" is used for the start
+  const v = cl.applyLogLines({ chars: [], selected: '', manual: null, questPoints: null, progress: {} }, ['[INFO Client 1] : Solo (Witch) is now level 2'], 'en', 0, undefined, 12345)
+  assert.equal(v.progress.Solo.startAt, 12345)
+  assert.deepEqual(v.progress.Solo.levelAt, { 2: 0 })
+})
+
 test('request guard (Q8): a phone cannot take the game log catch-up lines', () => {
   assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::game-log-catchup', {}), false)
   assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::read-game-log', { requestId: 1 }), true)

@@ -135,6 +135,11 @@ export function capRuns (runs: PaceRun[]): PaceRun[] {
   return kept
 }
 
+function sameStart (old: PaceRun, run: PaceRun) {
+  const acts = Object.keys(old.splits)
+  return acts.length > 0 && acts.every(a => run.splits[a] === old.splits[a])
+}
+
 // Client.txt progress (the level recorder's store) -> saved runs.
 // Returns the same object when nothing changed (no write needed).
 export function syncRuns (store: PaceStore, levels: CharLevels, now = Date.now()): PaceStore {
@@ -146,7 +151,9 @@ export function syncRuns (store: PaceStore, levels: CharLevels, now = Date.now()
     if (!run || store.forgotten.includes(run.id)) continue
     // a run saved before its start time was known (name@0) is the same run
     let i = runs.findIndex(r => r.id === run.id)
-    if (i < 0 && run.startAt) i = runs.findIndex(r => r.name === name && !r.startAt)
+    // (same start = its splits are the start of the new run's; otherwise it's an
+    // earlier character with the same name and is kept)
+    if (i < 0 && run.startAt) i = runs.findIndex(r => r.name === name && !r.startAt && sameStart(r, run))
     if (i >= 0 && same(runs[i], run)) continue
     if (i >= 0 && !run.cls) run.cls = runs[i].cls
     runs = i >= 0 ? runs.map((r, j) => j === i ? run : r) : [...runs, run]
