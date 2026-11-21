@@ -67,6 +67,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q9): bench recipe checklist
 - **Cheat sheets → Bench recipes**: the crafting bench recipes on the campaign route, by act and zone (the same places the campaign guide shows), with the next one ahead of the guide's step and a count of unticked ones in zones you're past. Click a recipe in the guide's "crafting recipe" line to tick it there; ticked ones are crossed out in both. Ticks are by hand (the game log doesn't say when you pick one up) and account-wide on this PC, like recipe unlocks in game.
 
+### Security: Dependabot version updates
+- `.github/dependabot.yml`: weekly update PRs (Mondays) for main and renderer npm packages and the pinned GitHub Actions, all to **dev**; minor and patch bumps grouped, at most 3 open per folder. Nothing changes in the app.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
