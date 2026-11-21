@@ -18,10 +18,18 @@ export interface BenchRecipeSpot {
   step: number
 }
 
-// Recipe names on one route step (the labyrinth's "crafting" parts have none)
-export function stepRecipes (st: RouteStep | undefined): string[] {
+// Which step/task `only` flags are shown (optional quests, bandit choice);
+// campaign-route.ts onlyActive with the guide's current switches
+export type OnlyFilter = (only: string | undefined) => boolean
+const ALL: OnlyFilter = () => true
+
+// Recipe names on one route step (the labyrinth's "crafting" parts have none).
+// Steps and tasks the guide hides (e.g. optional quests switched off) give none.
+export function stepRecipes (st: RouteStep | undefined, active: OnlyFilter = ALL): string[] {
   const out: string[] = []
-  for (const t of st?.tasks ?? []) {
+  if (!st || !active(st.only)) return out
+  for (const t of st.tasks) {
+    if (!active(t.only)) continue
     for (const p of t.parts) {
       if (typeof p === 'string' || p.k !== 'crafting') continue
       for (const r of p.recipes ?? []) if (typeof r === 'string' && r && !out.includes(r)) out.push(r)
@@ -31,11 +39,11 @@ export function stepRecipes (st: RouteStep | undefined): string[] {
 }
 
 // Every recipe on the route, in route order, at the first place the route passes it
-export function benchRecipeSpots (steps: RouteStep[]): BenchRecipeSpot[] {
+export function benchRecipeSpots (steps: RouteStep[], active: OnlyFilter = ALL): BenchRecipeSpot[] {
   const seen = new Set<string>()
   const out: BenchRecipeSpot[] = []
   steps.forEach((st, i) => {
-    for (const recipe of stepRecipes(st)) {
+    for (const recipe of stepRecipes(st, active)) {
       if (seen.has(recipe)) continue
       seen.add(recipe)
       out.push({ recipe, zone: st.zone, act: st.act, areaId: st.areaId, step: i })

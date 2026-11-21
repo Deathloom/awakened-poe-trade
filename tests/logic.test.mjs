@@ -389,6 +389,12 @@ test('bench recipes (Q9): places from the route, manual account-wide ticks', asy
   assert.ok(lab)
   assert.deepEqual(bench.stepRecipes(lab), [])
   assert.deepEqual(bench.stepRecipes(undefined), [])
+  // optional quests switched off in the guide: their recipes aren't listed
+  const regen = 'Life and Mana Regeneration - Rank 1'
+  assert.ok(spots.some(s => s.recipe === regen && s.zone === 'The Archives'))
+  const noOptional = bench.benchRecipeSpots(steps, o => o !== 'OPTIONAL')
+  assert.ok(!noOptional.some(s => s.zone === 'The Archives'))
+  assert.ok(noOptional.length < spots.length && noOptional.length > 0)
   const caverns = spots.find(s => s.recipe === 'Vaal Skill Damage - Rank 1')
   assert.equal(caverns.zone, 'The Caverns')
   assert.equal(caverns.act, 2)

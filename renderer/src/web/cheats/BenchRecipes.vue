@@ -13,7 +13,8 @@
       <div>Crafting bench recipes you pick up on the campaign (a "Crafting Recipe" you click in the zone). Recipes are account-wide in game,
         so once you have one every character and league has it: tick it once. The game doesn't tell the app when you pick one up, so ticks are yours.</div>
       <div>The places are the ones the campaign guide's route lists (Exile Leveling's data), so the guide shows the same "crafting recipe" lines.
-        Click a recipe in the guide to tick it there too. Recipes not on the route (side areas the route skips) aren't listed.</div>
+        Click a recipe in the guide to tick it there too. Recipes not on the route (side areas the route skips) aren't listed, and
+        neither are ones in optional quests while the guide's optional quests are switched off.</div>
       <div>Not sure what you have? In game the crafting bench lists every recipe you've unlocked.</div>
     </div>
     <div v-if="confirmClear" class="flex flex-wrap items-center gap-1 text-gray-300">
@@ -21,7 +22,9 @@
       <button class="ui-btn" @click="clearAll">Untick all</button>
       <button class="ui-btn ui-btn-quiet" @click="confirmClear = false">Keep</button>
     </div>
-    <div v-if="!loaded" class="text-gray-500"><i class="fas fa-spinner fa-spin mr-1" />Loading the campaign route…</div>
+    <div v-if="failed" class="text-gray-400"><i class="fas fa-exclamation-triangle mr-1 text-yellow-500" />Couldn't load the campaign route.
+      <button class="ui-btn ml-1" @click="load">Retry</button></div>
+    <div v-else-if="!loaded" class="text-gray-500"><i class="fas fa-spinner fa-spin mr-1" />Loading the campaign route…</div>
     <template v-else>
       <div v-if="next" class="text-gray-300">
         <i class="fas fa-route mr-1 text-gray-500" />Next on your guide: <span class="text-gray-100">{{ next.recipe }}</span>
@@ -46,23 +49,31 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
-import { CAMPAIGN_STEP_KEY, STEPS, loadCampaignStep, loadRoute, routeLoaded } from '../companion/campaign-route'
+import { BANDIT_KEY, CAMPAIGN_STEP_KEY, OPTIONAL_KEY, STEPS, loadCampaignStep, loadRoute, onlyActive, routeLoaded } from '../companion/campaign-route'
 import { BENCH_KEY, actLabel, benchRecipeSpots, loadBenchTicks, nextUnfound, passedUnfound, saveBenchTicks, spotsByAct, toggleBenchTick, type BenchRecipeSpot } from '../companion/bench-recipes'
 
+// same steps as the guide shows (optional quests / bandit choice switches)
+const shownSpots = () => benchRecipeSpots(STEPS, o => onlyActive(o))
 const loaded = ref(routeLoaded())
-const spots = ref<BenchRecipeSpot[]>(loaded.value ? benchRecipeSpots(STEPS) : [])
+const failed = ref(false)
+const spots = ref<BenchRecipeSpot[]>(loaded.value ? shownSpots() : [])
 const guideStep = ref(loadCampaignStep())
-loadRoute().then(() => {
-  spots.value = benchRecipeSpots(STEPS)
-  guideStep.value = loadCampaignStep()
-  loaded.value = true
-}, () => {})
+function load () {
+  failed.value = false
+  loadRoute().then(() => {
+    spots.value = shownSpots()
+    guideStep.value = loadCampaignStep()
+    loaded.value = true
+  }, () => { failed.value = true })
+}
+load()
 
 const ticks = ref(loadBenchTicks())
 // the guide (overlay / HUD / window) can tick too, and moves the step
 const onStorage = (e: StorageEvent) => {
   if (e.key === BENCH_KEY) ticks.value = loadBenchTicks()
   if (e.key === CAMPAIGN_STEP_KEY) guideStep.value = loadCampaignStep()
+  if ((e.key === OPTIONAL_KEY || e.key === BANDIT_KEY) && loaded.value) spots.value = shownSpots()
 }
 window.addEventListener('storage', onStorage)
 onUnmounted(() => { window.removeEventListener('storage', onStorage) })
