@@ -61,7 +61,9 @@ const MODULES = {
   'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts',
   'price-alerts': 'ipc/price-alerts.ts',
   'pace-log': 'renderer/src/web/companion/pace-log.ts',
-  'char-level': 'renderer/src/web/companion/char-level.ts'
+  'char-level': 'renderer/src/web/companion/char-level.ts',
+  'loot-filter': 'ipc/loot-filter.ts',
+  'loot-filter-files': 'main/src/LootFilterFiles.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

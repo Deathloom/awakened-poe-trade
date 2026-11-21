@@ -9,6 +9,7 @@ import path from 'node:path'
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { startServer, eventPipe, server, otherDevicesConnected, fromOtherDevice, onClientConnected } from './server'
 import { PriceAlerts } from './PriceAlerts'
+import { LootFilter } from './LootFilter'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
 import { OverlayWindow } from './windowing/OverlayWindow'
@@ -67,6 +68,8 @@ app.on('ready', async () => {
   // Deathloom fork (Q6): price alerts, checked on each shared poe.ninja download
   const priceAlerts = new PriceAlerts(eventPipe, logger, otherDevicesConnected, fromOtherDevice)
   onClientConnected((send) => { priceAlerts.sendStateTo(send) })
+  // Deathloom fork (Q10): loot filter add-on next to his filter (this PC only)
+  const lootFilter = new LootFilter(eventPipe, logger, fromOtherDevice)
   const _httpProxy = new HttpProxy(server, logger, (target, res) => { priceAlerts.onNinjaDownload(target, res.statusCode, res.body) })
   const pobImpact = new PobImpact(eventPipe, logger)
   tray.pobDir = () => pobImpact.pobDir()
@@ -321,6 +324,7 @@ app.on('ready', async () => {
         shortcuts.updateActions(cfg.shortcuts, cfg.stashScroll, cfg.logKeys, cfg.restoreClipboard, cfg.language)
         gameLogWatcher.restart(cfg.clientLog ?? '', asGame(cfg.game))
         gameConfig.readConfig(cfg.gameConfig ?? '', asGame(cfg.game))
+        lootFilter.game = asGame(cfg.game)
         appUpdater.setChannel(cfg.pob?.updateChannel)
         appUpdater.checkAtStartup()
         tray.overlayKey = cfg.overlayKey

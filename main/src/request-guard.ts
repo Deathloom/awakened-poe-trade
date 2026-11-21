@@ -133,7 +133,9 @@ const NOT_FROM_OTHER_DEVICES = new Set([
   // Deathloom fork (Q8): the lines written while Orbhoarder was closed are handed
   // out once; only this PC's level recorder may take them (a phone asking first
   // left levels, deaths and act splits uncounted)
-  'CLIENT->MAIN::game-log-catchup'
+  'CLIENT->MAIN::game-log-catchup',
+  // Deathloom fork (Q10): reading / writing loot filter files stays on this PC
+  'CLIENT->MAIN::loot-filter'
 ])
 const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
 const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])
