@@ -72,7 +72,7 @@
             <li><b>Panels over the game</b>: pin any panel (build, guide, trade companion, tree map, atlas, session, market, cheat sheets, money) with Settings → Panels → Where panels show.
               Drag them by the top bar, resize from the bottom-right corner. A panel set to click-through can't be dragged while you play: press Shift+Space first.</li>
             <li><b>Panels in the overlay</b>: hover a panel, click <b>Move</b> and drag one of the corner squares. A panel's hotkey pressed in game shows only that panel; Shift+Space shows the menu and every open panel.</li>
-            <li><b>Cheat sheets</b>: short sheets for league mechanics (Covens, Betrayal, Heist, Delve, Sanctum, map mechanics), vendor recipes and a league checklist.
+            <li><b>Cheat sheets</b>: short sheets for league mechanics (Covens, Betrayal, Heist, Delve, Sanctum, map mechanics), vendor recipes, campaign bench recipes and a league checklist.
               <b>Fate reward values</b> (button at the bottom of the Covens sheet): the Fate reward types with their poe.ninja price per item, dearest first, and how many copies of a Fate pay
               (2 for the single Divine / Annulment outcomes, otherwise 1 or 3). GGG doesn't say how many items most rewards give, so the star only means "highest price per item"; random drops have no price.
               <b>Thread planner</b>: pick a Thread and how many you put in the map device (1–8) to see the guaranteed Thread mods, which 3 / 6 / 8 bonus you get and the next one,
@@ -103,6 +103,7 @@
             <li>Moves on by itself when you enter the next zone on the route (from the game's log file). The arrows fix it by hand.</li>
             <li>Hand-ins show what to pick for your build ("take …") and what to buy after. <span class="tag">optional</span> quests can be hidden with <i class="fas fa-plus-square" />.</li>
             <li>Bandit choice comes from your PoB build's Configuration tab.</li>
+            <li>"crafting recipe: …" lines are crafting bench recipes to pick up in that zone. Click one when you have it: it's crossed out and ticked in Cheat sheets → Bench recipes, which lists them all by act with the next one on your route. Ticks are by hand (the game log doesn't say) and count for all your characters, like recipes in game.</li>
           </ul>
         </section>
       </template>

@@ -84,7 +84,10 @@
                 <i v-else-if="p.k === 'dir'" class="fas fa-arrow-up text-gray-300 mx-px" :style="{ transform: `rotate(${Number(p.v)}deg)` }" :title="`direction ${p.v}°`" />
                 <span v-else-if="p.k === 'portal'" class="text-purple-300">{{ p.v === 'set' ? 'a portal' : 'the portal' }}</span>
                 <span v-else-if="p.k === 'ascend'" class="text-yellow-400">Ascend ({{ p.v }} Labyrinth)</span>
-                <span v-else-if="p.k === 'crafting'" class="text-gray-400" :title="p.recipes?.length ? 'Bench recipe found here' : ''">crafting recipe<template v-if="p.recipes?.length">: <span class="text-gray-200">{{ p.recipes.join(', ') }}</span></template></span>
+                <span v-else-if="p.k === 'crafting'" class="text-gray-400" :title="p.recipes?.length ? 'Bench recipe found here' : ''">crafting recipe<template v-if="p.recipes?.length">: <template v-for="(r, ri) of p.recipes" :key="r"><template v-if="ri">, </template><button type="button"
+                  class="text-gray-200 hover:underline" :class="{ 'line-through opacity-60': benchTicks.has(r) }"
+                  :title="benchTicks.has(r) ? 'Ticked in Cheat sheets → Bench recipes (click to untick)' : 'Bench recipe here. Click when you have it (ticks Cheat sheets → Bench recipes)'"
+                  @click="benchTicks = toggleBenchTick(r)">{{ r }}</button><i v-if="benchTicks.has(r)" class="fas fa-check text-green-500 ml-1" title="Ticked: you have this recipe" /></template></template></span>
                 <span v-else-if="p.k === 'quest_text'" class="g-item"><i class="fas fa-box" />{{ p.v }}</span>
                 <span v-else class="g-item">{{ p.v }}</span>
               </template>
@@ -131,6 +134,7 @@ import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional
 import { loadQuestGemData, planQuestGems, type QuestGemData, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
+import { BENCH_KEY, loadBenchTicks, toggleBenchTick } from './bench-recipes'
 
 const index = ref(loadIndex())
 // Deathloom fork: overlay, HUD and desktop window each show the guide; keep them on the same step
@@ -173,6 +177,11 @@ onUnmounted(() => { window.removeEventListener('storage', onLevels) })
 const progress = computed(() => progressOf(levels.value, currentChar(levels.value)?.name ?? ''))
 const doneQuests = computed(() => new Set(progress.value?.quests ?? []))
 const doneBosses = computed(() => new Set(progress.value?.bosses ?? []))
+// Deathloom fork (Q9): bench recipes ticked by hand (Cheat sheets → Bench recipes, or a click here)
+const benchTicks = ref(loadBenchTicks())
+const onBench = (e: StorageEvent) => { if (e.key === BENCH_KEY) benchTicks.value = loadBenchTicks() }
+window.addEventListener('storage', onBench)
+onUnmounted(() => { window.removeEventListener('storage', onBench) })
 
 // Deathloom fork (Gerhard, 16 Nov 2026): follow the character. Each one keeps its
 // own step; one seen for the first time starts at the act it was last in
