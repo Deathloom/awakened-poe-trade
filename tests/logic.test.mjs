@@ -1477,3 +1477,155 @@ test('fate value: outcomes at poe.ninja prices, best marked, unknowns honest (Q5
   assert.ok(f.valueFates(f.FATE_OUTCOMES, () => null).every(r => !r.best))
   assert.ok(f.valueFates(f.FATE_OUTCOMES, () => 0).every(r => !r.best))
 })
+
+// Deathloom fork (Q6): price alerts to the phone
+const alerts = await import('./.build/price-alerts.mjs')
+
+const NINJA_BLOB = '{"overviews":[' +
+  '{"type":"Currency","lines":[{"name":"Divine Orb","chaos":200,"graph":[1]},{"name":"Exalted Orb","chaos":12.5,"graph":[]}]},' +
+  '{"type":"UniqueAccessory","lines":[{"name":"Mageblood","chaos":30000,"graph":[]},{"name":"Headhunter","variant":"Relic","chaos":9000}]},' +
+  '{"type":"SkillGem","lines":[{"name":"Exalted Orb","chaos":1}]}]}'
+
+test('price alerts: poe.ninja lookup by section, name and variant', () => {
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'Currency', 'Exalted Orb'), 12.5)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'SkillGem', 'Exalted Orb'), 1)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'UniqueAccessory', 'Headhunter', 'Relic'), 9000)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'UniqueAccessory', 'Headhunter'), null)
+  // a name only in another section isn't taken
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'Currency', 'Mageblood'), null)
+  assert.equal(alerts.ninjaChaos(NINJA_BLOB, 'Fossil', 'Exalted Orb'), null)
+  assert.equal(alerts.ninjaDivine(NINJA_BLOB), 200)
+  assert.equal(alerts.ninjaDivine('{"type":"Currency","lines":[{"name":"Divine Orb","chaos":3}]}'), null)
+})
+
+test('price alerts: league from the shared download path (PoE 1 price list only)', () => {
+  assert.equal(alerts.ninjaLeague('poe.ninja/poe1/api/economy/current/dense/overviews?league=Keepers&language=en'), 'Keepers')
+  assert.equal(alerts.ninjaLeague('poe.ninja/poe1/api/economy/current/dense/overviews?league=Hardcore%20Keepers&language=en'), 'Hardcore Keepers')
+  assert.equal(alerts.ninjaLeague('poe.ninja/poe2/api/economy/current/dense/overviews?league=X'), null)
+  assert.equal(alerts.ninjaLeague('poe.ninja.evil.com/poe1/api/economy/current/dense/overviews?league=X'), null)
+  assert.equal(alerts.ninjaLeague('www.pathofexile.com/api/trade?league=X'), null)
+})
+
+test('price alerts: only checked, sane input is added', () => {
+  const ok = { league: 'Keepers', type: 'UniqueAccessory', name: 'Mageblood', label: 'Mageblood', dir: 'above', value: 150, unit: 'div' }
+  assert.deepEqual(alerts.validateAlertInput(ok, 0), { ...ok, variant: undefined })
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, dir: 'sideways' }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, value: -1 }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, value: Infinity }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, type: 'Currency"},{"x' }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput({ ...ok, name: 'x'.repeat(201) }, 0), 'string')
+  assert.equal(typeof alerts.validateAlertInput(ok, alerts.MAX_PRICE_ALERTS), 'string')
+  assert.equal(alerts.validateAlertInput({ ...ok, label: 'Mage\nblood\u0007' }, 0).label, 'Mageblood')
+  // the file is read back the same careful way
+  const st = alerts.readAlertState({ rules: [{ ...ok, id: 'a1', createdAt: 1, armed: true }, { ...ok, id: '../x' }, { id: 'b' }], fired: [{ id: 1 }], pcAlways: 'yes' })
+  assert.equal(st.rules.length, 1)
+  assert.equal(st.rules[0].armed, true)
+  assert.deepEqual(st.fired, [])
+  assert.equal(st.pcAlways, false)
+  assert.deepEqual(alerts.readAlertState('nonsense'), alerts.emptyAlertState())
+})
+
+test('price alerts: fire once per crossing, re-arm past 3%, at most once an hour', () => {
+  const H = 60 * 60 * 1000
+  let rule = { id: 'r', league: 'L', type: 'Currency', name: 'X', label: 'X', dir: 'above', value: 100, unit: 'chaos', createdAt: 0 }
+  // first price only arms (already above: never fires for it)
+  let s = alerts.stepRule(rule, 120, 0)
+  assert.equal(s.fire, false); assert.equal(s.rule.armed, false)
+  s = alerts.stepRule(rule, 90, 0)
+  assert.equal(s.fire, false); assert.equal(s.rule.armed, true)
+  rule = s.rule
+  s = alerts.stepRule(rule, 105, 1 * H); assert.equal(s.fire, true); rule = s.rule
+  // stays above: no second alert
+  s = alerts.stepRule(rule, 130, 2 * H); assert.equal(s.fire, false); rule = s.rule
+  // dips just under the line (within 3%): not re-armed
+  s = alerts.stepRule(rule, 98, 3 * H); assert.equal(s.rule.armed, false); rule = s.rule
+  s = alerts.stepRule(rule, 101, 4 * H); assert.equal(s.fire, false); rule = s.rule
+  // well under: re-armed, fires on the next crossing
+  s = alerts.stepRule(rule, 90, 5 * H); assert.equal(s.rule.armed, true); rule = s.rule
+  s = alerts.stepRule(rule, 100, 6 * H); assert.equal(s.fire, true); rule = s.rule
+  // flapping inside the hour: re-armed but the cooldown holds it back
+  s = alerts.stepRule(rule, 50, 6 * H + 1000); rule = s.rule
+  s = alerts.stepRule(rule, 150, 6 * H + 2000); assert.equal(s.fire, false); assert.equal(s.rule.armed, true); rule = s.rule
+  s = alerts.stepRule(rule, 150, 7 * H + 1); assert.equal(s.fire, true)
+  // no price: nothing changes
+  assert.equal(alerts.stepRule(rule, null, 8 * H).rule, rule)
+  // below works the other way round
+  const below = { ...rule, dir: 'below', value: 10, armed: true, firedAt: undefined }
+  assert.equal(alerts.stepRule(below, 9.9, 0).fire, true)
+  assert.equal(alerts.stepRule(below, 10.1, 0).fire, false)
+})
+
+test('price alerts: a fresh price list checks only that league, divine alerts use the divine price', () => {
+  const base = { league: 'Keepers', type: 'UniqueAccessory', name: 'Mageblood', label: 'Mageblood', dir: 'above', unit: 'div', createdAt: 0 }
+  const state = {
+    pcAlways: false,
+    fired: [],
+    rules: [
+      { ...base, id: 'a', value: 140, armed: true },
+      { ...base, id: 'b', value: 160, armed: true },
+      { ...base, id: 'c', value: 1, armed: true, league: 'Standard' },
+      { ...base, id: 'd', name: 'Exalted Orb', type: 'Currency', label: 'Exalted Orb', unit: 'chaos', dir: 'below', value: 13, armed: true }
+    ]
+  }
+  const res = alerts.checkAlerts(state, NINJA_BLOB, 'Keepers', 1000)
+  assert.deepEqual(res.fired.map(f => f.ruleId), ['a', 'd'])
+  assert.equal(res.fired[0].price, 150)
+  assert.equal(res.fired[0].chaos, 30000)
+  assert.equal(alerts.alertText(res.fired[0]), 'Mageblood is above 140 div (now 150 div)')
+  assert.equal(res.state.rules.find(r => r.id === 'c'), state.rules[2])
+  assert.equal(res.state.fired.length, 2)
+  // the same list again: nothing new
+  const again = alerts.checkAlerts(res.state, NINJA_BLOB, 'Keepers', 2000)
+  assert.equal(again.fired.length, 0)
+  assert.equal(res.changed, true)
+  // another league's list doesn't touch these
+  assert.equal(alerts.checkAlerts(state, NINJA_BLOB, 'Hardcore', 1000).changed, false)
+  // only the "now" price moved: not a change worth saving/broadcasting, but kept in memory
+  const quiet = { ...res.state, rules: res.state.rules.map(r => ({ ...r, last: 1 })) }
+  const moved = alerts.checkAlerts(quiet, NINJA_BLOB, 'Keepers', 3000)
+  assert.equal(moved.changed, false)
+  assert.equal(moved.lastChanged, true)
+  assert.equal(moved.fired.length, 0)
+  assert.equal(moved.state.rules.find(r => r.id === 'a').last, 150)
+  assert.equal(moved.state.fired, quiet.fired)
+  // same prices again: nothing at all
+  const same = alerts.checkAlerts(moved.state, NINJA_BLOB, 'Keepers', 4000)
+  assert.equal(same.changed || same.lastChanged, false)
+  assert.equal(same.state, moved.state)
+})
+
+test('price alerts: no duplicates, PC notified unless a phone confirmed, file read-back cleaned', () => {
+  const ok = { league: 'Keepers', type: 'UniqueAccessory', name: 'Mageblood', label: 'Mageblood', dir: 'above', value: 150, unit: 'div' }
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok }), true)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, value: 151 }), false)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, dir: 'below' }), false)
+  assert.equal(alerts.isDuplicateAlert([ok], { ...ok, variant: 'Relic' }), false)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: false, phoneAcked: false }), true)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: false, phoneAcked: true }), false)
+  assert.equal(alerts.shouldNotifyPc({ pcAlways: true, phoneAcked: true }), true)
+  assert.deepEqual(alerts.cleanAckIds(['a-1', '../x', 5, 'b_2']), ['a-1', 'b_2'])
+  assert.deepEqual(alerts.cleanAckIds('a'), [])
+  const fired = { id: 'r1-5', ruleId: 'r1', league: 'Keepers', label: 'Mage\nblood', dir: 'above', value: 1, unit: 'div', price: 2, chaos: 400, at: 5 }
+  const st = alerts.readAlertState({
+    rules: [{ ...ok, id: 'a' }, { ...ok, id: 'b' }],
+    fired: [fired, { ...fired, id: '<img>' }, { ...fired, label: 'x'.repeat(300) }, { ...fired, price: Infinity }]
+  })
+  assert.equal(st.rules.length, 1)
+  assert.equal(st.fired.length, 1)
+  assert.equal(st.fired[0].label, 'Mageblood')
+})
+
+test('request guard: phones see price alerts but cannot change them, nor take over the price check', () => {
+  const ok = guard.allowedFromOtherDevice
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'list' }), true)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'ack', ids: ['a'] }), true)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'add', rule: {} }), false)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'remove', id: 'a' }), false)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', { op: 'settings', pcAlways: true }), false)
+  assert.equal(ok('CLIENT->MAIN::price-alerts', null), false)
+  assert.equal(ok('CLIENT->MAIN::used-recently', { isOverlay: false }), false)
+  assert.equal(ok('CLIENT->MAIN::stash-session', { sessionId: 'x' }), false)
+  // the PC's own windows still reach main (price check needs OVERLAY->MAIN)
+  assert.equal(guard.isClientEvent('CLIENT->MAIN::price-alerts'), true)
+  assert.equal(guard.isClientEvent('OVERLAY->MAIN::track-area'), true)
+})

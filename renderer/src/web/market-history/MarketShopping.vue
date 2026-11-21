@@ -32,6 +32,7 @@
           <ui-menu :items="rowMenu(r)" align-right button-class="ui-btn-quiet" title="More" />
         </div>
         <div v-if="tradeErr[r.key]" class="pl-12 pb-1 text-red-400">{{ tradeErr[r.key] }}</div>
+        <price-alert-form v-if="alertOpen === r.key && r.listing" class="pl-12" :item="{ type: r.listing.type, name: r.listing.name, variant: r.listing.variant, label: r.listing.variant ? `${r.label} (${r.listing.variant})` : r.label }" :chaos="r.listing.chaos" />
         <div v-if="openRows.has(r.key) && gearOf(r)" class="pl-12 pb-1.5 space-y-px">
           <div class="text-gray-400">{{ gearOf(r)!.baseName }}<template v-if="gearOf(r)!.itemLevel"> · item level {{ gearOf(r)!.itemLevel }}</template><template v-if="gearOf(r)!.corrupted"> · <span class="text-red-400">corrupted</span></template></div>
           <div v-for="(m, mi) of gearOf(r)!.mods" :key="mi" :class="modClass(m)">{{ m.text }}<span v-if="m.crafted" class="text-gray-500"> (crafted)</span><span v-if="m.fractured" class="text-gray-500"> (fractured)</span></div>
@@ -50,6 +51,7 @@ import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { Host } from '@/web/background/IPC'
 import type { PobGearItem, PobSocketGroup } from '@ipc/types'
 import PriceSpark from './PriceSpark.vue'
+import PriceAlertForm from './PriceAlertForm.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { useMarket } from './use-market'
 import { copyText } from '../pob/market'
@@ -172,8 +174,11 @@ function trade (r: ShopRow, upgrade: boolean) {
   tradeErr.value = { ...tradeErr.value, [r.key]: err ?? '' }
 }
 
+// Deathloom fork (Q6): price alert above / below a price for this row
+const alertOpen = ref<string | null>(null)
 function rowMenu (r: ShopRow): UiMenuItem[] {
   return [
+    { label: 'Price line above / below…', icon: 'fas fa-bell', disabled: !r.listing || r.kind === 'rare', hint: 'Tell me (phone or Windows notification) when the price crosses a line', action: () => { alertOpen.value = alertOpen.value === r.key ? null : r.key } },
     { label: 'Copy name for the in-game market', icon: 'far fa-copy', hint: 'Press / in game, then Ctrl+V', action: () => copyText(gearOf(r)?.searchText ?? r.label) },
     { label: 'Open on poe.ninja', icon: 'fas fa-external-link-alt', disabled: !r.listing, action: () => { if (r.listing) open(r.listing.url) } }
   ]

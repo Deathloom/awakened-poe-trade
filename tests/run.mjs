@@ -58,7 +58,8 @@ const MODULES = {
   'cheat-fates': 'renderer/src/web/cheats/fates.ts',
   'lazy-data': 'renderer/src/web/companion/lazy-data.ts',
   'cheat-challenges': 'renderer/src/web/cheats/challenges.ts',
-  'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts'
+  'build-map-rules': 'renderer/src/web/map-check/build-map-rules.ts',
+  'price-alerts': 'ipc/price-alerts.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

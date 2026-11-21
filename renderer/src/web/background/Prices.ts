@@ -16,6 +16,8 @@ export interface NinjaListing extends NinjaDenseInfo {
   ns: string
   // poe.ninja category slug (currency, scarabs, unique-weapons...)
   category: string
+  // Deathloom fork (Q6): poe.ninja overview type (Currency, UniqueWeapon, …), for price alerts
+  type: string
   url: string
 }
 
@@ -88,11 +90,12 @@ export const usePoeninja = createGlobalState(() => {
     if (allCache) return allCache
     const out: NinjaListing[] = []
     for (const { ns, url, lines } of PRICES_DB) {
+      const type = overviewType(lines)
       for (const m of lines.matchAll(/\{"name":[^{}]*\}/g)) {
         try {
           const info = JSON.parse(m[0]) as NinjaDenseInfo
           if (typeof info.chaos !== 'number' || !info.name) continue
-          out.push({ ...info, ns, category: url, url: `https://poe.ninja/poe1/economy/${selectedLeagueToUrl()}/${url}/${denseInfoToDetailsId(info)}` })
+          out.push({ ...info, ns, category: url, type, url: `https://poe.ninja/poe1/economy/${selectedLeagueToUrl()}/${url}/${denseInfoToDetailsId(info)}` })
         } catch {}
       }
     }
@@ -143,6 +146,7 @@ export const usePoeninja = createGlobalState(() => {
 
       return {
         ...info,
+        type: overviewType(lines),
         url: `https://poe.ninja/poe1/economy/${selectedLeagueToUrl()}/${url}/${denseInfoToDetailsId(info)}`
       }
     }
@@ -193,6 +197,12 @@ export const usePoeninja = createGlobalState(() => {
     initialLoading: () => isLoading.value && !PRICES_DB.length
   }
 })
+
+// a price list section starts with {"type":"<type>"
+function overviewType (lines: string): string {
+  const start = '{"type":"'.length
+  return lines.slice(start, lines.indexOf('"', start))
+}
 
 function denseInfoToDetailsId (info: NinjaDenseInfo): string {
   return ((info.variant) ? `${info.name}, ${info.variant}` : info.name)

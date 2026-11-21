@@ -73,7 +73,9 @@ function downloadToMemory (options: Electron.ClientRequestConstructorOptions): P
 export class HttpProxy {
   constructor (
     server: Server,
-    logger: Logger
+    logger: Logger,
+    // Deathloom fork (Q6): told about each fresh poe.ninja price list (price alerts)
+    onNinjaDownload?: (target: string, res: CachedResponse) => void
   ) {
     server.addListener('request', (req, res) => {
       if (!req.url?.startsWith('/proxy/')) return
@@ -108,7 +110,13 @@ export class HttpProxy {
       // for a few minutes instead of each one downloading it (see proxy-cache.ts)
       if (isCacheableProxyRequest(req.method, target)) {
         req.resume()
-        ninjaCache.fetch(target, () => downloadToMemory(requestOptions))
+        ninjaCache.fetch(target, () => downloadToMemory(requestOptions).then((fresh) => {
+          // only real downloads (not cache hits): the alerts follow the same refresh, no extra requests
+          if (onNinjaDownload) {
+            try { onNinjaDownload(target, fresh) } catch (err) { logger.write(`error [price-alerts] ${(err as Error).message}`) }
+          }
+          return fresh
+        }))
           .then((cached) => {
             if (res.destroyed) return
             res.writeHead(cached.statusCode, cached.statusMessage, {

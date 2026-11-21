@@ -26,7 +26,8 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 |---|------|--------|-------|
 | 2.1 | Listens on 127.0.0.1 only by default | ✅ | `server.ts` |
 | 2.2 | Requests and WebSocket upgrades from other web pages refused (Host + Origin check, blocks CSRF and DNS rebinding) | ✅ | `request-guard.ts` |
-| 2.3 | Phone link ("Phone or other devices"): other devices need the key, decided by the connection's address (not the Host header); they can't change settings, folders, sign-in or phone access, or send input to the game | ✅ | `request-guard.ts` `isLoopbackAddress`, `allowedFromOtherDevice` |
+| 2.3 | Phone link ("Phone or other devices"): other devices need the key, decided by the connection's address (not the Host header); they can't change settings, folders, sign-in, phone access or price alerts, or send input to the game, and never become the window that gets the price check's item text | ✅ | `request-guard.ts` `isLoopbackAddress`, `allowedFromOtherDevice`; `server.ts` (last-active window) |
+| 2.4 | Price alerts: checked on the shared poe.ninja download (no extra requests), sent only to windows connected to the local server (this PC, a paired phone); input validated in main; stored in `apt-data/price-alerts.json` | ✅ | `ipc/price-alerts.ts`, `PriceAlerts.ts` |
 
 ## 3. Secrets (ASVS V6/V8)
 
