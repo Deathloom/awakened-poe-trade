@@ -5,8 +5,35 @@
       <span class="truncate text-gray-300" :title="buildName">{{ buildName || 'Build' }}<span v-if="itemSet" class="text-gray-500"> · {{ itemSet }}</span></span>
       <button class="ui-btn ui-btn-quiet ml-auto" :disabled="loading" title="Read the build again from Path of Building" @click="request">
         <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
+      <ui-menu :items="listMenu" align-right button-class="ui-btn-quiet" title="More" />
     </div>
     <div v-if="error" class="px-2 pb-1 text-red-400">{{ error }}</div>
+    <!-- Deathloom fork (Q10): loot filter add-on: pick his filter, Orbhoarder writes a copy with our Show blocks first -->
+    <div v-if="lf.open" class="mx-2 mb-1 p-2 rounded border border-gray-700 bg-gray-900 shrink-0 space-y-1">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-300">Loot filter add-on: pick your filter</span>
+        <button class="ui-btn ui-btn-quiet ml-auto" :class="{ 'ui-btn-on': lf.help }" title="How it works" @click="lf.help = !lf.help"><i class="fas fa-question" /></button>
+        <button class="ui-btn ui-btn-quiet" title="Close" @click="lf.open = false"><i class="fas fa-times" /></button>
+      </div>
+      <div v-if="lf.help" class="text-gray-400">
+        Orbhoarder writes a new file next to your filter, <i>"your filter + Orbhoarder.filter"</i>: first a few Show blocks
+        (big text, a coloured border, a beam and a minimap star) for what's still to buy here (uniques by their base type, the rares' bases, gems),
+        then your filter copied unchanged. Your own file is never changed. Make it again after your list changes.
+        Gems: PoE1 only. Filters from the website (online filters) can't be used: download the filter file into the folder first.
+      </div>
+      <div class="text-gray-500">{{ wantsLine }}</div>
+      <div v-if="lf.busy" class="text-gray-500"><i class="fas fa-spinner fa-spin mr-1" />Working…</div>
+      <div v-else-if="lf.error" class="text-red-400">{{ lf.error }}</div>
+      <div v-if="lf.written" class="text-gray-200">
+        Wrote <b>{{ lf.written }}</b>. In game: <b>Options → UI → Item filter</b>, pick <b>{{ lf.written.replace(/\.filter$/i, '') }}</b> (press the refresh button next to the list if it's not there yet).
+        <span v-if="lf.refused.length" class="text-gray-500"> Left out (not a known item name, or odd characters): {{ lf.refused.join(', ') }}.</span>
+      </div>
+      <div v-if="!lf.busy && !lf.written && lf.filters.length" class="flex flex-wrap gap-1">
+        <button v-for="f of lf.filters" :key="f" class="ui-btn" :disabled="!wantsTotal" :title="`Make “${f.replace(/\.filter$/i, '')} + Orbhoarder” from this one`" @click="makeFilter(f)">{{ f.replace(/\.filter$/i, '') }}</button>
+      </div>
+      <div v-else-if="!lf.busy && !lf.written && !lf.error" class="text-gray-500">No .filter files in {{ lf.folder || 'the game folder' }}. Save your filter there first.</div>
+      <div v-if="lf.folder" class="text-gray-600 truncate" :title="lf.folder">{{ lf.folder }}</div>
+    </div>
     <div class="flex items-baseline gap-2 px-2 pb-1 shrink-0">
       <span class="text-gray-300">Still to buy:</span>
       <span class="text-yellow-300 text-sm">{{ money(shop.total) }}</span>
@@ -47,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, shallowRef } from 'vue'
 import { Host } from '@/web/background/IPC'
 import type { PobGearItem, PobSocketGroup } from '@ipc/types'
 import PriceSpark from './PriceSpark.vue'
@@ -57,6 +84,9 @@ import { useMarket } from './use-market'
 import { copyText } from '../pob/market'
 import { openTradeSearch, openTradeByType } from '../pob/gear-actions'
 import { shoppingList, type ShopRow } from './market-tools'
+import { IS_OTHER_DEVICE } from './price-alerts-store'
+import { wantsFromShop, wantsCount, keepKnown } from '@ipc/loot-filter'
+import { ITEM_BY_REF } from '@/assets/data'
 
 const { all, money, open, ninja } = useMarket()
 ninja.queuePricesFetch()
@@ -172,6 +202,64 @@ function trade (r: ShopRow, upgrade: boolean) {
   const g = gearOf(r)
   const err = g ? openTradeSearch(g.text, upgrade) : openTradeByType(r.label)
   tradeErr.value = { ...tradeErr.value, [r.key]: err ?? '' }
+}
+
+// Deathloom fork (Q10): loot filter add-on (part 1: made by hand from this menu)
+const lf = reactive({ open: false, help: false, busy: false, error: '', written: '', folder: '', filters: [] as string[], refused: [] as string[] })
+let lfId = 0
+const listMenu = computed((): UiMenuItem[] => [
+  {
+    label: 'Make loot filter add-on…',
+    icon: 'fas fa-filter',
+    disabled: IS_OTHER_DEVICE,
+    hint: IS_OTHER_DEVICE ? 'Only on the PC' : 'A copy of your loot filter that also shows what this list still needs',
+    action: openLootFilter
+  }
+])
+// Q10 review: only names the price-check item data knows (PoE1 won't load a filter
+// whose BaseType == names an item that doesn't exist); transfigured gems drop as their normal gem
+const lootChecked = computed(() => keepKnown(wantsFromShop(shop.value.rows.map(r => {
+  if (r.kind === 'gem') {
+    const gem = groups.value.flatMap(g => g.gems).find(x => x.name.toLowerCase() === r.label.toLowerCase())
+    return { kind: r.kind, owned: r.owned, name: r.label, support: gem?.support === true }
+  }
+  return { kind: r.kind, owned: r.owned, name: gearOf(r)?.baseName ?? '' }
+})), {
+  base: (n) => (ITEM_BY_REF('ITEM', n)?.length ?? 0) > 0,
+  gem: (n) => {
+    const g = ITEM_BY_REF('GEM', n)?.[0]
+    if (!g) return null
+    return g.gem?.transfigured ? (g.gem.normalVariant ?? null) : g.refName
+  }
+}))
+const lootWants = computed(() => lootChecked.value.wants)
+const wantsTotal = computed(() => wantsCount(lootWants.value))
+const wantsLine = computed(() => {
+  const w = lootWants.value
+  if (!wantsTotal.value) return 'Nothing left to buy on this list, so nothing to add.'
+  const parts = [[w.uniqueBases.length, 'unique base'], [w.bases.length, 'rare base'], [w.gems.length, 'gem']]
+    .filter(([n]) => n).map(([n, s]) => `${n} ${s}${n === 1 ? '' : 's'}`)
+  const unknown = lootChecked.value.unknown.length
+  return `Adds: ${parts.join(', ')} (what's not ticked).${unknown ? ` ${unknown} left out: not a known item name.` : ''}`
+})
+const offLf = Host.onEvent('MAIN->CLIENT::loot-filter', (e) => {
+  if (e.requestId !== lfId) return
+  lf.busy = false
+  lf.error = e.ok ? '' : (e.error ?? 'Something went wrong.')
+  if (e.folder) lf.folder = e.folder
+  if (e.filters) lf.filters = e.filters
+  if (e.written) { lf.written = e.written; lf.refused = [...lootChecked.value.unknown, ...(e.refused ?? [])].slice(0, 50) }
+})
+onUnmounted(() => { offLf.abort() })
+function openLootFilter () {
+  Object.assign(lf, { open: true, busy: true, error: '', written: '', refused: [] })
+  lfId = 800000 + Math.floor(Math.random() * 100000)
+  Host.sendEvent({ name: 'CLIENT->MAIN::loot-filter', payload: { requestId: lfId, op: 'list' } })
+}
+function makeFilter (source: string) {
+  Object.assign(lf, { busy: true, error: '', written: '', refused: [] })
+  lfId += 1
+  Host.sendEvent({ name: 'CLIENT->MAIN::loot-filter', payload: { requestId: lfId, op: 'make', source, wants: lootWants.value } })
 }
 
 // Deathloom fork (Q6): price alert above / below a price for this row
