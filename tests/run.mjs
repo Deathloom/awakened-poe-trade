@@ -63,7 +63,8 @@ const MODULES = {
   'pace-log': 'renderer/src/web/companion/pace-log.ts',
   'char-level': 'renderer/src/web/companion/char-level.ts',
   'loot-filter': 'ipc/loot-filter.ts',
-  'loot-filter-files': 'main/src/LootFilterFiles.ts'
+  'loot-filter-files': 'main/src/LootFilterFiles.ts',
+  'lab-helper': 'renderer/src/web/companion/lab-helper.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime
