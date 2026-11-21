@@ -9,13 +9,14 @@ import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { applySessionLines, loadPlaySession, savePlaySession } from './play-session'
 import { afterReady } from './lazy-data'
+import { labOnArea, labOnIzaro, labOnTrialDone, isIzaroDefeat, type LabProgress } from './lab-helper'
 import { STEPS, loadRoute, loadCampaignStep, actFromAreaCode, findStep, onlyActive, isEndgameArea } from './campaign-route'
 
 export interface CharLevel { name: string, cls: string, level: number, at: number }
 // Campaign progress from Client.txt, per character: quest rewards received and
 // bosses met. Quest hand-ins aren't in the log; a received passive / respec
 // point ticks the nearest such quest on the guide's route.
-export interface CharProgress {
+export interface CharProgress extends LabProgress {
   // first level-up seen (2 = followed from the start, so the counts are complete)
   firstLevel: number
   passives: number
@@ -280,8 +281,15 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
         p.splits = { ...p.splits, [act]: campaignMs(p) }
       }
       if (isEndgameArea(ev.code)) p.endgame = true
+      // Labyrinth helper (Q7): trial zone / lab you're in
+      labOnArea(p, ev.code, ev.level)
       p.lastAct = act ?? undefined
       p.lastAt = ts
+    } else if (ev.type === 'trialDone') {
+      const cur = v ?? start
+      const p0 = cur.progress[currentChar(cur)?.name ?? '']
+      // only touch the store when it ticks something (else nothing to save)
+      if (p0?.lastArea && labOnTrialDone({ ...p0 })) labOnTrialDone(prog())
     } else if (session && ev.type === 'afk') {
       session.afk = ev.on
     } else if (session && ev.type === 'disconnect') {
@@ -304,6 +312,7 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
           left -= got
         }
       } else {
+        if (isIzaroDefeat(ev.speaker, ev.text)) labOnIzaro(p)
         tickBoss(p, ev.speaker, guideIndex)
       }
     }

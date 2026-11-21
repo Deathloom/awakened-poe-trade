@@ -75,10 +75,8 @@
           <div class="text-xs text-gray-500">{{ plan.refund.map(n => n.name).join(', ') }}</div>
         </div>
 
-        <div v-if="plan.ascendancy.length" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
-          <div class="lg-head"><i class="fas fa-crown mr-1 text-gray-500" />Ascendancy in this tree{{ plan.ascendancyClass ? ` (${plan.ascendancyClass})` : '' }}</div>
-          <div class="text-blue-300">{{ plan.ascendancy.map(a => a.name).join(', ') }}</div>
-        </div>
+        <!-- Deathloom fork (Q7): trials + the next lab's 2 ascendancy points (replaces "Ascendancy in this tree") -->
+        <LabHelper :char-name="char?.name ?? ''" :progress="progress" :plan="plan" />
 
         <!-- gems: swap at the next step -->
         <div v-if="swap" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
@@ -247,6 +245,7 @@ import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
 import { loadQuestGemData, planQuestGems, type QuestGemData } from '../companion/quest-gems'
 import { currentPlan, currentTaken, mapHave, treeLayout } from './plan-store'
+import LabHelper from '../companion/LabHelper.vue'
 
 const levels = ref<CharLevels>(loadCharLevels())
 const guideStep = ref(loadCampaignStep())
