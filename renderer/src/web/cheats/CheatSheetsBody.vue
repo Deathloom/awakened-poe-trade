@@ -10,6 +10,7 @@
     <div class="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-3">
       <ThreadPlanner v-if="tab === 'threads'" />
       <ChallengeTracker v-else-if="tab === 'challenges'" @open-tab="setTab" />
+      <BenchRecipes v-else-if="tab === 'bench'" />
       <template v-else-if="tab === 'progress'">
         <div class="text-gray-400">League start, then endgame: tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
         <div v-for="g of PROGRESS" :key="g.title">
@@ -67,6 +68,8 @@ import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 const ThreadPlanner = defineAsyncComponent(() => import('./ThreadPlanner.vue'))
 // Fate value helper (Covens sheet): closed by default, so prices only load when opened
 const FateValue = defineAsyncComponent(() => import('./FateValue.vue'))
+// Bench recipes (Q9) needs the campaign route (~57 kB): loaded when its tab opens
+const BenchRecipes = defineAsyncComponent(() => import('./BenchRecipes.vue'))
 const FATE_KEY = 'deathloom.cheats.fateValue.v1'
 const fateOpen = ref((() => { try { return localStorage.getItem(FATE_KEY) === '1' } catch { return false } })())
 function toggleFate () {
