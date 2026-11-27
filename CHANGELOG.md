@@ -163,6 +163,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Changed: no automatic tree tracking anywhere
 - The passive tree map, the atlas tree map, Levelling → Next steps, Build progress and the ascendancy hints no longer follow the game log or your level. Where you are on a tree is only what you set with the ‹ › « » arrows (Next steps now has them too), and every panel and window shows the same step. A tree you haven't stepped on yet starts at 0; **My level** jumps once to where your level and quest points say you are, without following it afterwards. The atlas's old game-log matching is removed.
 
+### Changed: levelling tree picked by hand
+- Levelling → Next steps no longer picks the levelling tree from your level (it could stay on the old tree after you changed trees until you levelled up). Click a tree in the row at the top to use it; the choice is kept per build and shared by every window, and a build starts at its first tree. The "Passives taken" count from the game log is removed.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

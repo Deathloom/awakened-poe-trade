@@ -1382,6 +1382,9 @@ type IpcPobPlanRequest =
     requestId: number
     level: number
     questPoints: number
+    // Deathloom fork (27 Nov 2026): the levelling tree you picked (its title);
+    // missing / unknown = the first one. Never picked from your level.
+    phase?: string
   }>
 
 type IpcPobPlanResult =
