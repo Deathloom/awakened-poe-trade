@@ -73,7 +73,8 @@ const MODULES = {
   'build-progress': 'renderer/src/web/pob/build-progress.ts',
   'gem-profit': 'renderer/src/web/market-history/gem-profit.ts',
   'bulk-sell': 'renderer/src/web/market-history/bulk-sell.ts',
-  viscera: 'renderer/src/web/money/viscera.ts'
+  viscera: 'renderer/src/web/money/viscera.ts',
+  temple: 'renderer/src/web/money/temple.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

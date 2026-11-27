@@ -138,6 +138,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q12): Viscera planner
 - Money tools → Viscera: your active build's Wickerman (from its Path of Building file) with what each planned Viscera costs on poe.ninja, cheaper Lesser/Greater versions of the same part, and "farm <boss> with a Fate" when it isn't listed; below, every Viscera from Path of Building 2.69 to search by mod or boss, cheapest first. Boss names come from PoB's data and may differ slightly from the game.
 
+### Added (Q13): Temple planner
+- Money tools → Temple: set each Temple of Atzoatl room's tier (or "not in temple") as you see it in game; it lists which room to upgrade next (best rooms first, the one closest to tier 3 first), good rooms you don't have yet, and what your temple is worth as an Itemised Temple from poe.ninja's temple prices (the dearest listing whose tier 3 rooms you all have). What some rooms give is marked (guess). Your temple stays on this PC.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
