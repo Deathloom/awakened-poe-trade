@@ -41,16 +41,18 @@ async function fileInside (realDir: string, name: string): Promise<string | null
   return full
 }
 
-export interface MakeResult { ok: boolean, error?: string, written?: string, count?: number, refused?: string[] }
+export interface MakeResult { ok: boolean, error?: string, written?: string, count?: number, refused?: string[], unchanged?: boolean }
 
-export async function makeAddon (dir: string, source: unknown, wantsIn: unknown, game: Game, when?: string): Promise<MakeResult> {
+// opts.allowEmpty (Q11 automatic update): with nothing left to buy, the add-on is
+// still written (just his filter) so old Show blocks don't stay
+export async function makeAddon (dir: string, source: unknown, wantsIn: unknown, game: Game, when?: string, opts: { allowEmpty?: boolean } = {}): Promise<MakeResult> {
   if (typeof source !== 'string' || !isFilterFileName(source) || isAddonFileName(source)) {
     return { ok: false, error: 'Pick one of your own .filter files.' }
   }
   const outName = addonFileName(source)
   if (!outName) return { ok: false, error: 'That filter name is too long or has odd characters. Rename it in the folder and try again.' }
   const { wants, refused } = cleanWants(wantsIn)
-  if (!wantsCount(wants)) return { ok: false, error: 'Nothing to add: the Shopping list has nothing left to buy.', refused }
+  if (!wantsCount(wants) && !opts.allowEmpty) return { ok: false, error: 'Nothing to add: the Shopping list has nothing left to buy.', refused }
 
   const realDir = await fs.realpath(dir)
   const src = await fileInside(realDir, source)
@@ -69,6 +71,9 @@ export async function makeAddon (dir: string, source: unknown, wantsIn: unknown,
   // keep his text byte for byte (only a leading UTF-8 BOM is dropped: ours comes first)
   if (body[0] === 0xEF && body[1] === 0xBB && body[2] === 0xBF) body = body.subarray(3)
 
+  const text = Buffer.concat([Buffer.from(addonBlocks(wants as LootFilterWants, { source, game, when }), 'utf8'), body])
+  const count = wantsCount(wants) - (game === 'poe2' ? wants.gems.length : 0)
+
   // the file we write: never a link, and only replaced when it is ours
   try {
     const ost = await fs.lstat(out)
@@ -80,15 +85,18 @@ export async function makeAddon (dir: string, source: unknown, wantsIn: unknown,
       if (!isAddonText(head.subarray(0, bytesRead).toString('utf8'))) {
         return { ok: false, error: `${outName} already exists and was not made by Orbhoarder. Rename or remove it first.` }
       }
+      // Q11: same content already there: leave the file (and its date) alone
+      if (ost.size === text.length && text.equals(await fh.readFile())) {
+        return { ok: true, written: outName, count, refused, unchanged: true }
+      }
     } finally { await fh.close() }
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
   }
 
-  const text = Buffer.concat([Buffer.from(addonBlocks(wants as LootFilterWants, { source, game, when }), 'utf8'), body])
   // O_NOFOLLOW where the OS has it (not Windows): a link swapped in after the check isn't followed
   const flags = fsc.O_WRONLY | fsc.O_CREAT | fsc.O_TRUNC | (fsc.O_NOFOLLOW ?? 0)
   const fh = await fs.open(out, flags, 0o644)
   try { await fh.writeFile(text) } finally { await fh.close() }
-  return { ok: true, written: outName, count: wantsCount(wants) - (game === 'poe2' ? wants.gems.length : 0), refused }
+  return { ok: true, written: outName, count, refused }
 }

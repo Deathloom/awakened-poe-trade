@@ -32,6 +32,8 @@ async function filterFolder (game: Game): Promise<string | null> {
 
 export class LootFilter {
   game: Game = 'poe1'
+  // Q11: one write at a time (several windows may ask for the automatic update at once)
+  private queue: Promise<unknown> = Promise.resolve()
 
   constructor (
     private server: ServerEvents,
@@ -40,7 +42,7 @@ export class LootFilter {
   ) {
     this.server.onEventAnyClient('CLIENT->MAIN::loot-filter', (req) => {
       const send = this.server.replyTo()
-      const reply = (p: { ok: boolean, error?: string, folder?: string, filters?: string[], written?: string, count?: number, refused?: string[] }) => {
+      const reply = (p: { ok: boolean, error?: string, folder?: string, filters?: string[], written?: string, count?: number, refused?: string[], unchanged?: boolean }) => {
         send({ name: 'MAIN->CLIENT::loot-filter', payload: { requestId: Number(req.requestId) || 0, ...p } })
       }
       if (this.fromOtherDevice()) { reply({ ok: false, error: 'Only on the PC.' }); return }
@@ -54,8 +56,11 @@ export class LootFilter {
         if (req.op === 'list') {
           reply({ ok: true, folder, filters: await listFilters(folder) })
         } else if (req.op === 'make') {
-          const res = await makeAddon(folder, req.source, req.wants, game, new Date().toISOString().slice(0, 10))
-          if (res.ok) this.logger.write(`info [loot-filter] wrote ${res.written ?? ''} (${res.count ?? 0} names)`)
+          const auto = req.auto === true
+          const job = this.queue.then(async () => await makeAddon(folder, req.source, req.wants, game, new Date().toISOString().slice(0, 10), { allowEmpty: auto }))
+          this.queue = job.catch(() => {})
+          const res = await job
+          if (res.ok && !res.unchanged) this.logger.write(`info [loot-filter] wrote ${res.written ?? ''} (${res.count ?? 0} names${auto ? ', automatic' : ''})`)
           reply({ ...res, folder })
         } else {
           // Q10 review: never leave the panel waiting
