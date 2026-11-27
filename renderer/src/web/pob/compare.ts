@@ -160,3 +160,42 @@ export function fmtStat (v: number | undefined, pct?: boolean): string {
   if (Math.abs(v) >= 1e4) return `${(v / 1e3).toFixed(1)}k`
   return String(Math.round(v * 100) / 100)
 }
+
+// Deathloom fork (Q22): build diff on Pull. Short lines for "what changed in a
+// friend's build since your copy": old = before the Pull, new = after it.
+export interface ChangeLine { section: 'stats' | 'gear' | 'gems' | 'tree', text: string, tone?: 'up' | 'down' }
+
+export function changeLines (cmp: BuildCompare): ChangeLine[] {
+  const out: ChangeLine[] = []
+  for (const r of cmp.stats) {
+    if (!r.better || r.diff == null) continue
+    const sign = r.diff > 0 ? '+' : '−'
+    out.push({ section: 'stats', text: `${r.label}: ${fmtStat(r.a, r.pct)} → ${fmtStat(r.b, r.pct)} (${sign}${fmtStat(Math.abs(r.diff), r.pct)})`, tone: r.better === 'b' ? 'up' : 'down' })
+  }
+  for (const g of cmp.gear) {
+    if (g.same) continue
+    if (!g.a) { out.push({ section: 'gear', text: `${g.slot}: added ${g.b ?? ''}`.trim() }); continue }
+    if (!g.b) { out.push({ section: 'gear', text: `${g.slot}: removed ${g.a}` }); continue }
+    if (g.a !== g.b) { out.push({ section: 'gear', text: `${g.slot}: ${g.a} → ${g.b}` }); continue }
+    const parts: string[] = []
+    if (g.onlyB.length) parts.push(`${g.onlyB.length} new mod${g.onlyB.length > 1 ? 's' : ''}`)
+    if (g.onlyA.length) parts.push(`${g.onlyA.length} mod${g.onlyA.length > 1 ? 's' : ''} gone`)
+    const rolls = g.aHigher.length + g.aLower.length
+    if (rolls) parts.push(`${rolls} roll${rolls > 1 ? 's' : ''} changed`)
+    out.push({ section: 'gear', text: `${g.slot}: ${g.b} (${parts.join(', ')})` })
+  }
+  for (const g of cmp.gems) {
+    out.push({
+      section: 'gems',
+      text: g.change === 'added' ? `+ ${g.name}${g.b ? ` (level ${g.b})` : ''}`
+        : g.change === 'removed' ? `− ${g.name}`
+          : `${g.name}: level ${g.a ?? '?'} → ${g.b ?? '?'}`,
+      tone: g.change === 'added' ? 'up' : g.change === 'removed' ? 'down' : undefined
+    })
+  }
+  const t = cmp.tree
+  if (t.onlyB.length || t.onlyA.length) out.push({ section: 'tree', text: `Passives: ${t.onlyB.length} added, ${t.onlyA.length} removed` })
+  if (t.masteriesChanged.length) out.push({ section: 'tree', text: `${t.masteriesChanged.length} masteries changed` })
+  if (t.versionA && t.versionB && t.versionA !== t.versionB) out.push({ section: 'tree', text: `Tree version ${t.versionA} → ${t.versionB}` })
+  return out
+}

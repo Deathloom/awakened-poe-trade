@@ -20,6 +20,9 @@ import type { Logger } from '../RemoteLogger'
 import type { PobImpact } from './PobImpact'
 import { openWebLink } from '../safe-open'
 import { isCodeError } from '../ErrorReporter'
+import { PullDiffStore, takeSnapshot, type Snapshot } from './pull-diff'
+import { realFileInside } from './BuildFiles'
+import { parseBuildXml } from './build-xml'
 
 const REPLY_PREFIX = '@pob '
 const START_TIMEOUT = 30_000
@@ -47,6 +50,9 @@ export class PobSync {
   private pushTimer: NodeJS.Timeout | null = null
   private startupDone = false
   private lastPobDir = ''
+  // Deathloom fork (Q22): old copies of friends' builds a Pull changed
+  private diffs = new PullDiffStore(path.join(app.getPath('userData'), 'pull-diff'))
+  private changesLoaded = false
 
   constructor (
     private server: ServerEvents,
@@ -56,6 +62,44 @@ export class PobSync {
     this.server.onEventAnyClient('CLIENT->MAIN::pob-sync', (req) => {
       void this.handle(req)
     })
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-pull-diff', ({ requestId, id }) => {
+      const send = this.server.replyTo()
+      this.pullDiff(id).then(
+        (r) => { send({ name: 'MAIN->CLIENT::pob-pull-diff', payload: { requestId, ok: true, ...r } }) },
+        (err: Error) => { send({ name: 'MAIN->CLIENT::pob-pull-diff', payload: { requestId, ok: false, error: err.message } }) })
+    })
+  }
+
+  // Deathloom fork (Q22): the builds folder Pull writes to, and your own folder (left out)
+  private diffFolders (): { buildsDir: string, own: string } | null {
+    const st = this.state.status
+    const cfg = this.impact.resolved()
+    const buildsDir = st?.buildPath || cfg?.buildsDir
+    if (!buildsDir) return null
+    return { buildsDir, own: st?.settings.player || cfg?.player || '' }
+  }
+
+  private async pullDiff (id: unknown) {
+    const old = typeof id === 'string' ? await this.diffs.oldText(id) : null
+    if (!old) throw new Error('That change is no longer kept (Pull again or clear the list)')
+    const f = this.diffFolders()
+    if (!f) throw new Error('Missing in settings: Builds folder')
+    const full = await realFileInside(f.buildsDir, old.change.rel).catch(() => undefined)
+    if (full === null) throw new Error('Not in your builds folder')
+    const st = full ? await fs.promises.stat(full).catch(() => null) : null
+    if (!full || !st?.isFile()) throw new Error(`Build not found: ${old.change.name} (deleted or renamed since)`)
+    if (st.size > 8 * 1024 * 1024) throw new Error(`Build file too big: ${old.change.name}`)
+    return {
+      change: old.change,
+      before: old.text == null ? undefined : parseBuildXml(old.text),
+      after: parseBuildXml(await fs.promises.readFile(full, 'utf8'))
+    }
+  }
+
+  private async loadChanges () {
+    if (this.changesLoaded) return
+    this.changesLoaded = true
+    this.state = { ...this.state, changes: await this.diffs.list() }
   }
 
   private publish (patch: Partial<PobSyncState> = {}) {
@@ -109,7 +153,12 @@ export class PobSync {
   }
 
   private async handle (req: SyncOp) {
+    await this.loadChanges()
     switch (req.op) {
+      case 'clearChanges':
+        await this.diffs.clear()
+        this.publish({ changes: [] })
+        return
       case 'status':
         // answer at once with what we have, then refresh
         this.publish()
@@ -214,12 +263,24 @@ export class PobSync {
     const title = op === 'pull' ? 'Pull' : op === 'push' ? 'Push' : 'Sync now'
     this.publish({ busy: op === 'push' ? 'Pushing…' : 'Pulling…' })
     try {
+      await this.loadChanges()
+      // Deathloom fork (Q22): friends' builds as they are before this Pull
+      const folders = op === 'push' ? null : this.diffFolders()
+      let before: Snapshot | null = null
+      if (folders) before = await takeSnapshot(folders.buildsDir, folders.own).catch(() => null)
       const [reply] = await this.run([{ cmd: op }], (text) => { this.publish({ busy: text }) })
       this.setStatus(reply)
       const lines = Array.isArray(reply.lines) ? reply.lines.map(String) : []
       const success = reply.success === true
       this.logger.write(`${success ? 'info' : 'warn'} [PoB sync] ${title}${auto ? ' (auto)' : ''}: ${lines.join(' / ')}`)
-      this.publish({ busy: null, error: undefined, last: { time: Date.now(), title, success, auto, lines } })
+      let changes = this.state.changes
+      if (folders && before) {
+        changes = await this.diffs.record(before, folders.buildsDir, folders.own).catch((err: Error) => {
+          this.logger.write(`warn [PoB sync] build diff: ${err.message}`)
+          return changes
+        })
+      }
+      this.publish({ busy: null, error: undefined, changes, last: { time: Date.now(), title, success, auto, lines } })
     } catch (err) {
       this.publish({ busy: null, last: { time: Date.now(), title, success: false, auto, lines: [(err as Error).message] } })
     }

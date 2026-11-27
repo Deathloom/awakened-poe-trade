@@ -77,7 +77,9 @@ const MODULES = {
   'bulk-sell': 'renderer/src/web/market-history/bulk-sell.ts',
   viscera: 'renderer/src/web/money/viscera.ts',
   temple: 'renderer/src/web/money/temple.ts',
-  wombgift: 'renderer/src/web/money/wombgift.ts'
+  wombgift: 'renderer/src/web/money/wombgift.ts',
+  'pull-diff': 'main/src/pob/pull-diff.ts',
+  'board-matching': 'renderer/src/web/trade-board/matching.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

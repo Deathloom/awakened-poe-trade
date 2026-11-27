@@ -555,6 +555,8 @@ export type IpcEvent =
   IpcPobPlanResult |
   IpcPobTreeMapResult |
   IpcPobCompareResult |
+  IpcPobPullDiffRequest |
+  IpcPobPullDiffResult |
   IpcPobTimelessRequest |
   IpcPobTimelessResult |
   IpcPobCraftRequest |
@@ -1087,11 +1089,24 @@ export interface PobSyncState {
   notice?: string
   // Orbhoarder reads builds from another folder than PoB syncs
   mismatch?: string
+  // Deathloom fork (Q22): friends' builds the last Pulls changed, newest first
+  changes?: PullChange[]
+}
+
+// Deathloom fork (Q22): a friend's build a Pull changed (old copy kept by main)
+export interface PullChange {
+  id: string
+  // inside the builds folder, '/' separators ("Friend/RF Jugg.xml")
+  rel: string
+  player: string
+  name: string
+  kind: 'changed' | 'new'
+  time: number
 }
 
 type IpcPobSyncRequest =
   Event<'CLIENT->MAIN::pob-sync', {
-    op: 'status' | 'signIn' | 'cancelSignIn' | 'signOut' | 'pull' | 'push' | 'syncNow' | 'configure'
+    op: 'status' | 'signIn' | 'cancelSignIn' | 'signOut' | 'pull' | 'push' | 'syncNow' | 'configure' | 'clearChanges'
     // configure
     player?: string
     autoSync?: boolean
@@ -1564,6 +1579,24 @@ type IpcPobCompareRequest =
     // Deathloom fork: compare loadouts (sets) instead of the active ones
     selA?: PobSetSelection
     selB?: PobSetSelection
+  }>
+
+// Deathloom fork (Q22): a friend's build before and after the Pull that changed it
+type IpcPobPullDiffRequest =
+  Event<'CLIENT->MAIN::pob-pull-diff', {
+    requestId: number
+    id: string
+  }>
+
+type IpcPobPullDiffResult =
+  Event<'MAIN->CLIENT::pob-pull-diff', {
+    requestId: number
+    ok: boolean
+    error?: string
+    change?: PullChange
+    // missing for a build that is new with this Pull
+    before?: PobBuildSummary
+    after?: PobBuildSummary
   }>
 
 type IpcPobCompareResult =
