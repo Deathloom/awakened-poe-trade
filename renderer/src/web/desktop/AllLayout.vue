@@ -87,7 +87,8 @@ import {
   LazyMarketHistoryBody as MarketHistoryBody,
   LazyMarketOverview as MarketOverview,
   LazyMarketSearchBody as MarketSearchBody,
-  LazyTradeBoardBody as TradeBoardBody
+  LazyTradeBoardBody as TradeBoardBody,
+  LazyBuildProgress as BuildProgress
 } from '../ui/LazyBodies'
 import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
 import { LazyPobNext } from '../companion/LazyLevelling'
@@ -101,7 +102,8 @@ import {
 const propsIn = defineProps<{ editing: boolean }>()
 const emit = defineEmits<{ (e: 'done'): void }>()
 useSettingsSync()
-const needPlanner = computed(() => inLayout('tree') && shownBySettings('tree') && !(inLayout('guide') && shownBySettings('guide')))
+// the tree map and Build progress (Q17) follow the levelling planner: keep one running when the guide isn't shown
+const needPlanner = computed(() => ((inLayout('tree') && shownBySettings('tree')) || inLayout('progress')) && !(inLayout('guide') && shownBySettings('guide')))
 
 const BODIES: Record<AllPanelId, Component> = {
   gear: PobGearBody,
@@ -115,7 +117,8 @@ const BODIES: Record<AllPanelId, Component> = {
   session: PlaySessionBody,
   board: TradeBoardBody,
   cheats: CheatSheetsBody,
-  money: MoneyToolsBody
+  money: MoneyToolsBody,
+  progress: BuildProgress
 }
 function body (id: AllPanelId) { return BODIES[id] }
 function props (id: AllPanelId): Record<string, unknown> {

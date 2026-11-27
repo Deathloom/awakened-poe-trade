@@ -123,6 +123,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - After making the add-on (Market → Shopping ⋯ → Make loot filter add-on…), tick **Keep it updated**: Orbhoarder writes it again a few seconds after the Shopping list changes (you tick something as got, or switch builds) while Market → Shopping is open in any window. When everything is ticked, the add-on is just your filter. Reload the filter in game (Options → UI → Item filter) to see changes. The file isn't touched when nothing changed.
 - New **Settings → Loot filter** page: pick your filter, turn the automatic update on or off, **Update now**, and see when it was last written. PC only.
 
+### Added (Q17): Build progress panel
+- New panel for the All tab (Edit layout → Add panel → Build progress): where you are in the build in one view. Tree: the levelling step, passives taken of this step and the next 3 to take. Gems: the step's gems you have ticked (tick or untick right there). Gear: the build's items with the same "got it" ticks as Build → Gear. One percentage on top. Ticks are shared with Build → Gear, Build → Gems and Levelling, and now update in the same window straight away too.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
