@@ -32,8 +32,10 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { LazyCampaignGuide } from '../companion/LazyLevelling'
-import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
-import PobGearBody from '../pob/PobGearBody.vue'
+import {
+  LazyTradeCompanionBody as TradeCompanionBody,
+  LazyPobGearBody as PobGearBody
+} from '../ui/LazyBodies'
 import { PANEL_BODY_BY_PANEL } from '../overlay/panel-widgets'
 import type { HudPanel } from '@ipc/types'
 

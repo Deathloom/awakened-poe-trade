@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Performance (S4): lighter windows, round 2
+- The panel bodies (Build, Levelling, Trades, Trade board, Market history, Market overview, Market search, This session, Cheat sheets, Money tools, Craft, Help) load the first time they are shown instead of with every window, the phone QR code library loads when a QR code is shown, and the price check cache and the fade animations no longer need two extra libraries. Every window starts with about a third less code (main bundle 1,423 kB → 948 kB, CSS 204 kB → 177 kB). The first time a panel opens it may take a frame or two longer.
+
 ### Changed (S6): features your Path of Building can't do yet
 - Orbhoarder now reads what its Path of Building copy can do when it starts. A feature that copy doesn't have yet is hidden (Craft → Timeless → Find seeds) or explained ("Your Path of Building is older than this feature…") instead of showing an error. Older copies are treated as the 22 Nov 2026 version.
 

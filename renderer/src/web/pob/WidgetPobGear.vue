@@ -39,7 +39,7 @@ import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
 import { inOverlay } from '../desktop/panels'
-import PobGearBody from './PobGearBody.vue'
+import { LazyPobGearBody as PobGearBody } from '../ui/LazyBodies'
 import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{

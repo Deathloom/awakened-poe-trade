@@ -38,11 +38,12 @@ import { Host } from '@/web/background/IPC'
 import Widget from '../overlay/Widget.vue'
 import type { WidgetManager } from '../overlay/interfaces'
 import { useInOverlay } from '../desktop/panels'
-import MarketSearchBody from './MarketSearchBody.vue'
+import { LazyMarketSearchBody as MarketSearchBody } from '../ui/LazyBodies'
+import type MarketSearchBodyT from './MarketSearchBody.vue'
 import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: MarketSearchWidget }>()
-const body = ref<InstanceType<typeof MarketSearchBody>>()
+const body = ref<InstanceType<typeof MarketSearchBodyT>>()
 watch(() => props.config.wmWants, (w) => {
   if (w === 'show') nextTick(() => body.value?.focus()).catch(() => {})
 })

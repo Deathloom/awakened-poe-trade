@@ -49,7 +49,7 @@ if (!IS_HUD && !IS_DESKTOP) {
 
 <style lang="postcss">
 @import url('@fortawesome/fontawesome-free/css/all.min.css');
-@import url('animate.css/animate.css');
+@import url('../assets/animate-lite.css');
 @import url('../assets/font.css');
 @tailwind base;
 @tailwind components;

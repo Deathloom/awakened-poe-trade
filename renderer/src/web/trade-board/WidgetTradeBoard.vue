@@ -38,7 +38,7 @@ import type { WidgetManager } from '../overlay/interfaces'
 import { Host } from '@/web/background/IPC'
 import { useInOverlay } from '../desktop/panels'
 import { postDraft } from './board'
-import TradeBoardBody from './TradeBoardBody.vue'
+import { LazyTradeBoardBody as TradeBoardBody } from '../ui/LazyBodies'
 import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: TradeBoardWidget }>()

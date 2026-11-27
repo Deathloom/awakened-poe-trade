@@ -78,26 +78,28 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { loadSession, SESSION_KEY } from '../companion/char-level'
 import { Host } from '@/web/background/IPC'
-import PobGearBody from '../pob/PobGearBody.vue'
-import LevellingBody from './LevellingBody.vue'
-import MarketOverview from '../market-history/MarketOverview.vue'
+import {
+  LazyPobGearBody as PobGearBody,
+  LazyLevellingBody as LevellingBody,
+  LazyMarketOverview as MarketOverview,
+  LazyTradeCompanionBody as TradeCompanionBody,
+  LazyTradeBoardBody as TradeBoardBody,
+  LazyMarketHistoryBody as MarketHistoryBody,
+  LazyHelpBody as HelpBody,
+  LazyCraftBody as CraftBody
+} from '../ui/LazyBodies'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
-import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
-import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
-import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
 import FeedbackDialog from './FeedbackDialog.vue'
 import TradeSiteBody from './TradeSiteBody.vue'
 import LabSiteBody from './LabSiteBody.vue'
-import HelpBody from '../help/HelpBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
 import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
 import type { LayoutPref } from './layout-phase'
 import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
-import CraftBody from '../craft/CraftBody.vue'
 import PriceAlertBanner from '../market-history/PriceAlertBanner.vue'
 
 // Deathloom fork: moving backgrounds pause while you play (the window is drawn without

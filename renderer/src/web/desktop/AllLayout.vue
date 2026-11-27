@@ -77,20 +77,22 @@
 <script setup lang="ts">
 import { computed, ref, type Component } from 'vue'
 import SplitGutter from './SplitGutter.vue'
-import PobGearBody from '../pob/PobGearBody.vue'
+import {
+  LazyPobGearBody as PobGearBody,
+  LazyLevellingBody as LevellingBody,
+  LazyPlaySessionBody as PlaySessionBody,
+  LazyCheatSheetsBody as CheatSheetsBody,
+  LazyMoneyToolsBody as MoneyToolsBody,
+  LazyTradeCompanionBody as TradeCompanionBody,
+  LazyMarketHistoryBody as MarketHistoryBody,
+  LazyMarketOverview as MarketOverview,
+  LazyMarketSearchBody as MarketSearchBody,
+  LazyTradeBoardBody as TradeBoardBody
+} from '../ui/LazyBodies'
 import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
-import LevellingBody from './LevellingBody.vue'
 import { LazyPobNext } from '../companion/LazyLevelling'
 import MappingLoadoutPrompt from './MappingLoadoutPrompt.vue'
-import PlaySessionBody from '../companion/PlaySessionBody.vue'
-import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
-import MoneyToolsBody from '../money/MoneyToolsBody.vue'
-import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
-import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
-import MarketOverview from '../market-history/MarketOverview.vue'
-import MarketSearchBody from '../market-search/MarketSearchBody.vue'
 import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
-import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
 import {
   ALL_PANELS, layout, saveLayout, resetLayout, panelDef, shownBySettings, inLayout,
   removePanel, addPanel, movePanel, resize, useSettingsSync, type AllPanelId, type DropTarget
