@@ -19,10 +19,21 @@
     <!-- Backup -->
     <div class="mb-4">
       <div class="text-base mb-1">Settings backup</div>
-      <div class="text-gray-500 mb-2">One file with all settings, hotkeys, panel layouts, notes, ticks and session data, to move to a new PC or share your setup with a friend. Your builds stay in their folder (build sync shares those).</div>
+      <div class="text-gray-500 mb-2">One file with all settings, hotkeys, panel layouts, notes, ticks and session data, to move to a new PC or share your setup with a friend. Your builds stay in their folder (build sync shares those). Sign-ins and keys are never in the file. On restore you pick what to take, and this PC's folders are kept unless you say otherwise.</div>
       <div class="flex gap-2">
         <button class="ui-btn" :disabled="busy === 'backup'" @click="saveBackup"><i class="fas fa-file-export mr-1" />Save backup…</button>
         <button class="ui-btn" :disabled="busy === 'backup'" @click="openBackup"><i class="fas fa-file-import mr-1" />Restore…</button>
+      </div>
+      <!-- Q24: what's in the file, and what to take from it -->
+      <div v-if="pick" class="mt-2 p-2 rounded border border-gray-700 bg-gray-900">
+        <div class="mb-1">Backup from <b>{{ pick.summary.createdAt || 'an unknown date' }}</b>: {{ pick.summary.settings }} settings, {{ pick.summary.panelData }} panel data items.</div>
+        <ui-checkbox v-model="pick.settings">Settings, hotkeys and panel layouts</ui-checkbox>
+        <ui-checkbox v-model="pick.panelData" class="mt-1">Panel data (notes, ticks, watchlist, session and the like). Replaces this PC's copy straight away.</ui-checkbox>
+        <ui-checkbox v-if="pick.settings && pick.summary.otherPaths?.length" v-model="pick.keepPaths" class="mt-1">Keep this PC's folders (game files, Path of Building, builds): the backup has other ones</ui-checkbox>
+        <div class="flex gap-2 mt-2">
+          <button class="ui-btn ui-btn-primary" :disabled="!pick.settings && !pick.panelData" @click="restorePicked"><i class="fas fa-file-import mr-1" />Restore</button>
+          <button class="ui-btn" @click="pick = null">Cancel</button>
+        </div>
       </div>
       <div v-if="backupMsg" class="mt-1" :class="backupErr ? 'text-red-400' : 'text-green-400'">{{ backupMsg }}</div>
     </div>
@@ -65,12 +76,13 @@ import type { HealthItem, RemoteInfo, IpcEventPayload } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import type { Config } from '@/web/Config'
 import { configProp } from './utils'
-import { hotkeyClashes, makeBackup, readBackup } from './tools'
+import { hotkeyClashes, makeBackup, readBackup, backupSummary, type BackupSummary } from './tools'
 import UiToggle from '@/web/ui/UiToggle.vue'
+import UiCheckbox from '@/web/ui/UiCheckbox.vue'
 
 export default defineComponent({
   name: 'Tools',
-  components: { UiToggle },
+  components: { UiToggle, UiCheckbox },
   props: configProp(),
   setup (props) {
     const busy = ref<'health' | 'backup' | null>(null)
@@ -146,16 +158,27 @@ export default defineComponent({
     async function openBackup () {
       busy.value = 'backup'
       backupMsg.value = ''
+      pick.value = null
       try {
         const res = (await ask('backup-open')).backup
         if (!res?.ok) { if (res?.error) { backupErr.value = true; backupMsg.value = res.error } return }
-        const r = readBackup(res.text ?? '', props.config as Config)
-        backupErr.value = !r.ok
-        backupMsg.value = r.message
+        const summary = backupSummary(res.text ?? '', props.config as Config)
+        if (!summary.ok) { backupErr.value = true; backupMsg.value = summary.message; return }
+        pick.value = { text: res.text ?? '', summary, settings: true, panelData: true, keepPaths: true }
       } finally { busy.value = null }
     }
+    // Q24: the opened file, waiting for Restore
+    const pick = ref<{ text: string, summary: BackupSummary, settings: boolean, panelData: boolean, keepPaths: boolean } | null>(null)
+    function restorePicked () {
+      const p = pick.value
+      if (!p) return
+      const r = readBackup(p.text, props.config as Config, { settings: p.settings, panelData: p.panelData, keepPaths: p.keepPaths && !!p.summary.otherPaths?.length })
+      pick.value = null
+      backupErr.value = !r.ok
+      backupMsg.value = r.message
+    }
 
-    return { busy, health, allHealth, runHealth, remote, setRemote, newKey, restart, qrFor, qrSvg, copy, copied, saveBackup, openBackup, backupMsg, backupErr }
+    return { busy, health, allHealth, runHealth, remote, setRemote, newKey, restart, qrFor, qrSvg, copy, copied, saveBackup, openBackup, backupMsg, backupErr, pick, restorePicked }
   }
 })
 </script>

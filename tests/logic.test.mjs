@@ -166,6 +166,40 @@ test('hotkey clashes and backup', () => {
   assert.equal(tools.readBackup(b, { configVersion: 17 }).ok, false)
 })
 
+test('backup restore (Q24): pick what to take, keep this PC\'s folders, no prototype keys', () => {
+  const theirs = { configVersion: 18, clientLog: 'D:/Their/Client.txt', overlayKey: 'F1', widgets: [], pob: { pobDir: 'D:/TheirPoB', buildsDir: 'D:/b', gearPanelKey: 'F2' } }
+  const b = JSON.stringify({ kind: 'orbhoarder-backup', v: 1, createdAt: '2026-11-27T10:00:00Z', config: theirs, local: { 'deathloom.q24': 'x', 'other.key': 'y' } })
+  const mine = () => ({ configVersion: 18, clientLog: 'C:/Mine/Client.txt', gameConfig: null, overlayKey: 'Shift + Space', widgets: [{ a: 1 }], pob: { pobDir: 'C:/PoB', buildsDir: 'C:/b', gearPanelKey: null } })
+  const s = tools.backupSummary(b, mine())
+  assert.equal(s.ok, true)
+  assert.equal(s.createdAt, '2026-11-27')
+  assert.equal(s.panelData, 1)
+  assert.deepEqual(s.otherPaths, ['clientLog', 'pob.pobDir', 'pob.buildsDir'])
+  // keep folders: their hotkeys, my paths
+  let into = mine()
+  delete store['deathloom.q24']
+  assert.equal(tools.readBackup(b, into, { settings: true, panelData: false, keepPaths: true }).ok, true)
+  assert.equal(into.overlayKey, 'F1')
+  assert.equal(into.pob.gearPanelKey, 'F2')
+  assert.equal(into.clientLog, 'C:/Mine/Client.txt')
+  assert.equal(into.pob.pobDir, 'C:/PoB')
+  assert.equal(store['deathloom.q24'], undefined)
+  // panel data only: settings untouched
+  into = mine()
+  tools.readBackup(b, into, { settings: false, panelData: true, keepPaths: false })
+  assert.equal(into.overlayKey, 'Shift + Space')
+  assert.equal(store['deathloom.q24'], 'x')
+  assert.equal(store['other.key'], undefined)
+  // a hand-made file can't swap the settings object's prototype or change a value's kind
+  const evil = '{"kind":"orbhoarder-backup","config":{"configVersion":18,"__proto__":{"polluted":1},"widgets":{"not":"a list"},"overlayKey":"F3"}}'
+  into = mine()
+  assert.equal(tools.readBackup(evil, into).ok, true)
+  assert.equal(into.polluted, undefined)
+  assert.equal(Object.getPrototypeOf(into), Object.prototype)
+  assert.deepEqual(into.widgets, [{ a: 1 }])
+  assert.equal(into.overlayKey, 'F3')
+})
+
 test('search strings fit the game\'s 50-character limit', () => {
   const list = search.buildSearchStrings([{ enabled: true, gems: [{ name: 'Fireball', enabled: true }, { name: 'Spell Echo Support', enabled: true, support: true }] }], ['Monsters reflect #% of Elemental Damage'])
   assert.ok(list.length > 5)
