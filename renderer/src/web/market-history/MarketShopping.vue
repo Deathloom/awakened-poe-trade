@@ -18,7 +18,7 @@
       <div v-if="lf.help" class="text-gray-400">
         Orbhoarder writes a new file next to your filter, <i>"your filter + Orbhoarder.filter"</i>: first a few Show blocks
         (big text, a coloured border, a beam and a minimap star) for what's still to buy here (uniques by their base type, the rares' bases, gems),
-        then your filter copied unchanged. Your own file is never changed. Make it again after your list changes.
+        then your filter copied unchanged. Your own file is never changed. Make it again after your list changes, or tick <i>Keep it updated</i> after making it (Settings → Loot filter too).
         Gems: PoE1 only. Filters from the website (online filters) can't be used: download the filter file into the folder first.
       </div>
       <div class="text-gray-500">{{ wantsLine }}</div>
@@ -27,6 +27,10 @@
       <div v-if="lf.written" class="text-gray-200">
         Wrote <b>{{ lf.written }}</b>. In game: <b>Options → UI → Item filter</b>, pick <b>{{ lf.written.replace(/\.filter$/i, '') }}</b> (press the refresh button next to the list if it's not there yet).
         <span v-if="lf.refused.length" class="text-gray-500"> Left out (not a known item name, or odd characters): {{ lf.refused.join(', ') }}.</span>
+        <!-- Q11: rewrite it on every list change -->
+        <label class="flex items-center gap-1 mt-1 text-gray-300" title="Also in Settings → Loot filter">
+          <input type="checkbox" :checked="lfSettings.auto && lfSettings.source === lf.source" @change="setLfSettings({ source: lf.source, auto: ($event.target as HTMLInputElement).checked })">
+          Keep it updated: write it again when this list changes (ticks, build). In game, reload the filter to see changes.</label>
       </div>
       <div v-if="!lf.busy && !lf.written && lf.filters.length" class="flex flex-wrap gap-1">
         <button v-for="f of lf.filters" :key="f" class="ui-btn" :disabled="!wantsTotal" :title="`Make “${f.replace(/\.filter$/i, '')} + Orbhoarder” from this one`" @click="makeFilter(f)">{{ f.replace(/\.filter$/i, '') }}</button>
@@ -74,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import type { PobGearItem, PobSocketGroup } from '@ipc/types'
 import PriceSpark from './PriceSpark.vue'
@@ -85,7 +89,8 @@ import { copyText } from '../pob/market'
 import { openTradeSearch, openTradeByType } from '../pob/gear-actions'
 import { shoppingList, type ShopRow } from './market-tools'
 import { IS_OTHER_DEVICE } from './price-alerts-store'
-import { wantsFromShop, wantsCount, keepKnown } from '@ipc/loot-filter'
+import { wantsFromShop, wantsCount, keepKnown, wantsSignature } from '@ipc/loot-filter'
+import { lfSettings, setLfSettings, setLfLastWants, updateAddon } from './loot-filter-store'
 import { ITEM_BY_REF } from '@/assets/data'
 
 const { all, money, open, ninja } = useMarket()
@@ -205,7 +210,7 @@ function trade (r: ShopRow, upgrade: boolean) {
 }
 
 // Deathloom fork (Q10): loot filter add-on (part 1: made by hand from this menu)
-const lf = reactive({ open: false, help: false, busy: false, error: '', written: '', folder: '', filters: [] as string[], refused: [] as string[] })
+const lf = reactive({ open: false, help: false, busy: false, error: '', written: '', source: '', folder: '', filters: [] as string[], refused: [] as string[] })
 let lfId = 0
 const listMenu = computed((): UiMenuItem[] => [
   {
@@ -248,7 +253,12 @@ const offLf = Host.onEvent('MAIN->CLIENT::loot-filter', (e) => {
   lf.error = e.ok ? '' : (e.error ?? 'Something went wrong.')
   if (e.folder) lf.folder = e.folder
   if (e.filters) lf.filters = e.filters
-  if (e.written) { lf.written = e.written; lf.refused = [...lootChecked.value.unknown, ...(e.refused ?? [])].slice(0, 50) }
+  if (e.written) {
+    lf.written = e.written
+    lf.refused = [...lootChecked.value.unknown, ...(e.refused ?? [])].slice(0, 50)
+    // Q11: remember the filter for the automatic update / Settings → Loot filter
+    if (lf.source !== lfSettings.value.source) setLfSettings({ source: lf.source, auto: false })
+  }
 })
 onUnmounted(() => { offLf.abort() })
 function openLootFilter () {
@@ -257,10 +267,31 @@ function openLootFilter () {
   Host.sendEvent({ name: 'CLIENT->MAIN::loot-filter', payload: { requestId: lfId, op: 'list' } })
 }
 function makeFilter (source: string) {
-  Object.assign(lf, { busy: true, error: '', written: '', refused: [] })
+  Object.assign(lf, { busy: true, error: '', written: '', source, refused: [] })
   lfId += 1
   Host.sendEvent({ name: 'CLIENT->MAIN::loot-filter', payload: { requestId: lfId, op: 'make', source, wants: lootWants.value } })
 }
+
+// Deathloom fork (Q11): loot filter add-on part 2. When the list changes (ticks, another
+// build) and "Keep it updated" is on, write the add-on again after a short pause. Only
+// once the build was read without an error and has rows, so a failed read never
+// empties the add-on. Main leaves the file alone when nothing changed.
+const lfReady = computed(() => !loading.value && !error.value && buildName.value !== '' && shop.value.rows.length > 0)
+let lfTimer: ReturnType<typeof setTimeout> | undefined
+let lfLastSig = ''
+watch([() => wantsSignature(lootWants.value), lfReady, () => lfSettings.value.auto, () => lfSettings.value.source], ([sig, ready]) => {
+  clearTimeout(lfTimer)
+  if (!ready || IS_OTHER_DEVICE) return
+  lfTimer = setTimeout(() => {
+    setLfLastWants(buildName.value, lootWants.value)
+    const s = lfSettings.value
+    const key = `${s.source}|${sig}`
+    if (!s.auto || !s.source || key === lfLastSig) return
+    lfLastSig = key
+    updateAddon(s.source, lootWants.value, true)
+  }, 3000)
+}, { immediate: true })
+onUnmounted(() => { clearTimeout(lfTimer) })
 
 // Deathloom fork (Q6): price alert above / below a price for this row
 const alertOpen = ref<string | null>(null)

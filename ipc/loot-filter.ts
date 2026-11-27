@@ -181,3 +181,59 @@ export function wantsFromShop (rows: Array<{ kind: 'unique' | 'rare' | 'gem', ow
 export function isAddonText (text: string): boolean {
   return text.replace(/^﻿/, '').startsWith(ADDON_MARKER)
 }
+
+// ---- Q11: part 2, keep the add-on up to date ----
+// Renderer storage (localStorage, shared by the windows and in settings backups):
+// which filter to build from and whether to rewrite on every Shopping list change,
+// the last result, and the last list the Shopping panel worked out.
+export const LF_SETTINGS_KEY = 'deathloom.loot-filter.v1'
+export const LF_STATUS_KEY = 'deathloom.loot-filter-status.v1'
+export const LF_WANTS_KEY = 'deathloom.loot-filter-wants.v1'
+
+export interface LootFilterSettings {
+  // his filter's file name ('' = none picked yet)
+  source: string
+  // rewrite the add-on when the Shopping list changes
+  auto: boolean
+}
+
+export interface LootFilterStatus {
+  at: string
+  ok: boolean
+  written?: string
+  count?: number
+  error?: string
+  // the file already had this content
+  unchanged?: boolean
+  // made by the automatic update (not a button)
+  auto?: boolean
+}
+
+export function parseLfSettings (raw: string | null): LootFilterSettings {
+  let o: Record<string, unknown> = {}
+  try { const v = JSON.parse(raw ?? 'null'); if (v && typeof v === 'object') o = v } catch {}
+  const source = isFilterFileName(o.source) && !isAddonFileName(o.source) ? o.source : ''
+  return { source, auto: o.auto === true && source !== '' }
+}
+
+export function parseLfStatus (raw: string | null): LootFilterStatus | null {
+  try {
+    const v = JSON.parse(raw ?? 'null')
+    return (v && typeof v === 'object' && typeof v.at === 'string' && typeof v.ok === 'boolean') ? v : null
+  } catch { return null }
+}
+
+// the last Shopping list: { build, wants, at }; wants are cleaned again here
+export function parseLfWants (raw: string | null): { build: string, wants: LootFilterWants, at: string } | null {
+  try {
+    const v = JSON.parse(raw ?? 'null')
+    if (!v || typeof v !== 'object' || typeof v.at !== 'string') return null
+    return { build: typeof v.build === 'string' ? v.build.slice(0, 120) : '', wants: cleanWants(v.wants).wants, at: v.at }
+  } catch { return null }
+}
+
+// same names in any order = same list (so a re-read of the build doesn't rewrite the file)
+export function wantsSignature (w: LootFilterWants): string {
+  const s = (l: string[]) => [...l].map(x => x.toLowerCase()).sort()
+  return JSON.stringify([s(w.bases), s(w.uniqueBases), s(w.gems)])
+}

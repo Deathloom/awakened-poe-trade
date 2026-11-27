@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q27): first-run tour of the Orbhoarder window
+- On a new install, once the setup guide closes, a one-minute tour points at each tab of the Orbhoarder window in turn (All, Build, Levelling, Atlas, Trades, Board, Market, Trade site, Help, Settings, Bug / Idea), opens it and says what it is for, then ends with the in-game price check and overlay hotkeys. Arrow keys move through it, Esc ends it. Existing installs don't get it by itself: Settings → **Take the tour** runs it any time. It loads only when it opens, so windows don't get bigger.
+
 ### Added (Q25): text size slider and colour-blind-safe colours
 - Settings → Appearance: a Text size slider (12–24 px) that previews straight away and scales the overlay, the in-game panels and the Orbhoarder window, and a "Colour-blind-safe colours" switch that turns every green/red (good/bad, price up/down, warnings) into blue/orange for red-green colour blindness.
 
@@ -115,6 +118,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Changed (Q24): settings backup asks what to restore
 - Settings → Tools → Restore… now shows what's in the file first (date, how many settings and panel data items) and lets you pick: settings and hotkeys, panel data (notes, ticks, watchlist), or both. When the backup has other folders than this PC (game files, Path of Building, builds), this PC's folders are kept unless you untick it, so moving to a new PC or using a friend's setup doesn't break Path of Building.
 - Security: a hand-edited backup file can no longer change the settings object's internals (`__proto__` and similar keys are skipped) or replace a setting with a different kind of value.
+
+### Added (Q11): loot filter add-on keeps itself up to date
+- After making the add-on (Market → Shopping ⋯ → Make loot filter add-on…), tick **Keep it updated**: Orbhoarder writes it again a few seconds after the Shopping list changes (you tick something as got, or switch builds) while Market → Shopping is open in any window. When everything is ticked, the add-on is just your filter. Reload the filter in game (Options → UI → Item filter) to see changes. The file isn't touched when nothing changed.
+- New **Settings → Loot filter** page: pick your filter, turn the automatic update on or off, **Update now**, and see when it was last written. PC only.
 
 ### Added (Q17): Build progress panel
 - New panel for the All tab (Edit layout → Add panel → Build progress): where you are in the build in one view. Tree: the levelling step, passives taken of this step and the next 3 to take. Gems: the step's gems you have ticked (tick or untick right there). Gear: the build's items with the same "got it" ticks as Build → Gear. One percentage on top. Ticks are shared with Build → Gear, Build → Gems and Levelling, and now update in the same window straight away too.

@@ -2168,3 +2168,40 @@ test('lab helper: ascendancy from the levelling plan (Q7)', async () => {
   assert.deepEqual(lab.labBannerAscendancy(tree1, { 'Bane of Legends': 1 }), ['Endless Hunger'])
   assert.deepEqual(lab.labBannerAscendancy(undefined), [])
 })
+
+test('loot filter part 2 (Q11): settings, signatures, automatic rewrite', async () => {
+  const lf = lootFilter
+  assert.deepEqual(lf.parseLfSettings('{"source":"Mine.filter","auto":true}'), { source: 'Mine.filter', auto: true })
+  assert.deepEqual(lf.parseLfSettings('{"source":"../x.filter","auto":true}'), { source: '', auto: false })
+  assert.deepEqual(lf.parseLfSettings('{"source":"Mine + Orbhoarder.filter","auto":true}'), { source: '', auto: false })
+  assert.deepEqual(lf.parseLfSettings('nope'), { source: '', auto: false })
+  assert.equal(lf.parseLfWants('{"at":"x","wants":{"bases":["a\\"b","Vaal Regalia"]}}').wants.bases.length, 1)
+  assert.equal(lf.wantsSignature({ bases: ['B', 'a'], uniqueBases: [], gems: [] }), lf.wantsSignature({ bases: ['A', 'b'], uniqueBases: [], gems: [] }))
+  assert.notEqual(lf.wantsSignature({ bases: ['a'], uniqueBases: [], gems: [] }), lf.wantsSignature({ bases: [], uniqueBases: ['a'], gems: [] }))
+
+  const { mkdtempSync, writeFileSync, readFileSync, statSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const dir = mkdtempSync(join(tmpdir(), 'lf2-'))
+  writeFileSync(join(dir, 'Mine.filter'), 'Hide\n')
+  const wants = { bases: ['Vaal Regalia'], uniqueBases: [], gems: [] }
+  const first = await lootFiles.makeAddon(dir, 'Mine.filter', wants, 'poe1', '2026-11-27')
+  assert.equal(first.ok, true)
+  assert.equal(first.unchanged, undefined)
+  const out = join(dir, 'Mine + Orbhoarder.filter')
+  const t1 = statSync(out).mtimeMs
+  // same list again: not written
+  const again = await lootFiles.makeAddon(dir, 'Mine.filter', wants, 'poe1', '2026-11-27')
+  assert.equal(again.unchanged, true)
+  assert.equal(statSync(out).mtimeMs, t1)
+  // nothing left to buy: a button refuses, the automatic update writes just his filter
+  const none = { bases: [], uniqueBases: [], gems: [] }
+  assert.equal((await lootFiles.makeAddon(dir, 'Mine.filter', none, 'poe1')).ok, false)
+  const empty = await lootFiles.makeAddon(dir, 'Mine.filter', none, 'poe1', '2026-11-27', { allowEmpty: true })
+  assert.equal(empty.ok, true)
+  assert.equal(empty.count, 0)
+  const text = readFileSync(out, 'utf8')
+  assert.ok(text.startsWith(lf.ADDON_MARKER))
+  assert.equal(/BaseType/.test(text), false)
+  assert.ok(text.endsWith('Hide\n'))
+})
