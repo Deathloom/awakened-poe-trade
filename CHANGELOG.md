@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q25): text size slider and colour-blind-safe colours
+- Settings → Appearance: a Text size slider (12–24 px) that previews straight away and scales the overlay, the in-game panels and the Orbhoarder window, and a "Colour-blind-safe colours" switch that turns every green/red (good/bad, price up/down, warnings) into blue/orange for red-green colour blindness.
+
 ### Changed (S3): Market history watchlist kept small
 - You can watch up to 50 items (the star says so when the list is full). Recorded prices older than 14 days keep one point a day; the last 14 days stay hourly. Prices are now saved once per refresh instead of once per item, and if saving ever fails the Market history panel says so instead of losing history silently.
 

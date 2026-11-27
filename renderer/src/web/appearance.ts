@@ -29,6 +29,9 @@ export interface AppearanceConfig {
   decorations: boolean
   // Deathloom fork (16 Nov 2026): small print a bit bigger, brighter and in a plain font
   readableText: boolean
+  // Deathloom fork (27 Nov 2026, Q25): red/green (bad/good, down/up) become
+  // orange/blue everywhere, so red-green colour blindness can tell them apart
+  colorBlind: boolean
   // full: transitions, panels easing in, theme backgrounds that move; subtle: transitions only; off
   motion: 'full' | 'subtle' | 'off'
   // Orbhoarder window: panels are frosted glass over the background (blurred, see-through)
@@ -62,6 +65,7 @@ export const defaultAppearance = (): AppearanceConfig => ({
   holidays: true,
   decorations: true,
   readableText: true,
+  colorBlind: false,
   motion: 'full',
   glass: true,
   decorStrength: 180,
@@ -403,6 +407,18 @@ export function accentShades (accent: string): string[] | null {
   return steps.map(([to, t]) => mix(c, to, t).join(' '))
 }
 
+// Tailwind's red and green (100..900). Colour-blind: Okabe–Ito vermilion and blue
+// ramps, the pair red-green colour blind people tell apart best.
+const RED = ['#fff5f5', '#fed7d7', '#feb2b2', '#fc8181', '#f56565', '#e53e3e', '#c53030', '#9b2c2c', '#742a2a']
+const GREEN = ['#f0fff4', '#c6f6d5', '#9ae6b4', '#68d391', '#48bb78', '#38a169', '#2f855a', '#276749', '#22543d']
+export const CB_BAD = '#e66a1f'
+export const CB_GOOD = '#3d9be0'
+
+export function statusShades (colorBlind: boolean): { red: string[], green: string[] } {
+  if (!colorBlind) return { red: RED.map(triplet), green: GREEN.map(triplet) }
+  return { red: accentShades(CB_BAD)!, green: accentShades(CB_GOOD)! }
+}
+
 const triplet = (hex: string) => (hexToRgb(hex) ?? [0, 0, 0]).join(' ')
 
 export function isValidColor (hex: string): boolean {
@@ -437,6 +453,9 @@ export function applyAppearance (cfg: Partial<AppearanceConfig> | undefined, sur
     : (accentShades(accent) ?? CLASSIC_BLUE.map(triplet))
   blue.forEach((rgb, i) => { root.setProperty(`--b-${(i + 1) * 100}`, rgb) })
   root.setProperty('--accent', triplet(accent))
+  const status = statusShades(a.colorBlind === true)
+  status.red.forEach((rgb, i) => { root.setProperty(`--r-${(i + 1) * 100}`, rgb) })
+  status.green.forEach((rgb, i) => { root.setProperty(`--gn-${(i + 1) * 100}`, rgb) })
 
   // a theme's own corners / font only replace the defaults (Normal, Fontin Small Caps)
   const rounding = (a.rounding === 1 && theme.rounding != null) ? theme.rounding : a.rounding
