@@ -44,6 +44,7 @@ export const LEGACY_VIEWS: Record<string, [string, string?]> = {
   atlas: ['mapping', 'atlas'],
   session: ['mapping', 'session'],
   farm: ['mapping', 'farm'],
+  mods: ['mapping', 'mods'],
   lab: ['levelling', 'lab'],
   progress: ['build', 'progress']
 }

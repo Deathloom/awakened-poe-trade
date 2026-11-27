@@ -132,7 +132,7 @@ useLeagues().load()
 const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
   { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: "Campaign guide, quest gems, gem swaps, the next passives, and today's Lab" },
-  { key: 'mapping', label: 'Mapping', icon: 'fa-globe', title: 'Atlas tree, This session (map timer, loot) and Farming (profit per hour)' },
+  { key: 'mapping', label: 'Mapping', icon: 'fa-globe', title: 'Atlas tree, This session (map timer, loot), Map mods and Farming (profit per hour)' },
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build, and Build progress' },
   { key: 'craft', label: 'Craft', icon: 'fa-flask', title: 'Crafting simulator and timeless jewel explorer' },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Prices: watched items, all poe.ninja prices, shopping and sell lists, bulk sell' },
