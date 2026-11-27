@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q28): spoken callouts (off until you turn them on)
+- Settings → **Spoken callouts**: a Windows voice says incoming trade whispers (item and price), fired price alerts, maps you check that have mods bad for your build, and Path of Building crashes or timeouts. Pick the voice, speed and volume, and which callouts you want; Test plays a sample. Only voices installed on this PC are used, so the words never leave it. Nothing is read from the game or sent to it. At most one callout every few seconds, and the same words aren't repeated within 30 seconds.
+
 ### Added (Q26): crash and slowness watch
 - Settings → Tools → **Speed and crashes**: how long Path of Building took to start and answer, how fast the trade site answered, and PoB crashes, over the last 7 days, with a fix hint when something is off (antivirus slowing PoB's start, PoB desktop app using the CPU, a slow trade site). Kept on this PC only (apt-data/health-watch.json); nothing is sent anywhere.
 - A PoB crash, a PoB answer that times out or a very slow one shows a short notice over the game, at most once per kind every 30 minutes. Turn it off on the same page.

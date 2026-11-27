@@ -45,6 +45,7 @@ import SettingsAppearance from '../settings/appearance.vue'
 import SettingsTools from '../settings/tools.vue'
 import SettingsPanels from '../settings/panels.vue'
 import SettingsLootFilter from '../settings/loot-filter.vue'
+import SettingsCallouts from '../settings/callouts.vue'
 import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 
 const { t } = useI18n()
@@ -52,7 +53,7 @@ const { t } = useI18n()
 // same pages and groups as the overlay's settings window (no Quit here: the tray has it)
 const GROUPS: Component[][] = [
   [SettingsHotkeys, SettingsChat],
-  [SettingsGeneral, SettingsAppearance, SettingsPanels],
+  [SettingsGeneral, SettingsAppearance, SettingsCallouts, SettingsPanels],
   [SettingsPricecheck, SettingsMaps, SettingsItemcheck, SettingsLootFilter, SettingsPob],
   [SettingsTools, SettingsDebug, SettingsAbout]
 ]

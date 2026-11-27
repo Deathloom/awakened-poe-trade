@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ItemRarity, ParsedItem } from '@/parser'
 import { ModifierType } from '@/parser/modifiers'
@@ -64,6 +64,8 @@ import MapStatButton from './MapStatButton.vue'
 import FullscreenImage from '@/web/ui/FullscreenImage.vue'
 import { notesState, loadNotes, buildLabel } from '@/web/pob/build-notes'
 import { badMods } from '@/web/pob/map-mods'
+import { callout } from '@/web/callouts/callouts-store'
+import { mapCallout } from '@/web/callouts/callouts'
 
 const props = defineProps<{
   item: ParsedItem,
@@ -136,6 +138,12 @@ function toggleLegend () {
 const mapStats = computed(() => props.item.statsByType
   .filter(calc => calc.type === ModifierType.Explicit)
   .map(calc => prepareMapStat(calc)))
+
+// Deathloom fork (Q28): spoken callout when the map has mods bad for this build
+watch(() => props.item, () => {
+  const flagged = mapStats.value.filter(st => buildFlagOf(st)?.danger === true).length
+  callout('map', mapCallout(buildWarnings.value.length + flagged))
+}, { immediate: true })
 
 const unknownModifiers = computed(() => props.item.unknownModifiers
   .filter(mod => mod.type === ModifierType.Explicit))
