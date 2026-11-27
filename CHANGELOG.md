@@ -144,6 +144,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q19): weekly farming report and a nudge when profit drops
 - Market → Farming now opens with a **Last 7 days** card: maps, hours, profit and profit per hour, the week before for comparison (▲/▼ % per hour), your strategies this week ranked by profit per hour, and a tip when one clearly earns less than another. When the last 5 maps of the strategy you're farming now make at least 30 % less per hour than its earlier maps (last 2 weeks, at least 10 of them), a yellow line says so in Farming and in This session, naming a strategy that did better if there is one. **Not now** hides it until the next day. Uses only the loot you type in This session, as before.
 
+### Added (Q14): Wombgift value
+- Money tools → Wombgifts: every Wombgift poe.ninja lists with its sell price. Click one, open it at the Genesis Tree, price check what came out and log what it was worth; after 3 openings of a kind it says Open (your openings are worth more than selling) or Sell. GGG doesn't publish what Wombgifts give, so the answer comes from your own openings (last 30 per kind, kept on this PC; Hiveblood not counted).
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

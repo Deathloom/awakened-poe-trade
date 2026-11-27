@@ -88,3 +88,36 @@ test('temple: itemised temple value matches only temples you can make', () => {
   assert.equal(temple.templeValue(priced).chaos, 300)
   assert.equal(temple.templeValue(temple.priceTemples([], {})), null)
 })
+
+const womb = await import('./.build/wombgift.mjs')
+
+test('wombgift: verdict needs enough openings and compares with the sell price', () => {
+  const L = (name, chaos) => ({ category: 'wombgifts', name, chaos, url: name })
+  let log = {}
+  for (const v of [10, 20, 30]) log = womb.addOpening(log, 'Lavish Wombgift', v)
+  log = womb.addOpening(log, 'Mysterious Wombgift', 100)
+  log = womb.addOpening(log, 'Ancient Wombgift', 5)
+  log = womb.addOpening(log, 'Ancient Wombgift', 5)
+  log = womb.addOpening(log, 'Ancient Wombgift', 5)
+  log = womb.addOpening(log, 'Lavish Wombgift', -1)
+  const rows = womb.valueWombgifts([L('Lavish Wombgift', 15), L('Lavish Wombgift', 12), L('Mysterious Wombgift', 3), L('Ancient Wombgift', 40), { category: 'currency', name: 'Divine Orb', chaos: 200, url: '' }], log)
+  const by = Object.fromEntries(rows.map(r => [r.name, r]))
+  assert.deepEqual(rows.map(r => r.name), ['Ancient Wombgift', 'Lavish Wombgift', 'Mysterious Wombgift'])
+  assert.equal(by['Lavish Wombgift'].sell, 12)
+  assert.equal(by['Lavish Wombgift'].avgOpen, 20)
+  assert.equal(by['Lavish Wombgift'].verdict, 'open')
+  assert.equal(by['Ancient Wombgift'].verdict, 'sell')
+  assert.equal(by['Mysterious Wombgift'].verdict, 'log')
+})
+
+test('wombgift: log keeps the last openings, undo, junk ignored', () => {
+  let log = {}
+  for (let i = 0; i < womb.KEEP_PER_KIND + 5; i++) log = womb.addOpening(log, 'X', i)
+  assert.equal(log.X.length, womb.KEEP_PER_KIND)
+  assert.equal(log.X[0], 5)
+  log = womb.undoOpening(womb.addOpening({}, 'Y', 1), 'Y')
+  assert.deepEqual(log, {})
+  assert.deepEqual(womb.addOpening({}, '__proto__', 1), {})
+  localStorage.setItem(womb.LOG_KEY, JSON.stringify({ A: [1, 'x', -2, 3], B: 'no', C: [] }))
+  assert.deepEqual(womb.loadLog(), { A: [1, 3] })
+})
