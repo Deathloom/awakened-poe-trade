@@ -89,6 +89,24 @@ test('PoE2 parser: common item texts parse with their rarity and base', () => {
   assert.equal(parse(fx.UniqueItem).rarity, 'Unique')
 })
 
+// 0.5.5 entries EE2 had not shipped yet (tools/poe2-additions)
+test('PoE2 data: 0.5.5 additions load and a new unique parses', () => {
+  assert.equal(poe2.ITEM_BY_REF('UNIQUE', 'Reverie')?.length, 2)
+  assert.ok(poe2.ITEM_BY_REF('ITEM', 'Starlit Ore')?.length)
+  assert.ok(poe2.STAT_BY_MATCH_STR('# to Level of all Herald Skill Gems'))
+  const it = parse({ rawText: `Item Class: Rings
+Rarity: Unique
+Eshtera's Path
+Ring
+--------
+Item Level: 80
+--------
++10% to Fire Resistance
+` })
+  assert.equal(it.rarity, 'Unique')
+  assert.equal(it.info?.refName, "Eshtera's Path")
+})
+
 test('PoE2 parser: text that is not an item is refused', () => {
   assert.ok(poe2.parseClipboard('not an item at all').isErr())
 })

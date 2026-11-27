@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (C1): PoE2 0.5.5 items the price check didn't know
+- PoE2 price check now knows the 0.5.5 uniques Byrnabas, Eshtera's Path, Safrin's Resolve, Zaida's Longevity, Reverie, The Road Warrior and Splinter of Lorrata, plus Soul Core of Vizoma, Mutated, Corrupted and Founders Verisium, Starlit Ore and Lesser Charging Rune, and 7 new rune and Expedition mods. Exiled Exchange 2 hasn't shipped these yet; they live in `tools/poe2-additions/` and drop out on their own once EE2 has them (`node tools/poe2-additions.mjs` after each EE2 data refresh). No icons for these yet.
+
 ### Added (Q29): League recap card
 - Reference → Tracking → **League recap**: one card for a league with what Orbhoarder kept on this PC: dates and days played, characters (level, deaths, campaign time), maps, hours and profit per hour, best farming strategy, most seen mechanic, trades sold/bought and what they sold for, bosses and voidstones ticked in the Checklist, and challenges done. Pick an earlier league in the list; **Copy** gives plain text to paste for friends.
 
