@@ -1,0 +1,140 @@
+diff --git a/node_modules/electron-overlay-window/dist/index.d.ts b/node_modules/electron-overlay-window/dist/index.d.ts
+index a49118a..866f1fe 100644
+--- a/node_modules/electron-overlay-window/dist/index.d.ts
++++ b/node_modules/electron-overlay-window/dist/index.d.ts
+@@ -7,6 +7,8 @@ export interface AttachEvent {
+     y: number;
+     width: number;
+     height: number;
++    /** Deathloom fork: index in the "\n"-separated title list (patched Windows build) */
++    titleIndex?: number;
+ }
+ export interface FullscreenEvent {
+     isFullscreen: boolean;
+@@ -30,6 +32,8 @@ declare class OverlayControllerGlobal {
+     private macTitleBarHeight;
+     private attachOptions;
+     readonly events: EventEmitter<[never]>;
++    /** Deathloom fork: native part supports a "\n"-separated title list */
++    get supportsMultiTitle(): boolean;
+     constructor();
+     private handleFullscreen;
+     private updateOverlayBounds;
+diff --git a/node_modules/electron-overlay-window/dist/index.js b/node_modules/electron-overlay-window/dist/index.js
+index 98d1d55..53b1708 100644
+--- a/node_modules/electron-overlay-window/dist/index.js
++++ b/node_modules/electron-overlay-window/dist/index.js
+@@ -203,6 +203,11 @@ class OverlayControllerGlobal {
+         this.electronWindow?.setIgnoreMouseEvents(true);
+         lib.focusTarget();
+     }
++    // Deathloom fork: true when the native part was built from the patched source
++    // (title may then be a "\n"-separated list; attach events carry titleIndex)
++    get supportsMultiTitle() {
++        return lib.multiTitle === true;
++    }
+     attachByTitle(electronWindow, targetWindowTitle, options = {}) {
+         if (this.isInitialized) {
+             throw new Error('Library can be initialized only once.');
+diff --git a/node_modules/electron-overlay-window/src/lib/addon.c b/node_modules/electron-overlay-window/src/lib/addon.c
+index ff6bbb0..f069af3 100644
+--- a/node_modules/electron-overlay-window/src/lib/addon.c
++++ b/node_modules/electron-overlay-window/src/lib/addon.c
+@@ -71,8 +71,13 @@ napi_value ow_event_to_js_object(napi_env env, struct ow_event* event) {
+     status = napi_create_uint32(env, event->data.attach.bounds.height, &e_height);
+     NAPI_FATAL_IF_FAILED(status, "ow_event_to_js_object", "napi_create_uint32");
+ 
++    napi_value e_title_index;
++    status = napi_create_int32(env, event->data.attach.title_index, &e_title_index);
++    NAPI_FATAL_IF_FAILED(status, "ow_event_to_js_object", "napi_create_int32");
++
+     napi_property_descriptor descriptors[] = {
+       { "type",         NULL, NULL, NULL, NULL, e_type,          napi_enumerable, NULL },
++      { "titleIndex",   NULL, NULL, NULL, NULL, e_title_index,   napi_enumerable, NULL },
+       { "hasAccess",    NULL, NULL, NULL, NULL, e_has_access,    napi_enumerable, NULL },
+       { "isFullscreen", NULL, NULL, NULL, NULL, e_is_fullscreen, napi_enumerable, NULL },
+       { "x",            NULL, NULL, NULL, NULL, e_x,             napi_enumerable, NULL },
+@@ -246,6 +251,17 @@ NAPI_MODULE_INIT() {
+   status = napi_set_named_property(env, exports, "focusTarget", export_fn);
+   NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_set_named_property");
+ 
++  // Deathloom fork: this build matches a "\n"-separated list of titles (Windows)
++  napi_value multi_title;
++#ifdef _WIN32
++  status = napi_get_boolean(env, true, &multi_title);
++#else
++  status = napi_get_boolean(env, false, &multi_title);
++#endif
++  NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_get_boolean");
++  status = napi_set_named_property(env, exports, "multiTitle", multi_title);
++  NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_set_named_property");
++
+   status = napi_create_function(env, NULL, 0, AddonScreenshot, NULL, &export_fn);
+   NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_create_function");
+   status = napi_set_named_property(env, exports, "screenshot", export_fn);
+diff --git a/node_modules/electron-overlay-window/src/lib/overlay_window.h b/node_modules/electron-overlay-window/src/lib/overlay_window.h
+index 063293d..a300a44 100644
+--- a/node_modules/electron-overlay-window/src/lib/overlay_window.h
++++ b/node_modules/electron-overlay-window/src/lib/overlay_window.h
+@@ -38,6 +38,9 @@ struct ow_event_attach {
+   int is_fullscreen;
+   //
+   struct ow_window_bounds bounds;
++  // Deathloom fork: which title of the "\n"-separated list matched
++  // (Windows only; 0 elsewhere)
++  int title_index;
+ };
+ 
+ struct ow_event_fullscreen {
+diff --git a/node_modules/electron-overlay-window/src/lib/windows.c b/node_modules/electron-overlay-window/src/lib/windows.c
+index 8544712..024762d 100644
+--- a/node_modules/electron-overlay-window/src/lib/windows.c
++++ b/node_modules/electron-overlay-window/src/lib/windows.c
+@@ -36,6 +36,27 @@ static struct ow_target_window target_info = {
+   .is_destroyed = false
+ };
+ 
++// Deathloom fork: the target title may be a "\n"-separated list of exact
++// titles (e.g. "Path of Exile\nPath of Exile 2"); returns the index of the
++// one that equals `title`, or -1. With one title this is the old strcmp.
++static int match_title_list(const char* title, const char* list) {
++  size_t title_len = strlen(title);
++  const char* start = list;
++  int index = 0;
++  for (;;) {
++    const char* end = strchr(start, '\n');
++    size_t len = end ? (size_t)(end - start) : strlen(start);
++    if (len == title_len && strncmp(title, start, len) == 0) {
++      return index;
++    }
++    if (end == NULL) {
++      return -1;
++    }
++    start = end + 1;
++    index++;
++  }
++}
++
+ static struct ow_overlay_window overlay_info = {
+   .hwnd = NULL
+ };
+@@ -173,9 +194,9 @@ static void check_and_handle_window(HWND hwnd, struct ow_target_window* target_i
+   if (!get_title(hwnd, &title) || title == NULL) {
+     return;
+   }
+-  bool is_equal = (strcmp(title, target_info->title) == 0);
++  int title_index = match_title_list(title, target_info->title);
+   free(title);
+-  if (!is_equal) {
++  if (title_index < 0) {
+     return;
+   }
+ 
+@@ -209,6 +230,7 @@ static void check_and_handle_window(HWND hwnd, struct ow_target_window* target_i
+     }
+   };
+   e.data.attach.has_access = has_uipi_access(target_info->hwnd);
++  e.data.attach.title_index = title_index;
+   if (get_content_bounds(target_info->hwnd, &e.data.attach.bounds)) {
+     // emit OW_ATTACH
+     ow_emit_event(&e);

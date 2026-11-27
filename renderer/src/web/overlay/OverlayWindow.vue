@@ -41,6 +41,7 @@ import { Widget, WidgetManager } from './interfaces'
 import { registry } from './widget-registry.js'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
 import LoadingAnimation from './LoadingAnimation.vue'
+import { initGameSwitch } from '@/web/background/game-switch'
 import UpdateToast from './UpdateToast.vue'
 import CalloutsSpeaker from '@/web/callouts/CalloutsSpeaker.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
@@ -120,6 +121,9 @@ export default defineComponent({
         }
       }
     })
+    // Deathloom fork (wave 6): Automatic game switch
+    initGameSwitch()
+
     Host.onEvent('MAIN->OVERLAY::visibility', (e) => {
       hideUI.value = !e.isVisible
     })

@@ -129,9 +129,10 @@ export class OverlayWindow {
     }
   }
 
-  updateOpts (overlayKey: string, windowTitle: string) {
+  // Deathloom fork (wave 6): titles from GameSwitch (undefined = already watching)
+  updateOpts (overlayKey: string, titles: readonly string[] | undefined) {
     this.overlayKey = overlayKey
-    this.poeWindow.attach(this.window, windowTitle)
+    if (titles?.length) this.poeWindow.attach(this.window, titles)
   }
 
   private handleExtraCommands = (event: Electron.Event, input: Electron.Input) => {

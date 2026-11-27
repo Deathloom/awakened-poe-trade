@@ -308,6 +308,30 @@ test('game switch: window title, exe match, default league', () => {
   assert.equal(game.pickDefaultLeague([]), undefined)
 })
 
+test('auto game switch: titles, tasklist, settings switch', () => {
+  assert.equal(game.asGameMode(undefined), 'auto'); assert.equal(game.asGameMode('poe2'), 'poe2'); assert.equal(game.asGameMode('x'), 'auto')
+  assert.equal(game.gameForWindowTitle('Path of Exile 2'), 'poe2'); assert.equal(game.gameForWindowTitle('Path of Exile'), 'poe1'); assert.equal(game.gameForWindowTitle('Path of Exile 3'), undefined)
+  // live library: both titles, whatever the mode
+  assert.deepEqual(game.overlayTitles({ mode: 'auto', game: 'poe1', windowTitle: 'Path of Exile', multiTitle: true }), { titles: ['Path of Exile', 'Path of Exile 2'], auto: true, live: true })
+  assert.deepEqual(game.overlayTitles({ mode: 'poe1', game: 'poe1', windowTitle: '', multiTitle: true }), { titles: ['Path of Exile', 'Path of Exile 2'], auto: false, live: true })
+  // stock library: the current (or pinned) game only
+  assert.deepEqual(game.overlayTitles({ mode: 'auto', game: 'poe2', windowTitle: 'Path of Exile 2', multiTitle: false }), { titles: ['Path of Exile 2'], auto: true, live: false })
+  assert.deepEqual(game.overlayTitles({ mode: 'poe1', game: 'poe2', windowTitle: 'Path of Exile 2', multiTitle: false }), { titles: ['Path of Exile'], auto: false, live: false })
+  // custom title: on its own, Auto off
+  assert.deepEqual(game.overlayTitles({ mode: 'auto', game: 'poe1', windowTitle: 'My PoE', multiTitle: true }), { titles: ['My PoE'], auto: false, live: false })
+  const tl = '"PathOfExileSteam.exe","1234","Console","1","1,200,000 K","Running","PC\\me","0:01:00","Path of Exile 2"\r\n' +
+    '"PathOfExile.exe","99","Console","1","900,000 K","Running","PC\\me","0:00:10","N/A"\r\n'
+  assert.deepEqual(game.gamesInTasklist(tl), ['poe2'])
+  assert.deepEqual(game.gamesInTasklist('INFO: No tasks are running which match the specified criteria.'), [])
+  const cfg = { game: 'poe1', leagueId: 'Covens of Umbra', windowTitle: 'Path of Exile' }
+  assert.equal(game.applyGameSwitch(cfg, 'poe1'), false)
+  assert.equal(game.applyGameSwitch(cfg, 'poe2'), true)
+  assert.deepEqual(cfg, { game: 'poe2', leagueId: undefined, leagueIdByGame: { poe1: 'Covens of Umbra' }, windowTitle: 'Path of Exile 2' })
+  cfg.leagueId = 'Forbidden Rites'
+  game.applyGameSwitch(cfg, 'poe1')
+  assert.equal(cfg.leagueId, 'Covens of Umbra'); assert.equal(cfg.leagueIdByGame.poe2, 'Forbidden Rites'); assert.equal(cfg.windowTitle, 'Path of Exile')
+})
+
 const vr = await import('./.build/vendor-regex.mjs')
 test('vendor regex: numbers, links, query', () => {
   const re = (n, d) => new RegExp('^(' + vr.atLeast(n, d) + ')$')

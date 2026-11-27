@@ -14,6 +14,7 @@ import { LootFilter } from './LootFilter'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
 import { OverlayWindow } from './windowing/OverlayWindow'
+import { GameSwitch } from './windowing/GameSwitch'
 import { GameConfig } from './host-files/GameConfig'
 import { Shortcuts } from './shortcuts/Shortcuts'
 import { AppUpdater } from './AppUpdater'
@@ -217,6 +218,7 @@ app.on('ready', async () => {
   setTimeout(
     async () => {
       const overlay = new OverlayWindow(eventPipe, logger, poeWindow)
+      const gameSwitch = new GameSwitch(eventPipe, logger, poeWindow)
       new OverlayVisibility(eventPipe, overlay, gameConfig)
       // Deathloom fork: panels that stay visible while playing
       const hud = new HudWindow(eventPipe, logger, poeWindow, overlay)
@@ -323,7 +325,7 @@ app.on('ready', async () => {
           })
       })
       eventPipe.onEventAnyClient('CLIENT->MAIN::update-host-config', (cfg) => {
-        overlay.updateOpts(cfg.overlayKey, cfg.windowTitle)
+        overlay.updateOpts(cfg.overlayKey, gameSwitch.configure(cfg))
         shortcuts.updateActions(cfg.shortcuts, cfg.stashScroll, cfg.logKeys, cfg.restoreClipboard, cfg.language)
         gameLogWatcher.restart(cfg.clientLog ?? '', asGame(cfg.game))
         gameConfig.readConfig(cfg.gameConfig ?? '', asGame(cfg.game))
