@@ -13,10 +13,6 @@ export function pobPinUrl (appVersion: string): string {
   return /-beta\.\d+$/.test(appVersion) ? POB_PIN_URL_TESTING : POB_PIN_URL
 }
 
-export function isPobCommit (ref: unknown): ref is string {
-  return typeof ref === 'string' && /^[0-9a-f]{40}$/.test(ref)
-}
-
 // the pin from this file's text (the copy on master)
 export function parsePobPin (text: string): string | null {
   const m = /POB_PIN = '([0-9a-f]{40})'/.exec(text)

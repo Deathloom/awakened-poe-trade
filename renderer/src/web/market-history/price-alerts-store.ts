@@ -31,7 +31,9 @@ export const usePriceAlerts = createGlobalState(() => {
   const error = ref('')
   const dismissed = ref<string[]>(loadDismissed())
   const now = ref(Date.now())
-  setInterval(() => { now.value = Date.now() }, 60_000)
+  // clock for "x min ago": tick only while the window is shown, catch up when shown again
+  setInterval(() => { if (!document.hidden) now.value = Date.now() }, 60_000)
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) now.value = Date.now() })
 
   Host.onEvent('MAIN->CLIENT::price-alerts', (e) => {
     const { error: err, ...rest } = e
