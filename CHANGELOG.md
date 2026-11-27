@@ -135,6 +135,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q16): bulk sell pricing
 - New Market → **Bulk sell** tab for stacks (currency, fragments, essences, divination cards…): add a stack and how many you have, and it shows poe.ninja's price the way bulk is quoted (12 c each, 8 per div, 5 per chaos). Type the ratio the in-game Currency Exchange offers (12c, 0.5 div, 8/div or 40:3) to see which pays more and by how much. **Copy** puts a WTS line for trade chat on the clipboard (at the better price, with the total); **Copy all** does every stack in one line. Nothing is sent for you: paste it yourself.
 
+### Changed: PoE2 switch is back in Settings
+- Settings → General → Game is shown again, so you can switch to Path of Exile 2 (beta) and try the new PoE2 price check. It was hidden while PoE2 support wasn't usable.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
