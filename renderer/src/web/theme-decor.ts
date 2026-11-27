@@ -196,4 +196,3 @@ export function decorAt (strength: number): Record<string, Decor> {
   if (!d) { K = k; d = build(); K = 1; cache.set(k, d) }
   return d
 }
-export const DECOR = decorAt(1)

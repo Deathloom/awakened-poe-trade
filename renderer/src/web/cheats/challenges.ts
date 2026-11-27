@@ -158,7 +158,6 @@ export function toggleTick (ticks: Set<string>, id: string): Set<string> {
   return t
 }
 
-export const isDone = (ticks: Set<string>, c: Challenge) => ticks.has(c.id)
 export const doneCount = (ticks: Set<string>, list: Challenge[] = CHALLENGES) => list.filter(c => ticks.has(c.id)).length
 export const stepsDone = (ticks: Set<string>, c: Challenge) => (c.steps ?? []).filter((_, i) => ticks.has(stepId(c, i))).length
 export const stepsNeeded = (c: Challenge) => c.need ?? c.steps?.length ?? 0

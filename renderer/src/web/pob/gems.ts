@@ -168,11 +168,6 @@ export interface SocketCheck {
   ok: boolean
 }
 
-// A group counts when it's real gear (not item-granted) and switched on
-export function isShownGroup (g: PobSocketGroup) {
-  return Boolean(g.slot) && g.enabled
-}
-
 export function socketNeeds (groups: PobSocketGroup[]): SocketNeeds {
   const needs: SocketNeeds = { R: 0, G: 0, B: 0, any: 0, links: 0 }
   for (const g of groups) {
