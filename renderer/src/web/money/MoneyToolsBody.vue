@@ -46,6 +46,8 @@
     <VisceraPlanner v-else-if="tab === 'viscera'" :items="all" :money="money" />
     <!-- Deathloom fork (Q13): Temple of Atzoatl planner -->
     <TemplePlanner v-else-if="tab === 'temple'" :items="all" :money="money" />
+    <!-- Deathloom fork (Q14): Wombgift value -->
+    <WombgiftValue v-else-if="tab === 'wombgifts'" :items="all" :money="money" />
 
     <!-- Currency counter -->
     <div v-else class="flex-1 min-h-0 flex flex-col">
@@ -93,12 +95,14 @@ import { gemProfits, DEFAULT_CURRENCIES, loadCounter, saveCounter, counterTotal,
 
 const VisceraPlanner = defineAsyncComponent(async () => await import('./VisceraPlanner.vue'))
 const TemplePlanner = defineAsyncComponent(async () => await import('./TemplePlanner.vue'))
+const WombgiftValue = defineAsyncComponent(async () => await import('./WombgiftValue.vue'))
 
 const TABS = [
   { id: 'gems', label: 'Gem levelling' },
   { id: 'counter', label: 'Currency counter' },
   { id: 'viscera', label: 'Viscera' },
-  { id: 'temple', label: 'Temple' }
+  { id: 'temple', label: 'Temple' },
+  { id: 'wombgifts', label: 'Wombgifts' }
 ] as const
 type Tab = typeof TABS[number]['id']
 const TAB_KEY = 'deathloom.money-tab.v1'

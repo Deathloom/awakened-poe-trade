@@ -141,6 +141,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q13): Temple planner
 - Money tools → Temple: set each Temple of Atzoatl room's tier (or "not in temple") as you see it in game; it lists which room to upgrade next (best rooms first, the one closest to tier 3 first), good rooms you don't have yet, and what your temple is worth as an Itemised Temple from poe.ninja's temple prices (the dearest listing whose tier 3 rooms you all have). What some rooms give is marked (guess). Your temple stays on this PC.
 
+### Added (Q14): Wombgift value
+- Money tools → Wombgifts: every Wombgift poe.ninja lists with its sell price. Click one, open it at the Genesis Tree, price check what came out and log what it was worth; after 3 openings of a kind it says Open (your openings are worth more than selling) or Sell. GGG doesn't publish what Wombgifts give, so the answer comes from your own openings (last 30 per kind, kept on this PC; Hiveblood not counted).
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
