@@ -74,6 +74,8 @@ export class PobImpact {
   private resolveTimer: NodeJS.Timeout | null = null
   // Deathloom fork: Lua errors / crashes of the headless PoB (automatic problem report)
   onCodeError: (message: string, detail?: string) => void = () => {}
+  // Deathloom fork (Q26): start / answer times and crashes for the local health watch
+  onHealth: (s: { k: 'pob-start' | 'pob-call' | 'pob-crash', ms: number, ok: boolean, what?: string, timeout?: boolean }) => void = () => {}
   // Deathloom fork: Orbhoarder wrote a file in the player folder (auto sync pushes it)
   onPlayerFilesChanged: () => void = () => {}
   // Deathloom fork: why Orbhoarder's PoB isn't usable yet (null = it is), from PobInstaller
@@ -493,8 +495,10 @@ export class PobImpact {
 
     this.ready = new Promise<void>((resolve, reject) => {
       let started = false
+      const startedAt = Date.now()
       const startTimer = setTimeout(() => {
         if (!started) {
+          this.onHealth({ k: 'pob-start', ms: Date.now() - startedAt, ok: false, timeout: true })
           reject(new Error('Path of Building took too long to start'))
           this.stop()
         }
@@ -517,7 +521,10 @@ export class PobImpact {
         const msg = `Path of Building exited (code ${String(code)})${detail ? ': ' + detail : ''}`
         this.logger.write(`warn [PoB] ${msg}`)
         // stop() kills it on purpose (code null); anything else is a crash
-        if (code !== null && code !== 0 && this.proc === proc) this.onCodeError(`Headless PoB exited (code ${String(code)})`, detail)
+        if (code !== null && code !== 0 && this.proc === proc) {
+          this.onCodeError(`Headless PoB exited (code ${String(code)})`, detail)
+          this.onHealth({ k: 'pob-crash', ms: 0, ok: false, what: `code ${String(code)}` })
+        }
         if (!started) reject(new Error(msg))
         if (this.proc === proc) this.cleanup(new Error(msg))
       })
@@ -547,6 +554,7 @@ export class PobImpact {
           if (reply.id === 0 && reply.ready) {
             started = true
             clearTimeout(startTimer)
+            this.onHealth({ k: 'pob-start', ms: Date.now() - startedAt, ok: true })
             this.caps = pobCapsFromReady(reply)
             this.logger.write(`info [PoB] ready (PoB ${String(reply.version)}, ${this.caps.reported ? `${this.caps.caps.length} caps` : 'no caps list: older copy'})`)
             resolve()
@@ -576,12 +584,19 @@ export class PobImpact {
     // Deathloom fork (S6): a command this PoB doesn't know gets an explanation, not "Unknown cmd"
     if (!pobSupports(this.caps, pobCapFor(cmd, params))) throw new Error(pobNeedsUpdate(this.caps))
     const id = this.nextId++
+    const sentAt = Date.now()
+    const took = (ok: boolean, timedOut = false) => { this.onHealth({ k: 'pob-call', ms: Date.now() - sentAt, ok, what: cmd, timeout: timedOut || undefined }) }
     return await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id)
+        took(false, true)
         reject(new Error(`Path of Building did not answer '${cmd}' in time`))
       }, timeout)
-      this.pending.set(id, { resolve, reject, timer })
+      this.pending.set(id, {
+        resolve: (r) => { took(true); resolve(r) },
+        reject: (e) => { took(false); reject(e) },
+        timer
+      })
       proc.stdin.write(JSON.stringify({ id, cmd, ...params }) + '\n')
     })
   }

@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q26): crash and slowness watch
+- Settings → Tools → **Speed and crashes**: how long Path of Building took to start and answer, how fast the trade site answered, and PoB crashes, over the last 7 days, with a fix hint when something is off (antivirus slowing PoB's start, PoB desktop app using the CPU, a slow trade site). Kept on this PC only (apt-data/health-watch.json); nothing is sent anywhere.
+- A PoB crash, a PoB answer that times out or a very slow one shows a short notice over the game, at most once per kind every 30 minutes. Turn it off on the same page.
+
 ### Added (Q22): what changed in a friend's build after a Pull
 - Build sharing (Build panel → ⋯ → Build sharing) lists the friends' builds that the last Pulls changed. **What changed** shows the difference from your previous copy: stats (old → new), gear, gems and passives. Works for Pulls started in Orbhoarder (also the automatic one at start); the last 30 changes are kept, **Clear** forgets them.
 
