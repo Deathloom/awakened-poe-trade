@@ -36,7 +36,7 @@ import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
 import { inOverlay } from '../desktop/panels'
-import TradeCompanionBody from './TradeCompanionBody.vue'
+import { LazyTradeCompanionBody as TradeCompanionBody } from '../ui/LazyBodies'
 import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: TradeCompanionWidget }>()

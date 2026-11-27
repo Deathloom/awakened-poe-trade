@@ -37,7 +37,7 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import { useInOverlay } from '../desktop/panels'
-import MarketHistoryBody from './MarketHistoryBody.vue'
+import { LazyMarketHistoryBody as MarketHistoryBody } from '../ui/LazyBodies'
 import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: MarketHistoryWidget }>()

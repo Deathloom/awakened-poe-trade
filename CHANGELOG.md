@@ -11,8 +11,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Changed (S3): Market history watchlist kept small
 - You can watch up to 50 items (the star says so when the list is full). Recorded prices older than 14 days keep one point a day; the last 14 days stay hourly. Prices are now saved once per refresh instead of once per item, and if saving ever fails the Market history panel says so instead of losing history silently.
 
-### Changed (S3): Market history watchlist kept small
-- You can watch up to 50 items (the star says so when the list is full). Recorded prices older than 14 days keep one point a day; the last 14 days stay hourly. Prices are now saved once per refresh instead of once per item, and if saving ever fails the Market history panel says so instead of losing history silently.
+### Performance (S4): lighter windows, round 2
+- The panel bodies (Build, Levelling, Trades, Trade board, Market history, Market overview, Market search, This session, Cheat sheets, Money tools, Craft, Help) load the first time they are shown instead of with every window, the phone QR code library loads when a QR code is shown, and the price check cache and the fade animations no longer need two extra libraries. Every window starts with about a third less code (main bundle 1,423 kB → 948 kB, CSS 204 kB → 177 kB). The first time a panel opens it may take a frame or two longer.
 
 ### Fixed (S5): other windows after renaming or deleting a build
 - Renaming, moving, copying or deleting a build in Build manager now updates the build list, tree, tree map and gems in your other windows (overlay, desktop, HUD) too; before, they could keep showing the old build until you switched. New automatic checks cover which changes reach every window.
@@ -90,6 +90,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Security (S2): Path of Building 2.69.0 with the open-request hardening
 - Path of Building moves to the fork's 2.69.0 release (upstream 2.69.0: loadout manager, item type icons, 3.30 Imbue gems, Viscera, Wickerman and Covetous Dark fixes). It also brings PoB fork #44: when Orbhoarder asks PoB to open a build, PoB now only opens local drive paths to real PoB build files (no network share paths). Update in PoB works as before. (#309)
+
+### Added (A1): PoE2 game data
+- Orbhoarder now ships the PoE2 item and modifier lists (English) from Exiled Exchange 2, kept separate from the PoE1 lists. Nothing uses them yet: they are the groundwork for PoE2 price check. Credited in the README and LICENSE.
 
 ## [1.0.97] - 2026-11-20
 
