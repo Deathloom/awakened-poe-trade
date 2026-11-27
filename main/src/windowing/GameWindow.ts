@@ -2,6 +2,11 @@ import type { BrowserWindow } from 'electron'
 import { EventEmitter } from 'events'
 import { OverlayController, AttachEvent } from 'electron-overlay-window'
 
+// Deathloom fork (wave 6): fields the patched library adds; typed here so the code
+// also type-checks when the patch isn't applied (npm ci --ignore-scripts)
+type PatchedAttachEvent = AttachEvent & { titleIndex?: number }
+const patched = OverlayController as typeof OverlayController & { supportsMultiTitle?: boolean }
+
 export interface GameWindow {
   on: (event: 'active-change', listener: (isActive: boolean) => void) => this
 }
@@ -20,7 +25,7 @@ export class GameWindow extends EventEmitter {
   get titles (): readonly string[] { return this._titles }
   get attachedTitle () { return this._attachedTitle }
   // the native part watches several titles at once (patched Windows build)
-  get supportsMultiTitle () { return OverlayController.supportsMultiTitle === true }
+  get supportsMultiTitle () { return patched.supportsMultiTitle === true }
 
   set isActive (active: boolean) {
     if (this.isActive !== active) {
@@ -38,7 +43,7 @@ export class GameWindow extends EventEmitter {
   constructor () {
     super()
     // first 'attach' listener, so onAttach callbacks see the new title
-    OverlayController.events.on('attach', (e: AttachEvent) => {
+    OverlayController.events.on('attach', (e: PatchedAttachEvent) => {
       const i = typeof e.titleIndex === 'number' && e.titleIndex >= 0 ? e.titleIndex : 0
       this._attachedTitle = this._titles[i] ?? this._titles[0]
     })
