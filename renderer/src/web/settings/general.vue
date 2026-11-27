@@ -1,15 +1,14 @@
 <template>
   <div class="max-w-2xl p-2">
-    <!-- Deathloom fork: PoE2 mode (phase 1: game switch). Hidden until PoE2 mode is usable;
-         still shown if PoE2 is already selected so it can be switched back. -->
+    <!-- Deathloom fork: PoE2 mode. Shown since PoE2 price check is in (Phase A). -->
     <div class="mb-4" v-if="showGameSwitch">
       <div class="flex-1 mb-1">Game</div>
       <div class="flex gap-x-4">
         <ui-radio v-model="game" value="poe1">Path of Exile 1</ui-radio>
-        <ui-radio v-model="game" value="poe2">Path of Exile 2 <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">early</span></ui-radio>
+        <ui-radio v-model="game" value="poe2">Path of Exile 2 <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">beta</span></ui-radio>
       </div>
       <div class="text-gray-500 text-sm mt-1" v-if="game === 'poe2'">
-        Finds the PoE2 window, Client.txt and config file, and lists PoE2 trade leagues. Price check,
+        Price check uses the PoE2 trade site (English game client only; no quick poe.ninja price yet).
         Path of Building and poe.ninja prices are still PoE1 only. Restart Orbhoarder after switching.
       </div>
     </div>
@@ -133,8 +132,8 @@ import { configModelValue, configProp } from './utils'
 import { AppConfig } from '@/web/Config'
 import { windowTitleOnSwitch, type Game } from '@ipc/game'
 
-// Deathloom fork: PoE2 mode is deferred until the PoE1 app is done. Set true to show the switch.
-const GAME_SWITCH_ENABLED = false
+// Deathloom fork: PoE2 mode switch, shown since PoE2 price check is in (Phase A).
+const GAME_SWITCH_ENABLED = true
 
 export default defineComponent({
   name: 'settings.general',

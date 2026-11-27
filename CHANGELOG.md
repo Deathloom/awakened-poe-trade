@@ -114,6 +114,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Added (A4): PoE2 price check is on
 - With Settings → General → Game set to PoE2, the price check hotkey now checks PoE2 items: trade2 search and bulk exchange with filters, like Exiled Exchange 2. The "not ready yet" notice is gone. PoE1 price check is unchanged. Beta: English game client only, no quick poe.ninja price yet, and some item icons show a "?" (we don't ship GGG art). The PoE2 data loads the first time you check a PoE2 item.
+- Settings → General → Game is shown again (it was hidden while PoE2 wasn't usable), so you can switch to Path of Exile 2.
 
 ### Changed (Q24): settings backup asks what to restore
 - Settings → Tools → Restore… now shows what's in the file first (date, how many settings and panel data items) and lets you pick: settings and hotkeys, panel data (notes, ticks, watchlist), or both. When the backup has other folders than this PC (game files, Path of Building, builds), this PC's folders are kept unless you untick it, so moving to a new PC or using a friend's setup doesn't break Path of Building.
@@ -143,6 +144,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Added (Q19): weekly farming report and a nudge when profit drops
 - Market → Farming now opens with a **Last 7 days** card: maps, hours, profit and profit per hour, the week before for comparison (▲/▼ % per hour), your strategies this week ranked by profit per hour, and a tip when one clearly earns less than another. When the last 5 maps of the strategy you're farming now make at least 30 % less per hour than its earlier maps (last 2 weeks, at least 10 of them), a yellow line says so in Farming and in This session, naming a strategy that did better if there is one. **Not now** hides it until the next day. Uses only the loot you type in This session, as before.
+
+### Added (Q14): Wombgift value
+- Money tools → Wombgifts: every Wombgift poe.ninja lists with its sell price. Click one, open it at the Genesis Tree, price check what came out and log what it was worth; after 3 openings of a kind it says Open (your openings are worth more than selling) or Sell. GGG doesn't publish what Wombgifts give, so the answer comes from your own openings (last 30 per kind, kept on this PC; Hiveblood not counted).
 
 ### Changed: no automatic tree tracking anywhere
 - The passive tree map, the atlas tree map, Levelling → Next steps, Build progress and the ascendancy hints no longer follow the game log or your level. Where you are on a tree is only what you set with the ‹ › « » arrows (Next steps now has them too), and every panel and window shows the same step. A tree you haven't stepped on yet starts at 0; **My level** jumps once to where your level and quest points say you are, without following it afterwards. The atlas's old game-log matching is removed.
