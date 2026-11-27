@@ -108,6 +108,47 @@ for (const [name, file] of Object.entries(MODULES)) {
   })
 }
 
+// the PoE2 parser test reads the *.index.bin files, which are normally made by the vite build
+const { makeIndexFiles } = await import('../renderer/src/assets/make-index-files.mjs')
+makeIndexFiles()
+
+// Deathloom fork (A2): the PoE2 parser (renderer/src/poe2, from Exiled Exchange 2)
+// with its real data files. '@/...' resolves into renderer/src; the app config,
+// IPC and client strings are stubbed so the parser runs outside Electron.
+const renderer = join(root, 'renderer')
+await build({
+  entryPoints: [join(here, 'fixtures/poe2/entry.ts')],
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  outfile: join(out, 'poe2-parser.mjs'),
+  logLevel: 'error',
+  nodePaths: [join(renderer, 'node_modules')],
+  define: { 'import.meta.env.BASE_URL': '"/"' },
+  plugins: [{
+    name: 'poe2',
+    setup (b) {
+      b.onResolve({ filter: /^@\/web\/Config$/ }, () => ({ path: 'config', namespace: 'poe2-stub' }))
+      b.onResolve({ filter: /^@\/web\/background\/IPC$/ }, () => ({ path: 'ipc', namespace: 'poe2-stub' }))
+      b.onResolve({ filter: /client-string-loader$/ }, () => ({ path: 'strings', namespace: 'poe2-stub' }))
+      b.onLoad({ filter: /.*/, namespace: 'poe2-stub' }, (a) => ({
+        contents: {
+          config: 'const cfg = { language: "en", widgets: [{ wmType: "price-check" }] }\n' +
+            'export const AppConfig = (type) => type ? cfg.widgets.find(w => w.wmType === type) : cfg',
+          ipc: 'export const Host = { proxy: async () => { throw new Error("offline in tests") } }',
+          strings: `import { pathToFileURL } from 'node:url'\n` +
+            `export async function loadClientStrings (lang) { return (await import(pathToFileURL(${JSON.stringify(join(renderer, 'public/data/poe2'))} + '/' + lang + '/client_strings.js').href)).default }`
+        }[a.path],
+        loader: 'js'
+      }))
+      b.onResolve({ filter: /^@\// }, async (a) => {
+        const r = await b.resolve('./' + a.path.slice(2), { kind: a.kind, resolveDir: join(renderer, 'src') })
+        return r
+      })
+    }
+  }]
+})
+
 const tests = readdirSync(here).filter(f => f.endsWith('.test.mjs')).map(f => join(here, f))
 const res = spawnSync(process.execPath, ['--test', ...tests], { stdio: 'inherit' })
 process.exit(res.status ?? 1)

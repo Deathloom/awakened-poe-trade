@@ -100,6 +100,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Security: minimatch fix in the renderer lint tools
 - Renderer dev tools: typescript-eslint 8.72.2 → 8.74.0, which moves minimatch 10.2.6 → 11.0.9 (GHSA-g3hv-75wg-m249, moderate, denial of service from crafted glob patterns). Lint only; nothing in the app changes. The same alert in main (electron-builder's build tools) has no fix in electron-builder 26 yet and stays open.
 
+### Added (A2): PoE2 item reader
+- Orbhoarder can now read PoE2 items copied with Ctrl+C (the item reader from Exiled Exchange 2, using the PoE2 lists from A1). Not switched on yet: PoE2 price check comes in the next steps. Automatic checks cover bows, armour, charms, gems, waystones and fractured items.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
