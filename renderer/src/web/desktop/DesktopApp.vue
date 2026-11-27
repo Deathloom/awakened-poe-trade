@@ -6,7 +6,7 @@
       <span class="text-gray-300 mr-3 flex items-center shrink-0 font-semibold"><img src="/images/orbhoarder.svg" class="w-6 h-6 mr-1.5 lg-logo" alt="" /><span class="hidden 2xl:inline">Orbhoarder</span><span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
       <button v-for="v of VIEWS" :key="v.key" class="shrink-0 px-2 py-1 rounded-md text-sm"
         :class="view === v.key ? 'bg-blue-600/25 text-blue-100 lg-tab-active' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
-        :title="v.title" @click="setView(v.key)">
+        :title="v.title" :data-tour="v.key" @click="setView(v.key)">
         <i class="fas xl:mr-1.5" :class="v.icon" /><span class="hidden xl:inline">{{ v.label }}</span></button>
       <select v-if="view === 'overview'" class="shrink-0 ml-auto rounded-md bg-transparent text-xs text-gray-400 hover:text-gray-100 px-1 py-1"
         title="Which All tab layout shows. Auto: Mapping from your first atlas map, Levelling again when a new character starts (The Twilight Strand). Each layout is edited on its own."
@@ -21,7 +21,7 @@
         <i class="fas fa-th mr-1" />{{ editLayout ? 'Done' : 'Edit layout' }}</button>
       <span class="shrink-0 text-xs text-gray-500" :class="view === 'overview' ? 'ml-3' : 'ml-auto'" :title="playingHelp">{{ status }}</span>
       <button class="shrink-0 ml-3 px-2 py-1 rounded-md text-xs text-gray-400 hover:text-gray-100 hover:bg-gray-700"
-        title="Report a bug or suggest a feature" @click="feedback = 'bug'">
+        title="Report a bug or suggest a feature" data-tour="feedback" @click="feedback = 'bug'">
         <i class="fas fa-bug mr-1" />Bug<span class="text-gray-600 mx-1">/</span><i class="fas fa-lightbulb mr-1" />Idea</button>
     </div>
 
@@ -70,12 +70,14 @@
     <WidgetSetupGuide v-if="!IS_DESKTOP2" desktop />
     <!-- after an update (not while the setup guide is open) -->
     <WhatsNew v-if="!IS_DESKTOP2" :active="!desktopSetupShown" />
+    <!-- Deathloom fork (Q27): first-run tour (own chunk, loaded when it opens) -->
+    <OnboardingTour v-if="tourOpen && !IS_DESKTOP2" @view="viewFromHotkey" />
     <FeedbackDialog v-if="feedback" :initial="feedback" @close="feedback = null" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onUnmounted, ref, watch } from 'vue'
 import { loadSession, SESSION_KEY } from '../companion/char-level'
 import { Host } from '@/web/background/IPC'
 import {
@@ -111,6 +113,9 @@ onUnmounted(() => { gameListener.abort() })
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 import { desktopSetupShown } from '../setup/setup-state'
+import { AppConfig } from '@/web/Config'
+import { autoTourWanted, tourOpen } from '../onboarding/tour-state'
+const OnboardingTour = defineAsyncComponent(() => import('../onboarding/OnboardingTour.vue'))
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 
@@ -163,6 +168,15 @@ watch(view, (v) => {
   const name = IS_DESKTOP2 ? 'Orbhoarder (2)' : 'Orbhoarder'
   document.title = v === 'overview' ? name : `${name} · ${label}`
 }, { immediate: true })
+
+// Deathloom fork (Q27): new install: the tour opens once the setup guide closes
+if (!IS_DESKTOP2 && autoTourWanted(AppConfig().pob?.setupDone)) {
+  const stop = watch(desktopSetupShown, (shown) => {
+    if (shown) return
+    stop()
+    tourOpen.value = true
+  })
+}
 
 // Trade site tab: mounted the first time it's shown, then kept
 const tradeOpened = ref(view.value === 'trade' || tradeTabRequest.value > 0)

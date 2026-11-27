@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q27): first-run tour of the Orbhoarder window
+- On a new install, once the setup guide closes, a one-minute tour points at each tab of the Orbhoarder window in turn (All, Build, Levelling, Atlas, Trades, Board, Market, Trade site, Help, Settings, Bug / Idea), opens it and says what it is for, then ends with the in-game price check and overlay hotkeys. Arrow keys move through it, Esc ends it. Existing installs don't get it by itself: Settings → **Take the tour** runs it any time. It loads only when it opens, so windows don't get bigger.
+
 ### Added (Q25): text size slider and colour-blind-safe colours
 - Settings → Appearance: a Text size slider (12–24 px) that previews straight away and scales the overlay, the in-game panels and the Orbhoarder window, and a "Colour-blind-safe colours" switch that turns every green/red (good/bad, price up/down, warnings) into blue/orange for red-green colour blindness.
 
