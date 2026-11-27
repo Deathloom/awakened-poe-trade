@@ -129,6 +129,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q18): next upgrades in Build progress
 - Build progress has a Next upgrades box: click Rank and Path of Building compares each unique of the build you haven't ticked with your character file (Build → Gems → Your character), then shows the 3 with the most gain per chaos (DPS %, plus half the eHP %), with the cheapest poe.ninja price and a Copy button for the in-game market. Up to 8 items, one at a time; rare items aren't ranked (no poe.ninja price).
 
+### Added (Q12): Viscera planner
+- Money tools → Viscera: your active build's Wickerman (from its Path of Building file) with what each planned Viscera costs on poe.ninja, cheaper Lesser/Greater versions of the same part, and "farm <boss> with a Fate" when it isn't listed; below, every Viscera from Path of Building 2.69 to search by mod or boss, cheapest first. Boss names come from PoB's data and may differ slightly from the game.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
