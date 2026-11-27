@@ -144,6 +144,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q19): weekly farming report and a nudge when profit drops
 - Market → Farming now opens with a **Last 7 days** card: maps, hours, profit and profit per hour, the week before for comparison (▲/▼ % per hour), your strategies this week ranked by profit per hour, and a tip when one clearly earns less than another. When the last 5 maps of the strategy you're farming now make at least 30 % less per hour than its earlier maps (last 2 weeks, at least 10 of them), a yellow line says so in Farming and in This session, naming a strategy that did better if there is one. **Not now** hides it until the next day. Uses only the loot you type in This session, as before.
 
+### Added (Q20): rare prices in Market → Shopping
+- Rare rows have a **Price** button. One click looks up listings like your build's rare on the trade site (the stats the price check picks by default) and shows the median of the 10 cheapest, in chaos or divine; hover for the cheapest and how many were found, click the price to open those listings. Priced rares are added to "Still to buy" (shown with ~). Nothing is searched until you click, it uses the price check's normal rate limits, and a second click within 15 minutes reuses the answer. PoE1 builds only.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
