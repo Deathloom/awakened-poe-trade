@@ -107,6 +107,8 @@ How this fork is kept up to date:
 
 MIT, same as upstream; see [LICENSE](./LICENSE). The original app is © Alexander Drozdov (SnosMe) and the [Awakened PoE Trade contributors](https://github.com/SnosMe/awakened-poe-trade/graphs/contributors).
 
+PoE2 price check data and code come from [Exiled Exchange 2](https://github.com/Kvan7/exiled-exchange-2) (MIT, © Alexander Drozdov and the Exiled Exchange 2 contributors), kept apart in `renderer/src/poe2/` and `renderer/public/data/poe2/`.
+
 Also relies on [Path of Building Community](https://github.com/PathOfBuildingCommunity/PathOfBuilding), [libuiohook](https://github.com/kwhat/libuiohook), [RePoE](https://github.com/brather1ng/RePoE), [poeprices.info](https://www.poeprices.info/) and [poe.ninja](https://poe.ninja/).
 
 Game data and images © Grinding Gear Games.
