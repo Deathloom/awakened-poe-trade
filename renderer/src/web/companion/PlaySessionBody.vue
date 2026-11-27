@@ -74,6 +74,9 @@
           Disconnects: {{ s.disconnects.length }} · last {{ clock(s.disconnects[s.disconnects.length - 1].at) }}</span>
       </div>
 
+      <!-- Deathloom fork (Q19): your strategy earns less than it used to -->
+      <farm-nudge :runs="farmRuns" :strategy="strategy" />
+
       <div v-for="h of hints" :key="h.text" :class="h.warn ? 'text-yellow-300' : 'text-gray-400'">
         <i class="fas fa-lightbulb mr-1" />{{ h.text }}</div>
 
@@ -109,6 +112,8 @@ import {
 import { usePoeninja } from '@/web/background/Prices'
 import UiMenu, { type UiMenuItem } from '@/web/ui/UiMenu.vue'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from './char-level'
+import FarmNudge from '@/web/market-history/FarmNudge.vue'
+import { FARM_RUNS_KEY, FARM_STRATEGY_KEY, loadFarmRuns, loadStrategy, mergeRuns, runsFromSession } from '@/web/market-history/market-tools'
 
 const s = ref<PlaySession>(loadPlaySession())
 const me = ref(currentChar(loadCharLevels())?.name ?? '')
@@ -152,6 +157,8 @@ const onStorage = (e: StorageEvent) => {
   if (e.key === MAP_COST_KEY) cost.value = loadMapCost()
   if (e.key === LAST_SESSION_KEY) last.value = loadLastSession()
   if (e.key === WATCH_KEY) watch.value = loadWatch()
+  if (e.key === FARM_RUNS_KEY) archived.value = loadFarmRuns()
+  if (e.key === FARM_STRATEGY_KEY) strategy.value = loadStrategy()
 }
 window.addEventListener('storage', onStorage)
 onUnmounted(() => {
@@ -210,6 +217,10 @@ function setCost (v: number) {
   saveMapCost(cost.value)
 }
 const profit = computed(() => mapProfit(s.value, cost.value, now.value))
+// Q19: maps from earlier sessions plus this one, for the profit-drop nudge
+const archived = ref(loadFarmRuns())
+const strategy = ref(loadStrategy())
+const farmRuns = computed(() => mergeRuns(archived.value, runsFromSession(s.value.maps, cost.value)))
 function money (chaos: number) {
   const d = divine.value
   if (d && Math.abs(chaos) >= d) return `${(chaos / d).toFixed(1)} div`
