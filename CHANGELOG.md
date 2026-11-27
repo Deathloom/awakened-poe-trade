@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (S5): other windows after renaming or deleting a build
+- Renaming, moving, copying or deleting a build in Build manager now updates the build list, tree, tree map and gems in your other windows (overlay, desktop, HUD) too; before, they could keep showing the old build until you switched. New automatic checks cover which changes reach every window.
+
 ### Changed (S6): features your Path of Building can't do yet
 - Orbhoarder now reads what its Path of Building copy can do when it starts. A feature that copy doesn't have yet is hidden (Craft → Timeless → Find seeds) or explained ("Your Path of Building is older than this feature…") instead of showing an error. Older copies are treated as the 22 Nov 2026 version.
 

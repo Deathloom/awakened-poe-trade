@@ -22,6 +22,7 @@ import { pobDefaults, withDefaults, isLegacyPobSetting, type PobDefaults } from 
 import { findExistingBuilds, copyBuilds } from './ExistingPob'
 import { isCodeError } from '../ErrorReporter'
 import { pobCapsFromReady, pobCapFor, pobSupports, pobNeedsUpdate, type PobCaps } from '../../../ipc/pob-caps'
+import { shouldAnnounce } from './announce'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
@@ -135,16 +136,17 @@ export class PobImpact {
       // Deathloom fork (user report 20 Nov 2026): the reply only reaches the
       // panel that asked, so tell every panel (tree map, tree, gems, other
       // windows) that the build, loadout, character or player changed
-      if (setActive || setLoadout || setCharacter || typeof setPlayer === 'string') this.announceAfterQueue()
+      if (shouldAnnounce('CLIENT->MAIN::pob-builds', { setActive, setLoadout, setCharacter, setPlayer })) this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-edit', ({ requestId, ops }) => {
       this.reply('MAIN->CLIENT::pob-edit', requestId, async () => await this.editLoadouts(ops))
-      // set changes (new, copy, delete loadout) can change the active tree;
-      // single passive / gem edits answer the panel that made them
-      if (Array.isArray(ops) && ops.some(o => o && (o.op === 'newLoadout' || o.op === 'copySet' || o.op === 'deleteSet'))) this.announceAfterQueue()
+      if (shouldAnnounce('CLIENT->MAIN::pob-edit', { ops })) this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-manage-build', (req) => {
       this.reply('MAIN->CLIENT::pob-manage-build', req.requestId, async () => await this.manageBuild(req))
+      // S5: renaming / moving / deleting the active build left other windows'
+      // tree, gems and build list stale
+      if (shouldAnnounce('CLIENT->MAIN::pob-manage-build', req)) this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-tree', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-tree', requestId, async () => await this.tree(refreshGear === true))
