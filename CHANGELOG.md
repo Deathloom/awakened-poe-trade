@@ -116,6 +116,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - Settings → Tools → Restore… now shows what's in the file first (date, how many settings and panel data items) and lets you pick: settings and hotkeys, panel data (notes, ticks, watchlist), or both. When the backup has other folders than this PC (game files, Path of Building, builds), this PC's folders are kept unless you untick it, so moving to a new PC or using a friend's setup doesn't break Path of Building.
 - Security: a hand-edited backup file can no longer change the settings object's internals (`__proto__` and similar keys are skipped) or replace a setting with a different kind of value.
 
+### Added (Q11): loot filter add-on keeps itself up to date
+- After making the add-on (Market → Shopping ⋯ → Make loot filter add-on…), tick **Keep it updated**: Orbhoarder writes it again a few seconds after the Shopping list changes (you tick something as got, or switch builds) while Market → Shopping is open in any window. When everything is ticked, the add-on is just your filter. Reload the filter in game (Options → UI → Item filter) to see changes. The file isn't touched when nothing changed.
+- New **Settings → Loot filter** page: pick your filter, turn the automatic update on or off, **Update now**, and see when it was last written. PC only.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

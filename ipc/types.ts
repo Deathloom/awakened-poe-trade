@@ -716,6 +716,8 @@ type IpcLootFilterRequest =
     // make: his filter's file name (no folder)
     source?: string
     wants?: LootFilterWants
+    // Q11: automatic update (also writes when nothing is left to buy)
+    auto?: boolean
   }>
 
 type IpcLootFilterResult =
@@ -730,6 +732,8 @@ type IpcLootFilterResult =
     written?: string
     count?: number
     refused?: string[]
+    // Q11: the file already had this content (not written again)
+    unchanged?: boolean
   }>
 
 type IpcHudDims =

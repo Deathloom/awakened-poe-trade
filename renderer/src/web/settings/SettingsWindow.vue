@@ -51,6 +51,7 @@ import SettingsPob from './pob.vue'
 import SettingsAppearance from './appearance.vue'
 import SettingsPanels from './panels.vue'
 import SettingsTools from './tools.vue'
+import SettingsLootFilter from './loot-filter.vue'
 
 function quit () {
   Host.sendEvent({
@@ -169,7 +170,7 @@ function menuByType (type?: string) {
       return [
         [SettingsHotkeys, SettingsChat],
         [SettingsGeneral, SettingsAppearance, SettingsPanels],
-        [SettingsPricecheck, SettingsPob, SettingsMaps, SettingsItemcheck],
+        [SettingsPricecheck, SettingsPob, SettingsLootFilter, SettingsMaps, SettingsItemcheck],
         [SettingsTools, SettingsDebug, SettingsAbout]
       ]
   }
