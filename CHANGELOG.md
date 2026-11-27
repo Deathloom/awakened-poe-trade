@@ -79,6 +79,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Security (S1): phone access is an allow-list
 - A phone or other device may now only send the overlay requests that are listed as allowed; anything new or unlisted is refused (it used to be allowed unless listed as refused). Phone panels work as before. A test now fails if an overlay request is added without deciding whether phones may send it.
 
+### Security (S2): Path of Building 2.69.0 with the open-request hardening
+- Path of Building moves to the fork's 2.69.0 release (upstream 2.69.0: loadout manager, item type icons, 3.30 Imbue gems, Viscera, Wickerman and Covetous Dark fixes). It also brings PoB fork #44: when Orbhoarder asks PoB to open a build, PoB now only opens local drive paths to real PoB build files (no network share paths). Update in PoB works as before. (#309)
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
