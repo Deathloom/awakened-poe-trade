@@ -3,25 +3,13 @@
 // its own price points for watched items (about hourly while it runs) to show
 // longer trends. Stored in the overlay's local storage.
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { type WatchedItem, type PriceNow, type AlertHit, MAX_ITEMS, canAdd, applyPrices } from './watchlist-store'
 
-export interface WatchedItem {
-  key: string
-  ns: string
-  name: string
-  variant?: string
-  label: string
-  icon?: string
-  league: string
-  addedAt: number
-  // [time ms, chaos]
-  points: Array<[number, number]>
-  // price alert: tell when the price moved this many % from base (then base = new price)
-  alert?: { pct: number, base: number }
-}
+export type { WatchedItem }
+export { MAX_ITEMS }
 
 const KEY = 'deathloom.market-history.v1'
-const MAX_POINTS = 24 * 120 // ~4 months hourly
 
 function load (): WatchedItem[] {
   try {
@@ -33,6 +21,9 @@ function load (): WatchedItem[] {
 }
 
 export const watchlist = ref<WatchedItem[]>(load())
+export const watchFull = computed(() => !canAdd(watchlist.value))
+// S3: shown in the Market history panel (save failed, list full)
+export const watchNotice = ref('')
 
 // Deathloom fork: the overlay and the desktop window share this list; another
 // window's change shows up here too
@@ -40,8 +31,17 @@ try {
   window.addEventListener('storage', (e) => { if (e.key === KEY) watchlist.value = load() })
 } catch {}
 
-function save () {
-  try { localStorage.setItem(KEY, JSON.stringify(watchlist.value)) } catch {}
+function save (): boolean {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(watchlist.value))
+    if (watchNotice.value.startsWith('Couldn\'t save')) watchNotice.value = ''
+    return true
+  } catch (err) {
+    // S3: used to be swallowed, so recorded history was lost without a word
+    console.warn('[market history] save failed', err)
+    watchNotice.value = 'Couldn\'t save the watchlist (storage full?). Remove a few watched items so new prices are kept.'
+    return false
+  }
 }
 
 export function watchKey (q: { ns: string, name: string, variant?: string }, league: string) {
@@ -52,38 +52,45 @@ export function isWatched (key: string) {
   return watchlist.value.some(w => w.key === key)
 }
 
-export function toggleWatch (item: Omit<WatchedItem, 'key' | 'addedAt' | 'points'>, chaos?: number) {
+// false when the list is full (MAX_ITEMS) and the item wasn't added
+export function toggleWatch (item: Omit<WatchedItem, 'key' | 'addedAt' | 'points'>, chaos?: number): boolean {
   const key = watchKey(item, item.league)
   if (isWatched(key)) {
     watchlist.value = watchlist.value.filter(w => w.key !== key)
   } else {
+    if (!canAdd(watchlist.value)) {
+      watchNotice.value = `You can watch up to ${MAX_ITEMS} items. Remove one to add another.`
+      return false
+    }
     const now = Date.now()
     watchlist.value = [...watchlist.value, { ...item, key, addedAt: now, points: chaos != null ? [[now, chaos]] : [] }]
   }
+  if (watchNotice.value.startsWith('You can watch')) watchNotice.value = ''
   save()
+  return true
 }
 
 export function removeWatch (key: string) {
   watchlist.value = watchlist.value.filter(w => w.key !== key)
+  if (watchNotice.value.startsWith('You can watch')) watchNotice.value = ''
   save()
 }
 
-// Add a price point if the last one is older than minGap
-export function record (key: string, chaos: number, minGap = 55 * 60_000) {
-  // newest copy first: another window may have recorded a point already.
-  // Only touch the shared list when a point is added: replacing it every time
-  // re-ran the panel's watcher, which called record() again, endlessly (the
-  // overlay froze after starring an item)
+// S3: one load + one save for all watched prices (was one per item, every 10 min,
+// in every window). Adds a point if the last one is older than minGap, thins
+// points older than 14 days to daily, and returns the price alerts that fired.
+// Reads the newest copy first: another window may have recorded a point already,
+// so only the first window that sees an alert move reports it. Only touches the
+// shared list when something changed: replacing it every time re-ran the panel's
+// watcher, endlessly (the overlay froze after starring an item).
+export function recordPrices (prices: PriceNow[], minGap?: number): AlertHit[] {
+  if (!prices.length) return []
   const fresh = load()
-  const w = fresh.find(x => x.key === key)
-  if (!w) return
-  const last = w.points[w.points.length - 1]
-  const now = Date.now()
-  if (last && now - last[0] < minGap) return
-  w.points.push([now, chaos])
-  if (w.points.length > MAX_POINTS) w.points.splice(0, w.points.length - MAX_POINTS)
+  const { changed, alerts } = applyPrices(fresh, prices, Date.now(), minGap)
+  if (!changed) return []
   watchlist.value = fresh
   save()
+  return alerts
 }
 
 // Deathloom fork (idea 4): price alerts on watched items
@@ -97,18 +104,4 @@ export function setAlert (key: string, pct: number, chaos: number | undefined) {
   else delete w.alert
   watchlist.value = fresh
   save()
-}
-
-// the % move when it crossed the alert (and moves the base on), else null.
-// Reads the newest copy, so only the first window that sees the move reports it.
-export function checkAlert (key: string, chaos: number): number | null {
-  const fresh = load()
-  const w = fresh.find(x => x.key === key)
-  if (!w?.alert || !(w.alert.base > 0)) return null
-  const change = (chaos - w.alert.base) / w.alert.base * 100
-  if (Math.abs(change) < w.alert.pct) return null
-  w.alert = { ...w.alert, base: chaos }
-  watchlist.value = fresh
-  save()
-  return change
 }

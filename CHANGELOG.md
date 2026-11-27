@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (S3): Market history watchlist kept small
+- You can watch up to 50 items (the star says so when the list is full). Recorded prices older than 14 days keep one point a day; the last 14 days stay hourly. Prices are now saved once per refresh instead of once per item, and if saving ever fails the Market history panel says so instead of losing history silently.
+
 ### Changed (S7): price check for twice-corrupted items
 - A twice-corrupted item is now compared with twice-corrupted items only (before, once-corrupted ones were mixed in). Clicking the corrupted label cycles Twice corrupted → Corrupted → Not corrupted. Atlas Drops % on maps and Heist Contract/Blueprint enchants were already preselected.
 
