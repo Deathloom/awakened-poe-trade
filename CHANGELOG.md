@@ -135,6 +135,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q16): bulk sell pricing
 - New Market → **Bulk sell** tab for stacks (currency, fragments, essences, divination cards…): add a stack and how many you have, and it shows poe.ninja's price the way bulk is quoted (12 c each, 8 per div, 5 per chaos). Type the ratio the in-game Currency Exchange offers (12c, 0.5 div, 8/div or 40:3) to see which pays more and by how much. **Copy** puts a WTS line for trade chat on the clipboard (at the better price, with the total); **Copy all** does every stack in one line. Nothing is sent for you: paste it yourself.
 
+### Added (Q12): Viscera planner
+- Money tools → Viscera: your active build's Wickerman (from its Path of Building file) with what each planned Viscera costs on poe.ninja, cheaper Lesser/Greater versions of the same part, and "farm <boss> with a Fate" when it isn't listed; below, every Viscera from Path of Building 2.69 to search by mod or boss, cheapest first. Boss names come from PoB's data and may differ slightly from the game.
+
 ### Changed: PoE2 switch is back in Settings
 - Settings → General → Game is shown again, so you can switch to Path of Exile 2 (beta) and try the new PoE2 price check. It was hidden while PoE2 support wasn't usable.
 

@@ -42,6 +42,9 @@
       </div>
     </div>
 
+    <!-- Deathloom fork (Q12): Viscera planner (own chunk: carries PoB's Viscera list) -->
+    <VisceraPlanner v-else-if="tab === 'viscera'" :items="all" :money="money" />
+
     <!-- Currency counter -->
     <div v-else class="flex-1 min-h-0 flex flex-col">
       <div class="flex items-baseline gap-2 px-2 py-1 shrink-0">
@@ -81,18 +84,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onUnmounted, ref } from 'vue'
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
 import { gemProfits, DEFAULT_CURRENCIES, loadCounter, saveCounter, counterTotal, COUNTER_KEY, type CounterState } from './money'
 
+const VisceraPlanner = defineAsyncComponent(async () => await import('./VisceraPlanner.vue'))
+
 const TABS = [
   { id: 'gems', label: 'Gem levelling' },
-  { id: 'counter', label: 'Currency counter' }
+  { id: 'counter', label: 'Currency counter' },
+  { id: 'viscera', label: 'Viscera' }
 ] as const
 type Tab = typeof TABS[number]['id']
 const TAB_KEY = 'deathloom.money-tab.v1'
-const tab = ref<Tab>((() => { try { return localStorage.getItem(TAB_KEY) === 'counter' ? 'counter' : 'gems' } catch { return 'gems' } })())
+const tab = ref<Tab>((() => {
+  try {
+    const t = localStorage.getItem(TAB_KEY)
+    return TABS.find(x => x.id === t)?.id ?? 'gems'
+  } catch { return 'gems' }
+})())
 function setTab (t: Tab) {
   tab.value = t
   try { localStorage.setItem(TAB_KEY, t) } catch {}
