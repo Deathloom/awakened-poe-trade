@@ -2,7 +2,7 @@ import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
 import { HostConfig, ShortcutAction, PobConfig, PobHudConfig } from '@ipc/types'
-import { asGame, asGameMode, type Game, type GameMode } from '@ipc/game'
+import { asGame, asGameMode, POE1_ONLY_PANELS, type Game, type GameMode } from '@ipc/game'
 import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from './hud/is-hud'
 import { applyAppearance, defaultAppearance, type AppearanceConfig } from './appearance'
 import type * as widget from './overlay/widgets'
@@ -793,8 +793,21 @@ function getConfigForHost (): HostConfig {
     language: config.language,
     game: config.game,
     gameMode: config.gameMode,
-    pob: config.pob
+    pob: config.game === 'poe2' ? poe2HostPob(config.pob) : config.pob
   }
+}
+
+// Deathloom fork (wave 6): main gets the PoE1-only panels switched off while PoE2
+// is active (no in-game panel windows; their hotkeys don't open the overlay panel).
+// Settings themselves are untouched, so PoE1 gets them back as they were.
+function poe2HostPob (pob: PobConfig): PobConfig {
+  const hud = { ...pob.hud } as Record<string, unknown>
+  const panels = { ...pob.panels } as Record<string, unknown>
+  for (const p of POE1_ONLY_PANELS) {
+    if (p in hud) hud[p] = false
+    panels[p] = { overlay: false, window: false }
+  }
+  return { ...pob, hud: hud as unknown as PobConfig['hud'], panels: panels as PobConfig['panels'] }
 }
 
 export function defaultHudConfig (): PobHudConfig {

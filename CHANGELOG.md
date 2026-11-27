@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (E2): PoE1-only tabs hidden while playing PoE2
+- With Path of Exile 2 active, the Orbhoarder window hides Levelling, Build, Craft, Market and Profit, and the PoE1-only sub-tabs (Mapping → Atlas tree, Map mods, Farming; Trade → Search; Friends → Build sharing; Reference → Cheat sheets, Recipes, Tracking). The same panels don't show in the overlay, in game or on the All tab. Switching back to PoE1 brings everything back where it was; no settings change.
+
 ### Added (E1): automatic PoE1 / PoE2 switch, no restart
 - Settings → Game is now **Automatic** (the default): Orbhoarder watches both the "Path of Exile" and "Path of Exile 2" windows and follows whichever has focus. League, price check, Client.txt, game config and loot filter switch with it, and the overlay says "Switched to Path of Exile 2". Pick Path of Exile 1 or 2 to stay on one game. Only window titles are used: nothing is read from the game's memory.
 - The overlay library's Windows part (electron-overlay-window, MIT) is patched (`main/build/electron-overlay-window+4.1.0.patch`) and rebuilt at install by `main/build/overlay-native.mjs`. If that build isn't there, Orbhoarder falls back to watching one game and relaunches itself (about 2 s) when the other game starts.

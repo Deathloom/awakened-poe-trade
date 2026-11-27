@@ -4,7 +4,7 @@
   <div class="desktop-root relative flex flex-col h-full text-gray-200">
     <div class="desktop-topbar flex items-center gap-x-1 px-2 py-1 bg-gray-800 border-b border-gray-700 shrink-0 whitespace-nowrap overflow-x-auto">
       <span class="text-gray-300 mr-3 flex items-center shrink-0 font-semibold"><img src="/images/orbhoarder.svg" class="w-6 h-6 mr-1.5 lg-logo" alt="" /><span class="hidden 2xl:inline">Orbhoarder</span><span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
-      <button v-for="v of VIEWS" :key="v.key" class="shrink-0 px-2 py-1 rounded-md text-sm"
+      <button v-for="v of shownViews" :key="v.key" class="shrink-0 px-2 py-1 rounded-md text-sm"
         :class="view === v.key ? 'bg-blue-600/25 text-blue-100 lg-tab-active' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
         :title="v.title" :data-tour="v.key" @click="setView(v.key)">
         <i class="fas xl:mr-1.5" :class="v.icon" /><span class="hidden xl:inline">{{ v.label }}</span></button>
@@ -98,6 +98,7 @@ import MappingBody from './MappingBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
+import { isPoe2, POE1_ONLY_VIEWS } from './panels'
 import ReferenceBody from './ReferenceBody.vue'
 import { hasSavedSub, resolveView, setSub } from './view-route'
 import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
@@ -172,9 +173,21 @@ if (askedView) viewFromHotkey(askedView)
 // hotkeys, Help and Lab buttons go to window 1 (the main hub)
 if (!IS_DESKTOP2) Host.onEvent('MAIN->CLIENT::desktop-view', (e) => { viewFromHotkey(e.view) })
 function setView (v: View) {
+  // PoE1-only tab while PoE2 is the active game: All instead (saved tab kept)
+  if (isPoe2() && POE1_ONLY_VIEWS.has(v)) { view.value = 'overview'; return }
   view.value = v
   try { localStorage.setItem(windowKey(VIEW_KEY), v) } catch {}
 }
+// Deathloom fork (wave 6): PoE1-only tabs are hidden while PoE2 is the active game
+const shownViews = computed(() => isPoe2() ? VIEWS.filter(v => !POE1_ONLY_VIEWS.has(v.key)) : VIEWS)
+watch(() => isPoe2(), (poe2) => {
+  if (poe2 && POE1_ONLY_VIEWS.has(view.value)) view.value = 'overview'
+  else if (!poe2 && view.value === 'overview') {
+    // back on PoE1: the tab you had saved
+    const saved = loadView()
+    if (saved !== 'overview') view.value = saved
+  }
+}, { immediate: true })
 watch(view, (v) => {
   const label = VIEWS.find(x => x.key === v)?.label
   const name = IS_DESKTOP2 ? 'Orbhoarder (2)' : 'Orbhoarder'

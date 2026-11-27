@@ -20,7 +20,7 @@ import { LazyTradeCompanionBody as TradeCompanionBody, LazyMarketSearchBody as M
 
 const TABS = [
   { id: 'whispers', label: 'Whispers and ledger', icon: 'fa-handshake', title: 'Trade whispers and a ledger of what you bought and sold' },
-  { id: 'search', label: 'Search', icon: 'fa-search-dollar', title: 'Market search: who sells an item, cheapest first' },
+  { id: 'search', label: 'Search', icon: 'fa-search-dollar', title: 'Market search: who sells an item, cheapest first', poe1Only: true },
   { id: 'site', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Orbhoarder never sees your login)" }
 ] as const
 const sub = useSubTab('trade', TABS.map(t => t.id), 'whispers')

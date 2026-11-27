@@ -118,3 +118,9 @@ export function applyGameSwitch (cfg: GameSwitchable, to: Game): boolean {
   cfg.game = to
   return true
 }
+
+// Deathloom fork (wave 6): panels and Orbhoarder window tabs that only work for
+// PoE1 (PoB builds, PoE1 campaign / atlas / league planners, poe.ninja PoE1
+// prices, PoE1 trade search). Hidden everywhere while PoE2 is the active game.
+export const POE1_ONLY_PANELS: ReadonlySet<string> = new Set(['guide', 'atlas', 'gear', 'tree', 'progress', 'market', 'money', 'cheats', 'search'])
+export const POE1_ONLY_VIEWS: ReadonlySet<string> = new Set(['levelling', 'build', 'craft', 'market', 'profit'])
