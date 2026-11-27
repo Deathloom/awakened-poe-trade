@@ -8,6 +8,7 @@
         <div class="py-2 px-4">
           <div class="text-base">Orbhoarder</div>
           <p>{{ text }}</p>
+          <p v-if="fix" class="text-gray-400">{{ fix }}</p>
         </div>
       </div>
     </div>
@@ -19,13 +20,15 @@ import { shallowRef } from 'vue'
 import { Host } from '@/web/background/IPC'
 
 const text = shallowRef('')
+const fix = shallowRef('')
 let timer: ReturnType<typeof setTimeout> | undefined
 const shown = new Set<string>()
 
-function flash (key: string, msg: string, ms: number) {
+function flash (key: string, msg: string, ms: number, hint = '') {
   if (shown.has(key)) return
   shown.add(key)
   text.value = msg
+  fix.value = hint
   clearTimeout(timer)
   timer = setTimeout(() => { text.value = '' }, ms)
 }
@@ -36,6 +39,12 @@ Host.onEvent('MAIN->CLIENT::updater-state', (info) => {
   } else if (info.state === 'update-downloaded') {
     flash(`ok:${info.version}`, `Update ${info.version} is ready. It installs when you close the game (or tray → Restart to update).`, 8000)
   }
+})
+
+// Deathloom fork (Q26): crash / slowness notice (main sends at most one per kind per 30 min)
+let healthN = 0
+Host.onEvent('MAIN->CLIENT::health-warning', (w) => {
+  flash(`health:${healthN++}`, w.text, 10000, w.fix)
 })
 </script>
 

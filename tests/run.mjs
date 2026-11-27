@@ -79,7 +79,8 @@ const MODULES = {
   temple: 'renderer/src/web/money/temple.ts',
   wombgift: 'renderer/src/web/money/wombgift.ts',
   'pull-diff': 'main/src/pob/pull-diff.ts',
-  'board-matching': 'renderer/src/web/trade-board/matching.ts'
+  'board-matching': 'renderer/src/web/trade-board/matching.ts',
+  'health-watch': 'ipc/health-watch.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

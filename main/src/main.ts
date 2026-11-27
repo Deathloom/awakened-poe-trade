@@ -9,6 +9,7 @@ import path from 'node:path'
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { startServer, eventPipe, server, otherDevicesConnected, fromOtherDevice, onClientConnected } from './server'
 import { PriceAlerts } from './PriceAlerts'
+import { HealthWatch } from './HealthWatch'
 import { LootFilter } from './LootFilter'
 import { Logger } from './RemoteLogger'
 import { GameWindow } from './windowing/GameWindow'
@@ -72,6 +73,8 @@ app.on('ready', async () => {
   const lootFilter = new LootFilter(eventPipe, logger, fromOtherDevice)
   const _httpProxy = new HttpProxy(server, logger, (target, res) => { priceAlerts.onNinjaDownload(target, res.statusCode, res.body) })
   const pobImpact = new PobImpact(eventPipe, logger)
+  const healthWatch = new HealthWatch(eventPipe, logger)
+  pobImpact.onHealth = (s) => { healthWatch.record(s) }
   tray.pobDir = () => pobImpact.pobDir()
   // Deathloom fork: tray "Restart to update" item
   tray.installUpdate = appUpdater.installNow
