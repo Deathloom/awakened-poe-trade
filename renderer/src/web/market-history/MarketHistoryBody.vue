@@ -21,6 +21,7 @@
     </div>
     <div v-else class="overflow-y-auto min-h-0 p-1">
       <price-alerts-summary />
+      <div v-if="watchNotice" class="p-1 mb-1 rounded bg-red-900 text-red-100 text-xs">{{ watchNotice }}</div>
       <div v-if="!items.length" class="p-1 text-gray-500">
         Nothing watched yet. Press the <i class="far fa-star" /> next to an item in the market list, or next to its poe.ninja price in a price check.
       </div>
@@ -77,7 +78,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import VueApexcharts from '../ui/LazyChart'
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
-import { watchlist, removeWatch, record, setAlert, checkAlert, ALERT_STEPS, type WatchedItem } from './watchlist'
+import { watchlist, removeWatch, recordPrices, setAlert, watchNotice, ALERT_STEPS, type WatchedItem } from './watchlist'
 
 // active: the panel is on screen; fill: take the whole space (desktop window)
 const props = defineProps<{ active?: boolean, fill?: boolean, tabs?: boolean }>()
@@ -119,14 +120,9 @@ const items = computed(() => watchlist.value
   }))
 
 function recordAll () {
-  for (const w of items.value) {
-    if (!w.now) continue
-    record(w.key, w.now.chaos)
-    if (w.alert) {
-      const change = checkAlert(w.key, w.now.chaos)
-      if (change != null) notify(w.label, change, w.now.chaos)
-    }
-  }
+  const shown = items.value.filter(w => w.now)
+  const hits = recordPrices(shown.map(w => ({ key: w.key, chaos: w.now!.chaos })))
+  for (const h of hits) notify(shown.find(w => w.key === h.key)?.label ?? h.key, h.change, h.chaos)
 }
 
 // Deathloom fork (idea 4): price alerts
