@@ -112,6 +112,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (A4): PoE2 price check is on
 - With Settings → General → Game set to PoE2, the price check hotkey now checks PoE2 items: trade2 search and bulk exchange with filters, like Exiled Exchange 2. The "not ready yet" notice is gone. PoE1 price check is unchanged. Beta: English game client only, no quick poe.ninja price yet, and some item icons show a "?" (we don't ship GGG art). The PoE2 data loads the first time you check a PoE2 item.
 
+### Changed (Q24): settings backup asks what to restore
+- Settings → Tools → Restore… now shows what's in the file first (date, how many settings and panel data items) and lets you pick: settings and hotkeys, panel data (notes, ticks, watchlist), or both. When the backup has other folders than this PC (game files, Path of Building, builds), this PC's folders are kept unless you untick it, so moving to a new PC or using a friend's setup doesn't break Path of Building.
+- Security: a hand-edited backup file can no longer change the settings object's internals (`__proto__` and similar keys are skipped) or replace a setting with a different kind of value.
+
 ### Added (Q17): Build progress panel
 - New panel for the All tab (Edit layout → Add panel → Build progress): where you are in the build in one view. Tree: the levelling step, passives taken of this step and the next 3 to take. Gems: the step's gems you have ticked (tick or untick right there). Gear: the build's items with the same "got it" ticks as Build → Gear. One percentage on top. Ticks are shared with Build → Gear, Build → Gems and Levelling, and now update in the same window straight away too.
 
