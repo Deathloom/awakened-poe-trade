@@ -106,6 +106,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (A3): PoE2 trade search and filters
 - The PoE2 price check panel from Exiled Exchange 2 is now in Orbhoarder: trade2 search and bulk exchange, mod filters, rune/soul core editor and listing tooltips, with the same rate-limit handling. Not switched on yet (next step). Until poe.ninja PoE2 prices are added, PoE2 shows trade listings only, no quick price (EE2's own price server is not used).
 
+### Added (A4): PoE2 price check is on
+- With Settings → General → Game set to PoE2, the price check hotkey now checks PoE2 items: trade2 search and bulk exchange with filters, like Exiled Exchange 2. The "not ready yet" notice is gone. PoE1 price check is unchanged. Beta: English game client only, no quick poe.ninja price yet, and some item icons show a "?" (we don't ship GGG art). The PoE2 data loads the first time you check a PoE2 item.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
