@@ -52,8 +52,15 @@ export interface PriceCheckWidget extends Widget {
   showCursor: boolean
   requestPricePrediction: boolean
   builtinBrowser: boolean
-  // Deathloom fork: PoE2 price check (from Exiled Exchange 2). Optional so PoE1 configs stay as they are.
-  savedAugments?: { [key: string]: Array<string | null> }
+  // Deathloom fork: PoE2 price check settings (from Exiled Exchange 2), filled in by Config.ts
+  rememberCurrency: boolean
+  defaultAllSelected: boolean
+  itemHoverTooltip: 'off' | 'keybind' | 'always'
+  alwaysShowTier: boolean
+  coreCurrency: 'exalted' | 'chaos'
+  currencyVolume: 'none' | 'value' | 'item' | 'both'
+  rememberListingType: boolean
+  savedAugments: { [key: string]: Array<string | null> }
 }
 
 export interface StopwatchWidget extends Widget {

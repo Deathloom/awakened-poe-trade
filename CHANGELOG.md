@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q25): text size slider and colour-blind-safe colours
+- Settings → Appearance: a Text size slider (12–24 px) that previews straight away and scales the overlay, the in-game panels and the Orbhoarder window, and a "Colour-blind-safe colours" switch that turns every green/red (good/bad, price up/down, warnings) into blue/orange for red-green colour blindness.
+
 ### Changed (S3): Market history watchlist kept small
 - You can watch up to 50 items (the star says so when the list is full). Recorded prices older than 14 days keep one point a day; the last 14 days stay hourly. Prices are now saved once per refresh instead of once per item, and if saving ever fails the Market history panel says so instead of losing history silently.
 
@@ -102,6 +105,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Added (A2): PoE2 item reader
 - Orbhoarder can now read PoE2 items copied with Ctrl+C (the item reader from Exiled Exchange 2, using the PoE2 lists from A1). Not switched on yet: PoE2 price check comes in the next steps. Automatic checks cover bows, armour, charms, gems, waystones and fractured items.
+
+### Added (A3): PoE2 trade search and filters
+- The PoE2 price check panel from Exiled Exchange 2 is now in Orbhoarder: trade2 search and bulk exchange, mod filters, rune/soul core editor and listing tooltips, with the same rate-limit handling. Not switched on yet (next step). Until poe.ninja PoE2 prices are added, PoE2 shows trade listings only, no quick price (EE2's own price server is not used).
 
 ### Added (Q17): Build progress panel
 - New panel for the All tab (Edit layout → Add panel → Build progress): where you are in the build in one view. Tree: the levelling step, passives taken of this step and the next 3 to take. Gems: the step's gems you have ticked (tick or untick right there). Gear: the build's items with the same "got it" ticks as Build → Gear. One percentage on top. Ticks are shared with Build → Gear, Build → Gems and Levelling, and now update in the same window straight away too.

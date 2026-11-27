@@ -92,13 +92,26 @@
           <option v-for="(f, id) in FONTS" :key="id" :value="id">{{ f.name }}</option>
         </select>
       </div>
-      <div>
-        <div class="mb-1">Font size</div>
-        <div class="flex gap-1 items-center">
-          <input v-model.number="fontSize" class="rounded bg-gray-900 px-1 block w-16 font-poe text-center" />
-          <span>px</span>
-        </div>
+    </div>
+
+    <div class="mb-4">
+      <div class="mb-1">Text size <span class="text-gray-500">{{ fontSize }} px{{ fontSize === 16 ? ' (normal)' : '' }}</span></div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-500">A</span>
+        <input type="range" :min="FONT_MIN" :max="FONT_MAX" step="1" v-model.number="fontSize" class="flex-1" aria-label="Text size" />
+        <span class="text-lg text-gray-500">A</span>
+        <button v-if="fontSize !== 16" type="button" class="ui-btn ui-btn-quiet px-1 text-sm" @click="fontSize = 16">Normal</button>
       </div>
+      <div class="text-gray-500 text-sm mt-1">Everything scales with it: the overlay, the in-game panels and the Orbhoarder window.</div>
+    </div>
+
+    <div class="mb-4">
+      <ui-toggle v-model="a.colorBlind">Colour-blind-safe colours</ui-toggle>
+      <div class="flex items-center gap-3 text-sm mt-1">
+        <span class="text-gray-500">Good / up:</span><span class="w-4 h-3 rounded-sm bg-green-500" /><span class="text-green-400">+12%</span>
+        <span class="text-gray-500">Bad / down:</span><span class="w-4 h-3 rounded-sm bg-red-500" /><span class="text-red-400">−8%</span>
+      </div>
+      <div class="text-gray-500 text-sm mt-1">Green and red become blue and orange everywhere (price trends, warnings, map mods), for red-green colour blindness.</div>
     </div>
 
     <div class="mb-4">
@@ -158,6 +171,8 @@ import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from '@/web/hud/is-hud'
 import { configModelValue } from './utils'
 
 const MAX_IMAGE_BYTES = 15_000_000
+const FONT_MIN = 12
+const FONT_MAX = 24
 const SURFACE = IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay'
 
 export default defineComponent({
@@ -175,7 +190,14 @@ export default defineComponent({
     const ownLook = computed(() => IS_DESKTOP2 && props.config.window2Appearance != null)
     const a = computed(() => surfaceAppearance(props.config))
     watch(a, (v) => { applyAppearance(v, SURFACE, props.config.leagueId) }, { deep: true, immediate: true })
-    onUnmounted(() => { applyAppearance(surfaceAppearance(AppConfig()), SURFACE, AppConfig().leagueId) })
+    // text size previews live too; the saved size comes back on close
+    watch(() => props.config.fontSize, (px) => {
+      if (px >= FONT_MIN && px <= FONT_MAX) document.documentElement.style.fontSize = `${px}px`
+    })
+    onUnmounted(() => {
+      applyAppearance(surfaceAppearance(AppConfig()), SURFACE, AppConfig().leagueId)
+      document.documentElement.style.fontSize = `${AppConfig().fontSize}px`
+    })
     const active = computed(() => resolveTheme(a.value, props.config.leagueId))
     const groups = THEME_GROUPS.map(g => ({ ...g, themes: (Object.keys(THEMES) as ThemeId[]).filter(id => themeGroup(id) === g.id) }))
 
@@ -192,6 +214,8 @@ export default defineComponent({
       },
       THEMES,
       FONTS,
+      FONT_MIN,
+      FONT_MAX,
       active,
       groups,
       fmtDate: (d: Date) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }),

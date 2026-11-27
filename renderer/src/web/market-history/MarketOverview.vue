@@ -60,7 +60,7 @@
               {{ r.trend?.wild ? 'too fast' : pct(r.trend?.outlook) }}</td>
             <td class="px-1"><svg v-if="r.trend" width="60" height="16" class="block">
               <polyline :points="spark(r.trend.series)" fill="none" stroke-width="1.2"
-                :stroke="(r.trend.change ?? 0) >= 0 ? '#48bb78' : '#f56565'" /></svg></td>
+                :style="{ stroke: (r.trend.change ?? 0) >= 0 ? 'rgb(var(--gn-500))' : 'rgb(var(--r-500))' }" /></svg></td>
             <td class="whitespace-nowrap text-right">
               <button class="px-1" :class="isWatched(r.watchKey) ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'"
                 :title="isWatched(r.watchKey) ? 'Stop watching' : watchFull ? `Watchlist full (${MAX_ITEMS} items)` : 'Watch (left panel)'" @click="watchRow(r)">
