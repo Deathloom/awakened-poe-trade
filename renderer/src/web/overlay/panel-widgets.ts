@@ -5,11 +5,13 @@ import type { WidgetSpec } from './interfaces'
 import type { Widget as WidgetT, Anchor } from './widgets'
 import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
 import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
-import PlaySessionBody from '../companion/PlaySessionBody.vue'
-import MarketOverview from '../market-history/MarketOverview.vue'
-import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
-import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
-import MoneyToolsBody from '../money/MoneyToolsBody.vue'
+import {
+  LazyPlaySessionBody as PlaySessionBody,
+  LazyMarketOverview as MarketOverview,
+  LazyMarketHistoryBody as MarketHistoryBody,
+  LazyCheatSheetsBody as CheatSheetsBody,
+  LazyMoneyToolsBody as MoneyToolsBody
+} from '../ui/LazyBodies'
 import { EXTRA_PANELS } from '../desktop/panel-defs'
 
 export interface PanelBody {

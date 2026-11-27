@@ -80,7 +80,19 @@ export default defineComponent({
 
     function toggleCorrupted () {
       const { filters } = props
-      if (filters.corrupted) {
+      if (!filters.corrupted) return
+      // Deathloom fork (S7): a twice-corrupted item cycles
+      // Twice corrupted → Corrupted (once) → Not corrupted → Twice corrupted
+      if (props.item.isCorrupted?.twice) {
+        if (filters.corrupted.value && filters.corrupted.twice) {
+          filters.corrupted.twice = false
+        } else if (filters.corrupted.value) {
+          filters.corrupted.value = false
+        } else {
+          filters.corrupted.value = true
+          filters.corrupted.twice = true
+        }
+      } else {
         filters.corrupted.value = !filters.corrupted.value
       }
     }

@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (S7): price check for twice-corrupted items
+- A twice-corrupted item is now compared with twice-corrupted items only (before, once-corrupted ones were mixed in). Clicking the corrupted label cycles Twice corrupted → Corrupted → Not corrupted. Atlas Drops % on maps and Heist Contract/Blueprint enchants were already preselected.
+
+### Performance (S4): lighter windows, round 2
+- The panel bodies (Build, Levelling, Trades, Trade board, Market history, Market overview, Market search, This session, Cheat sheets, Money tools, Craft, Help) load the first time they are shown instead of with every window, the phone QR code library loads when a QR code is shown, and the price check cache and the fade animations no longer need two extra libraries. Every window starts with about a third less code (main bundle 1,423 kB → 948 kB, CSS 204 kB → 177 kB). The first time a panel opens it may take a frame or two longer.
+
 ### Fixed (S5): other windows after renaming or deleting a build
 - Renaming, moving, copying or deleting a build in Build manager now updates the build list, tree, tree map and gems in your other windows (overlay, desktop, HUD) too; before, they could keep showing the old build until you switched. New automatic checks cover which changes reach every window.
 
@@ -87,6 +93,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ### Added (A1): PoE2 game data
 - Orbhoarder now ships the PoE2 item and modifier lists (English) from Exiled Exchange 2, kept separate from the PoE1 lists. Nothing uses them yet: they are the groundwork for PoE2 price check. Credited in the README and LICENSE.
+
+### Security: minimatch fix in the renderer lint tools
+- Renderer dev tools: typescript-eslint 8.72.2 → 8.74.0, which moves minimatch 10.2.6 → 11.0.9 (GHSA-g3hv-75wg-m249, moderate, denial of service from crafted glob patterns). Lint only; nothing in the app changes. The same alert in main (electron-builder's build tools) has no fix in electron-builder 26 yet and stays open.
 
 ### Added (A2): PoE2 item reader
 - Orbhoarder can now read PoE2 items copied with Ctrl+C (the item reader from Exiled Exchange 2, using the PoE2 lists from A1). Not switched on yet: PoE2 price check comes in the next steps. Automatic checks cover bows, armour, charms, gems, waystones and fractured items.
