@@ -82,6 +82,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Security (S2): Path of Building 2.69.0 with the open-request hardening
 - Path of Building moves to the fork's 2.69.0 release (upstream 2.69.0: loadout manager, item type icons, 3.30 Imbue gems, Viscera, Wickerman and Covetous Dark fixes). It also brings PoB fork #44: when Orbhoarder asks PoB to open a build, PoB now only opens local drive paths to real PoB build files (no network share paths). Update in PoB works as before. (#309)
 
+### Added (A1): PoE2 game data
+- Orbhoarder now ships the PoE2 item and modifier lists (English) from Exiled Exchange 2, kept separate from the PoE1 lists. Nothing uses them yet: they are the groundwork for PoE2 price check. Credited in the README and LICENSE.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
