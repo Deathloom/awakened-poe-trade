@@ -138,6 +138,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q12): Viscera planner
 - Money tools → Viscera: your active build's Wickerman (from its Path of Building file) with what each planned Viscera costs on poe.ninja, cheaper Lesser/Greater versions of the same part, and "farm <boss> with a Fate" when it isn't listed; below, every Viscera from Path of Building 2.69 to search by mod or boss, cheapest first. Boss names come from PoB's data and may differ slightly from the game.
 
+### Added (Q13): Temple planner
+- Money tools → Temple: set each Temple of Atzoatl room's tier (or "not in temple") as you see it in game; it lists which room to upgrade next (best rooms first, the one closest to tier 3 first), good rooms you don't have yet, and what your temple is worth as an Itemised Temple from poe.ninja's temple prices (the dearest listing whose tier 3 rooms you all have). What some rooms give is marked (guess). Your temple stays on this PC.
+
+### Added (Q19): weekly farming report and a nudge when profit drops
+- Market → Farming now opens with a **Last 7 days** card: maps, hours, profit and profit per hour, the week before for comparison (▲/▼ % per hour), your strategies this week ranked by profit per hour, and a tip when one clearly earns less than another. When the last 5 maps of the strategy you're farming now make at least 30 % less per hour than its earlier maps (last 2 weeks, at least 10 of them), a yellow line says so in Farming and in This session, naming a strategy that did better if there is one. **Not now** hides it until the next day. Uses only the loot you type in This session, as before.
+
 ### Changed: PoE2 switch is back in Settings
 - Settings → General → Game is shown again, so you can switch to Path of Exile 2 (beta) and try the new PoE2 price check. It was hidden while PoE2 support wasn't usable.
 

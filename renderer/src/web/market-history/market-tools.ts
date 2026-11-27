@@ -212,6 +212,109 @@ export function farmingStats (runs: FarmRun[], by: 'strategy' | 'mechanic'): Far
   }).sort((a, b) => b.perHour - a.perHour)
 }
 
+// Deathloom fork (Q19): farming strategy report. A weekly card (last 7 days vs the
+// 7 before, best and worst strategy) and a nudge when the strategy you're on now
+// earns clearly less per hour than it used to. Pure logic; runs are the same as above.
+
+const DAY = 86_400_000
+function perHourOf (runs: FarmRun[]): number {
+  const ms = runs.reduce((a, r) => a + r.ms, 0)
+  return ms > 0 ? runs.reduce((a, r) => a + r.loot - r.cost, 0) / (ms / 3_600_000) : 0
+}
+
+export interface WeekReport {
+  maps: number
+  hours: number
+  profit: number
+  perHour: number
+  // the 7 days before (null when no maps then)
+  prev: { maps: number, perHour: number } | null
+  // per-hour change against the week before, as a fraction (0.12 = +12 %)
+  change: number | null
+  // strategies with at least minMaps maps this week, best per hour first
+  strategies: FarmStat[]
+  tip: string | null
+}
+
+export function weeklyReport (runs: FarmRun[], now: number, minMaps = 5): WeekReport | null {
+  const week = runs.filter(r => r.at >= now - 7 * DAY && r.at <= now)
+  if (!week.length) return null
+  const before = runs.filter(r => r.at >= now - 14 * DAY && r.at < now - 7 * DAY)
+  const perHour = perHourOf(week)
+  const prev = before.length ? { maps: before.length, perHour: perHourOf(before) } : null
+  const change = prev && prev.perHour > 0 && before.length >= minMaps && week.length >= minMaps
+    ? (perHour - prev.perHour) / prev.perHour
+    : null
+  const strategies = farmingStats(week, 'strategy').filter(s => s.maps >= minMaps)
+  let tip: string | null = null
+  if (strategies.length >= 2) {
+    const best = strategies[0]
+    const worst = strategies[strategies.length - 1]
+    if (best.perHour > 0 && worst.perHour < best.perHour * 0.8) {
+      tip = `${best.name} earned the most per hour this week; ${worst.name} made ${Math.round((1 - worst.perHour / best.perHour) * 100)} % less.`
+    }
+  } else if (strategies.length < 1 && week.length >= minMaps) {
+    tip = 'Name your strategy (Farming now) so the report can compare them.'
+  }
+  return {
+    maps: week.length,
+    hours: week.reduce((a, r) => a + r.ms, 0) / 3_600_000,
+    profit: week.reduce((a, r) => a + r.loot - r.cost, 0),
+    perHour,
+    prev,
+    change,
+    strategies,
+    tip
+  }
+}
+
+export interface ProfitDrop {
+  strategy: string
+  // per hour over the last `recent` maps of this strategy
+  recent: number
+  // per hour over its earlier maps (last 14 days)
+  usual: number
+  // fraction lost, 0.4 = 40 % less
+  drop: number
+  maps: number
+  // another strategy from the last 14 days that earns more than `recent`
+  better: FarmStat | null
+}
+
+// Nudge: the current strategy's last `recentMaps` maps earn at least `threshold`
+// less per hour than its earlier maps in the last 14 days. Needs enough maps on
+// both sides so one bad map doesn't trigger it.
+export function profitDrop (runs: FarmRun[], strategy: string, now: number,
+  opts: { recentMaps?: number, baseMaps?: number, threshold?: number } = {}): ProfitDrop | null {
+  const recentMaps = opts.recentMaps ?? 5
+  const baseMaps = opts.baseMaps ?? 10
+  const threshold = opts.threshold ?? 0.3
+  const name = strategy.trim() || 'No strategy set'
+  const window = runs.filter(r => r.at >= now - 14 * DAY && r.at <= now)
+  const mine = window.filter(r => r.strategy === name).sort((a, b) => a.at - b.at)
+  if (mine.length < recentMaps + baseMaps) return null
+  const recentRuns = mine.slice(-recentMaps)
+  const baseRuns = mine.slice(0, -recentMaps)
+  const recent = perHourOf(recentRuns)
+  const usual = perHourOf(baseRuns)
+  if (usual <= 0) return null
+  const drop = (usual - recent) / usual
+  if (drop < threshold) return null
+  const better = farmingStats(window.filter(r => r.strategy !== name), 'strategy')
+    .find(s => s.maps >= recentMaps && s.perHour > recent) ?? null
+  return { strategy: name, recent, usual, drop, maps: recentRuns.length, better }
+}
+
+// "Not now" on the nudge: hidden for that strategy until the next day
+export const FARM_NUDGE_KEY = 'deathloom.farming-nudge.v1'
+function dayOf (at: number) { return new Date(at).toDateString() }
+export function nudgeDismissed (strategy: string, now: number): boolean {
+  try { return localStorage.getItem(FARM_NUDGE_KEY) === `${dayOf(now)}|${strategy}` } catch { return false }
+}
+export function dismissNudge (strategy: string, now: number) {
+  try { localStorage.setItem(FARM_NUDGE_KEY, `${dayOf(now)}|${strategy}`) } catch {}
+}
+
 // ---- crafting costs ---------------------------------------------------------
 
 // Common crafting currency (poe.ninja names, ITEM namespace)

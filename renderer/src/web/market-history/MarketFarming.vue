@@ -19,6 +19,24 @@
       </select>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-2">
+      <!-- Deathloom fork (Q19): weekly report card + profit-drop nudge -->
+      <farm-nudge class="py-1" :runs="allRuns" :strategy="strategy" />
+      <div v-if="week" class="my-1 p-1.5 rounded border border-gray-700 bg-gray-900 space-y-0.5">
+        <div class="flex items-baseline gap-2">
+          <span class="text-gray-300">Last 7 days</span>
+          <span class="text-gray-500">{{ week.maps }} map{{ week.maps === 1 ? '' : 's' }} · {{ week.hours.toFixed(1) }} h</span>
+          <span class="ml-auto font-mono" :class="week.profit < 0 ? 'text-red-400' : 'text-yellow-300'" title="Loot minus map costs">{{ money(week.profit) }}</span>
+          <span class="font-mono" :class="week.perHour < 0 ? 'text-red-400' : 'text-yellow-300'">{{ money(week.perHour) }}/h</span>
+        </div>
+        <div v-if="week.prev" class="text-gray-500">
+          Week before: {{ week.prev.maps }} maps, {{ money(week.prev.perHour) }}/h<template v-if="week.change != null">
+            · <span :class="week.change < 0 ? 'text-red-400' : 'text-green-300'">{{ week.change < 0 ? '▼' : '▲' }} {{ Math.abs(Math.round(week.change * 100)) }} % per hour</span></template>
+        </div>
+        <div v-if="week.strategies.length" class="flex flex-wrap gap-x-3 text-gray-400">
+          <span v-for="(s, i) of week.strategies.slice(0, 4)" :key="s.name" :class="{ 'text-green-300': i === 0 && week.strategies.length > 1 }">{{ s.name }} {{ money(s.perHour) }}/h <span class="text-gray-600">({{ s.maps }})</span></span>
+        </div>
+        <div v-if="week.tip" class="text-gray-300"><i class="fas fa-lightbulb mr-1 text-gray-500" />{{ week.tip }}</div>
+      </div>
       <div v-if="!stats.length" class="text-gray-500 py-1">
         No maps with loot yet. Play maps with This session open and add each map's loot there (+10c, +50c, +1 div or type it). Then the profit per hour of each strategy shows up here.
       </div>
@@ -49,7 +67,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { useMarket } from './use-market'
-import { FARM_RUNS_KEY, FARM_STRATEGY_KEY, farmingStats, loadFarmRuns, loadStrategy, mergeRuns, runsFromSession, saveStrategy } from './market-tools'
+import FarmNudge from './FarmNudge.vue'
+import { weeklyReport, FARM_RUNS_KEY, FARM_STRATEGY_KEY, farmingStats, loadFarmRuns, loadStrategy, mergeRuns, runsFromSession, saveStrategy } from './market-tools'
 import { PLAY_SESSION_KEY, loadMapCost, loadPlaySession } from '../companion/play-session'
 
 const { money, league } = useMarket()
@@ -81,13 +100,15 @@ onUnmounted(() => {
 })
 
 // runs archived before this feature have no league: count them under "this league" only by date
+const allRuns = computed(() => mergeRuns(archived.value, runsFromSession(session.value.maps, loadMapCost(), league.value ?? undefined)))
 const runs = computed(() => {
-  const live = runsFromSession(session.value.maps, loadMapCost(), league.value ?? undefined)
-  let list = mergeRuns(archived.value, live)
+  let list = allRuns.value
   if (range.value === '7d') list = list.filter(r => r.at >= Date.now() - 7 * 86_400_000)
   if (range.value === 'league') list = list.filter(r => !r.league || r.league === league.value)
   return list
 })
+// recomputed with the 30 s reload (session changes), so "now" moves along
+const week = computed(() => weeklyReport(allRuns.value, Date.now()))
 const stats = computed(() => farmingStats(runs.value, by.value))
 const few = computed(() => stats.value.some(s => s.maps < 10))
 const known = computed(() => [...new Set(archived.value.map(r => r.strategy).filter(s => s && s !== 'No strategy set'))].sort())

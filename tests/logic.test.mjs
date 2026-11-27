@@ -2206,6 +2206,41 @@ test('loot filter part 2 (Q11): settings, signatures, automatic rewrite', async 
   assert.ok(text.endsWith('Hide\n'))
 })
 
+test('market tools (Q19): weekly farming report and profit-drop nudge', async () => {
+  const mt = await import('./.build/market-tools.mjs')
+  const DAY = 86_400_000
+  const now = 100 * DAY
+  let n = 0
+  // one map: 6 minutes, loot in chaos, cost 0
+  const run = (strategy, loot, daysAgo) => ({ id: String(n++), strategy, mechanics: [], loot, cost: 0, ms: 6 * 60_000, at: now - daysAgo * DAY })
+  const runs = [
+    ...Array.from({ length: 6 }, () => run('Breach', 100, 9)), // week before: 1000 c/h
+    ...Array.from({ length: 6 }, () => run('Breach', 120, 2)), // this week: 1200 c/h
+    ...Array.from({ length: 5 }, () => run('Essence', 50, 1)), // this week: 500 c/h
+    run('Old', 999, 30) // too old for both weeks
+  ]
+  const w = mt.weeklyReport(runs, now)
+  assert.equal(w.maps, 11)
+  assert.equal(w.prev.maps, 6)
+  assert.equal(Math.round(w.prev.perHour), 1000)
+  assert.deepEqual(w.strategies.map(s => s.name), ['Breach', 'Essence'])
+  assert.ok(w.tip.startsWith('Breach earned the most'))
+  assert.match(w.tip, /58 % less/)
+  assert.equal(mt.weeklyReport([run('X', 5, 20)], now), null, 'no maps this week')
+  assert.equal(mt.weeklyReport([run('X', 5, 1)], now).change, null, 'too few maps to compare')
+
+  // nudge: last 5 Breach maps make 40 c each (400 c/h) vs 100+ before
+  const drop = [...runs, ...Array.from({ length: 5 }, () => run('Breach', 40, 0.5))]
+  const d = mt.profitDrop(drop, 'Breach', now)
+  assert.equal(d.strategy, 'Breach')
+  assert.equal(Math.round(d.recent), 400)
+  assert.ok(d.drop > 0.6)
+  assert.equal(d.better.name, 'Essence', 'Essence (500 c/h) beats the recent 400 c/h')
+  assert.equal(mt.profitDrop(runs, 'Breach', now), null, 'no drop: the last maps are the best ones')
+  assert.equal(mt.profitDrop(drop, 'Essence', now), null, 'too few maps')
+  assert.equal(mt.profitDrop(drop.map(r => ({ ...r, strategy: 'No strategy set' })), '', now).strategy, 'No strategy set')
+})
+
 test('gem profit (Q15): variants, best route per gem, prisms, slot-days, tracked gems', async () => {
   const gp = await import('./.build/gem-profit.mjs')
   const G = (name, variant, chaos) => ({ ns: 'GEM', name, variant, chaos, graph: [], category: 'skill-gems', type: 'SkillGem', url: 'u' })
