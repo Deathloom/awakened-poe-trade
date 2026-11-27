@@ -56,18 +56,22 @@ export function useI18nNs (name: string) {
 // list doesn't have. Add only the missing ones, so PoE1 wording never changes.
 export async function addMissingMessages (url: string): Promise<void> {
   const extra = await (await fetch(url)).json() as Record<string, unknown>
-  const base = structuredClone(_global.getLocaleMessage('en')) as Record<string, unknown>
-  _global.setLocaleMessage('en', fillMissing(base, extra) as never)
+  // read the current messages only (they may hold compiled functions / proxies that
+  // can't be cloned), then merge in just what is missing
+  const have = _global.getLocaleMessage('en') as Record<string, unknown>
+  _global.mergeLocaleMessage('en', missingMessages(have, extra) as never)
 }
 
-function fillMissing (base: Record<string, unknown>, extra: Record<string, unknown>) {
+export function missingMessages (have: Record<string, unknown>, extra: Record<string, unknown>) {
+  const out: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(extra)) {
-    const have = base[key]
-    if (have === undefined) {
-      base[key] = value
-    } else if (have && value && typeof have === 'object' && typeof value === 'object') {
-      fillMissing(have as Record<string, unknown>, value as Record<string, unknown>)
+    const current = have?.[key]
+    if (current === undefined) {
+      out[key] = value
+    } else if (current && value && typeof current === 'object' && typeof value === 'object') {
+      const nested = missingMessages(current as Record<string, unknown>, value as Record<string, unknown>)
+      if (Object.keys(nested).length) out[key] = nested
     }
   }
-  return base
+  return out
 }
