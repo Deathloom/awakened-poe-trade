@@ -55,6 +55,7 @@ const steps: Step[] = [
   { target: 'trades', view: 'trades', icon: 'fa-handshake', title: 'Trades', body: 'Trade whispers and a ledger of what you bought and sold.' },
   { target: 'board', view: 'board', icon: 'fa-people-carry', title: 'Board', body: "The friends' trade board: give away, sell to and ask the group." },
   { target: 'market', view: 'market', icon: 'fa-chart-line', title: 'Market', body: 'Prices of items you watch (star them in a price check) next to the poe.ninja overview.' },
+  { target: 'profit', view: 'profit', icon: 'fa-piggy-bank', title: 'Profit', body: 'Ways to make currency: gem levelling, crafting costs, a currency counter and the league planners (Viscera, Temple, Wombgifts).' },
   { target: 'trade', icon: 'fa-store', title: 'Trade site', body: "GGG's own trade site inside this window. You sign in on GGG's page; Orbhoarder never sees your login." },
   { target: 'reference', view: 'reference', icon: 'fa-book', title: 'Reference', body: 'Cheat sheets for league mechanics, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and <b>Help</b>: how things work, where to find a build, common questions.' },
   { target: 'settings', view: 'settings', icon: 'fa-cog', title: 'Settings', body: 'Everything you can change. <b>Appearance</b> has the theme, text size and colour-blind-safe colours. <b>Take the tour</b> at the bottom runs this again.' },

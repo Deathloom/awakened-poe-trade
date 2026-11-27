@@ -55,7 +55,7 @@ export async function healthCheck (d: HealthDeps): Promise<HealthItem[]> {
   const [ninja, github] = await Promise.all([reachable('https://poe.ninja/'), reachable('https://github.com/')])
   out.push(ninja
     ? { name: 'poe.ninja (prices)', ok: true, detail: 'reachable' }
-    : { name: 'poe.ninja (prices)', ok: false, detail: 'Not reachable: prices, Market and Money tools stay empty. Check your internet or firewall.' })
+    : { name: 'poe.ninja (prices)', ok: false, detail: 'Not reachable: prices, Market and Profit stay empty. Check your internet or firewall.' })
   out.push(github
     ? { name: 'GitHub (updates, Path of Building)', ok: true, detail: 'reachable' }
     : { name: 'GitHub (updates, Path of Building)', ok: false, detail: 'Not reachable: updates and Path of Building downloads fail. Check your internet or firewall.' })

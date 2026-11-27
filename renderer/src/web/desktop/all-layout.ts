@@ -32,7 +32,7 @@ export const ALL_PANELS: AllPanelDef[] = [
   { id: 'board', label: "Friends' trade board", icon: 'fa-people-carry', settingsKey: 'board' },
   { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' },
   { id: 'cheats', label: 'Cheat sheets', icon: 'fa-book', settingsKey: 'cheats' },
-  { id: 'money', label: 'Money tools', icon: 'fa-piggy-bank', settingsKey: 'money' },
+  { id: 'money', label: 'Profit', icon: 'fa-piggy-bank', settingsKey: 'money' },
   // Q17: tree step + gems + gear ticks in one view (added with Add panel)
   { id: 'progress', label: 'Build progress', icon: 'fa-tasks' }
 ]
