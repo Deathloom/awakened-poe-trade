@@ -122,7 +122,16 @@ export default defineComponent({
         showCursor: true,
         requestPricePrediction: false,
         merchantOnly: true,
-        defaultCurrency: null
+        defaultCurrency: null,
+        // Deathloom fork: PoE2 price check settings (Exiled Exchange 2 defaults)
+        rememberCurrency: false,
+        defaultAllSelected: false,
+        itemHoverTooltip: 'keybind',
+        alwaysShowTier: false,
+        coreCurrency: 'exalted',
+        currencyVolume: 'both',
+        rememberListingType: false,
+        savedAugments: {}
       }
     }
   } satisfies WidgetSpec,

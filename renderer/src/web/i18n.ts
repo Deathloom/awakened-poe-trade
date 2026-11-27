@@ -51,3 +51,23 @@ export function useI18nNs (name: string) {
     }) as typeof t
   }
 }
+
+// Deathloom fork: PoE2 price check (from Exiled Exchange 2) uses some texts our
+// list doesn't have. Add only the missing ones, so PoE1 wording never changes.
+export async function addMissingMessages (url: string): Promise<void> {
+  const extra = await (await fetch(url)).json() as Record<string, unknown>
+  const base = structuredClone(_global.getLocaleMessage('en')) as Record<string, unknown>
+  _global.setLocaleMessage('en', fillMissing(base, extra) as never)
+}
+
+function fillMissing (base: Record<string, unknown>, extra: Record<string, unknown>) {
+  for (const [key, value] of Object.entries(extra)) {
+    const have = base[key]
+    if (have === undefined) {
+      base[key] = value
+    } else if (have && value && typeof have === 'object' && typeof value === 'object') {
+      fillMissing(have as Record<string, unknown>, value as Record<string, unknown>)
+    }
+  }
+  return base
+}
