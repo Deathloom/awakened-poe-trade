@@ -70,6 +70,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Security: Dependabot version updates
 - `.github/dependabot.yml`: weekly update PRs (Mondays) for main and renderer npm packages and the pinned GitHub Actions, all to **dev**; minor and patch bumps grouped, at most 3 open per folder. Nothing changes in the app.
 
+### Tidy-up (S8): fewer background timers, less dead code
+- Market history (Farming) and price alerts stop their 30 s / 60 s refresh while their window is hidden and catch up when it is shown again. A stray Python package file was removed from the source and unused leftovers are gone. Nothing else changes.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
