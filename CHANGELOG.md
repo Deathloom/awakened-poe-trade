@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (layout 3): Profit tab; Money tools is now Profit
+- New **Profit** tab in the Orbhoarder window, and the Money tools panel (overlay, in game, All tab) is renamed **Profit**: Gems, Crafting costs, Currency counter, Viscera, Temple, Wombgifts. **Gems** is the Market → Gems tool (profit per slot-day, Levelling now list); the older, simpler Gem levelling list is gone, so there is one gem-profit tool. **Gems** and **Crafting** are no longer Market tabs (Market keeps Watched, All prices, Shopping, Sell list, Bulk sell, Farming). The Money tools hotkey opens Profit.
+
 ### Changed (layout 2): Reference tab in the Orbhoarder window
 - New **Reference** tab with four parts: **Cheat sheets** (league mechanics), **Recipes** (vendor and bench recipes), **Tracking** (Thread planner, Challenges, league checklist) and **Help**. It replaces the Help tab; Cheat sheets had no tab before (only a panel). The Cheat sheets panel in the overlay, in game and on the All tab is unchanged. If the window was on Help, it opens on Reference → Help; the overlay's Help button and the Cheat sheets hotkey go there too.
 

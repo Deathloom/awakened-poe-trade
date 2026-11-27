@@ -17,9 +17,7 @@
       <market-shopping v-if="curTab === 'shop'" />
       <market-sell v-else-if="curTab === 'sell'" />
       <market-farming v-else-if="curTab === 'farm'" />
-      <market-gems v-else-if="curTab === 'gems'" />
-      <market-bulk v-else-if="curTab === 'bulk'" />
-      <market-crafting v-else />
+      <market-bulk v-else />
     </div>
     <div v-else class="overflow-y-auto min-h-0 p-1">
       <price-alerts-summary />
@@ -70,8 +68,6 @@ import MarketOverview from './MarketOverview.vue'
 import MarketShopping from './MarketShopping.vue'
 import MarketSell from './MarketSell.vue'
 import MarketFarming from './MarketFarming.vue'
-import MarketCrafting from './MarketCrafting.vue'
-import MarketGems from './MarketGems.vue'
 import MarketBulk from './MarketBulk.vue'
 import DivineChip from './DivineChip.vue'
 import PriceAlertForm from './PriceAlertForm.vue'
@@ -93,10 +89,9 @@ const TABS = [
   { id: 'shop', label: 'Shopping', tip: 'What your build still needs (uniques and gems) and what it costs' },
   { id: 'sell', label: 'Sell list', tip: 'What you plan to sell: value now and whether to wait' },
   { id: 'bulk', label: 'Bulk sell', tip: 'Bulk ratios: poe.ninja vs the Currency Exchange, copy a WTS line' },
-  { id: 'farm', label: 'Farming', tip: 'Profit per hour per strategy or league mechanic' },
-  { id: 'craft', label: 'Crafting', tip: 'Crafting currency prices and what your craft costs' },
-  { id: 'gems', label: 'Gems', tip: 'Gem levelling profit: buy low level, level in a spare socket, sell at max level' }
+  { id: 'farm', label: 'Farming', tip: 'Profit per hour per strategy or league mechanic' }
 ] as const
+// Deathloom fork (layout review step 3): Gems and Crafting moved to the Profit panel / tab
 type Tab = typeof TABS[number]['id']
 const tab = ref<Tab>((() => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(t => t.id === v) ? v as Tab : 'watched' } catch { return 'watched' } })())
 // the window's Market view shows All prices on the right, so that tab isn't listed there

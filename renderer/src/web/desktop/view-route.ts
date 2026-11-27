@@ -30,7 +30,8 @@ export const LEGACY_VIEWS: Record<string, [string, string?]> = {
   guide: ['levelling'],
   next: ['levelling'],
   help: ['reference', 'help'],
-  cheats: ['reference', 'sheets']
+  cheats: ['reference', 'sheets'],
+  money: ['profit']
 }
 
 export function resolveView (v: string, known: (v: string) => boolean): { view: string, sub?: string } | null {

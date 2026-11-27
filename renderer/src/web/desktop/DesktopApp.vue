@@ -54,6 +54,7 @@
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[1]} 1 0` }"><MarketOverview /></div>
         </div>
         <CraftBody v-else-if="view === 'craft'" />
+        <MoneyToolsBody v-else-if="view === 'profit'" />
         <DesktopSettings v-else-if="view === 'settings'" />
         <ReferenceBody v-else-if="view === 'reference'" />
       </div>
@@ -87,7 +88,8 @@ import {
   LazyTradeCompanionBody as TradeCompanionBody,
   LazyTradeBoardBody as TradeBoardBody,
   LazyMarketHistoryBody as MarketHistoryBody,
-  LazyCraftBody as CraftBody
+  LazyCraftBody as CraftBody,
+  LazyMoneyToolsBody as MoneyToolsBody
 } from '../ui/LazyBodies'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
@@ -133,7 +135,8 @@ const VIEWS = [
   { key: 'craft', label: 'Craft', icon: 'fa-flask', title: 'Crafting simulator and timeless jewel explorer' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
-  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
+  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Prices: watched items, all poe.ninja prices, shopping and sell lists, bulk sell, farming' },
+  { key: 'profit', label: 'Profit', icon: 'fa-piggy-bank', title: 'Ways to make currency: gem levelling, crafting costs, currency counter, Viscera, Temple, Wombgifts' },
   { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Orbhoarder never sees your login)" },
   { key: 'lab', label: 'Lab', icon: 'fa-dungeon', title: "Today's labyrinth layouts on poelab.com (community site, shown as-is)" },
   { key: 'reference', label: 'Reference', icon: 'fa-book', title: 'Cheat sheets, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and Help' },
