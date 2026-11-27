@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (layout follow-up): pin the friends' board, Market search and Build progress in game
+- Settings → Panels → Show while playing now lists **Friends' trade board**, **Market search** and **Build progress** too. Pinned, the board and Market search open and close with their usual hotkeys; Build progress gets an optional hotkey in Settings → Hotkeys (unpinned, it opens Build → Progress in the window). Like other pinned panels, typing in them needs Shift+Space first.
+
 ### Added (layout follow-up): Map mods on the Mapping tab
 - Mapping → **Map mods**: the map mod list from Settings → Maps (colour mods, Warn for my PoB build) right next to the atlas tree and This session, with its own Save.
 

@@ -18,7 +18,7 @@ import type { GameWindow } from './GameWindow'
 import type { OverlayWindow } from './OverlayWindow'
 
 export type { HudPanel }
-const PANELS: HudPanel[] = ['guide', 'trades', 'gear', 'tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money']
+const PANELS: HudPanel[] = ['guide', 'trades', 'gear', 'tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money', 'board', 'search', 'progress']
 const DEFAULT_POS: Record<HudPanel, { x: number, y: number }> = {
   guide: { x: 10, y: 90 },
   trades: { x: 10, y: 420 },
@@ -29,7 +29,10 @@ const DEFAULT_POS: Record<HudPanel, { x: number, y: number }> = {
   market: { x: 440, y: 440 },
   overview: { x: 440, y: 440 },
   cheats: { x: 880, y: 90 },
-  money: { x: 880, y: 440 }
+  money: { x: 880, y: 440 },
+  board: { x: 440, y: 90 },
+  search: { x: 440, y: 90 },
+  progress: { x: 880, y: 90 }
 }
 
 // Not in a zone: the game just started ("***** LOG FILE OPENING *****" is the
@@ -84,7 +87,10 @@ export class HudWindow {
     market: { size: { width: 416, height: 400 } },
     overview: { size: { width: 480, height: 430 } },
     cheats: { size: { width: 384, height: 420 } },
-    money: { size: { width: 416, height: 430 } }
+    money: { size: { width: 416, height: 430 } },
+    board: { size: { width: 416, height: 450 } },
+    search: { size: { width: 416, height: 420 } },
+    progress: { size: { width: 384, height: 420 } }
   }
 
   private shared: SharedWindow = { hover: null }
@@ -94,7 +100,7 @@ export class HudWindow {
   private drag?: { panel: HudPanel, cursorX: number, cursorY: number, x: number, y: number, timer: NodeJS.Timeout, started: number }
   // Pinned panels start closed each time the app starts; their hotkey opens and
   // closes them (a trade whisper opens the trade companion). Not saved.
-  private hidden: Record<HudPanel, boolean> = { guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true, cheats: true, money: true }
+  private hidden: Record<HudPanel, boolean> = { guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true, cheats: true, money: true, board: true, search: true, progress: true }
   // Only show once a character is in a zone, not on the login / character select screens
   private inWorld = false
   // no Client.txt being read: can't tell, so behave as before (show with the game)

@@ -10,7 +10,10 @@ import {
   LazyMarketOverview as MarketOverview,
   LazyMarketHistoryBody as MarketHistoryBody,
   LazyCheatSheetsBody as CheatSheetsBody,
-  LazyMoneyToolsBody as MoneyToolsBody
+  LazyMoneyToolsBody as MoneyToolsBody,
+  LazyTradeBoardBody as TradeBoardBody,
+  LazyMarketSearchBody as MarketSearchBody,
+  LazyBuildProgressPanel as BuildProgressPanel
 } from '../ui/LazyBodies'
 import { EXTRA_PANELS } from '../desktop/panel-defs'
 
@@ -33,7 +36,11 @@ const BODIES: Record<string, Omit<PanelBody, 'panel' | 'label' | 'icon'>> = {
   market: { body: MarketHistoryBody, props: { active: true, fill: true }, boxed: false, w: '26rem', h: '24rem' },
   overview: { body: MarketOverview, props: {}, boxed: false, w: '30rem', h: '26rem' },
   cheats: { body: CheatSheetsBody, props: {}, boxed: false, w: '24rem', h: '26rem' },
-  money: { body: MoneyToolsBody, props: {}, boxed: false, w: '26rem', h: '27rem' }
+  money: { body: MoneyToolsBody, props: {}, boxed: false, w: '26rem', h: '27rem' },
+  // in game only (their overlay widgets are their own)
+  board: { body: TradeBoardBody, props: { fill: true }, boxed: false, w: '26rem', h: '28rem' },
+  search: { body: MarketSearchBody, props: {}, boxed: true, w: '26rem', h: '26rem' },
+  progress: { body: BuildProgressPanel, props: {}, boxed: false, w: '24rem', h: '26rem' }
 }
 
 // by panel (HUD) and by widget type (overlay)
