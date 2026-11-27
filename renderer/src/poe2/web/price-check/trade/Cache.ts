@@ -1,5 +1,6 @@
 import type { RateLimiter } from "./RateLimiter";
-import hash from "object-hash";
+// Deathloom fork (S4): object-hash is gone; same canonical-JSON key as the PoE1 cache
+import { cacheKey } from "@/web/price-check/trade/Cache";
 
 const CACHE_TTL = 300;
 
@@ -8,12 +9,12 @@ export class Cache {
   private currency = "";
 
   get<T = unknown>(key: unknown): T | undefined {
-    const _key = hash.sha1(JSON.parse(JSON.stringify(key)));
+    const _key = cacheKey(key);
     return this.cached.get(_key) as T | undefined;
   }
 
   set<T = unknown>(key: unknown, value: T, ttl: number): void {
-    const _key = hash.sha1(JSON.parse(JSON.stringify(key)));
+    const _key = cacheKey(key);
     this.cached.set(_key, value);
 
     setTimeout(() => {
