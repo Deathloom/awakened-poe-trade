@@ -8,7 +8,6 @@
 // the other game starts (fallback). In CI a failed build fails the install.
 import { spawnSync } from 'node:child_process'
 import { copyFileSync, rmSync, existsSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -36,14 +35,16 @@ const cmd = gyp ? [process.execPath, [gyp, 'rebuild']] : ['npx', ['--yes', 'node
 const res = spawnSync(cmd[0], cmd[1], { cwd: pkg, stdio: 'inherit', shell: !gyp })
 if (res.status !== 0 || !existsSync(built)) fail('node-gyp rebuild failed')
 
-// self-test: the fresh binary loads and says it matches a title list
-try {
-  const mod = createRequire(import.meta.url)(built)
-  if (mod.multiTitle !== true || typeof mod.start !== 'function') fail('rebuilt binary is missing multiTitle')
-} catch (err) {
-  fail(`rebuilt binary does not load: ${err.message}`)
-}
+// self-test in a child process: the fresh binary loads and says it matches a
+// title list (loading it here would lock the file on Windows, so build/ couldn't
+// be removed afterwards)
+const probe = spawnSync(process.execPath, ['-e',
+  'const m = require(process.argv[1]); process.exit(m.multiTitle === true && typeof m.start === "function" ? 0 : 3)',
+  built], { stdio: 'inherit' })
+if (probe.status === 3) fail('rebuilt binary is missing multiTitle')
+if (probe.status !== 0) fail('rebuilt binary does not load')
 
 copyFileSync(built, prebuilt)
-rmSync(join(pkg, 'build'), { recursive: true, force: true })
+// leftover build files are only clutter; never fail the install over them
+try { rmSync(join(pkg, 'build'), { recursive: true, force: true }) } catch (err) { console.warn(`[overlay-native] could not remove build/: ${err.message}`) }
 console.log('[overlay-native] electron-overlay-window rebuilt with the two-title patch')
