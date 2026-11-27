@@ -124,6 +124,17 @@ module.exports = {
         800: '#97266d',
         900: '#702459',
       },
+      // Deathloom fork: colours the PoE2 price check (Exiled Exchange 2) uses
+      fire: '#c80000',
+      cold: '#5aadff',
+      lightning: '#ffff00',
+      normal: '#c8c8c8',
+      magic: '#8888ff',
+      rare: '#ffff77',
+      unique: '#af6025',
+      rose: { 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af', 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#881337' },
+      fuchsia: { 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75' },
+      slate: { 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' }
     }
   },
   variants: {},

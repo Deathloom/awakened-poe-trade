@@ -429,6 +429,15 @@ function upgradeConfig (_config: Config): Config {
   if (priceCheck.defaultCurrency === undefined) {
     priceCheck.defaultCurrency = null
   }
+  // Deathloom fork: PoE2 price check settings (Exiled Exchange 2 defaults)
+  priceCheck.rememberCurrency ??= false
+  priceCheck.defaultAllSelected ??= false
+  priceCheck.itemHoverTooltip ??= 'keybind'
+  priceCheck.alwaysShowTier ??= false
+  priceCheck.coreCurrency ??= 'exalted'
+  priceCheck.currencyVolume ??= 'both'
+  priceCheck.rememberListingType ??= false
+  priceCheck.savedAugments ??= {}
 
   for (const widget of config.widgets) {
     if (widget.wmType === 'stash-search') {

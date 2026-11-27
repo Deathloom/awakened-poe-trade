@@ -92,3 +92,27 @@ test('PoE2 parser: common item texts parse with their rarity and base', () => {
 test('PoE2 parser: text that is not an item is refused', () => {
   assert.ok(poe2.parseClipboard('not an item at all').isErr())
 })
+
+// A3: trade2 search request built from a parsed PoE2 item (what the Search button sends)
+test('PoE2 trade: rare bow becomes a trade2 search with its mods', () => {
+  const item = parse(fx.RareItem)
+  const { presets, active } = poe2.createPresets(item, {
+    league: 'Standard',
+    currency: undefined,
+    listingType: undefined,
+    collapseListings: 'app',
+    activateStockFilter: false,
+    searchStatRange: 10,
+    useEn: true,
+    defaultAllSelected: true
+  })
+  const preset = presets.find(p => p.id === active) ?? presets[0]
+  assert.ok(preset.stats.length > 0, 'no stat filters')
+  for (const s of preset.stats) s.disabled = false
+  const req = poe2.createTradeRequest(preset.filters, preset.stats, item)
+  assert.ok(req.query, 'no query')
+  assert.equal(req.sort?.price, 'asc')
+  const ids = JSON.stringify(req.query.stats)
+  assert.match(ids, /"(explicit|implicit|pseudo|rune)\.[a-z_0-9]+"/)
+  assert.equal(req.query.filters.type_filters.filters.category.option, 'weapon.bow')
+})

@@ -121,6 +121,7 @@ await build({
   format: 'esm',
   platform: 'node',
   outfile: join(out, 'poe2-parser.mjs'),
+  banner: { js: "import { createRequire as __cr } from 'node:module'; const require = __cr(import.meta.url);" },
   logLevel: 'error',
   nodePaths: [join(renderer, 'node_modules')],
   define: { 'import.meta.env.BASE_URL': '"/"' },
@@ -130,15 +131,21 @@ await build({
       b.onResolve({ filter: /^@\/web\/Config$/ }, () => ({ path: 'config', namespace: 'poe2-stub' }))
       b.onResolve({ filter: /^@\/web\/background\/IPC$/ }, () => ({ path: 'ipc', namespace: 'poe2-stub' }))
       b.onResolve({ filter: /client-string-loader$/ }, () => ({ path: 'strings', namespace: 'poe2-stub' }))
+      b.onResolve({ filter: /^@\/web\/background\/Leagues$/ }, () => ({ path: 'leagues', namespace: 'poe2-stub' }))
+      b.onResolve({ filter: /^@\/web\/i18n$/ }, () => ({ path: 'i18n', namespace: 'poe2-stub' }))
       b.onLoad({ filter: /.*/, namespace: 'poe2-stub' }, (a) => ({
         contents: {
-          config: 'const cfg = { language: "en", widgets: [{ wmType: "price-check" }] }\n' +
-            'export const AppConfig = (type) => type ? cfg.widgets.find(w => w.wmType === type) : cfg',
-          ipc: 'export const Host = { proxy: async () => { throw new Error("offline in tests") } }',
+          config: 'const cfg = { language: "en", widgets: [{ wmType: "price-check", savedAugments: {}, coreCurrency: "exalted", searchStatRange: 10 }] }\n' +
+            'export const AppConfig = (type) => type ? cfg.widgets.find(w => w.wmType === type) : cfg\n' +
+            'export const poeWebApi = () => "www.pathofexile.com"',
+          ipc: 'export const Host = { proxy: async () => { throw new Error("offline in tests") }, onEvent () {}, sendEvent () {} }; export const MainProcess = Host',
+          leagues: 'import { shallowRef } from "vue"\nexport const useLeagues = () => ({ selected: shallowRef(undefined), selectedId: shallowRef("Standard") })',
+          i18n: 'export const useI18nNs = () => ({ t: (k) => k })',
           strings: `import { pathToFileURL } from 'node:url'\n` +
             `export async function loadClientStrings (lang) { return (await import(pathToFileURL(${JSON.stringify(join(renderer, 'public/data/poe2'))} + '/' + lang + '/client_strings.js').href)).default }`
         }[a.path],
-        loader: 'js'
+        loader: 'js',
+        resolveDir: join(renderer, 'src')
       }))
       b.onResolve({ filter: /^@\// }, async (a) => {
         const r = await b.resolve('./' + a.path.slice(2), { kind: a.kind, resolveDir: join(renderer, 'src') })

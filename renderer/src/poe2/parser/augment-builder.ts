@@ -80,7 +80,7 @@ function buildEditorItem(
 
 export function getSavedAugments(item: ParsedItem): Array<BaseType | null> {
   if (!item.augmentSockets) return [];
-  const lookup = AppConfig<PriceCheckWidget>("price-check")!.savedAugments ?? {};
+  const lookup = AppConfig<PriceCheckWidget>("price-check")!.savedAugments;
 
   let refNames: Array<string | null> = [];
   if (item.category && lookup[item.category]?.length) {
