@@ -77,6 +77,8 @@
       </div>
       <button v-if="state.last && !state.busy" class="self-start text-xs text-gray-500 hover:text-gray-300" @click="showLines = !showLines">
         {{ showLines ? 'Hide details' : 'Details' }}</button>
+      <!-- Deathloom fork (Q22): what changed in friends' builds with the last Pulls -->
+      <PullChanges v-if="state.changes?.length" :changes="state.changes" />
     </template>
 
     <div v-else-if="!state.error" class="text-gray-500">Checking build sharing…</div>
@@ -91,6 +93,7 @@
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { IpcEventPayload, PobSyncState } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
+import PullChanges from './PullChanges.vue'
 
 defineProps<{ hud?: boolean }>()
 const emit = defineEmits<{
