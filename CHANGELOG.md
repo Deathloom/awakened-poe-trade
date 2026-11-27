@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q22): what changed in a friend's build after a Pull
+- Build sharing (Build panel → ⋯ → Build sharing) lists the friends' builds that the last Pulls changed. **What changed** shows the difference from your previous copy: stats (old → new), gear, gems and passives. Works for Pulls started in Orbhoarder (also the automatic one at start); the last 30 changes are kept, **Clear** forgets them.
+
+### Added (Q23): friends' board matches
+- The friends' board marks friends' listings that match what you want (the Shopping list's uniques and gems, your Wanted listings) or what friends want that you give or sell, with a **For you** filter.
+- Once you have used the board, Orbhoarder checks it every 15 minutes and sends one Windows notification per new match. Untick **Tell me about new matches** at the bottom of the board to stop it.
+
 ## [1.0.98] - 2026-11-27
 
 ### Added (layout follow-up): pin the friends' board, Market search and Build progress in game

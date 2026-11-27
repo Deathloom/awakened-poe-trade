@@ -13,6 +13,9 @@
       </div>
       <label class="text-xs text-gray-400 shrink-0 cursor-pointer" title="Only your own listings">
         <input v-model="onlyMine" type="checkbox" class="mr-1 align-middle">Mine</label>
+      <label class="text-xs shrink-0 cursor-pointer" :class="matches.size ? 'text-yellow-300' : 'text-gray-400'"
+        title="Only friends' listings that match your Shopping list (uniques, gems), your Wanted listings, or what you give / sell">
+        <input v-model="onlyMatches" type="checkbox" class="mr-1 align-middle">For you<span v-if="matches.size"> {{ matches.size }}</span></label>
       <span class="ml-auto text-xs text-gray-500 truncate" :title="statusTitle">{{ statusText }}</span>
       <button class="ui-btn ui-btn-quiet shrink-0" title="Refresh" :disabled="!!state.busy" @click="refreshBoard">
         <i class="fas fa-sync-alt" :class="{ 'fa-spin': state.busy === 'Loading…' }" /></button>
@@ -64,7 +67,7 @@
     <div v-else class="overflow-y-auto min-h-0 p-1 lg-stagger">
       <div v-if="state.signedIn == null || (state.busy === 'Loading…' && !state.updated)" class="p-1 text-gray-500 lg-loading">Loading the board…</div>
       <div v-else-if="!shown.length" class="p-1 text-gray-500">
-        {{ onlyMine ? 'You have nothing on this tab.' : emptyText }}
+        {{ onlyMine ? 'You have nothing on this tab.' : onlyMatches ? 'No matches on this tab.' : emptyText }}
       </div>
       <div v-for="l of shown" :key="l.number" class="rounded mb-1 p-1" :class="l.mine ? 'bg-gray-800 border-l-2 border-blue-600' : 'bg-gray-900'">
         <div class="flex items-baseline gap-x-2">
@@ -79,6 +82,7 @@
           <span v-if="l.league" :class="l.league === league ? 'text-gray-500' : 'text-orange-400'" :title="l.league === league ? 'Your league' : 'Another league than yours'">{{ l.league }}</span>
           <button v-if="l.item" class="ui-btn ui-btn-quiet" @click="toggle(l.number)">{{ open.has(l.number) ? 'hide item' : 'item text' }}</button>
         </div>
+        <div v-if="matches.get(l.number)" class="text-xs text-yellow-300"><i class="fas fa-star mr-1" />{{ matches.get(l.number) }}</div>
         <div v-if="l.note" class="text-xs text-gray-300 break-words">"{{ l.note }}"</div>
         <pre v-if="l.item && open.has(l.number)" class="text-xs text-gray-300 bg-gray-950 rounded p-1 mt-1 whitespace-pre-wrap break-words">{{ l.item }}</pre>
 
@@ -120,6 +124,10 @@
       <div v-if="state.updated" class="px-1 pt-1 text-xs text-gray-600">
         {{ modeHelp }} Claims and offers show on the listing for everyone in the group.
       </div>
+      <label v-if="state.signedIn" class="px-1 pt-1 flex items-center gap-x-1 text-xs text-gray-500 cursor-pointer"
+        title="Matches: a friend gives or sells something on your Shopping list or Wanted listings, or wants what you give or sell. Orbhoarder checks the board every 15 minutes while it runs and tells you once per listing.">
+        <input type="checkbox" :checked="boardPing" @change="setBoardPing(($event.target as HTMLInputElement).checked)">
+        Tell me about new matches (Windows notification)</label>
     </div>
   </div>
 </template>
@@ -129,6 +137,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   KINDS, CURRENCIES, useBoard, refreshBoard, postListing, commentOn, closeListing, whisperFor, replyWhisper,
   inviteCommand, itemFromText, validCharacter, oneLine, loadMyCharacter, saveMyCharacter, currentLeague, postDraft,
+  useMatches, boardPing, setBoardPing,
   type BoardKind, type Currency, type Listing, type ListingData
 } from './board'
 import { chatMode, runChat } from '../companion/chat'
@@ -138,13 +147,16 @@ defineProps<{ fill?: boolean }>()
 const { state, listings } = useBoard()
 const tab = ref<BoardKind>('sell')
 const onlyMine = ref(false)
+// Deathloom fork (Q23): friends' listings that match what you want or offer
+const matches = useMatches()
+const onlyMatches = ref(false)
 const open = ref(new Set<number>())
 const league = currentLeague()
 
 const shown = computed(() => listings.value
-  .filter(l => l.kind === tab.value && (!onlyMine.value || l.mine))
+  .filter(l => l.kind === tab.value && (!onlyMine.value || l.mine) && (!onlyMatches.value || matches.value.has(l.number)))
   .sort((a, b) => b.created - a.created))
-function count (k: BoardKind) { return listings.value.filter(l => l.kind === k && !l.mine).length }
+function count (k: BoardKind) { return listings.value.filter(l => l.kind === k && !l.mine && (!onlyMatches.value || matches.value.has(l.number))).length }
 const emptyText = computed(() => tab.value === 'give' ? 'Nothing to give away yet.'
   : tab.value === 'sell' ? 'Nothing for sale yet.' : 'Nobody is looking for anything yet.')
 

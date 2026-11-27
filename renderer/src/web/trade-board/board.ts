@@ -7,11 +7,15 @@
 // ever shown as plain text. Contacting a friend is a chat button: one chat
 // message per click (copy or send, like the trade companion), never automatic.
 
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import type { BoardState, BoardRawListing } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { loadCharLevels, currentChar } from '../companion/char-level'
+import {
+  boardMatches, unseen, parseWants, parseSeen, pingText,
+  BOARD_WANTS_KEY, BOARD_SEEN_KEY, BOARD_PING_KEY, type BoardMatch
+} from './matching'
 
 export type BoardKind = 'give' | 'sell' | 'wanted'
 export const KINDS: Array<{ key: BoardKind, label: string, icon: string, hint: string }> = [
@@ -267,3 +271,62 @@ export function currentLeague (): string {
 
 // Item sent by the "Post to friends' board" hotkey (the form picks it up)
 export const postDraft = ref<{ item: string, at: number } | null>(null)
+
+// ---- Q23: matching and the ping ---------------------------------------------------
+function get (k: string): string | null { try { return localStorage.getItem(k) } catch { return null } }
+function put (k: string, v: string) { try { localStorage.setItem(k, v) } catch {} }
+
+// names still to buy on the Shopping list (uniques, gems), shared by the windows
+const shoppingNames = shallowRef<string[]>(parseWants(get(BOARD_WANTS_KEY)))
+export const boardPing = ref(get(BOARD_PING_KEY) !== 'off')
+window.addEventListener('storage', (e) => {
+  if (e.key === BOARD_WANTS_KEY) shoppingNames.value = parseWants(e.newValue)
+  if (e.key === BOARD_PING_KEY) boardPing.value = e.newValue !== 'off'
+})
+export function setShoppingNames (names: string[]) {
+  const next = parseWants(JSON.stringify({ names: [...new Set(names)] }))
+  if (next.join('\n') === shoppingNames.value.join('\n')) return
+  shoppingNames.value = next
+  put(BOARD_WANTS_KEY, JSON.stringify({ names: next, at: new Date().toISOString() }))
+}
+export function setBoardPing (on: boolean) {
+  boardPing.value = on
+  put(BOARD_PING_KEY, on ? 'on' : 'off')
+}
+
+export function useMatches () {
+  const { listings } = useBoard()
+  return computed(() => new Map<number, string>(boardMatches(listings.value, shoppingNames.value).map(m => [m.number, m.reason])))
+}
+
+// Overlay window only (it runs as long as Orbhoarder does): once the board has been
+// used on this PC, list it every 15 minutes (a few GitHub requests with your own
+// sign-in) and tell you once about each new match. Off with the board's ping box.
+const USED_KEY = 'deathloom.board-used.v1'
+const PING_EVERY = 15 * 60_000
+let pingStarted = false
+export function startBoardPing () {
+  if (pingStarted) return
+  pingStarted = true
+  const { listings } = useBoard()
+  watch(() => state.value.updated, () => {
+    if (!state.value.signedIn) return
+    put(USED_KEY, '1')
+    const matches = boardMatches(listings.value, shoppingNames.value)
+    const { fresh, keep } = unseen(matches, parseSeen(get(BOARD_SEEN_KEY)))
+    put(BOARD_SEEN_KEY, JSON.stringify(keep))
+    if (!fresh.length || !boardPing.value) return
+    const byNumber = new Map(listings.value.map(l => [l.number, l]))
+    const rows = fresh.map((m: BoardMatch) => ({ ...m, name: byNumber.get(m.number)?.name ?? '', kind: byNumber.get(m.number)?.kind ?? '', author: byNumber.get(m.number)?.author ?? '' }))
+    const { title, body } = pingText(rows)
+    try {
+      const n = new Notification(title, { body, silent: false })
+      n.onclick = () => { Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'board' } }) }
+    } catch {}
+  })
+  const tick = () => {
+    if (boardPing.value && get(USED_KEY) && state.value.signedIn !== false && !state.value.busy &&
+      Date.now() - (state.value.updated ?? 0) > PING_EVERY - 30_000) refreshBoard()
+  }
+  setTimeout(() => { tick(); setInterval(tick, PING_EVERY) }, 2 * 60_000)
+}
