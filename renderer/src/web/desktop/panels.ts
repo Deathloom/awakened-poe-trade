@@ -4,7 +4,8 @@
 
 import { computed } from 'vue'
 import type { PanelKey, HudPanel } from '@ipc/types'
-import { AppConfig } from '@/web/Config'
+import { AppConfig, type Config } from '@/web/Config'
+import { POE1_ONLY_PANELS, POE1_ONLY_VIEWS } from '@ipc/game'
 
 // Deathloom fork (layout review step 6): in the order of the window's tabs; tab = the
 // Orbhoarder window tab the panel lives on (Settings → Panels shows it)
@@ -23,12 +24,25 @@ export const PANELS: Array<{ key: PanelKey, label: string, hud?: HudPanel, overl
   { key: 'cheats', label: 'Cheat sheets', hud: 'cheats', overlay: true, window: true, view: 'reference', tab: 'Reference' }
 ]
 
+// Deathloom fork (wave 6): panels and window tabs that only work for PoE1 (PoB
+// builds, PoE1 campaign / atlas / league planners, poe.ninja PoE1 prices). Hidden
+// everywhere (overlay, in game, window) while PoE2 is the active game.
+export { POE1_ONLY_PANELS, POE1_ONLY_VIEWS }
+
+export function isPoe2 (): boolean {
+  return (AppConfig() as Config | null)?.game === 'poe2'
+}
+
+export function hiddenForGame (key: string): boolean {
+  return isPoe2() && POE1_ONLY_PANELS.has(key)
+}
+
 export function inOverlay (key: PanelKey): boolean {
-  return AppConfig().pob?.panels?.[key]?.overlay !== false
+  return !hiddenForGame(key) && AppConfig().pob?.panels?.[key]?.overlay !== false
 }
 
 export function inWindow (key: PanelKey): boolean {
-  return AppConfig().pob?.panels?.[key]?.window !== false
+  return !hiddenForGame(key) && AppConfig().pob?.panels?.[key]?.window !== false
 }
 
 export function useInOverlay (key: PanelKey) {

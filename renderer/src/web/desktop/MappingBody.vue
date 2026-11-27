@@ -22,9 +22,9 @@ const MarketFarming = defineAsyncComponent(() => import('../market-history/Marke
 // Settings → Maps page (the mod list is big): loaded when the sub-tab opens
 const MapModsBody = defineAsyncComponent(() => import('./MapModsBody.vue'))
 const TABS = [
-  { id: 'atlas', label: 'Atlas tree', icon: 'fa-globe', title: 'Your atlas tree builds: step along one, edit and share' },
+  { id: 'atlas', label: 'Atlas tree', icon: 'fa-globe', title: 'Your atlas tree builds: step along one, edit and share', poe1Only: true },
   { id: 'session', label: 'This session', icon: 'fa-stopwatch', title: 'Map timer, maps run and loot this session' },
-  { id: 'mods', label: 'Map mods', icon: 'fa-skull-crossbones', title: 'Map mods to colour in the map check (the same as Settings → Maps)' },
-  { id: 'farm', label: 'Farming', icon: 'fa-seedling', title: 'Profit per map and per hour, by strategy or league mechanic' }
+  { id: 'mods', label: 'Map mods', icon: 'fa-skull-crossbones', title: 'Map mods to colour in the map check (the same as Settings → Maps)', poe1Only: true },
+  { id: 'farm', label: 'Farming', icon: 'fa-seedling', title: 'Profit per map and per hour, by strategy or league mechanic', poe1Only: true }
 ] as const
 </script>

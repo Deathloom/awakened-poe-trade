@@ -22,6 +22,6 @@ import { LazyTradeBoardBody as TradeBoardBody } from '../ui/LazyBodies'
 
 const TABS = [
   { id: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
-  { id: 'sharing', label: 'Build sharing', icon: 'fa-cloud', title: 'Share builds with your group (GitHub sync)' }
+  { id: 'sharing', label: 'Build sharing', icon: 'fa-cloud', title: 'Share builds with your group (GitHub sync)', poe1Only: true }
 ] as const
 </script>

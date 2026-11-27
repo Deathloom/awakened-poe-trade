@@ -24,6 +24,7 @@ import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import { HUD_PANEL, IS_HUD_SHARED } from './is-hud'
 import { AppConfig } from '@/web/Config'
+import { hiddenForGame } from '@/web/desktop/panels'
 import HudPanelView from './HudPanelView.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
@@ -40,7 +41,7 @@ const playing = ref(true)
 const hidden = ref<Record<HudPanel, boolean>>({ guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true, cheats: true, money: true, board: true, search: true, progress: true })
 const hiddenByAlt = ref(false)
 
-const sharedPanels = computed(() => ALL.filter(p => Boolean(AppConfig().pob?.hud?.[p])))
+const sharedPanels = computed(() => ALL.filter(p => Boolean(AppConfig().pob?.hud?.[p]) && !hiddenForGame(p)))
 // market panels need leagues and poe.ninja prices (the overlay and window load them too)
 let marketLoaded = false
 watch(() => IS_HUD_SHARED ? sharedPanels.value : [HUD_PANEL], (panels) => {
