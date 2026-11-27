@@ -16,7 +16,7 @@ export const PANELS: Array<{ key: PanelKey, label: string, hud?: HudPanel, overl
   { key: 'tree', label: 'Tree map', hud: 'tree', overlay: true, window: true, view: 'build' },
   { key: 'atlas', label: 'Atlas tree', hud: 'atlas', overlay: true, window: true, view: 'atlas' },
   { key: 'session', label: 'This session', hud: 'session', overlay: true, window: true, view: 'overview' },
-  { key: 'cheats', label: 'Cheat sheets', hud: 'cheats', overlay: true, window: true, view: 'overview' },
+  { key: 'cheats', label: 'Cheat sheets', hud: 'cheats', overlay: true, window: true, view: 'reference' },
   { key: 'money', label: 'Money tools (gem levelling, currency counter)', hud: 'money', overlay: true, window: true, view: 'market' }
 ]
 

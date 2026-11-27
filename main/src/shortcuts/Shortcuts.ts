@@ -9,7 +9,7 @@ import type { ShortcutAction, HudPanel } from '../../../ipc/types'
 
 // Deathloom fork: Orbhoarder window tab for a panel that's in neither the overlay nor in game
 const WINDOW_VIEW: Record<string, string> = {
-  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', board: 'board', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market', cheats: 'overview', money: 'market'
+  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', board: 'board', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market', cheats: 'reference', money: 'market'
 }
 const EXTRA = new Set(['tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money'])
 import type { Logger } from '../RemoteLogger'

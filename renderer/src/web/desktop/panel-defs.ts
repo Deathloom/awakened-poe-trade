@@ -19,7 +19,7 @@ export const EXTRA_PANELS: ExtraPanelDef[] = [
   { panel: 'session', label: 'This session', icon: 'fa-stopwatch', widget: 'play-session', view: 'overview' },
   { panel: 'market', label: 'Market history', icon: 'fa-chart-line', widget: '', view: 'market' },
   { panel: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins', widget: 'market-overview', view: 'market' },
-  { panel: 'cheats', label: 'Cheat sheets', icon: 'fa-book', widget: 'cheat-sheets', view: 'overview' },
+  { panel: 'cheats', label: 'Cheat sheets', icon: 'fa-book', widget: 'cheat-sheets', view: 'reference' },
   { panel: 'money', label: 'Money tools', icon: 'fa-piggy-bank', widget: 'money-tools', view: 'market' }
 ]
 
