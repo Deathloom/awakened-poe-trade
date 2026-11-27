@@ -49,3 +49,42 @@ test('viscera: plan steps say buy, farm or unknown and add up', () => {
   assert.equal(steps[0].others[0].name, 'Lesser Scorched Arm')
   assert.deepEqual(viscera.planCost(steps), { chaos: 5, unpriced: 2 })
 })
+
+const temple = await import('./.build/temple.mjs')
+const ATZOATL = readFileSync(join(root, 'renderer/src/web/price-check/filters/pseudo/atzoatl-rules.ts'), 'utf8')
+
+test('temple: every room name is a trade-site "Has Room" stat', () => {
+  for (const l of temple.ROOM_LINES) {
+    l.names.forEach((n, i) => {
+      const esc = n.replace(/'/g, "\\'")
+      assert.ok(ATZOATL.includes(`Has Room: ${esc} (Tier ${i + 1})`), n)
+    })
+  }
+})
+
+test('temple: upgrade order puts the best room closest to tier 3 first', () => {
+  const order = temple.upgradeOrder({ packs: 2, corruption: 1, gems: 2, explosives: 1, currency: 3, items: 1 })
+  assert.deepEqual(order.map(s => s.line.id), ['gems', 'corruption', 'packs', 'items', 'explosives'])
+  assert.equal(order[0].next, 'Doryani\'s Institute')
+  assert.deepEqual(temple.missingGoodRooms({ corruption: 1, gems: 3, sacrifice: 2, currency: 1, maps: 1 }).map(l => l.id), ['timeless'])
+})
+
+test('temple: plan load ignores junk', () => {
+  globalThis.localStorage = { s: {}, getItem (k) { return this.s[k] ?? null }, setItem (k, v) { this.s[k] = v } }
+  localStorage.setItem(temple.PLAN_KEY, JSON.stringify({ gems: 3, corruption: 7, nope: 2, maps: '2' }))
+  assert.deepEqual(temple.loadPlan(), { gems: 3 })
+})
+
+test('temple: itemised temple value matches only temples you can make', () => {
+  const L = (name, variant, chaos) => ({ category: 'temples', name, variant, chaos, url: name + variant })
+  const priced = temple.priceTemples([
+    L('Chronicle of Atzoatl', 'Locus of Corruption, Doryani\'s Institute', 900),
+    L('Chronicle of Atzoatl', 'Doryani\'s Institute', 300),
+    L('Chronicle of Atzoatl', undefined, 20),
+    { category: 'currency', name: 'Doryani\'s Institute', chaos: 5000, url: 'x' }
+  ], { gems: 3, corruption: 2 })
+  assert.equal(priced.length, 3)
+  assert.deepEqual(priced.map(p => p.matches), [false, true, false])
+  assert.equal(temple.templeValue(priced).chaos, 300)
+  assert.equal(temple.templeValue(temple.priceTemples([], {})), null)
+})
