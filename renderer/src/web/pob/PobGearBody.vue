@@ -153,6 +153,7 @@ import { pobText } from './labels'
 import { itemRegexParts, itemRegex, MAX_LEN } from './item-regex'
 import { itemDefences, type ItemDefence } from './item-defences'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
+import { GEAR_OWNED_KEY, gearItemId, gearOwnedKey, parseGearOwned, saveShared, toggleGearOwned, type GearOwned } from './build-progress'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
 // hud: inside the HUD window (Trade / price check are done by the overlay)
@@ -298,24 +299,18 @@ function request () {
 
 // Deathloom fork (19 Nov): "got it" ticks per build and slot; a tick counts for
 // the item it was set on (if the build's item changes, the tick goes)
-const OWNED_KEY = 'deathloom.gear-owned.v1'
-function readOwned (): Record<string, Record<string, string>> {
-  try { const v = JSON.parse(localStorage.getItem(OWNED_KEY) ?? '{}'); return v && typeof v === 'object' ? v : {} } catch { return {} }
-}
+// (shared with the Build progress panel, build-progress.ts)
+function readOwned (): GearOwned { return parseGearOwned(localStorage.getItem(GEAR_OWNED_KEY)) }
 const owned = shallowRef(readOwned())
-const onOwned = (e: StorageEvent) => { if (e.key === OWNED_KEY) owned.value = readOwned() }
+const onOwned = (e: StorageEvent) => { if (e.key === GEAR_OWNED_KEY) owned.value = readOwned() }
 window.addEventListener('storage', onOwned)
 onUnmounted(() => { window.removeEventListener('storage', onOwned) })
-const ownedKey = computed(() => `${build.value?.name ?? ''}|${itemSet.value ?? ''}`)
-function itemId (item: PobGearItem) { return `${item.title || item.name}|${item.baseName ?? ''}` }
-function isOwned (item: PobGearItem) { return owned.value[ownedKey.value]?.[item.slot] === itemId(item) }
+const ownedKey = computed(() => gearOwnedKey(build.value?.name, itemSet.value))
+function isOwned (item: PobGearItem) { return owned.value[ownedKey.value]?.[item.slot] === gearItemId(item) }
 function toggleOwned (item: PobGearItem) {
-  const all = { ...owned.value }
-  const was = all[ownedKey.value] ?? {}
-  const on = was[item.slot] !== itemId(item)
-  all[ownedKey.value] = Object.fromEntries([...Object.entries(was).filter(([slot]) => slot !== item.slot), ...(on ? [[item.slot, itemId(item)]] : [])])
+  const all = toggleGearOwned(owned.value, ownedKey.value, item)
   owned.value = all
-  try { localStorage.setItem(OWNED_KEY, JSON.stringify(all)) } catch {}
+  saveShared(GEAR_OWNED_KEY, all)
 }
 function rowMenu (item: PobGearItem): UiMenuItem[] {
   return [

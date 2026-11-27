@@ -240,6 +240,7 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { saveShared } from './build-progress'
 import type { PobPlan, PobPlanGem, PobPlanNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf, rebuildFromLog, saveCharLevels, type CharLevels } from '../companion/char-level'
@@ -499,7 +500,7 @@ function toggleGem (name: string) {
   if (list.has(name)) list.delete(name)
   else list.add(name)
   ticks.value = { ...ticks.value, [tickOwner.value]: [...list] }
-  try { localStorage.setItem(TICKS_KEY, JSON.stringify(ticks.value)) } catch {}
+  saveShared(TICKS_KEY, ticks.value)
 }
 const haveCount = computed(() => uniqueGems.value.filter(g => hasGem(g.name)).length)
 // usable at your level and not ticked

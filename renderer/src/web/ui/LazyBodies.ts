@@ -30,3 +30,4 @@ export const LazyCheatSheetsBody = lazy(() => import('../cheats/CheatSheetsBody.
 export const LazyMoneyToolsBody = lazy(() => import('../money/MoneyToolsBody.vue'))
 export const LazyCraftBody = lazy(() => import('../craft/CraftBody.vue'))
 export const LazyHelpBody = lazy(() => import('../help/HelpBody.vue'))
+export const LazyBuildProgress = lazy(() => import('../pob/BuildProgress.vue'))

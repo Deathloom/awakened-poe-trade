@@ -69,7 +69,8 @@ const MODULES = {
   'loot-filter-files': 'main/src/LootFilterFiles.ts',
   'lab-helper': 'renderer/src/web/companion/lab-helper.ts',
   'pob-announce': 'main/src/pob/announce.ts',
-  'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts'
+  'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts',
+  'build-progress': 'renderer/src/web/pob/build-progress.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

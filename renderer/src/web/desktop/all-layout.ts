@@ -8,7 +8,7 @@ import { readWindowKey, windowKey } from '@/web/hud/is-hud'
 import { effectiveMode, phaseForArea, addTreeMapOnce, type LayoutMode, type LayoutPref } from './layout-phase'
 import { PLAY_SESSION_KEY, loadPlaySession } from '../companion/play-session'
 
-export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money'
+export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money' | 'progress'
 
 export interface AllPanelDef {
   id: AllPanelId
@@ -32,7 +32,9 @@ export const ALL_PANELS: AllPanelDef[] = [
   { id: 'board', label: "Friends' trade board", icon: 'fa-people-carry', settingsKey: 'board' },
   { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' },
   { id: 'cheats', label: 'Cheat sheets', icon: 'fa-book', settingsKey: 'cheats' },
-  { id: 'money', label: 'Money tools', icon: 'fa-piggy-bank', settingsKey: 'money' }
+  { id: 'money', label: 'Money tools', icon: 'fa-piggy-bank', settingsKey: 'money' },
+  // Q17: tree step + gems + gear ticks in one view (added with Add panel)
+  { id: 'progress', label: 'Build progress', icon: 'fa-tasks' }
 ]
 const IDS = new Set(ALL_PANELS.map(p => p.id))
 
