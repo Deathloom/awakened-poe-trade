@@ -15,6 +15,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 - The friends' board marks friends' listings that match what you want (the Shopping list's uniques and gems, your Wanted listings) or what friends want that you give or sell, with a **For you** filter.
 - Once you have used the board, Orbhoarder checks it every 15 minutes and sends one Windows notification per new match. Untick **Tell me about new matches** at the bottom of the board to stop it.
 
+### Added (Q21): Boss readiness card
+- Build → Progress (and the Build progress panel) has a **Boss readiness** card: for each pinnacle boss (Exarch, Eater, Maven, Shaper, Elder, Uber Elder, Sirus, Venarius; **Uber** switch for the uber versions) it says **Ready**, **Close** or **Not yet** from your build's DPS, resistances, chaos resistance and the biggest hit you survive of that boss's main damage types, with two or three lines on the fight. Click a boss for the numbers. Stats are the ones Path of Building saved in the build file (save in PoB, then ↻). Bosses ticked in Reference → Tracking → Checklist get a ✓. The bars are rules of thumb, not GGG numbers.
+
 ## [1.0.98] - 2026-11-27
 
 ### Added (layout follow-up): pin the friends' board, Market search and Build progress in game

@@ -105,6 +105,9 @@
         <div v-if="candidates.rares.length" class="lg-sub">{{ candidates.rares.length }} rare/magic item{{ candidates.rares.length === 1 ? '' : 's' }} not ranked (no poe.ninja price): Build → Gear → Trade.</div>
       </div>
 
+      <!-- Q21: boss readiness (the build's saved PoB stats vs a rule-of-thumb bar) -->
+      <BossReadiness />
+
       <div class="px-1 text-xs text-gray-600">
         Ticks are shared with Build → Gear (got it), Build → Gems and Levelling → Your gems. Passives come from the
         levelling planner (game log or your level).
@@ -120,6 +123,7 @@ import { usePoeninja } from '@/web/background/Prices'
 import { myCharacterHint } from './use-my-character'
 import { useCopyFeedback } from './market'
 import { Host } from '@/web/background/IPC'
+import BossReadiness from './BossReadiness.vue'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from '../companion/char-level'
 import { currentPlan, planStep } from './plan-store'
 import {
