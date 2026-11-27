@@ -106,6 +106,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (A2): PoE2 item reader
 - Orbhoarder can now read PoE2 items copied with Ctrl+C (the item reader from Exiled Exchange 2, using the PoE2 lists from A1). Not switched on yet: PoE2 price check comes in the next steps. Automatic checks cover bows, armour, charms, gems, waystones and fractured items.
 
+### Added (A3): PoE2 trade search and filters
+- The PoE2 price check panel from Exiled Exchange 2 is now in Orbhoarder: trade2 search and bulk exchange, mod filters, rune/soul core editor and listing tooltips, with the same rate-limit handling. Not switched on yet (next step). Until poe.ninja PoE2 prices are added, PoE2 shows trade listings only, no quick price (EE2's own price server is not used).
+
+### Added (A4): PoE2 price check is on
+- With Settings → General → Game set to PoE2, the price check hotkey now checks PoE2 items: trade2 search and bulk exchange with filters, like Exiled Exchange 2. The "not ready yet" notice is gone. PoE1 price check is unchanged. Beta: English game client only, no quick poe.ninja price yet, and some item icons show a "?" (we don't ship GGG art). The PoE2 data loads the first time you check a PoE2 item.
+
 ### Changed (Q24): settings backup asks what to restore
 - Settings → Tools → Restore… now shows what's in the file first (date, how many settings and panel data items) and lets you pick: settings and hotkeys, panel data (notes, ticks, watchlist), or both. When the backup has other folders than this PC (game files, Path of Building, builds), this PC's folders are kept unless you untick it, so moving to a new PC or using a friend's setup doesn't break Path of Building.
 - Security: a hand-edited backup file can no longer change the settings object's internals (`__proto__` and similar keys are skipped) or replace a setting with a different kind of value.
@@ -113,12 +119,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q11): loot filter add-on keeps itself up to date
 - After making the add-on (Market → Shopping ⋯ → Make loot filter add-on…), tick **Keep it updated**: Orbhoarder writes it again a few seconds after the Shopping list changes (you tick something as got, or switch builds) while Market → Shopping is open in any window. When everything is ticked, the add-on is just your filter. Reload the filter in game (Options → UI → Item filter) to see changes. The file isn't touched when nothing changed.
 - New **Settings → Loot filter** page: pick your filter, turn the automatic update on or off, **Update now**, and see when it was last written. PC only.
-
-### Added (A3): PoE2 trade search and filters
-- The PoE2 price check panel from Exiled Exchange 2 is now in Orbhoarder: trade2 search and bulk exchange, mod filters, rune/soul core editor and listing tooltips, with the same rate-limit handling. Not switched on yet (next step). Until poe.ninja PoE2 prices are added, PoE2 shows trade listings only, no quick price (EE2's own price server is not used).
-
-### Added (A4): PoE2 price check is on
-- With Settings → General → Game set to PoE2, the price check hotkey now checks PoE2 items: trade2 search and bulk exchange with filters, like Exiled Exchange 2. The "not ready yet" notice is gone. PoE1 price check is unchanged. Beta: English game client only, no quick poe.ninja price yet, and some item icons show a "?" (we don't ship GGG art). The PoE2 data loads the first time you check a PoE2 item.
 
 ## [1.0.97] - 2026-11-20
 
