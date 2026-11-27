@@ -31,8 +31,8 @@ export function useSubTab<T extends string> (view: string, ids: readonly T[], de
 
 // old top tab → [new top tab, sub-tab]; also what main and the overlay still send
 export const LEGACY_VIEWS: Record<string, [string, string?]> = {
-  guide: ['levelling'],
-  next: ['levelling'],
+  guide: ['levelling', 'guide'],
+  next: ['levelling', 'guide'],
   help: ['reference', 'help'],
   cheats: ['reference', 'sheets'],
   money: ['profit'],
@@ -40,7 +40,12 @@ export const LEGACY_VIEWS: Record<string, [string, string?]> = {
   search: ['trade', 'search'],
   site: ['trade', 'site'],
   board: ['friends', 'board'],
-  sharing: ['friends', 'sharing']
+  sharing: ['friends', 'sharing'],
+  atlas: ['mapping', 'atlas'],
+  session: ['mapping', 'session'],
+  farm: ['mapping', 'farm'],
+  lab: ['levelling', 'lab'],
+  progress: ['build', 'progress']
 }
 
 export function resolveView (v: string, known: (v: string) => boolean): { view: string, sub?: string } | null {

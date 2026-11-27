@@ -8,6 +8,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (layout 5): Mapping tab, Lab in Levelling, new tab order
+- The Orbhoarder window's tabs are now named after what you are doing: **All, Levelling, Mapping, Build, Craft, Market, Profit, Trade, Friends, Reference, Settings** (11 instead of 12).
+- **Mapping** (new): Atlas tree, This session and Farming. It replaces the Atlas tab.
+- **Levelling** now has **Guide** and **Lab**; the Lab tab is gone. The Lab page still stays open once loaded, and the guide's Lab button opens it.
+- **Build** has a **Progress** part (Build progress was only an All tab panel).
+- **Farming** moved from Market to the Profit panel (and the Mapping tab). Market keeps Watched, All prices, Shopping, Sell list, Bulk sell.
+- A window left on an old tab opens in its new place; hotkeys of panels that aren't shown go there too. The tour and Help follow the new tabs.
+
 ### Changed (layout 4): Trade and Friends tabs
 - The Trades, Board and Trade site tabs are now two: **Trade** (Whispers and ledger, **Search**, Trade site) and **Friends** (the friends' trade board and **Build sharing**). Market search finally has a place in the window (it was only a panel). The trade site still stays signed in and keeps its page once opened, and trade links from the price check or Market search still open it. Your old tab opens in its new place. Build sharing is still in the Build panel's ⋯ menu too; the phone link stays in Settings → Tools.
 
