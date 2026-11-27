@@ -11,7 +11,7 @@ export const PANELS: Array<{ key: PanelKey, label: string, hud?: HudPanel, overl
   { key: 'guide', label: 'Campaign guide / levelling', hud: 'guide', overlay: true, window: true, view: 'levelling' },
   { key: 'trades', label: 'Trade companion', hud: 'trades', overlay: true, window: true, view: 'trades' },
   { key: 'market', label: 'Market (watched items, all prices)', hud: 'market', overlay: true, window: true, view: 'market' },
-  { key: 'search', label: 'Market search', overlay: true, window: false, view: 'trade' },
+  { key: 'search', label: 'Market search', overlay: true, window: false, view: 'search' },
   { key: 'board', label: "Friends' trade board", overlay: true, window: true, view: 'board' },
   { key: 'tree', label: 'Tree map', hud: 'tree', overlay: true, window: true, view: 'build' },
   { key: 'atlas', label: 'Atlas tree', hud: 'atlas', overlay: true, window: true, view: 'atlas' },

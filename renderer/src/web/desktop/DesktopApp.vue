@@ -45,8 +45,7 @@
         <PobGearBody v-if="view === 'build'" :active="true" desktop />
         <LevellingBody v-else-if="view === 'levelling'" />
         <div v-else-if="view === 'atlas'" class="h-full min-h-0 flex flex-col rounded bg-gray-800"><AtlasTreeMap /></div>
-        <TradeCompanionBody v-else-if="view === 'trades'" fill />
-        <TradeBoardBody v-else-if="view === 'board'" fill />
+        <FriendsBody v-else-if="view === 'friends'" />
         <!-- Market: watchlist | poe.ninja overview (drag the line to resize) -->
         <div v-else-if="view === 'market'" ref="marketEl" class="flex h-full min-h-0">
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[0]} 1 0` }"><MarketHistoryBody :active="true" fill :tabs="false" /></div>
@@ -59,9 +58,10 @@
         <ReferenceBody v-else-if="view === 'reference'" />
       </div>
     </div>
-    <!-- Trade site: kept alive once opened (stays signed in and keeps its page) -->
+    <!-- Trade (whispers, search, trade site): kept alive once opened, so the trade
+         site stays signed in and keeps its page -->
     <div v-if="tradeOpened" v-show="view === 'trade'" class="flex-1 min-h-0 p-2">
-      <TradeSiteBody />
+      <TradeBody />
     </div>
     <!-- Lab: poelab.com, kept alive once opened like the Trade site -->
     <div v-if="labOpened" v-show="view === 'lab'" class="flex-1 min-h-0 p-2">
@@ -85,8 +85,6 @@ import {
   LazyPobGearBody as PobGearBody,
   LazyLevellingBody as LevellingBody,
   LazyMarketOverview as MarketOverview,
-  LazyTradeCompanionBody as TradeCompanionBody,
-  LazyTradeBoardBody as TradeBoardBody,
   LazyMarketHistoryBody as MarketHistoryBody,
   LazyCraftBody as CraftBody,
   LazyMoneyToolsBody as MoneyToolsBody
@@ -95,13 +93,13 @@ import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
 import DesktopSettings from './DesktopSettings.vue'
 import FeedbackDialog from './FeedbackDialog.vue'
-import TradeSiteBody from './TradeSiteBody.vue'
+import TradeBody from './TradeBody.vue'
 import LabSiteBody from './LabSiteBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
 import ReferenceBody from './ReferenceBody.vue'
-import { resolveView, setSub } from './view-route'
+import { hasSavedSub, resolveView, setSub } from './view-route'
 import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
 import type { LayoutPref } from './layout-phase'
 import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
@@ -119,6 +117,8 @@ import { desktopSetupShown } from '../setup/setup-state'
 import { AppConfig } from '@/web/Config'
 import { autoTourWanted, tourOpen } from '../onboarding/tour-state'
 const OnboardingTour = defineAsyncComponent(() => import('../onboarding/OnboardingTour.vue'))
+// Friends tab brings Build sharing (GitHub sync): loaded when the tab opens
+const FriendsBody = defineAsyncComponent(() => import('./FriendsBody.vue'))
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 
@@ -133,11 +133,10 @@ const VIEWS = [
   { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
   { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, step along a build, edit and share' },
   { key: 'craft', label: 'Craft', icon: 'fa-flask', title: 'Crafting simulator and timeless jewel explorer' },
-  { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
-  { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Prices: watched items, all poe.ninja prices, shopping and sell lists, bulk sell, farming' },
   { key: 'profit', label: 'Profit', icon: 'fa-piggy-bank', title: 'Ways to make currency: gem levelling, crafting costs, currency counter, Viscera, Temple, Wombgifts' },
-  { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Orbhoarder never sees your login)" },
+  { key: 'trade', label: 'Trade', icon: 'fa-handshake', title: "Trading right now: whispers and ledger, Market search, GGG's trade site" },
+  { key: 'friends', label: 'Friends', icon: 'fa-user-friends', title: "Friends' trade board and build sharing" },
   { key: 'lab', label: 'Lab', icon: 'fa-dungeon', title: "Today's labyrinth layouts on poelab.com (community site, shown as-is)" },
   { key: 'reference', label: 'Reference', icon: 'fa-book', title: 'Cheat sheets, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and Help' },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Orbhoarder settings (same as Shift+Space → Settings)' }
@@ -148,6 +147,8 @@ const VIEW_KEY = 'deathloom.desktop-view.v1'
 function loadView (): View {
   try {
     const v = readWindowKey(VIEW_KEY)
+    // the Trade site tab was called 'trade' too: a window left there opens on Trade → Trade site
+    if (v === 'trade' && !hasSavedSub('trade')) setSub('trade', 'site')
     // old tab names (before 1.0.30, and before the 27 Nov 2026 layout) keep your place
     const r = v ? resolveView(v, isView) : null
     if (r?.sub) setSub(r.view, r.sub)
@@ -190,9 +191,9 @@ if (!IS_DESKTOP2 && autoTourWanted(AppConfig().pob?.setupDone)) {
 
 // Trade site tab: mounted the first time it's shown, then kept
 const tradeOpened = ref(view.value === 'trade' || tradeTabRequest.value > 0)
-if (tradeTabRequest.value > 0) view.value = 'trade'
+if (tradeTabRequest.value > 0) { setSub('trade', 'site'); view.value = 'trade' }
 watch(view, (v) => { if (v === 'trade') tradeOpened.value = true })
-watch(tradeTabRequest, () => { setView('trade') })
+watch(tradeTabRequest, () => { setSub('trade', 'site'); setView('trade') })
 // Lab tab: same, mounted the first time it's shown
 const labOpened = ref(view.value === 'lab')
 watch(view, (v) => { if (v === 'lab') labOpened.value = true })

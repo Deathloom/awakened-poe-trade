@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (layout 4): Trade and Friends tabs
+- The Trades, Board and Trade site tabs are now two: **Trade** (Whispers and ledger, **Search**, Trade site) and **Friends** (the friends' trade board and **Build sharing**). Market search finally has a place in the window (it was only a panel). The trade site still stays signed in and keeps its page once opened, and trade links from the price check or Market search still open it. Your old tab opens in its new place. Build sharing is still in the Build panel's ⋯ menu too; the phone link stays in Settings → Tools.
+
 ### Changed (layout 3): Profit tab; Money tools is now Profit
 - New **Profit** tab in the Orbhoarder window, and the Money tools panel (overlay, in game, All tab) is renamed **Profit**: Gems, Crafting costs, Currency counter, Viscera, Temple, Wombgifts. **Gems** is the Market → Gems tool (profit per slot-day, Levelling now list); the older, simpler Gem levelling list is gone, so there is one gem-profit tool. **Gems** and **Crafting** are no longer Market tabs (Market keeps Watched, All prices, Shopping, Sell list, Bulk sell, Farming). The Money tools hotkey opens Profit.
 
