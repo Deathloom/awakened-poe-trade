@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.99] - 2026-11-27
+
 ### Changed (E3): PoE1 and PoE2 keep their own lists
 - The trade ledger, This session and the last session, farming runs, watched items, the sell list, bulk sell and dismissed price alerts are kept per game. PoE1 keeps everything you have now; PoE2 starts empty. Open panels switch to the other game's lists when the game switches.
 
