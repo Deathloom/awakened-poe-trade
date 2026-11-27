@@ -40,11 +40,10 @@
 
     <!-- All: customisable (Edit layout in the top bar) -->
     <AllLayout v-if="view === 'overview'" class="lg-view" :editing="editLayout" @done="editLayout = false" />
-    <div v-else-if="view !== 'trade' && view !== 'lab'" class="flex-1 min-h-0 p-2">
+    <div v-else-if="view !== 'trade' && view !== 'levelling'" class="flex-1 min-h-0 p-2">
       <div :key="view" class="h-full min-h-0 lg-view">
-        <PobGearBody v-if="view === 'build'" :active="true" desktop />
-        <LevellingBody v-else-if="view === 'levelling'" />
-        <div v-else-if="view === 'atlas'" class="h-full min-h-0 flex flex-col rounded bg-gray-800"><AtlasTreeMap /></div>
+        <BuildTab v-if="view === 'build'" />
+        <MappingBody v-else-if="view === 'mapping'" />
         <FriendsBody v-else-if="view === 'friends'" />
         <!-- Market: watchlist | poe.ninja overview (drag the line to resize) -->
         <div v-else-if="view === 'market'" ref="marketEl" class="flex h-full min-h-0">
@@ -63,9 +62,10 @@
     <div v-if="tradeOpened" v-show="view === 'trade'" class="flex-1 min-h-0 p-2">
       <TradeBody />
     </div>
-    <!-- Lab: poelab.com, kept alive once opened like the Trade site -->
-    <div v-if="labOpened" v-show="view === 'lab'" class="flex-1 min-h-0 p-2">
-      <LabSiteBody />
+    <!-- Levelling (guide, Lab): kept once opened so the Lab page (poelab.com) stays
+         alive like the Trade site; the guide itself only runs while it's shown -->
+    <div v-if="levellingOpened" v-show="view === 'levelling'" class="flex-1 min-h-0 p-2">
+      <LevellingTab :active="view === 'levelling'" />
     </div>
     <!-- first-run setup (opens by itself on a new install) -->
     <WidgetSetupGuide v-if="!IS_DESKTOP2" desktop />
@@ -82,8 +82,6 @@ import { computed, defineAsyncComponent, onUnmounted, ref, watch } from 'vue'
 import { loadSession, SESSION_KEY } from '../companion/char-level'
 import { Host } from '@/web/background/IPC'
 import {
-  LazyPobGearBody as PobGearBody,
-  LazyLevellingBody as LevellingBody,
   LazyMarketOverview as MarketOverview,
   LazyMarketHistoryBody as MarketHistoryBody,
   LazyCraftBody as CraftBody,
@@ -94,7 +92,9 @@ import { useSplit } from './split'
 import DesktopSettings from './DesktopSettings.vue'
 import FeedbackDialog from './FeedbackDialog.vue'
 import TradeBody from './TradeBody.vue'
-import LabSiteBody from './LabSiteBody.vue'
+import LevellingTab from './LevellingTab.vue'
+import BuildTab from './BuildTab.vue'
+import MappingBody from './MappingBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
@@ -102,7 +102,6 @@ import ReferenceBody from './ReferenceBody.vue'
 import { hasSavedSub, resolveView, setSub } from './view-route'
 import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
 import type { LayoutPref } from './layout-phase'
-import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
 import PriceAlertBanner from '../market-history/PriceAlertBanner.vue'
 
 // Deathloom fork: moving backgrounds pause while you play (the window is drawn without
@@ -127,17 +126,19 @@ document.documentElement.classList.add('desktop')
 usePoeninja()
 useLeagues().load()
 
+// Deathloom fork (layout review, 27 Nov 2026): tabs named after what you are doing.
+// Old tab names (Atlas, Lab, Trades, Board, Trade site, Help) still open their new
+// place: view-route.ts
 const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
-  { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
-  { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
-  { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, step along a build, edit and share' },
+  { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: "Campaign guide, quest gems, gem swaps, the next passives, and today's Lab" },
+  { key: 'mapping', label: 'Mapping', icon: 'fa-globe', title: 'Atlas tree, This session (map timer, loot) and Farming (profit per hour)' },
+  { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build, and Build progress' },
   { key: 'craft', label: 'Craft', icon: 'fa-flask', title: 'Crafting simulator and timeless jewel explorer' },
-  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Prices: watched items, all poe.ninja prices, shopping and sell lists, bulk sell, farming' },
-  { key: 'profit', label: 'Profit', icon: 'fa-piggy-bank', title: 'Ways to make currency: gem levelling, crafting costs, currency counter, Viscera, Temple, Wombgifts' },
+  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Prices: watched items, all poe.ninja prices, shopping and sell lists, bulk sell' },
+  { key: 'profit', label: 'Profit', icon: 'fa-piggy-bank', title: 'Ways to make currency: gem levelling, crafting costs, currency counter, Farming, Viscera, Temple, Wombgifts' },
   { key: 'trade', label: 'Trade', icon: 'fa-handshake', title: "Trading right now: whispers and ledger, Market search, GGG's trade site" },
   { key: 'friends', label: 'Friends', icon: 'fa-user-friends', title: "Friends' trade board and build sharing" },
-  { key: 'lab', label: 'Lab', icon: 'fa-dungeon', title: "Today's labyrinth layouts on poelab.com (community site, shown as-is)" },
   { key: 'reference', label: 'Reference', icon: 'fa-book', title: 'Cheat sheets, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and Help' },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Orbhoarder settings (same as Shift+Space → Settings)' }
 ] as const
@@ -194,9 +195,9 @@ const tradeOpened = ref(view.value === 'trade' || tradeTabRequest.value > 0)
 if (tradeTabRequest.value > 0) { setSub('trade', 'site'); view.value = 'trade' }
 watch(view, (v) => { if (v === 'trade') tradeOpened.value = true })
 watch(tradeTabRequest, () => { setSub('trade', 'site'); setView('trade') })
-// Lab tab: same, mounted the first time it's shown
-const labOpened = ref(view.value === 'lab')
-watch(view, (v) => { if (v === 'lab') labOpened.value = true })
+// Levelling tab: same, mounted the first time it's shown
+const levellingOpened = ref(view.value === 'levelling')
+watch(view, (v) => { if (v === 'levelling') levellingOpened.value = true })
 
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)

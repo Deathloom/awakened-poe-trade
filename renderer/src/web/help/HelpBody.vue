@@ -27,11 +27,11 @@
           <p>A normal window for your second screen with everything in one place. Open it from the tray (double-click), or let it open when the game starts (Settings → General).</p>
           <ul>
             <li><b>All</b>: build, levelling, tree map, atlas tree, trades and market history at once. Drag the lines between panels to resize; double-click a line to even those panels out. <b>Edit layout</b> (top right) lets you move panels (drag them by their bar; drop on a column's edge for a new column), take them off with ×, add more (This session, market overview, market search, friends' board) and Reset layout.</li>
-            <li><b>Build</b>: gear, gems, tree and Tree map of the active build.
+            <li><b>Build</b>: gear, gems, tree and Tree map of the active build, and <b>Progress</b> (Build progress: tree step, gem and gear ticks, next upgrades).
               <b>Build</b> (top right) picks the build and loadout; the <b>⋯</b> menu next to it has Import a build, Build sharing, What changes between stages,
               Compare, Edit loadouts and Manage builds. In the overlay and in game, Compare / Edit / Manage open this window.</li>
-            <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take. <b>Pace</b> (below the game log stats) shows when you reached each act, your level and deaths there, and levels per hour of campaign time next to an earlier fresh start on this PC (your best or last; ⋯ to pick another, or to forget a run). Client.txt has no experience numbers, so it's levels per hour, not XP/h.</li>
-            <li><b>Atlas</b>: the atlas passive tree. The drop-down picks an atlas build; the <b>⋯</b> menu adds one from a pathofexile.com atlas tree link or code
+            <li><b>Levelling</b> (<b>Guide</b> and <b>Lab</b>: today's labyrinth layouts on poelab.com with your run checklist): campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take. <b>Pace</b> (below the game log stats) shows when you reached each act, your level and deaths there, and levels per hour of campaign time next to an earlier fresh start on this PC (your best or last; ⋯ to pick another, or to forget a run). Client.txt has no experience numbers, so it's levels per hour, not XP/h.</li>
+            <li><b>Mapping</b>: <b>Atlas tree</b>, <b>This session</b> (map timer and loot) and <b>Farming</b> (profit per map and per hour). Atlas tree: the atlas passive tree. The drop-down picks an atlas build; the <b>⋯</b> menu adds one from a pathofexile.com atlas tree link or code
               (poeplanner links use their own format) or makes a ready-made tree, and copies the link to share with friends, renames or deletes it.
               Green = taken, orange = still to take. Step along the build with the arrows (1 or 5 passives) as you take passives in game;
               ⋯ → "Taken: jump to all or nothing" sets "I have this whole build" (or "I have nothing" after a respec or in a new league).
@@ -40,8 +40,8 @@
               Orbhoarder takes that content's notables by the shortest path from the start, using only GGG's own atlas data.
               Atlas builds are saved in your builds folder (Atlas) and sync with your builds, so friends who can see your builds see your atlas builds too
               (listed under their name, read-only: ⋯ → Copy to my atlas builds). Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
-            <li><b>Trades</b>: incoming and outgoing trade whispers and your ledger.</li>
-            <li><b>Board</b>: the friends' trade board, only for your group (POE-Builds members, GitHub sign-in).
+            <li><b>Trade</b>: <b>Whispers and ledger</b> (incoming and outgoing trade whispers and your ledger), <b>Search</b> (Market search, below) and <b>Trade site</b> (below).</li>
+            <li><b>Friends</b>: <b>Build sharing</b> (the same as Build ⋯ → Build sharing) and <b>Board</b>: the friends' trade board, only for your group (POE-Builds members, GitHub sign-in).
               <b>Give</b>: free items, press <b>Claim</b> and the poster invites you. <b>Sell</b>: priced items for friends first, press <b>Whisper</b>.
               <b>Wanted</b>: what someone needs, press <b>I have one</b> and whisper them. <b>Post</b> adds your own: paste the item text (Ctrl+C on the item in game)
               or type a name. Mark yours <b>Sold</b> / <b>Given</b> / <b>Got it</b> when done. Also in the overlay menu (<i class="fas fa-people-carry" />)
@@ -50,15 +50,15 @@
               <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, every row has Trade and gear rows ↑ to open the trade site; click a gear row for its mods; rares are listed without a price;
               ⋯ → <b>Make loot filter add-on…</b>: pick your loot filter and Orbhoarder writes a new file next to it, <i>"your filter + Orbhoarder.filter"</i>, with big, highlighted Show blocks for what's still to buy (uniques by base type, the rares' bases, gems in PoE1) first and then your filter unchanged (every drop of a listed rare base is highlighted, white, magic or rare; names the app doesn't know are left out, since the game refuses a filter with an unknown name); in game pick it in <b>Options → UI → Item filter</b>. Your own filter file is never changed; make it again when the list changes. Only on the PC, only in the game's Documents\My Games folder; website (online) filters can't be used, download the file first),
               <b>Sell list</b> (what you plan to sell: value now, a week of prices, "Falling: sell soon" or "Rising: can wait", and a copy button for a <code>~price</code> note),
-              <b>Farming</b> (name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
-              (Gems and Crafting costs are on the <b>Profit</b> tab now.)
+              <b>Farming</b> (now on the Profit and Mapping tabs: name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
+              (Gems, Crafting costs and Farming are on the <b>Profit</b> tab now.)
               The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Profit → Currency counter).
               <b>Price lines</b>: on a Watched or Shopping row, ⋯ → <b>Price line above / below…</b>, then a price in chaos or divine. Each time Orbhoarder refreshes poe.ninja prices (no extra downloads) it checks them; an alert fires once when the price crosses your line.
               With the phone link on (Settings → Tools) a connected phone shows it at the top of the page (dismiss there only hides it on the phone); if no phone confirms it within a few seconds (none connected, or it's locked) you get a Windows notification. Prices are only checked while something that shows them (price check, Market, Profit) is in use. Add and remove price lines on the PC; <b>?</b> above the Watched list explains the rest. (Not the same as the Watched row's <b>Alert</b> button, which tells you when the price moves by a percentage.)</li>
             <li><b>Profit</b> (tab, and the Profit panel in the overlay and in game): <b>Gems</b> (gem levelling profit per slot-day, and the gems you are levelling now),
-              <b>Crafting costs</b> (crafting currency prices with a week's trend, and a sum of what your craft costs), <b>Currency counter</b>, and the league planners
+              <b>Crafting costs</b> (crafting currency prices with a week's trend, and a sum of what your craft costs), <b>Currency counter</b>, <b>Farming</b>, and the league planners
               <b>Viscera</b>, <b>Temple</b> and <b>Wombgifts</b>.</li>
-            <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
+            <li><b>Trade → Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
             <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide, What's new and <b>Patch notes</b> (GGG's PC patch notes; a yellow dot means new notes came out since you last opened them, with a Windows notification too: Settings → General to turn it off).</li>
           </ul>
         </section>

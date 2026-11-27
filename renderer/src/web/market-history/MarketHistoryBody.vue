@@ -16,7 +16,6 @@
     <div v-else-if="curTab !== 'watched'" class="flex-1 min-h-0" :style="fill ? {} : { height: '26rem' }">
       <market-shopping v-if="curTab === 'shop'" />
       <market-sell v-else-if="curTab === 'sell'" />
-      <market-farming v-else-if="curTab === 'farm'" />
       <market-bulk v-else />
     </div>
     <div v-else class="overflow-y-auto min-h-0 p-1">
@@ -67,7 +66,6 @@
 import MarketOverview from './MarketOverview.vue'
 import MarketShopping from './MarketShopping.vue'
 import MarketSell from './MarketSell.vue'
-import MarketFarming from './MarketFarming.vue'
 import MarketBulk from './MarketBulk.vue'
 import DivineChip from './DivineChip.vue'
 import PriceAlertForm from './PriceAlertForm.vue'
@@ -88,10 +86,10 @@ const TABS = [
   { id: 'all', label: 'All prices', tip: 'Every poe.ninja price: risers, fallers, outlook' },
   { id: 'shop', label: 'Shopping', tip: 'What your build still needs (uniques and gems) and what it costs' },
   { id: 'sell', label: 'Sell list', tip: 'What you plan to sell: value now and whether to wait' },
-  { id: 'bulk', label: 'Bulk sell', tip: 'Bulk ratios: poe.ninja vs the Currency Exchange, copy a WTS line' },
-  { id: 'farm', label: 'Farming', tip: 'Profit per hour per strategy or league mechanic' }
+  { id: 'bulk', label: 'Bulk sell', tip: 'Bulk ratios: poe.ninja vs the Currency Exchange, copy a WTS line' }
 ] as const
-// Deathloom fork (layout review step 3): Gems and Crafting moved to the Profit panel / tab
+// Deathloom fork (layout review steps 3 and 5): Gems, Crafting and Farming moved to the
+// Profit panel (Farming is on the window's Mapping tab too)
 type Tab = typeof TABS[number]['id']
 const tab = ref<Tab>((() => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(t => t.id === v) ? v as Tab : 'watched' } catch { return 'watched' } })())
 // the window's Market view shows All prices on the right, so that tab isn't listed there

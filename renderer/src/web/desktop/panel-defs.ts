@@ -16,7 +16,7 @@ export interface ExtraPanelDef {
 export const EXTRA_PANELS: ExtraPanelDef[] = [
   { panel: 'tree', label: 'Tree map', icon: 'fa-project-diagram', widget: 'tree-map', view: 'build' },
   { panel: 'atlas', label: 'Atlas tree', icon: 'fa-globe', widget: 'atlas-tree', view: 'atlas' },
-  { panel: 'session', label: 'This session', icon: 'fa-stopwatch', widget: 'play-session', view: 'overview' },
+  { panel: 'session', label: 'This session', icon: 'fa-stopwatch', widget: 'play-session', view: 'session' },
   { panel: 'market', label: 'Market history', icon: 'fa-chart-line', widget: '', view: 'market' },
   { panel: 'overview', label: 'Market overview (poe.ninja)', icon: 'fa-coins', widget: 'market-overview', view: 'market' },
   { panel: 'cheats', label: 'Cheat sheets', icon: 'fa-book', widget: 'cheat-sheets', view: 'reference' },

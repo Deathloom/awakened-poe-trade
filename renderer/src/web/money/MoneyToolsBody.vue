@@ -15,6 +15,7 @@
          tool now (it was here twice), and Crafting costs moved here from Market -->
     <MarketGems v-else-if="tab === 'gems'" class="flex-1 min-h-0" />
     <MarketCrafting v-else-if="tab === 'craft'" class="flex-1 min-h-0" />
+    <MarketFarming v-else-if="tab === 'farm'" class="flex-1 min-h-0" />
 
     <!-- Deathloom fork (Q12): Viscera planner (own chunk: carries PoB's Viscera list) -->
     <VisceraPlanner v-else-if="tab === 'viscera'" :items="all" :money="money" />
@@ -67,6 +68,7 @@ import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
 import MarketGems from '../market-history/MarketGems.vue'
 import MarketCrafting from '../market-history/MarketCrafting.vue'
+import MarketFarming from '../market-history/MarketFarming.vue'
 import { DEFAULT_CURRENCIES, loadCounter, saveCounter, counterTotal, COUNTER_KEY, type CounterState } from './money'
 
 const VisceraPlanner = defineAsyncComponent(async () => await import('./VisceraPlanner.vue'))
@@ -77,6 +79,7 @@ const TABS = [
   { id: 'gems', label: 'Gems' },
   { id: 'craft', label: 'Crafting costs' },
   { id: 'counter', label: 'Currency counter' },
+  { id: 'farm', label: 'Farming' },
   { id: 'viscera', label: 'Viscera' },
   { id: 'temple', label: 'Temple' },
   { id: 'wombgifts', label: 'Wombgifts' }

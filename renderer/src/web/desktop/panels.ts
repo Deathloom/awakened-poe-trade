@@ -15,9 +15,9 @@ export const PANELS: Array<{ key: PanelKey, label: string, hud?: HudPanel, overl
   { key: 'board', label: "Friends' trade board", overlay: true, window: true, view: 'board' },
   { key: 'tree', label: 'Tree map', hud: 'tree', overlay: true, window: true, view: 'build' },
   { key: 'atlas', label: 'Atlas tree', hud: 'atlas', overlay: true, window: true, view: 'atlas' },
-  { key: 'session', label: 'This session', hud: 'session', overlay: true, window: true, view: 'overview' },
+  { key: 'session', label: 'This session', hud: 'session', overlay: true, window: true, view: 'session' },
   { key: 'cheats', label: 'Cheat sheets', hud: 'cheats', overlay: true, window: true, view: 'reference' },
-  { key: 'money', label: 'Profit (gems, crafting costs, currency counter, league planners)', hud: 'money', overlay: true, window: true, view: 'profit' }
+  { key: 'money', label: 'Profit (gems, crafting costs, currency counter, farming, league planners)', hud: 'money', overlay: true, window: true, view: 'profit' }
 ]
 
 export function inOverlay (key: PanelKey): boolean {
