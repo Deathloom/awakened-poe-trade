@@ -6,6 +6,7 @@
 
 import type { NinjaListing } from '@/web/background/Prices'
 import { trendOf } from './market-trends'
+import { gameKey } from '../game-storage'
 
 // ---- prices -----------------------------------------------------------------
 
@@ -109,12 +110,12 @@ export const SELL_KEY = 'deathloom.sell-list.v1'
 
 export function loadSellList (): SellEntry[] {
   try {
-    const v = JSON.parse(localStorage.getItem(SELL_KEY) ?? '[]')
+    const v = JSON.parse(localStorage.getItem(gameKey(SELL_KEY)) ?? '[]')
     return Array.isArray(v) ? v.filter(e => e && typeof e.name === 'string' && typeof e.ns === 'string').slice(0, 200) : []
   } catch { return [] }
 }
 export function saveSellList (list: SellEntry[]) {
-  try { localStorage.setItem(SELL_KEY, JSON.stringify(list)) } catch {}
+  try { localStorage.setItem(gameKey(SELL_KEY), JSON.stringify(list)) } catch {}
 }
 export function sellTotal (list: SellEntry[], price: (e: SellEntry) => number | null): { chaos: number, missing: number } {
   let chaos = 0
@@ -146,7 +147,7 @@ const MAX_RUNS = 2000
 
 export function loadFarmRuns (): FarmRun[] {
   try {
-    const v = JSON.parse(localStorage.getItem(FARM_RUNS_KEY) ?? '[]')
+    const v = JSON.parse(localStorage.getItem(gameKey(FARM_RUNS_KEY)) ?? '[]')
     return Array.isArray(v) ? v.filter(r => r && typeof r.id === 'string') : []
   } catch { return [] }
 }
@@ -182,7 +183,7 @@ export function mergeRuns (old: FarmRun[], add: FarmRun[]): FarmRun[] {
 }
 export function archiveRuns (add: FarmRun[]) {
   if (!add.length) return
-  try { localStorage.setItem(FARM_RUNS_KEY, JSON.stringify(mergeRuns(loadFarmRuns(), add))) } catch {}
+  try { localStorage.setItem(gameKey(FARM_RUNS_KEY), JSON.stringify(mergeRuns(loadFarmRuns(), add))) } catch {}
 }
 
 export interface FarmStat { name: string, maps: number, profit: number, perMap: number, perHour: number, minutesPerMap: number }

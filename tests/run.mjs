@@ -22,6 +22,7 @@ const MODULES = {
   'remote-key-store': 'main/src/remote-key-store.ts',
   'pob-pin': 'main/src/pob/pob-pin.ts',
   'pob-caps': 'ipc/pob-caps.ts',
+  'game-storage': 'renderer/src/web/game-storage.ts',
   'play-session': 'renderer/src/web/companion/play-session.ts',
   money: 'renderer/src/web/money/money.ts',
   'settings-tools': 'renderer/src/web/settings/tools.ts',

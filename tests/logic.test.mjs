@@ -25,6 +25,7 @@ const sheets = await import('./.build/sheets.mjs')
 const buildXml = await import('./.build/build-xml.mjs')
 const compare = await import('./.build/build-compare.mjs')
 const game = await import('./.build/game.mjs')
+const gameStorage = await import('./.build/game-storage.mjs')
 
 test('request guard: what a phone may ask for', () => {
   const ok = guard.allowedFromOtherDevice
@@ -306,6 +307,15 @@ test('game switch: window title, exe match, default league', () => {
   assert.equal(game.pickDefaultLeague(['HC Fate of the Vaal', 'Fate of the Vaal SSF', 'Fate of the Vaal', 'Standard']), 'Fate of the Vaal')
   assert.equal(game.pickDefaultLeague(['Hardcore', 'Standard']), 'Standard')
   assert.equal(game.pickDefaultLeague([]), undefined)
+})
+
+test('per-game storage keys: PoE1 keeps the old key', () => {
+  assert.equal(gameStorage.gameKey('deathloom.trade-ledger.v1'), 'deathloom.trade-ledger.v1')
+  gameStorage.setStorageGame('poe2')
+  assert.equal(gameStorage.gameKey('deathloom.trade-ledger.v1'), 'deathloom.trade-ledger.v1.poe2')
+  assert.equal(gameStorage.gameKey('deathloom.trade-ledger.v1', 'poe1'), 'deathloom.trade-ledger.v1')
+  gameStorage.setStorageGame('poe1')
+  assert.equal(game.POE1_ONLY_VIEWS.has('levelling'), true); assert.equal(game.POE1_ONLY_PANELS.has('trades'), false)
 })
 
 test('auto game switch: titles, tasklist, settings switch', () => {

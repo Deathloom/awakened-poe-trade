@@ -104,6 +104,7 @@
 </template>
 
 <script setup lang="ts">
+import { gameKey } from '../game-storage'
 import { computed, onUnmounted, ref } from 'vue'
 import {
   currentMapMs, topZones, emptySession, loadPlaySession, PLAY_SESSION_KEY, savePlaySession, sessionHints, type PlaySession,
@@ -152,12 +153,12 @@ function resetWatch () {
   saveWatch({ startedAt: watch.value.startedAt ? Date.now() : null, ms: 0 })
 }
 const onStorage = (e: StorageEvent) => {
-  if (e.key === PLAY_SESSION_KEY) s.value = loadPlaySession()
+  if (e.key === gameKey(PLAY_SESSION_KEY)) s.value = loadPlaySession()
   if (e.key === CHAR_LEVELS_KEY) me.value = currentChar(loadCharLevels())?.name ?? ''
   if (e.key === MAP_COST_KEY) cost.value = loadMapCost()
-  if (e.key === LAST_SESSION_KEY) last.value = loadLastSession()
+  if (e.key === gameKey(LAST_SESSION_KEY)) last.value = loadLastSession()
   if (e.key === WATCH_KEY) watch.value = loadWatch()
-  if (e.key === FARM_RUNS_KEY) archived.value = loadFarmRuns()
+  if (e.key === gameKey(FARM_RUNS_KEY)) archived.value = loadFarmRuns()
   if (e.key === FARM_STRATEGY_KEY) strategy.value = loadStrategy()
 }
 window.addEventListener('storage', onStorage)

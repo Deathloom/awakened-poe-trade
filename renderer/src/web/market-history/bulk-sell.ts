@@ -4,6 +4,7 @@
 // type it in), and a WTS line to copy for trade chat. Pure logic only (tested in
 // tests/logic.test.mjs); the panel is MarketBulk.vue. Nothing here talks to GGG,
 // reads the game or sends anything: the player pastes the line themselves.
+import { gameKey } from '../game-storage'
 
 export interface BulkEntry { ns: string, name: string, variant?: string, label: string, qty: number, exchange?: string }
 export const BULK_KEY = 'deathloom.bulk-sell.v1'
@@ -11,7 +12,7 @@ const MAX_BULK = 100
 
 export function loadBulk (): BulkEntry[] {
   try {
-    const v = JSON.parse(localStorage.getItem(BULK_KEY) ?? '[]')
+    const v = JSON.parse(localStorage.getItem(gameKey(BULK_KEY)) ?? '[]')
     return Array.isArray(v)
       ? v.filter(e => e && typeof e.name === 'string' && typeof e.ns === 'string' && typeof e.label === 'string')
           .map(e => ({ ...e, qty: Number.isFinite(e.qty) && e.qty > 0 ? Math.round(e.qty) : 1, exchange: typeof e.exchange === 'string' ? e.exchange.slice(0, 40) : undefined }))
@@ -20,7 +21,7 @@ export function loadBulk (): BulkEntry[] {
   } catch { return [] }
 }
 export function saveBulk (list: BulkEntry[]) {
-  try { localStorage.setItem(BULK_KEY, JSON.stringify(list.slice(0, MAX_BULK))) } catch {}
+  try { localStorage.setItem(gameKey(BULK_KEY), JSON.stringify(list.slice(0, MAX_BULK))) } catch {}
 }
 
 // What the Currency Exchange pays for ONE item, in chaos, from what the player typed:

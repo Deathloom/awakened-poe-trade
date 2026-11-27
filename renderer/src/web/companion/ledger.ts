@@ -1,5 +1,6 @@
 // Deathloom fork: trade companion entries and the sales ledger (kept in the
 // overlay's local storage; per viewer, can be wiped by clearing app data).
+import { gameKey } from '../game-storage'
 
 export interface TradeEntry {
   id: string
@@ -18,7 +19,7 @@ const KEY = 'deathloom.trade-ledger.v1'
 
 export function loadLedger (): TradeEntry[] {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(gameKey(KEY))
     const list = raw ? JSON.parse(raw) : []
     return Array.isArray(list) ? list : []
   } catch {
@@ -28,7 +29,7 @@ export function loadLedger (): TradeEntry[] {
 
 export function saveLedger (list: TradeEntry[]) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(list))
+    localStorage.setItem(gameKey(KEY), JSON.stringify(list))
   } catch {}
 }
 
@@ -55,7 +56,7 @@ export function appendToLedger (entry: TradeEntry): TradeEntry[] {
 }
 
 export function onLedgerChange (cb: (list: TradeEntry[]) => void): () => void {
-  const handler = (e: StorageEvent) => { if (e.key === KEY) cb(loadLedger()) }
+  const handler = (e: StorageEvent) => { if (e.key === gameKey(KEY)) cb(loadLedger()) }
   window.addEventListener('storage', handler)
   return () => { window.removeEventListener('storage', handler) }
 }
