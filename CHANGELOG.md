@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (S6): features your Path of Building can't do yet
+- Orbhoarder now reads what its Path of Building copy can do when it starts. A feature that copy doesn't have yet is hidden (Craft → Timeless → Find seeds) or explained ("Your Path of Building is older than this feature…") instead of showing an error. Older copies are treated as the 22 Nov 2026 version.
+
 ### Security (F2b): phone key encrypted
 - The phone link key is now kept with Windows' own encryption for your Windows user (it used to be a plain text file in the config folder). Your phone's saved link keeps working: the old file is moved over and deleted on the next start with phone access on.
 - The Build checks on GitHub now also pin the upload/download steps to exact versions. Nothing changes in the app.
