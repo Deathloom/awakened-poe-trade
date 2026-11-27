@@ -71,6 +71,7 @@ const MODULES = {
   'pob-announce': 'main/src/pob/announce.ts',
   'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts',
   'build-progress': 'renderer/src/web/pob/build-progress.ts',
+  'gem-profit': 'renderer/src/web/market-history/gem-profit.ts',
   viscera: 'renderer/src/web/money/viscera.ts'
 }
 
