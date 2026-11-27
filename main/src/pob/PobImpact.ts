@@ -9,7 +9,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
 import * as fs from 'fs/promises'
 import { readFileSync } from 'fs'
 import * as path from 'path'
-import { applyBuildOp, type BuildFileOp } from './BuildFiles'
+import { applyBuildOp, realFileInside, type BuildFileOp } from './BuildFiles'
 import { parseBuildXml } from './build-xml'
 import { lootGoblinUserAgent } from '../proxy'
 import { app, net, dialog, BrowserWindow } from 'electron'
@@ -21,6 +21,8 @@ import { LIVE_CHARACTER_DATA, LIVE_CHARACTER_OFF, LiveGear, HttpError, type Fetc
 import { pobDefaults, withDefaults, isLegacyPobSetting, type PobDefaults } from './defaults'
 import { findExistingBuilds, copyBuilds } from './ExistingPob'
 import { isCodeError } from '../ErrorReporter'
+import { pobCapsFromReady, pobCapFor, pobSupports, pobNeedsUpdate, type PobCaps } from '../../../ipc/pob-caps'
+import { shouldAnnounce } from './announce'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
@@ -41,6 +43,8 @@ export class PobImpact {
   private rawCfg: PobConfig | undefined
   private proc: ChildProcessWithoutNullStreams | null = null
   private ready: Promise<void> | null = null
+  // Deathloom fork (S6): what the running PoB can do (from its ready line)
+  private caps: PobCaps | null = null
   private nextId = 1
   private pending = new Map<number, Pending>()
   private stdoutBuf = ''
@@ -132,16 +136,17 @@ export class PobImpact {
       // Deathloom fork (user report 20 Nov 2026): the reply only reaches the
       // panel that asked, so tell every panel (tree map, tree, gems, other
       // windows) that the build, loadout, character or player changed
-      if (setActive || setLoadout || setCharacter || typeof setPlayer === 'string') this.announceAfterQueue()
+      if (shouldAnnounce('CLIENT->MAIN::pob-builds', { setActive, setLoadout, setCharacter, setPlayer })) this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-edit', ({ requestId, ops }) => {
       this.reply('MAIN->CLIENT::pob-edit', requestId, async () => await this.editLoadouts(ops))
-      // set changes (new, copy, delete loadout) can change the active tree;
-      // single passive / gem edits answer the panel that made them
-      if (Array.isArray(ops) && ops.some(o => o && (o.op === 'newLoadout' || o.op === 'copySet' || o.op === 'deleteSet'))) this.announceAfterQueue()
+      if (shouldAnnounce('CLIENT->MAIN::pob-edit', { ops })) this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-manage-build', (req) => {
       this.reply('MAIN->CLIENT::pob-manage-build', req.requestId, async () => await this.manageBuild(req))
+      // S5: renaming / moving / deleting the active build left other windows'
+      // tree, gems and build list stale
+      if (shouldAnnounce('CLIENT->MAIN::pob-manage-build', req)) this.announceAfterQueue()
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-tree', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-tree', requestId, async () => await this.tree(refreshGear === true))
@@ -162,8 +167,8 @@ export class PobImpact {
     this.server.onEventAnyClient('CLIENT->MAIN::pob-craft', (req) => {
       this.reply('MAIN->CLIENT::pob-craft', req.requestId, async () => await this.craft(req))
     })
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints }) => {
-      this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints))
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints, phase }) => {
+      this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints, phase))
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gems', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
@@ -461,6 +466,7 @@ export class PobImpact {
   private cleanup (err: Error) {
     this.proc = null
     this.ready = null
+    this.caps = null
     this.loadedKey = null
     this.loadedBuild = null
     this.appliedLoadout = ''
@@ -541,7 +547,8 @@ export class PobImpact {
           if (reply.id === 0 && reply.ready) {
             started = true
             clearTimeout(startTimer)
-            this.logger.write(`info [PoB] ready (PoB ${String(reply.version)})`)
+            this.caps = pobCapsFromReady(reply)
+            this.logger.write(`info [PoB] ready (PoB ${String(reply.version)}, ${this.caps.reported ? `${this.caps.caps.length} caps` : 'no caps list: older copy'})`)
             resolve()
             continue
           }
@@ -566,6 +573,8 @@ export class PobImpact {
     await this.start()
     const proc = this.proc
     if (!proc) throw new Error('Path of Building is not running')
+    // Deathloom fork (S6): a command this PoB doesn't know gets an explanation, not "Unknown cmd"
+    if (!pobSupports(this.caps, pobCapFor(cmd, params))) throw new Error(pobNeedsUpdate(this.caps))
     const id = this.nextId++
     return await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -932,10 +941,12 @@ export class PobImpact {
   private async readBuildSummary (rel: unknown, sel?: PobSetSelection): Promise<PobBuildSummary> {
     if (typeof rel !== 'string' || !rel.toLowerCase().endsWith('.xml')) throw new Error('Pick two builds')
     const root = path.resolve(this.playerDir())
-    const full = path.resolve(root, rel)
-    if (!full.startsWith(root + path.sep)) throw new Error('Not in your builds folder')
-    const st = await fs.stat(full).catch(() => null)
-    if (!st?.isFile()) throw new Error(`Build not found: ${path.basename(rel)}`)
+    if (!path.resolve(root, rel).startsWith(root + path.sep)) throw new Error('Not in your builds folder')
+    // Deathloom fork (Q4 review): real paths, so a link inside the folder can't point outside it
+    const full = await realFileInside(root, rel).catch(() => undefined)
+    if (full === null) throw new Error('Not in your builds folder')
+    const st = full ? await fs.stat(full).catch(() => null) : null
+    if (!full || !st?.isFile()) throw new Error(`Build not found: ${path.basename(rel)}`)
     if (st.size > 8 * 1024 * 1024) throw new Error(`Build file too big: ${path.basename(rel)}`)
     const clean = (n: unknown) => (typeof n === 'number' && Number.isInteger(n) && n > 0 && n < 1000) ? n : undefined
     return parseBuildXml(await fs.readFile(full, 'utf8'), sel ? { spec: clean(sel.spec), itemSet: clean(sel.itemSet), skillSet: clean(sel.skillSet) } : {})
@@ -1090,15 +1101,32 @@ export class PobImpact {
 
   // Levelling planner (desktop window "Next" tab). Level and quest points come
   // from the window (Client.txt + campaign guide); no character data is fetched.
-  async plan (level: unknown, questPoints: unknown): Promise<Record<string, unknown>> {
+  async plan (level: unknown, questPoints: unknown, phase?: unknown): Promise<Record<string, unknown>> {
     const num = (v: unknown, min: number, max: number) => {
       const n = Math.floor(Number(v))
       return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min
     }
     await this.ensureBuild()
-    const reply = await this.call('plan', { level: num(level, 1, 100), questPoints: num(questPoints, 0, 30) })
+    const realLevel = num(level, 1, 100)
+    const qp = num(questPoints, 0, 30)
     // PoB's JSON encoder writes empty lists as {}
     const list = (v: unknown) => Array.isArray(v) ? v : []
+    // Deathloom fork (Gerhard 27 Nov 2026): the levelling tree is picked by hand,
+    // never from your level (it lagged after changing trees until you levelled).
+    // PoB picks the tree for a level, so ask again with a level that lands on the
+    // picked tree (just past the previous tree's level); default = the first tree.
+    let reply = await this.call('plan', { level: 1, questPoints: qp })
+    const phases = list(reply.phases) as Array<{ title?: unknown, level?: unknown }>
+    const want = typeof phase === 'string' ? phase : ''
+    const idx = Math.max(0, phases.findIndex(p => p.title === want))
+    if (idx + 1 !== reply.phase) {
+      const at = idx === 0 ? 1 : num(Number(phases[idx - 1].level ?? 0) + 1, 1, 100)
+      reply = await this.call('plan', { level: at, questPoints: qp })
+    }
+    // gems, points and the rest go by your real level
+    const available = realLevel - 1 + qp
+    const kept = Number(reply.kept) || 0
+    reply = { ...reply, level: realLevel, questPoints: qp, available, taken: Math.max(0, Math.min(list(reply.order).length, available - kept)) }
     const plan: PobPlan = {
       level: reply.level,
       questPoints: reply.questPoints,
@@ -1145,6 +1173,7 @@ export class PobImpact {
     const reply = await this.call('timeless', params, find ? 120_000 : undefined)
     const list = (v: unknown): any[] => Array.isArray(v) ? v : []
     return {
+      canFind: pobSupports(this.caps, 'timeless.find'),
       jewels: list(reply.jewels).map((j: any) => ({ ...j, conquerors: list(j.conquerors) })),
       sockets: reply.sockets ? list(reply.sockets).map((s: any) => ({ ...s, notables: list(s.notables) })) : undefined,
       result: reply.result
@@ -1312,7 +1341,7 @@ export class PobImpact {
         this.pobHasGear = false
         const msg = (err as Error).message.replace(/^.*ImpactServer\.lua:\d+: /, '')
         // PoB from before the fork's character-file support (#42): its update waits until the PoB window is closed
-        if (/equipped needs 'items'/.test(msg)) {
+        if (/equipped needs 'items'|older than this feature/.test(msg)) {
           return { error: 'Path of Building needs an update for "vs character". Close the Path of Building window: Orbhoarder updates it within a minute, then price check again.' }
         }
         return { error: msg }

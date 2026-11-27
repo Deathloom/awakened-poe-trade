@@ -8,6 +8,188 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.98] - 2026-11-27
+
+### Added (layout follow-up): pin the friends' board, Market search and Build progress in game
+- Settings → Panels → Show while playing now lists **Friends' trade board**, **Market search** and **Build progress** too. Pinned, the board and Market search open and close with their usual hotkeys; Build progress gets an optional hotkey in Settings → Hotkeys (unpinned, it opens Build → Progress in the window). Like other pinned panels, typing in them needs Shift+Space first.
+
+### Added (layout follow-up): Map mods on the Mapping tab
+- Mapping → **Map mods**: the map mod list from Settings → Maps (colour mods, Warn for my PoB build) right next to the atlas tree and This session, with its own Save.
+
+### Changed (layout 6): Settings → Panels follows the tabs; help buttons in About
+- Settings → Panels → Where panels show lists the panels in the order of the window's tabs, says which tab each one lives on, and now has the All tab switch for **Market search** and **Build progress** too. The in-game (pinned) list uses the same order.
+- **Help**, **What's new**, **Take the tour** and **Run setup guide** moved from the bottom of the Orbhoarder window's Settings to Settings → **About** (a **Help and tour** button at the bottom takes you there).
+
+### Changed (layout 5): Mapping tab, Lab in Levelling, new tab order
+- The Orbhoarder window's tabs are now named after what you are doing: **All, Levelling, Mapping, Build, Craft, Market, Profit, Trade, Friends, Reference, Settings** (11 instead of 12).
+- **Mapping** (new): Atlas tree, This session and Farming. It replaces the Atlas tab.
+- **Levelling** now has **Guide** and **Lab**; the Lab tab is gone. The Lab page still stays open once loaded, and the guide's Lab button opens it.
+- **Build** has a **Progress** part (Build progress was only an All tab panel).
+- **Farming** moved from Market to the Profit panel (and the Mapping tab). Market keeps Watched, All prices, Shopping, Sell list, Bulk sell.
+- A window left on an old tab opens in its new place; hotkeys of panels that aren't shown go there too. The tour and Help follow the new tabs.
+
+### Changed (layout 4): Trade and Friends tabs
+- The Trades, Board and Trade site tabs are now two: **Trade** (Whispers and ledger, **Search**, Trade site) and **Friends** (the friends' trade board and **Build sharing**). Market search finally has a place in the window (it was only a panel). The trade site still stays signed in and keeps its page once opened, and trade links from the price check or Market search still open it. Your old tab opens in its new place. Build sharing is still in the Build panel's ⋯ menu too; the phone link stays in Settings → Tools.
+
+### Changed (layout 3): Profit tab; Money tools is now Profit
+- New **Profit** tab in the Orbhoarder window, and the Money tools panel (overlay, in game, All tab) is renamed **Profit**: Gems, Crafting costs, Currency counter, Viscera, Temple, Wombgifts. **Gems** is the Market → Gems tool (profit per slot-day, Levelling now list); the older, simpler Gem levelling list is gone, so there is one gem-profit tool. **Gems** and **Crafting** are no longer Market tabs (Market keeps Watched, All prices, Shopping, Sell list, Bulk sell, Farming). The Money tools hotkey opens Profit.
+
+### Changed (layout 2): Reference tab in the Orbhoarder window
+- New **Reference** tab with four parts: **Cheat sheets** (league mechanics), **Recipes** (vendor and bench recipes), **Tracking** (Thread planner, Challenges, league checklist) and **Help**. It replaces the Help tab; Cheat sheets had no tab before (only a panel). The Cheat sheets panel in the overlay, in game and on the All tab is unchanged. If the window was on Help, it opens on Reference → Help; the overlay's Help button and the Cheat sheets hotkey go there too.
+
+### Fixed (layout 1): Loot filter page in the Orbhoarder window's Settings
+- The Orbhoarder window's Settings now has the Loot filter page (it was only in the overlay's Settings), and its pages are in the same order and groups as the overlay's: Hotkeys, Chat | General, Appearance, Panels | Price check, Maps, Item check, Loot filter, Path of Building | Tools, Debug, About.
+
+### Added (Q27): first-run tour of the Orbhoarder window
+- On a new install, once the setup guide closes, a one-minute tour points at each tab of the Orbhoarder window in turn (All, Build, Levelling, Atlas, Trades, Board, Market, Trade site, Help, Settings, Bug / Idea), opens it and says what it is for, then ends with the in-game price check and overlay hotkeys. Arrow keys move through it, Esc ends it. Existing installs don't get it by itself: Settings → **Take the tour** runs it any time. It loads only when it opens, so windows don't get bigger.
+
+### Added (Q25): text size slider and colour-blind-safe colours
+- Settings → Appearance: a Text size slider (12–24 px) that previews straight away and scales the overlay, the in-game panels and the Orbhoarder window, and a "Colour-blind-safe colours" switch that turns every green/red (good/bad, price up/down, warnings) into blue/orange for red-green colour blindness.
+
+### Changed (S3): Market history watchlist kept small
+- You can watch up to 50 items (the star says so when the list is full). Recorded prices older than 14 days keep one point a day; the last 14 days stay hourly. Prices are now saved once per refresh instead of once per item, and if saving ever fails the Market history panel says so instead of losing history silently.
+
+### Changed (S7): price check for twice-corrupted items
+- A twice-corrupted item is now compared with twice-corrupted items only (before, once-corrupted ones were mixed in). Clicking the corrupted label cycles Twice corrupted → Corrupted → Not corrupted. Atlas Drops % on maps and Heist Contract/Blueprint enchants were already preselected.
+
+### Performance (S4): lighter windows, round 2
+- The panel bodies (Build, Levelling, Trades, Trade board, Market history, Market overview, Market search, This session, Cheat sheets, Money tools, Craft, Help) load the first time they are shown instead of with every window, the phone QR code library loads when a QR code is shown, and the price check cache and the fade animations no longer need two extra libraries. Every window starts with about a third less code (main bundle 1,423 kB → 948 kB, CSS 204 kB → 177 kB). The first time a panel opens it may take a frame or two longer.
+
+### Fixed (S5): other windows after renaming or deleting a build
+- Renaming, moving, copying or deleting a build in Build manager now updates the build list, tree, tree map and gems in your other windows (overlay, desktop, HUD) too; before, they could keep showing the old build until you switched. New automatic checks cover which changes reach every window.
+
+### Changed (S6): features your Path of Building can't do yet
+- Orbhoarder now reads what its Path of Building copy can do when it starts. A feature that copy doesn't have yet is hidden (Craft → Timeless → Find seeds) or explained ("Your Path of Building is older than this feature…") instead of showing an error. Older copies are treated as the 22 Nov 2026 version.
+
+### Security (F2b): phone key encrypted
+- The phone link key is now kept with Windows' own encryption for your Windows user (it used to be a plain text file in the config folder). Your phone's saved link keeps working: the old file is moved over and deleted on the next start with phone access on.
+- The Build checks on GitHub now also pin the upload/download steps to exact versions. Nothing changes in the app.
+
+### Performance (F3): lighter windows
+- The chart library (price check trend line, Market history sparklines) loads the first time a chart is shown instead of with every window: each panel and window starts with about a quarter less code to load (2.4 MB → 1.9 MB).
+
+### Fixed (#287): ready-made atlas tree took other content's notables
+- Picking **Threads** no longer takes "Threads are more likely to be of type …" notables (Dextral / Sinistral Threads) set to a type you didn't pick (e.g. Ultimatum): they're only taken, with your type chosen, when one of their options is a content you picked. "Cannot be of type" ones rule out a type you didn't pick.
+- A notable that works inside another content (Trialmaster's Boon is Ultimatum even when it rewards Divination cards; Faith in Arms is Mercenaries) is only taken when that content is picked. Each stat line counts as the content it names first.
+
+### Added: patch notes link and alert
+- **Patch notes** link in Cheat sheets, Settings and What's new opens GGG's newest PC patch notes. When new notes (or a hotfix) are posted, Orbhoarder shows a Windows notification (click to read) and a yellow dot on the link until you open them. It reads GGG's public Patch Notes forum page every 30 minutes while it runs; turn it off in Settings → General. PoE1 only.
+
+### Tests (Q1): data guards
+- The automatic checks now fail if price check loses our added exchange items (Frayed Thread, Engineer's Orbs, the new Exalted Orbs, shards, Breach Blessings and others), if the atlas tree loses its 3.30.0c notables, or if the Threads cheat sheet or vendor recipes go missing. Nothing changes in the app.
+
+### Performance (F4): even lighter windows
+- Each panel and window starts with about a sixth less code to load (1.9 MB → 1.6 MB): the Atlas tree loads the first time you open it, and unused leftovers are gone. Nothing else changes.
+
+### Performance (F4): one price download for all windows
+- The poe.ninja price list (several MB) is now downloaded once and shared by the price check, Money tools, Market overview and Market history for up to 10 minutes, instead of each window downloading it on its own. Same prices, less waiting and less data.
+
+### Performance (F4b): lighter windows, part 2
+- Windows start with a little less code again (1.57 MB → 1.43 MB): the build panel's Gems, Tree, Tree map and Compare and the quest-gem data load the first time you open them, and the Lab and build-sync clocks rest while their window is hidden. Nothing else changes.
+
+### Added (Q3): Thread planner
+- **Cheat sheets → Thread planner**: pick a Thread (Abyss … Ultimatum) and how many you use (1–8) to see the guaranteed Thread mods, the 3 / 6 / 8 bonus you get and the next one, area-level notes, the cost per map at poe.ninja prices (chaos and divine, from the price list the app already downloads) and the atlas notables that help that Thread. The Map mechanics sheet and the planner now read the same Thread facts.
+
+### Performance (F4c): lighter windows, part 3
+- Windows start with a little less code again (1.44 MB → 1.35 MB): the campaign route, the campaign guide and the levelling planner load the first time one of them is shown; the level recorder waits for the route instead of needing it at start. If the route or the quest-gem data fails to load, it is tried once more; the guide then says "Couldn't load this panel" with a **Retry** button, and opening the panel again tries again, instead of staying empty. The levelling planner works without the route (act 1, no guide points). Nothing else changes.
+
+### Added (Q2): Challenges
+- **Cheat sheets → Challenges**: all 40 Covens of Umbra challenges with their steps, a tip and a link to the cheat sheet that helps (Vendor recipes, Thread planner, Map mechanics, Covens, Endgame bosses, Checklist). Tick challenges and steps yourself (x/40); saved on this PC per league, so a new league starts empty. Nothing is read from your account.
+
+### Added (Q4): map check warns for your PoB build
+- With a Path of Building build active, the map check marks mods dangerous for that build (red edge and hammer; hover for why: thorns/reflect for melee, no regen or less recovery for regen/leech builds, less max res when your over-cap is low, curses unless you're curse immune, ailment avoidance for ignite/poison builds, …) and greys mods that don't affect it, using the stats PoB saved in the build file; your own colours stay, **?** shows the legend, Settings → Maps → Warn for my PoB build turns it off. Mods dangerous for every build (more monster damage or crit, penetration, poison on hit, …) are never greyed. Security: reading a build file (map check, Compare builds) now checks the real path, so a link inside your builds folder can't point to a file outside it.
+
+### Changed: Beasts / Syndicate atlas trees take Thread type notables
+- Ready-made atlas tree: picking **Beasts** or **Syndicate** now also takes Sinistral Threads (set to Bestiary / Betrayal) and Unthreaded (ruling out another type), which were missed before.
+
+### Added (Q5): Fate reward values
+- **Cheat sheets → Covens → Fate reward values**: the Fate reward types with their poe.ninja price per item (from the price list the app already downloads), dearest first with a star, and how many copies of a Fate pay (2 for the single Divine Orb / Orb of Annulment outcomes, otherwise 1 or 3). Counts GGG hasn't stated are said so; random drops show no price. Closed until you open it.
+
+### Added (Q6): price alerts on your phone
+- **Market → Watched / Shopping → ⋯ → Price alert above / below…**: pick a price in chaos or divine; when Orbhoarder's normal poe.ninja refresh crosses it, a phone connected with the QR link (Settings → Tools) shows the alert at the top of the page, otherwise (or if the phone doesn't confirm within a few seconds, e.g. it's locked) you get a Windows notification. Prices are only checked when Orbhoarder refreshes them anyway (about every half hour while the price check, Market or Money tools is in use), so with nothing like that open no alert fires. Each alert fires once per crossing (at most once an hour); add and remove alerts on the PC, the phone can only dismiss them. No extra downloads, nothing leaves your PC except to your own phone. Security: a connected phone can no longer become the window that gets the price check's item text (it could take over the next price check); connections that stop answering (a locked phone) are closed after about a minute.
+
+### Added (Q8): deaths and pace log
+- **Levelling → Pace**: each character you follow from level 2 is saved as a run (act splits, your level and deaths per act, levels per hour of campaign time; Client.txt has no experience numbers, so it's levels per hour, not XP/h) and compared with your best or last earlier start (⋯ to pick another or forget a run; **?** explains the numbers). Only your own character's deaths count. Up to 10 runs (newest, and always your best) are kept on this PC only; Rebuild from game log fills in older characters (the last 20 characters the planner keeps). A character deleted and made again with the same name starts a new run. Security: a connected phone can no longer take the lines written while Orbhoarder was closed (the PC then missed those levels, deaths and splits), and reading the whole game log runs once at a time instead of once per request.
+
+### Added (Q10): loot filter add-on
+- **Market → Shopping → ⋯ → Make loot filter add-on…**: pick your loot filter (a .filter file in Documents\My Games\Path of Exile) and Orbhoarder writes a new file next to it, "your filter + Orbhoarder.filter": big, highlighted Show blocks for what the list still needs (uniques by base type, the rares' bases with every drop of that base highlighted, gems in PoE1; transfigured gems as their normal gem; names the app's item data doesn't know are left out, because the game won't load a filter with an unknown name), then your filter copied unchanged; pick it in game under Options → UI → Item filter. Your own filter file is never changed; make it again when the list changes. Security: only on the PC (not from a phone), only .filter files directly in that folder (links leading outside it are refused), at most 8 MB, and the only file ever written is the "+ Orbhoarder" one (a file of that name that Orbhoarder didn't make is left alone).
+
+### Added (Q7): Lab helper while levelling
+- **Levelling → Next steps → Labyrinth**: a checklist of the 12 Labyrinth trials (6 Normal, 3 Cruel, 3 Merciless), per character, ticked from your local Client.txt (a trial-completed message in that zone, or entering that lab) or by hand; labs done count from Izaro's "Triumphant at last" or entering a higher lab, or can be typed in; plus the next lab and the ascendancy notables your Path of Building levelling tree adds (not taken yet; PoB sets no order, so none is claimed). Replaces the "Ascendancy in this tree" box. The campaign guide ticks trials it knows are done, and in the Orbhoarder window its lab banner lists those notables too.
+
+### Added (Q9): bench recipe checklist
+- **Cheat sheets → Bench recipes**: the crafting bench recipes on the campaign route, by act and zone (the same places the campaign guide shows), with the next one ahead of the guide's step and a count of unticked ones in zones you're past. Click a recipe in the guide's "crafting recipe" line to tick it there; ticked ones are crossed out in both. Ticks are by hand (the game log doesn't say when you pick one up) and account-wide on this PC, like recipe unlocks in game.
+
+### Security: Dependabot version updates
+- `.github/dependabot.yml`: weekly update PRs (Mondays) for main and renderer npm packages and the pinned GitHub Actions, all to **dev**; minor and patch bumps grouped, at most 3 open per folder. Nothing changes in the app.
+
+### Tidy-up (S8): fewer background timers, less dead code
+- Market history (Farming) and price alerts stop their 30 s / 60 s refresh while their window is hidden and catch up when it is shown again. A stray Python package file was removed from the source and unused leftovers are gone. Nothing else changes.
+
+### Security (S1): phone access is an allow-list
+- A phone or other device may now only send the overlay requests that are listed as allowed; anything new or unlisted is refused (it used to be allowed unless listed as refused). Phone panels work as before. A test now fails if an overlay request is added without deciding whether phones may send it.
+
+### Security (S2): Path of Building 2.69.0 with the open-request hardening
+- Path of Building moves to the fork's 2.69.0 release (upstream 2.69.0: loadout manager, item type icons, 3.30 Imbue gems, Viscera, Wickerman and Covetous Dark fixes). It also brings PoB fork #44: when Orbhoarder asks PoB to open a build, PoB now only opens local drive paths to real PoB build files (no network share paths). Update in PoB works as before. (#309)
+
+### Added (A1): PoE2 game data
+- Orbhoarder now ships the PoE2 item and modifier lists (English) from Exiled Exchange 2, kept separate from the PoE1 lists. Nothing uses them yet: they are the groundwork for PoE2 price check. Credited in the README and LICENSE.
+
+### Security: minimatch fix in the renderer lint tools
+- Renderer dev tools: typescript-eslint 8.72.2 → 8.74.0, which moves minimatch 10.2.6 → 11.0.9 (GHSA-g3hv-75wg-m249, moderate, denial of service from crafted glob patterns). Lint only; nothing in the app changes. The same alert in main (electron-builder's build tools) has no fix in electron-builder 26 yet and stays open.
+
+### Added (A2): PoE2 item reader
+- Orbhoarder can now read PoE2 items copied with Ctrl+C (the item reader from Exiled Exchange 2, using the PoE2 lists from A1). Not switched on yet: PoE2 price check comes in the next steps. Automatic checks cover bows, armour, charms, gems, waystones and fractured items.
+
+### Added (A3): PoE2 trade search and filters
+- The PoE2 price check panel from Exiled Exchange 2 is now in Orbhoarder: trade2 search and bulk exchange, mod filters, rune/soul core editor and listing tooltips, with the same rate-limit handling. Not switched on yet (next step). Until poe.ninja PoE2 prices are added, PoE2 shows trade listings only, no quick price (EE2's own price server is not used).
+
+### Added (A4): PoE2 price check is on
+- With Settings → General → Game set to PoE2, the price check hotkey now checks PoE2 items: trade2 search and bulk exchange with filters, like Exiled Exchange 2. The "not ready yet" notice is gone. PoE1 price check is unchanged. Beta: English game client only, no quick poe.ninja price yet, and some item icons show a "?" (we don't ship GGG art). The PoE2 data loads the first time you check a PoE2 item.
+- Settings → General → Game is shown again (it was hidden while PoE2 wasn't usable), so you can switch to Path of Exile 2.
+- Fixed (1.0.98-beta.13): PoE2 price check stopped at "PoE2 data could not be loaded … could not be cloned".
+
+### Changed (Q24): settings backup asks what to restore
+- Settings → Tools → Restore… now shows what's in the file first (date, how many settings and panel data items) and lets you pick: settings and hotkeys, panel data (notes, ticks, watchlist), or both. When the backup has other folders than this PC (game files, Path of Building, builds), this PC's folders are kept unless you untick it, so moving to a new PC or using a friend's setup doesn't break Path of Building.
+- Security: a hand-edited backup file can no longer change the settings object's internals (`__proto__` and similar keys are skipped) or replace a setting with a different kind of value.
+
+### Added (Q11): loot filter add-on keeps itself up to date
+- After making the add-on (Market → Shopping ⋯ → Make loot filter add-on…), tick **Keep it updated**: Orbhoarder writes it again a few seconds after the Shopping list changes (you tick something as got, or switch builds) while Market → Shopping is open in any window. When everything is ticked, the add-on is just your filter. Reload the filter in game (Options → UI → Item filter) to see changes. The file isn't touched when nothing changed.
+- New **Settings → Loot filter** page: pick your filter, turn the automatic update on or off, **Update now**, and see when it was last written. PC only.
+
+### Added (Q17): Build progress panel
+- New panel for the All tab (Edit layout → Add panel → Build progress): where you are in the build in one view. Tree: the levelling step, passives taken of this step and the next 3 to take. Gems: the step's gems you have ticked (tick or untick right there). Gear: the build's items with the same "got it" ticks as Build → Gear. One percentage on top. Ticks are shared with Build → Gear, Build → Gems and Levelling, and now update in the same window straight away too.
+
+### Added (Q18): next upgrades in Build progress
+- Build progress has a Next upgrades box: click Rank and Path of Building compares each unique of the build you haven't ticked with your character file (Build → Gems → Your character), then shows the 3 with the most gain per chaos (DPS %, plus half the eHP %), with the cheapest poe.ninja price and a Copy button for the in-game market. Up to 8 items, one at a time; rare items aren't ranked (no poe.ninja price).
+
+### Added (Q15): gem profit calculator
+- New Market → **Gems** tab: for every skill gem poe.ninja lists, what it costs to buy at its lowest level, what it sells for at max level (same or more quality, not corrupted), how many Gemcutter's Prisms the quality needs, the profit and the **profit per slot-day** (days the gem sits in a spare socket; set the days at the top, Awakened gems count ×3 and Enlighten / Empower / Enhance ×5 as a rough guess). Sorted best first, with a search box. Press **+** on a gem you start levelling: **Levelling now** keeps what you paid, the day count and today's profit. Prices only; nothing is bought or sold for you.
+
+### Added (Q16): bulk sell pricing
+- New Market → **Bulk sell** tab for stacks (currency, fragments, essences, divination cards…): add a stack and how many you have, and it shows poe.ninja's price the way bulk is quoted (12 c each, 8 per div, 5 per chaos). Type the ratio the in-game Currency Exchange offers (12c, 0.5 div, 8/div or 40:3) to see which pays more and by how much. **Copy** puts a WTS line for trade chat on the clipboard (at the better price, with the total); **Copy all** does every stack in one line. Nothing is sent for you: paste it yourself.
+
+### Added (Q12): Viscera planner
+- Money tools → Viscera: your active build's Wickerman (from its Path of Building file) with what each planned Viscera costs on poe.ninja, cheaper Lesser/Greater versions of the same part, and "farm <boss> with a Fate" when it isn't listed; below, every Viscera from Path of Building 2.69 to search by mod or boss, cheapest first. Boss names come from PoB's data and may differ slightly from the game.
+
+### Added (Q13): Temple planner
+- Money tools → Temple: set each Temple of Atzoatl room's tier (or "not in temple") as you see it in game; it lists which room to upgrade next (best rooms first, the one closest to tier 3 first), good rooms you don't have yet, and what your temple is worth as an Itemised Temple from poe.ninja's temple prices (the dearest listing whose tier 3 rooms you all have). What some rooms give is marked (guess). Your temple stays on this PC.
+
+### Added (Q19): weekly farming report and a nudge when profit drops
+- Market → Farming now opens with a **Last 7 days** card: maps, hours, profit and profit per hour, the week before for comparison (▲/▼ % per hour), your strategies this week ranked by profit per hour, and a tip when one clearly earns less than another. When the last 5 maps of the strategy you're farming now make at least 30 % less per hour than its earlier maps (last 2 weeks, at least 10 of them), a yellow line says so in Farming and in This session, naming a strategy that did better if there is one. **Not now** hides it until the next day. Uses only the loot you type in This session, as before.
+
+### Added (Q14): Wombgift value
+- Money tools → Wombgifts: every Wombgift poe.ninja lists with its sell price. Click one, open it at the Genesis Tree, price check what came out and log what it was worth; after 3 openings of a kind it says Open (your openings are worth more than selling) or Sell. GGG doesn't publish what Wombgifts give, so the answer comes from your own openings (last 30 per kind, kept on this PC; Hiveblood not counted).
+
+### Added (Q20): rare prices in Market → Shopping
+- Rare rows have a **Price** button. One click looks up listings like your build's rare on the trade site (the stats the price check picks by default) and shows the median of the 10 cheapest, in chaos or divine; hover for the cheapest and how many were found, click the price to open those listings. Priced rares are added to "Still to buy" (shown with ~). Nothing is searched until you click, it uses the price check's normal rate limits, and a second click within 15 minutes reuses the answer. PoE1 builds only.
+
+### Changed: no automatic tree tracking anywhere
+- The passive tree map, the atlas tree map, Levelling → Next steps, Build progress and the ascendancy hints no longer follow the game log or your level. Where you are on a tree is only what you set with the ‹ › « » arrows (Next steps now has them too), and every panel and window shows the same step. A tree you haven't stepped on yet starts at 0; **My level** jumps once to where your level and quest points say you are, without following it afterwards. The atlas's old game-log matching is removed.
+
+### Changed: levelling tree picked by hand
+- Levelling → Next steps no longer picks the levelling tree from your level (it could stay on the old tree after you changed trees until you levelled up). Click a tree in the row at the top to use it; the choice is kept per build and shared by every window, and a build starts at its first tree. The "Passives taken" count from the game log is removed.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

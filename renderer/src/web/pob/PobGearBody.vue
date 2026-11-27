@@ -136,22 +136,24 @@ import { requestCraft } from '../craft/craft-request'
 import { useCopyFeedback } from './market'
 import BuildPicker from './BuildPicker.vue'
 import BuildManager from './BuildManager.vue'
-import BuildCompare from './BuildCompare.vue'
 import LoadoutEditor from './LoadoutEditor.vue'
 import LoadoutChanges from './LoadoutChanges.vue'
 import WickermanCard from './WickermanCard.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import BuildSync from './BuildSync.vue'
 import BuildImport from './BuildImport.vue'
-import PobGems from './PobGems.vue'
-import PobTree from './PobTree.vue'
-import PobTreeMap from './PobTreeMap.vue'
+// Gems, Tree, Tree map and Compare load the first time they are shown (F4)
+import type PobGemsPanel from './PobGems.vue'
+import type PobTreePanel from './PobTree.vue'
+import type PobTreeMapPanel from './PobTreeMap.vue'
+import { LazyBuildCompare as BuildCompare, LazyPobGems as PobGems, LazyPobTree as PobTree, LazyPobTreeMap as PobTreeMap } from './LazyPobPanels'
 import PobNotes from './PobNotes.vue'
 import { notesState, loadNotes, buildLabel } from './build-notes'
 import { pobText } from './labels'
 import { itemRegexParts, itemRegex, MAX_LEN } from './item-regex'
 import { itemDefences, type ItemDefence } from './item-defences'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
+import { GEAR_OWNED_KEY, gearItemId, gearOwnedKey, parseGearOwned, saveShared, toggleGearOwned, type GearOwned } from './build-progress'
 
 // active: the panel is on screen (the overlay widget is shown, or the HUD panel)
 // hud: inside the HUD window (Trade / price check are done by the overlay)
@@ -205,9 +207,9 @@ const headerMenu = computed<UiMenuItem[]>(() => [
 const showSync = ref(false)
 const showImport = ref(false)
 const pickerRef = ref<InstanceType<typeof BuildPicker> | null>(null)
-const gemsRef = ref<InstanceType<typeof PobGems> | null>(null)
-const treeRef = ref<InstanceType<typeof PobTree> | null>(null)
-const mapRef = ref<InstanceType<typeof PobTreeMap> | null>(null)
+const gemsRef = ref<InstanceType<typeof PobGemsPanel> | null>(null)
+const treeRef = ref<InstanceType<typeof PobTreePanel> | null>(null)
+const mapRef = ref<InstanceType<typeof PobTreeMapPanel> | null>(null)
 const notesRef = ref<InstanceType<typeof PobNotes> | null>(null)
 const visible = computed(() => props.active)
 
@@ -233,10 +235,11 @@ function onBuildChanged (b: PobBuildInfo | null) {
   stepsRef.value?.request()
   wickRef.value?.request()
   if (tab.value === 'gear') request()
-  else if (tab.value === 'gems') gemsRef.value?.request()
-  else if (tab.value === 'map') mapRef.value?.request()
+  // (a panel still loading has no request() yet; it asks on its own when it mounts)
+  else if (tab.value === 'gems') gemsRef.value?.request?.()
+  else if (tab.value === 'map') mapRef.value?.request?.()
   else if (tab.value === 'notes') notesRef.value?.request()
-  else treeRef.value?.request()
+  else treeRef.value?.request?.()
   // loot filter reminder for the new build (any tab)
   if (tab.value !== 'notes') loadNotes()
 }
@@ -296,24 +299,18 @@ function request () {
 
 // Deathloom fork (19 Nov): "got it" ticks per build and slot; a tick counts for
 // the item it was set on (if the build's item changes, the tick goes)
-const OWNED_KEY = 'deathloom.gear-owned.v1'
-function readOwned (): Record<string, Record<string, string>> {
-  try { const v = JSON.parse(localStorage.getItem(OWNED_KEY) ?? '{}'); return v && typeof v === 'object' ? v : {} } catch { return {} }
-}
+// (shared with the Build progress panel, build-progress.ts)
+function readOwned (): GearOwned { return parseGearOwned(localStorage.getItem(GEAR_OWNED_KEY)) }
 const owned = shallowRef(readOwned())
-const onOwned = (e: StorageEvent) => { if (e.key === OWNED_KEY) owned.value = readOwned() }
+const onOwned = (e: StorageEvent) => { if (e.key === GEAR_OWNED_KEY) owned.value = readOwned() }
 window.addEventListener('storage', onOwned)
 onUnmounted(() => { window.removeEventListener('storage', onOwned) })
-const ownedKey = computed(() => `${build.value?.name ?? ''}|${itemSet.value ?? ''}`)
-function itemId (item: PobGearItem) { return `${item.title || item.name}|${item.baseName ?? ''}` }
-function isOwned (item: PobGearItem) { return owned.value[ownedKey.value]?.[item.slot] === itemId(item) }
+const ownedKey = computed(() => gearOwnedKey(build.value?.name, itemSet.value))
+function isOwned (item: PobGearItem) { return owned.value[ownedKey.value]?.[item.slot] === gearItemId(item) }
 function toggleOwned (item: PobGearItem) {
-  const all = { ...owned.value }
-  const was = all[ownedKey.value] ?? {}
-  const on = was[item.slot] !== itemId(item)
-  all[ownedKey.value] = Object.fromEntries([...Object.entries(was).filter(([slot]) => slot !== item.slot), ...(on ? [[item.slot, itemId(item)]] : [])])
+  const all = toggleGearOwned(owned.value, ownedKey.value, item)
   owned.value = all
-  try { localStorage.setItem(OWNED_KEY, JSON.stringify(all)) } catch {}
+  saveShared(GEAR_OWNED_KEY, all)
 }
 function rowMenu (item: PobGearItem): UiMenuItem[] {
   return [

@@ -1,4 +1,6 @@
 import type { Game } from './game'
+import type { PriceAlertInput, PriceAlertState, PriceAlertFired } from './price-alerts'
+import type { LootFilterWants } from './loot-filter'
 
 export interface HostConfig {
   shortcuts: ShortcutAction[]
@@ -17,12 +19,8 @@ export interface HostConfig {
 }
 
 // Deathloom fork: panels pinned over the game while it has focus
-export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats' | 'money'
-// panels added after the first three (1.0.63): pinned flag and hotkey live in
-// hud.<panel> (optional) and pob.panelKeys
-export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money'] as const
-
-export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats' | 'money'
+export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats' | 'money' | 'board' | 'search' | 'progress'
+export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats' | 'money' | 'progress'
 
 export interface PanelPlacement {
   overlay?: boolean
@@ -41,6 +39,10 @@ export interface PobHudConfig {
   overview?: boolean
   cheats?: boolean
   money?: boolean
+  // 27 Nov 2026 (layout follow-up)
+  board?: boolean
+  search?: boolean
+  progress?: boolean
   // Per panel: mouse clicks go through to the game while playing (the panel is read-only then)
   clickThroughPanels: Record<HudPanel, boolean>
   // older single setting (moved into clickThroughPanels)
@@ -152,6 +154,8 @@ export interface PobConfig {
   window2?: { enabled: boolean, atStart?: boolean }
   // First-run setup guide was shown (absent = show it the next time the overlay opens)
   setupDone?: boolean
+  // Check GGG's Patch Notes forum and notify about new notes (absent = on)
+  patchNotesAlert?: boolean
 }
 
 export interface PobLoadoutChoice {
@@ -568,6 +572,9 @@ export type IpcEvent =
   IpcStashRequest |
   IpcStashResult |
   IpcStashSession |
+  IpcPriceAlertsRequest |
+  IpcPriceAlertsState |
+  IpcPriceAlertFired |
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
@@ -590,7 +597,9 @@ export type IpcEvent =
   IpcUserReport |
   IpcUserReportResult |
   IpcToolsRequest |
-  IpcToolsResult
+  IpcToolsResult |
+  IpcLootFilterRequest |
+  IpcLootFilterResult
 
 export type IpcEventPayload<Name extends IpcEvent['name'], T extends IpcEvent = IpcEvent> =
   T extends { name: Name, payload: infer P } ? P : never
@@ -699,6 +708,36 @@ type IpcToolsResult =
     health?: HealthItem[]
     remote?: RemoteInfo
     backup?: { ok: boolean, path?: string, text?: string, error?: string }
+  }>
+
+// Deathloom fork (Q10): loot filter add-on (Market → Shopping ⋯). Main lists the .filter
+// files in the game's My Games folder and writes "<name> + Orbhoarder.filter" next to
+// the one picked (his file is never changed). This PC only, not from phones.
+type IpcLootFilterRequest =
+  Event<'CLIENT->MAIN::loot-filter', {
+    requestId: number
+    op: 'list' | 'make'
+    // make: his filter's file name (no folder)
+    source?: string
+    wants?: LootFilterWants
+    // Q11: automatic update (also writes when nothing is left to buy)
+    auto?: boolean
+  }>
+
+type IpcLootFilterResult =
+  Event<'MAIN->CLIENT::loot-filter', {
+    requestId: number
+    ok: boolean
+    error?: string
+    // list: the filter folder and his filters (not our add-ons)
+    folder?: string
+    filters?: string[]
+    // make: the file written and what went in
+    written?: string
+    count?: number
+    refused?: string[]
+    // Q11: the file already had this content (not written again)
+    unchanged?: boolean
   }>
 
 type IpcHudDims =
@@ -1121,6 +1160,18 @@ export interface BuildNotesData {
   // loot filter: a FilterBlade link or a filter name
   filter: string
 }
+// Deathloom fork (Q4): what the map check needs to know about the active build,
+// read from its file (PoB's saved stats, no PoB run). Data only, also for friends' builds.
+export interface BuildMapProfile {
+  mainSkill?: string
+  // PoB's saved PlayerStat values (Life, FireResistOverCap, LifeRegenRecovery, …)
+  stats: Record<string, number>
+  // enabled gems of the main skill group, and of every enabled group
+  mainGems: string[]
+  gems: string[]
+  // equipped item mods about curses or exposure (curse immunity, exposure on hit)
+  itemMods: string[]
+}
 type IpcBuildNotesRequest =
   Event<'CLIENT->MAIN::build-notes', {
     requestId: number
@@ -1140,6 +1191,8 @@ type IpcBuildNotesResult =
     data?: BuildNotesData
     // the save that went through (other windows reload)
     saved?: boolean
+    // Deathloom fork (Q4): the build's stats for build-aware map mod warnings (left out when the file can't be read)
+    profile?: BuildMapProfile
   }>
 
 export interface BoardState {
@@ -1333,6 +1386,9 @@ type IpcPobPlanRequest =
     requestId: number
     level: number
     questPoints: number
+    // Deathloom fork (27 Nov 2026): the levelling tree you picked (its title);
+    // missing / unknown = the first one. Never picked from your level.
+    phase?: string
   }>
 
 type IpcPobPlanResult =
@@ -1441,6 +1497,8 @@ type IpcPobTimelessResult =
     result?: TimelessResult
     options?: TimelessOptions
     search?: TimelessSearch
+    // Deathloom fork (S6): false when the running PoB can't search seeds (hide Find seeds)
+    canFind?: boolean
   }>
 
 // Deathloom fork (16 Nov 2026): crafting simulator (mod pool from PoB's data)
@@ -1583,6 +1641,29 @@ type IpcStashSession =
   Event<'CLIENT->MAIN::stash-session', {
     sessionId: string | null
   }>
+
+// Deathloom fork (Q6): price alerts (ipc/price-alerts.ts). Only 'list' and 'ack' are allowed
+// from a phone (request-guard.ts); adding and removing happen on the PC.
+type IpcPriceAlertsRequest =
+  Event<'CLIENT->MAIN::price-alerts', {
+    op: 'list' | 'add' | 'remove' | 'clear-fired' | 'settings' | 'ack'
+    rule?: PriceAlertInput
+    id?: string
+    // ack: a phone got these fired alerts (so the PC needn't notify)
+    ids?: string[]
+    pcAlways?: boolean
+  }>
+
+// the alerts and recently fired ones; sent to every window (and a paired phone) when they change
+type IpcPriceAlertsState =
+  Event<'MAIN->CLIENT::price-alerts', PriceAlertState & {
+    // why an 'add' was refused
+    error?: string
+  }>
+
+// alerts that just fired (after a poe.ninja price refresh)
+type IpcPriceAlertFired =
+  Event<'MAIN->CLIENT::price-alert-fired', { fired: PriceAlertFired[] }>
 
 interface Event<TName extends string, TPayload = undefined> {
   name: TName

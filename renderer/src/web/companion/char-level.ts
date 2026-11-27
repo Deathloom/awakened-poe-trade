@@ -8,13 +8,16 @@ import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { applySessionLines, loadPlaySession, savePlaySession } from './play-session'
-import { STEPS, loadCampaignStep, actFromAreaCode, findStep, onlyActive, isEndgameArea } from './campaign-route'
+import { afterReady } from './lazy-data'
+import { loadPaceStore, savePaceStore, syncRuns } from './pace-log'
+import { labOnArea, labOnIzaro, labOnTrialDone, isIzaroDefeat, type LabProgress } from './lab-helper'
+import { STEPS, loadRoute, loadCampaignStep, actFromAreaCode, findStep, onlyActive, isEndgameArea } from './campaign-route'
 
 export interface CharLevel { name: string, cls: string, level: number, at: number }
 // Campaign progress from Client.txt, per character: quest rewards received and
 // bosses met. Quest hand-ins aren't in the log; a received passive / respec
 // point ticks the nearest such quest on the guide's route.
-export interface CharProgress {
+export interface CharProgress extends LabProgress {
   // first level-up seen (2 = followed from the start, so the counts are complete)
   firstLevel: number
   passives: number
@@ -40,6 +43,10 @@ export interface CharProgress {
   kitava?: Array<'cruel' | 'merciless'>
   // has been in an atlas map (campaign done, for the guide)
   endgame?: boolean
+  // Q8 pace log: PC time of the level 2 level-up, and the campaign time (ms)
+  // each level was reached (only for characters followed from level 2)
+  startAt?: number
+  levelAt?: Record<string, number>
   // where the character was and since when (for the act timer)
   lastAct?: number
   lastAt?: number
@@ -98,6 +105,12 @@ export function loadCharLevels (): CharLevels {
 
 export function saveCharLevels (v: CharLevels) {
   try { localStorage.setItem(CHAR_LEVELS_KEY, JSON.stringify(v)) } catch {}
+  // Q8: fresh starts are kept as pace runs (outlive the 20-character list)
+  try {
+    const pace = loadPaceStore()
+    const next = syncRuns(pace, v)
+    if (next !== pace) savePaceStore(next)
+  } catch {}
 }
 
 export function recordLevel (v: CharLevels, name: string, cls: string, level: number, at = Date.now()): CharLevels {
@@ -233,7 +246,26 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
       passivesList = null
     }
     if (ev.type === 'level') {
+      // a lower level than we have for this name: the character was deleted and
+      // made again with the same name. Its old progress would make the new run
+      // share the old one's start, splits and level times, so start afresh.
+      const base = v ?? start
+      const known = base.chars.find(c => c.name === ev.char)
+      if (known && known.level > ev.level && base.progress[ev.char]) {
+        const progress = Object.fromEntries(Object.entries(base.progress).filter(([k]) => k !== ev.char))
+        v = { ...base, progress }
+      }
       v = recordLevel(v ?? start, ev.char, ev.cls, ev.level)
+      // Q8 pace log: campaign time at each level, for characters followed from level 2
+      const lp = v.progress[ev.char]
+      if (lp && lp.firstLevel <= 2 && !lp.endgame && ev.level <= 100) {
+        const live = lp.lastAct && lp.lastAct <= 10 && lp.lastAt && ts > lp.lastAt && ts - lp.lastAt < ACT_GAP_MS ? ts - lp.lastAt : 0
+        v.progress[ev.char] = {
+          ...lp,
+          startAt: lp.startAt ?? (ev.level === 2 ? ts : undefined),
+          levelAt: { ...lp.levelAt, [ev.level]: lp.levelAt?.[ev.level] ?? campaignMs(lp) + live }
+        }
+      }
     } else if (ev.type === 'passivesTotal') {
       const p = prog()
       p.passivesSnap = { total: ev.total, allocated: ev.allocated, logCount: Object.values(p.alloc ?? {}).reduce((n, c) => n + c, 0) }
@@ -279,8 +311,15 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
         p.splits = { ...p.splits, [act]: campaignMs(p) }
       }
       if (isEndgameArea(ev.code)) p.endgame = true
+      // Labyrinth helper (Q7): trial zone / lab you're in
+      labOnArea(p, ev.code, ev.level)
       p.lastAct = act ?? undefined
       p.lastAt = ts
+    } else if (ev.type === 'trialDone') {
+      const cur = v ?? start
+      const p0 = cur.progress[currentChar(cur)?.name ?? '']
+      // only touch the store when it ticks something (else nothing to save)
+      if (p0?.lastArea && labOnTrialDone({ ...p0 })) labOnTrialDone(prog())
     } else if (session && ev.type === 'afk') {
       session.afk = ev.on
     } else if (session && ev.type === 'disconnect') {
@@ -303,6 +342,7 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
           left -= got
         }
       } else {
+        if (isIzaroDefeat(ev.speaker, ev.text)) labOnIzaro(p)
         tickBoss(p, ev.speaker, guideIndex)
       }
     }
@@ -316,9 +356,11 @@ export function applyLogLines (start: CharLevels, lines: string[], lang: string,
   return v
 }
 
-// Called once in the overlay window
+// Called once in the overlay window. The campaign route is loaded on first
+// need (F4): log lines wait for it (in order), so quest and boss ticks and the
+// guide position use the route. If it can't be loaded, levels etc. still count.
 export function startLevelRecorder () {
-  const record = (e: { lines: string[] }) => {
+  const recordNow = (e: { lines: string[] }) => {
     const session = loadSession()
     const before = JSON.stringify(session)
     const v = applyLogLines(loadCharLevels(), e.lines, AppConfig().language, loadCampaignStep(), session)
@@ -328,6 +370,7 @@ export function startLevelRecorder () {
     const play = applySessionLines(loadPlaySession(), e.lines, AppConfig().language, currentChar(levels)?.name ?? '')
     if (play) savePlaySession(play)
   }
+  const record = afterReady(loadRoute(), recordNow)
   Host.onEvent('MAIN->CLIENT::game-log', record)
   // lines written while Orbhoarder was closed (an update or restart): levels,
   // passives and atlas allocations made meanwhile still count

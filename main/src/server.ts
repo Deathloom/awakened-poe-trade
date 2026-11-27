@@ -56,7 +56,7 @@ const STABLE_PORT = 47284
 // Deathloom fork: Content-Security-Policy of the app pages (see the static file handler)
 export const APP_CSP = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
 const websocketServer = new WebSocketServer({ noServer: true })
-let lastActiveClient: WebSocket
+let lastActiveClient: WebSocket | undefined
 // Deathloom fork: the HUD window ("show while playing") connects as a second
 // client. It only listens; replies meant for the overlay never go to it.
 const hudClients = new WeakSet<WebSocket>()
@@ -123,8 +123,47 @@ export function sendEventTo (
       client.send(msg)
     }
   } else {
-    lastActiveClient.send(msg)
+    lastActiveClient?.send(msg)
   }
+}
+
+// Deathloom fork (Q6 review): the server pings every socket; one that didn't answer
+// the previous ping (a locked phone, one that left the Wi-Fi) is dropped, so it
+// doesn't count as connected for long.
+export const HEARTBEAT_MS = 30 * 1000
+const notAnswered = new WeakSet<WebSocket>()
+setInterval(() => {
+  for (const client of websocketServer.clients) {
+    if (notAnswered.has(client)) {
+      client.terminate()
+      continue
+    }
+    notAnswered.add(client)
+    try { client.ping() } catch {}
+  }
+}, HEARTBEAT_MS).unref()
+
+// Deathloom fork (Q6 review): run for each window / phone that (re)connects, with a
+// function that sends to just that socket (a phone dropped by the heartbeat reconnects
+// on unlock and must get the current price alerts without asking)
+const connectListeners: Array<(send: (event: IpcEvent) => void) => void> = []
+export function onClientConnected (cb: (send: (event: IpcEvent) => void) => void) {
+  connectListeners.push(cb)
+}
+
+// Deathloom fork (Q6 review): inside an onEventAnyClient handler: the event came from a phone / other device
+export function fromOtherDevice (): boolean {
+  return dispatchingSocket !== undefined && otherDeviceClients.has(dispatchingSocket)
+}
+
+// Deathloom fork (Q6): phones / other devices connected right now (price alerts
+// fall back to a Windows notification when there are none)
+export function otherDevicesConnected (): number {
+  let n = 0
+  for (const client of websocketServer.clients) {
+    if (otherDeviceClients.has(client) && client.readyState === client.OPEN) n++
+  }
+  return n
 }
 
 // Deathloom fork: call this synchronously inside an onEventAnyClient handler to
@@ -167,11 +206,21 @@ export async function startServer (
 
   websocketServer.on('connection', (socket) => {
     const isHud = hudClients.has(socket)
-    if (!isHud) lastActiveClient = socket
+    // Deathloom fork (Q6 review): a phone never becomes the "last active" window.
+    // That one gets the price check's item text (clipboard) and OCR results: with a
+    // phone connected last, the next price check went to the phone instead of the overlay.
+    const isOtherDevice = otherDeviceClients.has(socket)
+    if (!isHud && !isOtherDevice) lastActiveClient = socket
+    socket.on('pong', () => { notAnswered.delete(socket) })
     // Deathloom fork: a window that (re)connects gets the updater state now. It only
     // read it once at load, so a broadcast missed while its socket was reconnecting
     // left "Checking for updates" on screen for good.
     socket.send(JSON.stringify({ name: 'MAIN->CLIENT::updater-state', payload: appUpdater.info }))
+    for (const cb of connectListeners) {
+      try {
+        cb((event) => { if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(event)) })
+      } catch {}
+    }
     socket.on('message', (bytes) => {
       // Deathloom fork (F1 review): a malformed message is dropped, not thrown in the
       // main process (it used to end up as an error report)
@@ -185,7 +234,7 @@ export async function startServer (
         return
       }
       if (event.name === 'CLIENT->MAIN::used-recently') {
-        if (isHud) return
+        if (isHud || isOtherDevice) return
         lastActiveClient = socket
       }
       dispatchingSocket = socket
@@ -196,17 +245,16 @@ export async function startServer (
       }
     })
     socket.on('close', () => {
-      const clients = [...websocketServer.clients].filter(c => !hudClients.has(c))
+      const clients = [...websocketServer.clients].filter(c => !hudClients.has(c) && !otherDeviceClients.has(c))
       if (clients.length === 1) {
         lastActiveClient = clients[0]
         evBus.emit('CLIENT->MAIN::used-recently', { isOverlay: true })
       }
     })
-    if (!isHud) {
-      sendEventTo('last-active', {
-        name: 'MAIN->CLIENT::log-entry',
-        payload: { message: logger.history }
-      })
+    // the debug log goes to the window that just connected (not again to the
+    // overlay when a phone connects, and never to a phone)
+    if (!isHud && !isOtherDevice) {
+      socket.send(JSON.stringify({ name: 'MAIN->CLIENT::log-entry', payload: { message: logger.history } }))
     }
   })
 

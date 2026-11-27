@@ -6,7 +6,7 @@
       <span class="text-gray-300 mr-3 flex items-center shrink-0 font-semibold"><img src="/images/orbhoarder.svg" class="w-6 h-6 mr-1.5 lg-logo" alt="" /><span class="hidden 2xl:inline">Orbhoarder</span><span v-if="IS_DESKTOP2" class="text-gray-500" title="Second window: its own tabs, layout and look"> 2</span></span>
       <button v-for="v of VIEWS" :key="v.key" class="shrink-0 px-2 py-1 rounded-md text-sm"
         :class="view === v.key ? 'bg-blue-600/25 text-blue-100 lg-tab-active' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-700'"
-        :title="v.title" @click="setView(v.key)">
+        :title="v.title" :data-tour="v.key" @click="setView(v.key)">
         <i class="fas xl:mr-1.5" :class="v.icon" /><span class="hidden xl:inline">{{ v.label }}</span></button>
       <select v-if="view === 'overview'" class="shrink-0 ml-auto rounded-md bg-transparent text-xs text-gray-400 hover:text-gray-100 px-1 py-1"
         title="Which All tab layout shows. Auto: Mapping from your first atlas map, Levelling again when a new character starts (The Twilight Strand). Each layout is edited on its own."
@@ -21,7 +21,7 @@
         <i class="fas fa-th mr-1" />{{ editLayout ? 'Done' : 'Edit layout' }}</button>
       <span class="shrink-0 text-xs text-gray-500" :class="view === 'overview' ? 'ml-3' : 'ml-auto'" :title="playingHelp">{{ status }}</span>
       <button class="shrink-0 ml-3 px-2 py-1 rounded-md text-xs text-gray-400 hover:text-gray-100 hover:bg-gray-700"
-        title="Report a bug or suggest a feature" @click="feedback = 'bug'">
+        title="Report a bug or suggest a feature" data-tour="feedback" @click="feedback = 'bug'">
         <i class="fas fa-bug mr-1" />Bug<span class="text-gray-600 mx-1">/</span><i class="fas fa-lightbulb mr-1" />Idea</button>
     </div>
 
@@ -35,15 +35,16 @@
       <button class="text-green-300 hover:text-white" title="Later (installs by itself when the game isn't running)" @click="dismissed = readyVersion">Later</button>
     </div>
 
+    <!-- Deathloom fork (Q6): price alerts that fired (also on a phone opened with the QR link) -->
+    <PriceAlertBanner />
+
     <!-- All: customisable (Edit layout in the top bar) -->
     <AllLayout v-if="view === 'overview'" class="lg-view" :editing="editLayout" @done="editLayout = false" />
-    <div v-else-if="view !== 'trade' && view !== 'lab'" class="flex-1 min-h-0 p-2">
+    <div v-else-if="view !== 'trade' && view !== 'levelling'" class="flex-1 min-h-0 p-2">
       <div :key="view" class="h-full min-h-0 lg-view">
-        <PobGearBody v-if="view === 'build'" :active="true" desktop />
-        <LevellingBody v-else-if="view === 'levelling'" />
-        <div v-else-if="view === 'atlas'" class="h-full min-h-0 flex flex-col rounded bg-gray-800"><AtlasTreeMap /></div>
-        <TradeCompanionBody v-else-if="view === 'trades'" fill />
-        <TradeBoardBody v-else-if="view === 'board'" fill />
+        <BuildTab v-if="view === 'build'" />
+        <MappingBody v-else-if="view === 'mapping'" />
+        <FriendsBody v-else-if="view === 'friends'" />
         <!-- Market: watchlist | poe.ninja overview (drag the line to resize) -->
         <div v-else-if="view === 'market'" ref="marketEl" class="flex h-full min-h-0">
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[0]} 1 0` }"><MarketHistoryBody :active="true" fill :tabs="false" /></div>
@@ -51,50 +52,57 @@
           <div class="min-w-0 min-h-0" :style="{ flex: `${market.sizes.value[1]} 1 0` }"><MarketOverview /></div>
         </div>
         <CraftBody v-else-if="view === 'craft'" />
+        <MoneyToolsBody v-else-if="view === 'profit'" />
         <DesktopSettings v-else-if="view === 'settings'" />
-        <HelpBody v-else-if="view === 'help'" />
+        <ReferenceBody v-else-if="view === 'reference'" />
       </div>
     </div>
-    <!-- Trade site: kept alive once opened (stays signed in and keeps its page) -->
+    <!-- Trade (whispers, search, trade site): kept alive once opened, so the trade
+         site stays signed in and keeps its page -->
     <div v-if="tradeOpened" v-show="view === 'trade'" class="flex-1 min-h-0 p-2">
-      <TradeSiteBody />
+      <TradeBody />
     </div>
-    <!-- Lab: poelab.com, kept alive once opened like the Trade site -->
-    <div v-if="labOpened" v-show="view === 'lab'" class="flex-1 min-h-0 p-2">
-      <LabSiteBody />
+    <!-- Levelling (guide, Lab): kept once opened so the Lab page (poelab.com) stays
+         alive like the Trade site; the guide itself only runs while it's shown -->
+    <div v-if="levellingOpened" v-show="view === 'levelling'" class="flex-1 min-h-0 p-2">
+      <LevellingTab :active="view === 'levelling'" />
     </div>
     <!-- first-run setup (opens by itself on a new install) -->
     <WidgetSetupGuide v-if="!IS_DESKTOP2" desktop />
     <!-- after an update (not while the setup guide is open) -->
     <WhatsNew v-if="!IS_DESKTOP2" :active="!desktopSetupShown" />
+    <!-- Deathloom fork (Q27): first-run tour (own chunk, loaded when it opens) -->
+    <OnboardingTour v-if="tourOpen && !IS_DESKTOP2" @view="viewFromHotkey" />
     <FeedbackDialog v-if="feedback" :initial="feedback" @close="feedback = null" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onUnmounted, ref, watch } from 'vue'
 import { loadSession, SESSION_KEY } from '../companion/char-level'
 import { Host } from '@/web/background/IPC'
-import PobGearBody from '../pob/PobGearBody.vue'
-import LevellingBody from './LevellingBody.vue'
-import MarketOverview from '../market-history/MarketOverview.vue'
+import {
+  LazyMarketOverview as MarketOverview,
+  LazyMarketHistoryBody as MarketHistoryBody,
+  LazyCraftBody as CraftBody,
+  LazyMoneyToolsBody as MoneyToolsBody
+} from '../ui/LazyBodies'
 import SplitGutter from './SplitGutter.vue'
 import { useSplit } from './split'
-import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
-import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
-import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
 import DesktopSettings from './DesktopSettings.vue'
 import FeedbackDialog from './FeedbackDialog.vue'
-import TradeSiteBody from './TradeSiteBody.vue'
-import LabSiteBody from './LabSiteBody.vue'
-import HelpBody from '../help/HelpBody.vue'
+import TradeBody from './TradeBody.vue'
+import LevellingTab from './LevellingTab.vue'
+import BuildTab from './BuildTab.vue'
+import MappingBody from './MappingBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
+import ReferenceBody from './ReferenceBody.vue'
+import { hasSavedSub, resolveView, setSub } from './view-route'
 import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
 import type { LayoutPref } from './layout-phase'
-import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
-import CraftBody from '../craft/CraftBody.vue'
+import PriceAlertBanner from '../market-history/PriceAlertBanner.vue'
 
 // Deathloom fork: moving backgrounds pause while you play (the window is drawn without
 // the GPU, so a constantly moving background under glass panels costs CPU the game wants)
@@ -105,6 +113,11 @@ onUnmounted(() => { gameListener.abort() })
 import WidgetSetupGuide from '../setup/WidgetSetupGuide.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 import { desktopSetupShown } from '../setup/setup-state'
+import { AppConfig } from '@/web/Config'
+import { autoTourWanted, tourOpen } from '../onboarding/tour-state'
+const OnboardingTour = defineAsyncComponent(() => import('../onboarding/OnboardingTour.vue'))
+// Friends tab brings Build sharing (GitHub sync): loaded when the tab opens
+const FriendsBody = defineAsyncComponent(() => import('./FriendsBody.vue'))
 import { useLeagues } from '@/web/background/Leagues'
 import { usePoeninja } from '@/web/background/Prices'
 
@@ -113,18 +126,20 @@ document.documentElement.classList.add('desktop')
 usePoeninja()
 useLeagues().load()
 
+// Deathloom fork (layout review, 27 Nov 2026): tabs named after what you are doing.
+// Old tab names (Atlas, Lab, Trades, Board, Trade site, Help) still open their new
+// place: view-route.ts
 const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
-  { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
-  { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
-  { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, what you have taken (from the game log), edit and share' },
+  { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: "Campaign guide, quest gems, gem swaps, the next passives, and today's Lab" },
+  { key: 'mapping', label: 'Mapping', icon: 'fa-globe', title: 'Atlas tree, This session (map timer, loot), Map mods and Farming (profit per hour)' },
+  { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build, and Build progress' },
   { key: 'craft', label: 'Craft', icon: 'fa-flask', title: 'Crafting simulator and timeless jewel explorer' },
-  { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
-  { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },
-  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
-  { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Orbhoarder never sees your login)" },
-  { key: 'lab', label: 'Lab', icon: 'fa-dungeon', title: "Today's labyrinth layouts on poelab.com (community site, shown as-is)" },
-  { key: 'help', label: 'Help', icon: 'fa-question-circle', title: 'How to use it, where to get a build, FAQ' },
+  { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Prices: watched items, all poe.ninja prices, shopping and sell lists, bulk sell' },
+  { key: 'profit', label: 'Profit', icon: 'fa-piggy-bank', title: 'Ways to make currency: gem levelling, crafting costs, currency counter, Farming, Viscera, Temple, Wombgifts' },
+  { key: 'trade', label: 'Trade', icon: 'fa-handshake', title: "Trading right now: whispers and ledger, Market search, GGG's trade site" },
+  { key: 'friends', label: 'Friends', icon: 'fa-user-friends', title: "Friends' trade board and build sharing" },
+  { key: 'reference', label: 'Reference', icon: 'fa-book', title: 'Cheat sheets, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and Help' },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Orbhoarder settings (same as Shift+Space → Settings)' }
 ] as const
 type View = typeof VIEWS[number]['key']
@@ -132,17 +147,25 @@ type View = typeof VIEWS[number]['key']
 const VIEW_KEY = 'deathloom.desktop-view.v1'
 function loadView (): View {
   try {
-    let v = readWindowKey(VIEW_KEY)
-    if (v === 'guide' || v === 'next') v = 'levelling' // before 1.0.30
-    return VIEWS.some(x => x.key === v) ? v as View : 'overview'
+    const v = readWindowKey(VIEW_KEY)
+    // the Trade site tab was called 'trade' too: a window left there opens on Trade → Trade site
+    if (v === 'trade' && !hasSavedSub('trade')) setSub('trade', 'site')
+    // old tab names (before 1.0.30, and before the 27 Nov 2026 layout) keep your place
+    const r = v ? resolveView(v, isView) : null
+    if (r?.sub) setSub(r.view, r.sub)
+    return r ? r.view as View : 'overview'
   } catch { return 'overview' }
 }
 const view = ref<View>(loadView())
 // Deathloom fork: Report a bug / Suggest a feature dialog
 const feedback = ref<'bug' | 'idea' | null>(null)
 // a panel's hotkey asked for its tab (panel not shown in the overlay)
+function isView (v: string) { return VIEWS.some(x => x.key === v) }
 function viewFromHotkey (v: string) {
-  if (VIEWS.some(x => x.key === v)) setView(v as View)
+  const r = resolveView(v, isView)
+  if (!r) return
+  if (r.sub) setSub(r.view, r.sub)
+  setView(r.view as View)
 }
 const askedView = new URLSearchParams(window.location.search).get('view')
 if (askedView) viewFromHotkey(askedView)
@@ -158,14 +181,23 @@ watch(view, (v) => {
   document.title = v === 'overview' ? name : `${name} · ${label}`
 }, { immediate: true })
 
+// Deathloom fork (Q27): new install: the tour opens once the setup guide closes
+if (!IS_DESKTOP2 && autoTourWanted(AppConfig().pob?.setupDone)) {
+  const stop = watch(desktopSetupShown, (shown) => {
+    if (shown) return
+    stop()
+    tourOpen.value = true
+  })
+}
+
 // Trade site tab: mounted the first time it's shown, then kept
 const tradeOpened = ref(view.value === 'trade' || tradeTabRequest.value > 0)
-if (tradeTabRequest.value > 0) view.value = 'trade'
+if (tradeTabRequest.value > 0) { setSub('trade', 'site'); view.value = 'trade' }
 watch(view, (v) => { if (v === 'trade') tradeOpened.value = true })
-watch(tradeTabRequest, () => { setView('trade') })
-// Lab tab: same, mounted the first time it's shown
-const labOpened = ref(view.value === 'lab')
-watch(view, (v) => { if (v === 'lab') labOpened.value = true })
+watch(tradeTabRequest, () => { setSub('trade', 'site'); setView('trade') })
+// Levelling tab: same, mounted the first time it's shown
+const levellingOpened = ref(view.value === 'levelling')
+watch(view, (v) => { if (v === 'levelling') levellingOpened.value = true })
 
 // in game or not (from the HUD state main sends to every window)
 const playing = ref<boolean | null>(null)

@@ -18,6 +18,14 @@
       <button v-if="info.action" @click="info.action"
         class="btn w-full mt-1">{{ info.actionText }}</button>
     </div>
+    <!-- Deathloom fork (layout review step 6): help surfaces of the Orbhoarder window
+         in one place (they were buttons at the bottom of its Settings) -->
+    <div v-if="isDesktop" class="flex flex-wrap justify-center gap-2 mt-4">
+      <button class="btn" title="How to use Orbhoarder, where to get a build, FAQ (Reference → Help)" @click="openHelp"><i class="fas fa-question-circle mr-1" />Help</button>
+      <button class="btn" title="Changes in the latest Orbhoarder versions" @click="whatsNew"><i class="fas fa-gift mr-1" />What's new</button>
+      <button v-if="!isDesktop2" class="btn" title="A one-minute tour of this window's tabs and the in-game hotkeys" @click="tour"><i class="fas fa-route mr-1" />Take the tour</button>
+      <button class="btn" title="The first-run setup guide (build sharing, folders, panels, trade buttons)" @click="setupGuide"><i class="fas fa-magic mr-1" />Run setup guide</button>
+    </div>
   </div>
 </template>
 
@@ -26,6 +34,10 @@ import { defineComponent, computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Host } from '@/web/background/IPC'
 import { DateTime } from 'luxon'
+import { IS_DESKTOP, IS_DESKTOP2 } from '@/web/hud/is-hud'
+import { desktopSetupShown } from '../setup/setup-state'
+import { whatsNewRequested } from '../whats-new/whats-new-state'
+import { tourOpen } from '../onboarding/tour-state'
 
 function checkForUpdates () {
   Host.sendEvent({
@@ -92,7 +104,13 @@ export default defineComponent({
     return {
       t,
       info,
-      version: Host.version
+      version: Host.version,
+      isDesktop: IS_DESKTOP,
+      isDesktop2: IS_DESKTOP2,
+      openHelp: () => { Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'help' } }) },
+      whatsNew: () => { whatsNewRequested.value++ },
+      tour: () => { tourOpen.value = true },
+      setupGuide: () => { desktopSetupShown.value = true }
     }
   }
 })

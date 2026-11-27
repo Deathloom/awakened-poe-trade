@@ -5,6 +5,7 @@ import type { Config } from '@/web/Config'
 import { defaultPobConfig, defaultHudConfig } from '@/web/Config'
 import type { HudPanel } from '@ipc/types'
 import { OFFERED_EXTRA_PANELS } from '@/web/desktop/panel-defs'
+import { PANELS } from '@/web/desktop/panels'
 
 export function usePobConfig (config: () => Config) {
   return computed(() => {
@@ -20,12 +21,14 @@ export function usePobConfig (config: () => Config) {
   })
 }
 
-export type PanelHotkeyField = 'guideKey' | 'tradesKey' | 'gearPanelKey' | null
+export type PanelHotkeyField = 'guideKey' | 'tradesKey' | 'gearPanelKey' | 'boardKey' | 'marketSearchKey' | null
 
 // panels that can be pinned over the game, with where their hotkey is kept
+// (layout review step 6: in the order of the window's tabs, like Where panels show)
+const tabOrder = (k: string) => { const i = PANELS.findIndex(p => p.hud === k); return i < 0 ? PANELS.length : i }
 export const HUD_PANELS: Array<{ key: HudPanel, label: string, hotkey: PanelHotkeyField }> = [
-  { key: 'guide', label: 'Campaign guide', hotkey: 'guideKey' },
-  { key: 'trades', label: 'Trade companion', hotkey: 'tradesKey' },
-  { key: 'gear', label: 'Build gear', hotkey: 'gearPanelKey' },
-  ...OFFERED_EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: null }))
-]
+  { key: 'guide' as HudPanel, label: 'Campaign guide', hotkey: 'guideKey' as PanelHotkeyField },
+  { key: 'trades' as HudPanel, label: 'Trade companion', hotkey: 'tradesKey' as PanelHotkeyField },
+  { key: 'gear' as HudPanel, label: 'Build gear', hotkey: 'gearPanelKey' as PanelHotkeyField },
+  ...OFFERED_EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: (p.panel === 'board' ? 'boardKey' : p.panel === 'search' ? 'marketSearchKey' : null) as PanelHotkeyField }))
+].sort((a, b) => tabOrder(a.key) - tabOrder(b.key))

@@ -44,8 +44,9 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Search strings** | Build panel → Notes: ready-made stash and vendor searches for your build (gems, links, map mods you can't run), plus **Make your own**: pick links and socket colours, movement speed, life, resistances and more, see it fit the game's 50 characters, save it, and give it a hotkey. |
 | **Craft tab** | In the Orbhoarder window. **Crafting simulator**: pick a base, item level and influence, tick the mods you want, and see the chance per try, average tries and cost for Chaos Orbs, Alteration/Augmentation, Alteration + Regal and essences (spawn weights from Path of Building's game data, prices from poe.ninja). **Timeless jewels**: pick a jewel, conqueror, seed and socket to see every passive it changes (Path of Building's own data), and find that seed on the trade site; or **Find seeds**: pick what you want (a passive on one notable, or a stat on N notables in the radius) and get the seeds that give it. |
 | **Compare builds** | Pick two builds (yours or a friend's) and see the differences: stats, gear mods per slot, gems and passive tree. Read-only. |
+| **Map warnings for your build** | The map check marks mods dangerous for your active PoB build (reflect for melee, no regen, less max res vs your over-cap, curses, …; hover for why) and greys the rest. Settings → Maps to turn it off. |
 | **Where panels show** | Per panel: in game, in the overlay and/or in the Orbhoarder window. |
-| **PoE2 mode** (early) | Settings → General → Game: switch to Path of Exile 2. So far it finds the PoE2 window, log and config and lists PoE2 trade leagues; price check, PoB and prices for PoE2 come in later updates. |
+| **PoE2 mode** (beta) | Settings → General → Game: switch to Path of Exile 2. Finds the PoE2 window, log and config, lists PoE2 trade leagues and price checks PoE2 items on the PoE2 trade site (search, bulk exchange, filters; from Exiled Exchange 2). English game client only for now. No quick poe.ninja price yet; PoB for PoE2 comes later. |
 
 Shift+Space opens the full overlay. Hover the menu icons to see their names and hotkeys, or press **?** for a quick how-to. The Orbhoarder window's **Help** tab has the full help, an FAQ and links to build guides.
 
@@ -105,6 +106,8 @@ How this fork is kept up to date:
 ## Credits and licence
 
 MIT, same as upstream; see [LICENSE](./LICENSE). The original app is © Alexander Drozdov (SnosMe) and the [Awakened PoE Trade contributors](https://github.com/SnosMe/awakened-poe-trade/graphs/contributors).
+
+PoE2 price check data and code come from [Exiled Exchange 2](https://github.com/Kvan7/exiled-exchange-2) (MIT, © Alexander Drozdov and the Exiled Exchange 2 contributors), kept apart in `renderer/src/poe2/` and `renderer/public/data/poe2/`.
 
 Also relies on [Path of Building Community](https://github.com/PathOfBuildingCommunity/PathOfBuilding), [libuiohook](https://github.com/kwhat/libuiohook), [RePoE](https://github.com/brather1ng/RePoE), [poeprices.info](https://www.poeprices.info/) and [poe.ninja](https://poe.ninja/).
 

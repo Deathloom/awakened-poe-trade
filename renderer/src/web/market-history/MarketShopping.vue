@@ -5,12 +5,43 @@
       <span class="truncate text-gray-300" :title="buildName">{{ buildName || 'Build' }}<span v-if="itemSet" class="text-gray-500"> · {{ itemSet }}</span></span>
       <button class="ui-btn ui-btn-quiet ml-auto" :disabled="loading" title="Read the build again from Path of Building" @click="request">
         <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" /></button>
+      <ui-menu :items="listMenu" align-right button-class="ui-btn-quiet" title="More" />
     </div>
     <div v-if="error" class="px-2 pb-1 text-red-400">{{ error }}</div>
+    <!-- Deathloom fork (Q10): loot filter add-on: pick his filter, Orbhoarder writes a copy with our Show blocks first -->
+    <div v-if="lf.open" class="mx-2 mb-1 p-2 rounded border border-gray-700 bg-gray-900 shrink-0 space-y-1">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-300">Loot filter add-on: pick your filter</span>
+        <button class="ui-btn ui-btn-quiet ml-auto" :class="{ 'ui-btn-on': lf.help }" title="How it works" @click="lf.help = !lf.help"><i class="fas fa-question" /></button>
+        <button class="ui-btn ui-btn-quiet" title="Close" @click="lf.open = false"><i class="fas fa-times" /></button>
+      </div>
+      <div v-if="lf.help" class="text-gray-400">
+        Orbhoarder writes a new file next to your filter, <i>"your filter + Orbhoarder.filter"</i>: first a few Show blocks
+        (big text, a coloured border, a beam and a minimap star) for what's still to buy here (uniques by their base type, the rares' bases, gems),
+        then your filter copied unchanged. Your own file is never changed. Make it again after your list changes, or tick <i>Keep it updated</i> after making it (Settings → Loot filter too).
+        Gems: PoE1 only. Filters from the website (online filters) can't be used: download the filter file into the folder first.
+      </div>
+      <div class="text-gray-500">{{ wantsLine }}</div>
+      <div v-if="lf.busy" class="text-gray-500"><i class="fas fa-spinner fa-spin mr-1" />Working…</div>
+      <div v-else-if="lf.error" class="text-red-400">{{ lf.error }}</div>
+      <div v-if="lf.written" class="text-gray-200">
+        Wrote <b>{{ lf.written }}</b>. In game: <b>Options → UI → Item filter</b>, pick <b>{{ lf.written.replace(/\.filter$/i, '') }}</b> (press the refresh button next to the list if it's not there yet).
+        <span v-if="lf.refused.length" class="text-gray-500"> Left out (not a known item name, or odd characters): {{ lf.refused.join(', ') }}.</span>
+        <!-- Q11: rewrite it on every list change -->
+        <label class="flex items-center gap-1 mt-1 text-gray-300" title="Also in Settings → Loot filter">
+          <input type="checkbox" :checked="lfSettings.auto && lfSettings.source === lf.source" @change="setLfSettings({ source: lf.source, auto: ($event.target as HTMLInputElement).checked })">
+          Keep it updated: write it again when this list changes (ticks, build). In game, reload the filter to see changes.</label>
+      </div>
+      <div v-if="!lf.busy && !lf.written && lf.filters.length" class="flex flex-wrap gap-1">
+        <button v-for="f of lf.filters" :key="f" class="ui-btn" :disabled="!wantsTotal" :title="`Make “${f.replace(/\.filter$/i, '')} + Orbhoarder” from this one`" @click="makeFilter(f)">{{ f.replace(/\.filter$/i, '') }}</button>
+      </div>
+      <div v-else-if="!lf.busy && !lf.written && !lf.error" class="text-gray-500">No .filter files in {{ lf.folder || 'the game folder' }}. Save your filter there first.</div>
+      <div v-if="lf.folder" class="text-gray-600 truncate" :title="lf.folder">{{ lf.folder }}</div>
+    </div>
     <div class="flex items-baseline gap-2 px-2 pb-1 shrink-0">
       <span class="text-gray-300">Still to buy:</span>
-      <span class="text-yellow-300 text-sm">{{ money(shop.total) }}</span>
-      <span class="text-gray-500">{{ toBuy }} item{{ toBuy === 1 ? '' : 's' }}<template v-if="shop.missing"> · {{ shop.missing }} without a price</template><template v-if="shop.rares"> · {{ shop.rares }} rare{{ shop.rares === 1 ? '' : 's' }} not counted</template></span>
+      <span class="text-yellow-300 text-sm" :title="rareSum.n ? `Includes ~${money(rareSum.chaos)} for ${rareSum.n} priced rare${rareSum.n === 1 ? '' : 's'}` : ''">{{ rareSum.n ? '~' : '' }}{{ money(shop.total + rareSum.chaos) }}</span>
+      <span class="text-gray-500">{{ toBuy }} item{{ toBuy === 1 ? '' : 's' }}<template v-if="shop.missing"> · {{ shop.missing }} without a price</template><template v-if="shop.rares - rareSum.n > 0"> · {{ shop.rares - rareSum.n }} rare{{ shop.rares - rareSum.n === 1 ? '' : 's' }} not counted (Price)</template></span>
       <label class="ml-auto flex items-center gap-1 text-gray-400" title="Show items you already have (ticked)">
         <input v-model="showOwned" type="checkbox">show ticked</label>
     </div>
@@ -25,13 +56,20 @@
           <button class="flex-1 min-w-0 truncate text-left" :class="r.kind === 'unique' ? 'text-orange-300' : (r.kind === 'rare' ? 'text-yellow-200' : 'text-teal-300')"
             :title="r.slots.join(', ')" @click="toggleOpen(r)">{{ r.label }}<span v-if="r.slots.length" class="text-gray-500"> · {{ r.slots.join(', ') }}</span></button>
           <price-spark v-if="r.kind !== 'rare'" :item="r.listing" />
-          <span class="w-14 text-right" :class="r.listing ? 'text-yellow-300' : 'text-gray-600'"
-            :title="r.kind === 'rare' ? 'Rares: price depends on the rolls, use Trade' : (r.listing ? `Cheapest on poe.ninja${r.listing.variant ? ': ' + r.listing.variant : ''}` : 'No poe.ninja price')">{{ r.listing ? money(r.listing.chaos) : (r.kind === 'rare' ? 'rolls' : '–') }}</span>
+          <!-- Deathloom fork (Q20): rares get a trade estimate on click (Price) -->
+          <button v-if="r.kind === 'rare' && rarePrices[r.key]" class="w-14 text-right text-yellow-300 hover:underline"
+            :title="rareTitle(rarePrices[r.key])" @click="openTradeLink(rarePrices[r.key].url)">~{{ money(rarePrices[r.key].median) }}</button>
+          <span v-else class="w-14 text-right" :class="r.listing ? 'text-yellow-300' : 'text-gray-600'"
+            :title="r.kind === 'rare' ? 'Rares: price depends on the rolls. Price looks up similar listings on the trade site.' : (r.listing ? `Cheapest on poe.ninja${r.listing.variant ? ': ' + r.listing.variant : ''}` : 'No poe.ninja price')">{{ r.listing ? money(r.listing.chaos) : (r.kind === 'rare' ? 'rolls' : '–') }}</span>
+          <button v-if="r.kind === 'rare' && gearOf(r)" class="ui-btn ui-btn-quiet" :disabled="rareBusy.has(r.key)"
+            title="Look up similar listings on the trade site now (the stats the price check picks) and show the median of the 10 cheapest. One search per click, same limits as the price check."
+            @click="priceRareRow(r)"><i class="fas" :class="rareBusy.has(r.key) ? 'fa-spinner fa-spin' : 'fa-tag'" />Price</button>
           <button class="ui-btn ui-btn-quiet" :title="tradeTitle(r)" @click="trade(r, false)"><i class="fas fa-search" />Trade</button>
           <button v-if="gearOf(r)" class="ui-btn ui-btn-quiet" :title="r.kind === 'unique' ? 'Trade: the same unique with at least these rolls' : 'Trade: any base of the same kind with at least these mods'" @click="trade(r, true)"><i class="fas fa-arrow-up" /></button>
           <ui-menu :items="rowMenu(r)" align-right button-class="ui-btn-quiet" title="More" />
         </div>
         <div v-if="tradeErr[r.key]" class="pl-12 pb-1 text-red-400">{{ tradeErr[r.key] }}</div>
+        <price-alert-form v-if="alertOpen === r.key && r.listing" class="pl-12" :item="{ type: r.listing.type, name: r.listing.name, variant: r.listing.variant, label: r.listing.variant ? `${r.label} (${r.listing.variant})` : r.label }" :chaos="r.listing.chaos" />
         <div v-if="openRows.has(r.key) && gearOf(r)" class="pl-12 pb-1.5 space-y-px">
           <div class="text-gray-400">{{ gearOf(r)!.baseName }}<template v-if="gearOf(r)!.itemLevel"> · item level {{ gearOf(r)!.itemLevel }}</template><template v-if="gearOf(r)!.corrupted"> · <span class="text-red-400">corrupted</span></template></div>
           <div v-for="(m, mi) of gearOf(r)!.mods" :key="mi" :class="modClass(m)">{{ m.text }}<span v-if="m.crafted" class="text-gray-500"> (crafted)</span><span v-if="m.fractured" class="text-gray-500"> (fractured)</span></div>
@@ -40,23 +78,30 @@
       </div>
     </div>
     <div class="px-2 py-1 text-gray-500 shrink-0">
-      <i class="fas fa-info-circle mr-1" />Prices: cheapest on poe.ninja (gems: lowest level/quality). Trade opens the trade site: uniques any copy, rares this base with these mods; ↑ = at least these rolls / any base.
+      <i class="fas fa-info-circle mr-1" />Prices: cheapest on poe.ninja (gems: lowest level/quality); rares: Price = median of the 10 cheapest similar listings on the trade site. Trade opens the trade site: uniques any copy, rares this base with these mods; ↑ = at least these rolls / any base.
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import type { PobGearItem, PobSocketGroup } from '@ipc/types'
 import PriceSpark from './PriceSpark.vue'
+import PriceAlertForm from './PriceAlertForm.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { useMarket } from './use-market'
 import { copyText } from '../pob/market'
 import { openTradeSearch, openTradeByType } from '../pob/gear-actions'
+import { openTradeLink } from '@/web/desktop/trade-tab'
+import { priceRare, cachedRarePrice, type RarePrice } from './rare-price'
 import { shoppingList, type ShopRow } from './market-tools'
+import { IS_OTHER_DEVICE } from './price-alerts-store'
+import { wantsFromShop, wantsCount, keepKnown, wantsSignature } from '@ipc/loot-filter'
+import { lfSettings, setLfSettings, setLfLastWants, updateAddon } from './loot-filter-store'
+import { ITEM_BY_REF } from '@/assets/data'
 
-const { all, money, open, ninja } = useMarket()
+const { all, money, open, ninja, divine, itemPrice } = useMarket()
 ninja.queuePricesFetch()
 
 const buildName = ref('')
@@ -172,8 +217,135 @@ function trade (r: ShopRow, upgrade: boolean) {
   tradeErr.value = { ...tradeErr.value, [r.key]: err ?? '' }
 }
 
+// Deathloom fork (Q20): rare estimate, only on click (one trade search + one fetch)
+const rarePrices = ref<Record<string, RarePrice>>({})
+const rareBusy = ref(new Set<string>())
+async function priceRareRow (r: ShopRow) {
+  const g = gearOf(r)
+  if (!g || rareBusy.value.has(r.key)) return
+  rareBusy.value = new Set([...rareBusy.value, r.key])
+  try {
+    const res = await priceRare(g.text, { divine: divine.value, item: itemPrice })
+    if (typeof res === 'string') tradeErr.value = { ...tradeErr.value, [r.key]: res }
+    else {
+      tradeErr.value = { ...tradeErr.value, [r.key]: '' }
+      rarePrices.value = { ...rarePrices.value, [r.key]: res }
+    }
+  } finally {
+    const s = new Set(rareBusy.value); s.delete(r.key); rareBusy.value = s
+  }
+}
+// estimates from the last 15 minutes come back when the panel opens again
+watch(gear, () => {
+  const next: Record<string, RarePrice> = {}
+  for (const r of shop.value.rows) {
+    const g = r.kind === 'rare' ? gearOf(r) : null
+    const hit = g ? cachedRarePrice(g.text) : null
+    if (hit) next[r.key] = hit
+  }
+  rarePrices.value = next
+})
+const rareSum = computed(() => {
+  let chaos = 0; let n = 0
+  for (const r of shop.value.rows) {
+    const p = r.kind === 'rare' && !r.owned ? rarePrices.value[r.key] : undefined
+    if (p) { chaos += p.median; n += 1 }
+  }
+  return { chaos, n }
+})
+function rareTitle (p: RarePrice) {
+  return `Median of the ${p.used} cheapest similar listings (cheapest ${money(p.low)}; ${p.total} found). Click to open them on the trade site.`
+}
+
+// Deathloom fork (Q10): loot filter add-on (part 1: made by hand from this menu)
+const lf = reactive({ open: false, help: false, busy: false, error: '', written: '', source: '', folder: '', filters: [] as string[], refused: [] as string[] })
+let lfId = 0
+const listMenu = computed((): UiMenuItem[] => [
+  {
+    label: 'Make loot filter add-on…',
+    icon: 'fas fa-filter',
+    disabled: IS_OTHER_DEVICE,
+    hint: IS_OTHER_DEVICE ? 'Only on the PC' : 'A copy of your loot filter that also shows what this list still needs',
+    action: openLootFilter
+  }
+])
+// Q10 review: only names the price-check item data knows (PoE1 won't load a filter
+// whose BaseType == names an item that doesn't exist); transfigured gems drop as their normal gem
+const lootChecked = computed(() => keepKnown(wantsFromShop(shop.value.rows.map(r => {
+  if (r.kind === 'gem') {
+    const gem = groups.value.flatMap(g => g.gems).find(x => x.name.toLowerCase() === r.label.toLowerCase())
+    return { kind: r.kind, owned: r.owned, name: r.label, support: gem?.support === true }
+  }
+  return { kind: r.kind, owned: r.owned, name: gearOf(r)?.baseName ?? '' }
+})), {
+  base: (n) => (ITEM_BY_REF('ITEM', n)?.length ?? 0) > 0,
+  gem: (n) => {
+    const g = ITEM_BY_REF('GEM', n)?.[0]
+    if (!g) return null
+    return g.gem?.transfigured ? (g.gem.normalVariant ?? null) : g.refName
+  }
+}))
+const lootWants = computed(() => lootChecked.value.wants)
+const wantsTotal = computed(() => wantsCount(lootWants.value))
+const wantsLine = computed(() => {
+  const w = lootWants.value
+  if (!wantsTotal.value) return 'Nothing left to buy on this list, so nothing to add.'
+  const parts = [[w.uniqueBases.length, 'unique base'], [w.bases.length, 'rare base'], [w.gems.length, 'gem']]
+    .filter(([n]) => n).map(([n, s]) => `${n} ${s}${n === 1 ? '' : 's'}`)
+  const unknown = lootChecked.value.unknown.length
+  return `Adds: ${parts.join(', ')} (what's not ticked).${unknown ? ` ${unknown} left out: not a known item name.` : ''}`
+})
+const offLf = Host.onEvent('MAIN->CLIENT::loot-filter', (e) => {
+  if (e.requestId !== lfId) return
+  lf.busy = false
+  lf.error = e.ok ? '' : (e.error ?? 'Something went wrong.')
+  if (e.folder) lf.folder = e.folder
+  if (e.filters) lf.filters = e.filters
+  if (e.written) {
+    lf.written = e.written
+    lf.refused = [...lootChecked.value.unknown, ...(e.refused ?? [])].slice(0, 50)
+    // Q11: remember the filter for the automatic update / Settings → Loot filter
+    if (lf.source !== lfSettings.value.source) setLfSettings({ source: lf.source, auto: false })
+  }
+})
+onUnmounted(() => { offLf.abort() })
+function openLootFilter () {
+  Object.assign(lf, { open: true, busy: true, error: '', written: '', refused: [] })
+  lfId = 800000 + Math.floor(Math.random() * 100000)
+  Host.sendEvent({ name: 'CLIENT->MAIN::loot-filter', payload: { requestId: lfId, op: 'list' } })
+}
+function makeFilter (source: string) {
+  Object.assign(lf, { busy: true, error: '', written: '', source, refused: [] })
+  lfId += 1
+  Host.sendEvent({ name: 'CLIENT->MAIN::loot-filter', payload: { requestId: lfId, op: 'make', source, wants: lootWants.value } })
+}
+
+// Deathloom fork (Q11): loot filter add-on part 2. When the list changes (ticks, another
+// build) and "Keep it updated" is on, write the add-on again after a short pause. Only
+// once the build was read without an error and has rows, so a failed read never
+// empties the add-on. Main leaves the file alone when nothing changed.
+const lfReady = computed(() => !loading.value && !error.value && buildName.value !== '' && shop.value.rows.length > 0)
+let lfTimer: ReturnType<typeof setTimeout> | undefined
+let lfLastSig = ''
+watch([() => wantsSignature(lootWants.value), lfReady, () => lfSettings.value.auto, () => lfSettings.value.source], ([sig, ready]) => {
+  clearTimeout(lfTimer)
+  if (!ready || IS_OTHER_DEVICE) return
+  lfTimer = setTimeout(() => {
+    setLfLastWants(buildName.value, lootWants.value)
+    const s = lfSettings.value
+    const key = `${s.source}|${sig}`
+    if (!s.auto || !s.source || key === lfLastSig) return
+    lfLastSig = key
+    updateAddon(s.source, lootWants.value, true)
+  }, 3000)
+}, { immediate: true })
+onUnmounted(() => { clearTimeout(lfTimer) })
+
+// Deathloom fork (Q6): price alert above / below a price for this row
+const alertOpen = ref<string | null>(null)
 function rowMenu (r: ShopRow): UiMenuItem[] {
   return [
+    { label: 'Price line above / below…', icon: 'fas fa-bell', disabled: !r.listing || r.kind === 'rare', hint: 'Tell me (phone or Windows notification) when the price crosses a line', action: () => { alertOpen.value = alertOpen.value === r.key ? null : r.key } },
     { label: 'Copy name for the in-game market', icon: 'far fa-copy', hint: 'Press / in game, then Ctrl+V', action: () => copyText(gearOf(r)?.searchText ?? r.label) },
     { label: 'Open on poe.ninja', icon: 'fas fa-external-link-alt', disabled: !r.listing, action: () => { if (r.listing) open(r.listing.url) } }
   ]

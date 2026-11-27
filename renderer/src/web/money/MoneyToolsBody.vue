@@ -1,9 +1,9 @@
 <template>
-  <!-- Deathloom fork: Money tools (overlay, in game, Orbhoarder window). Prices
+  <!-- Deathloom fork: Profit, was Money tools (overlay, in game, Orbhoarder window). Prices
        from the poe.ninja economy data the app already downloads. -->
   <div class="flex flex-col h-full min-h-0 rounded bg-gray-800 text-xs">
     <div class="flex flex-wrap items-center gap-1 px-2 py-1 border-b border-gray-700 shrink-0">
-      <span class="lg-head mr-1"><i class="fas fa-piggy-bank mr-1 text-gray-500" />Money tools</span>
+      <span class="lg-head mr-1"><i class="fas fa-piggy-bank mr-1 text-gray-500" />Profit</span>
       <button v-for="t of TABS" :key="t.id" class="ui-tab"
         :class="{ 'ui-tab-on': tab === t.id }" @click="setTab(t.id)">{{ t.label }}</button>
       <span class="ml-auto text-gray-500">{{ league ?? 'no league' }}<span v-if="divine"> · 1 div = {{ Math.round(divine) }} c</span></span>
@@ -11,36 +11,18 @@
 
     <div v-if="ninja.initialLoading()" class="p-2 text-gray-500">Loading prices from poe.ninja…</div>
 
-    <!-- Gem levelling profit -->
-    <div v-else-if="tab === 'gems'" class="flex-1 min-h-0 flex flex-col">
-      <div class="flex flex-wrap items-center gap-2 px-2 py-1 shrink-0">
-        <input v-model="gemFilter" class="flex-1 min-w-0 bg-gray-900 rounded px-1" placeholder="Filter gems" spellcheck="false">
-        <label class="flex items-center gap-1" title="Buy level 1 with 20% quality, sell level 20 with 20% quality">
-          <input v-model="quality" type="checkbox">20% quality</label>
-        <label class="flex items-center gap-1" title="Leave out gems that cost less than this at level 1 (cheap gems often have few sellers)">
-          min <input v-model.number="minBuy" type="number" min="0" class="w-10 bg-gray-900 rounded px-1"> c</label>
-      </div>
-      <div class="flex-1 min-h-0 overflow-y-auto px-2">
-        <table class="w-full">
-          <tr class="text-gray-500 sticky top-0 bg-gray-800">
-            <th class="text-left font-normal">Gem</th>
-            <th class="text-right font-normal pr-2">Buy {{ quality ? '1/20' : '1' }}</th>
-            <th class="text-right font-normal pr-2">Sell {{ quality ? '20/20' : '20' }}</th>
-            <th class="text-right font-normal">Profit</th>
-          </tr>
-          <tr v-for="g of gems" :key="g.name" class="hover:bg-gray-700 cursor-pointer" :title="`Open ${g.name} (${g.sell.variant}) on poe.ninja`" @click="open(g.url)">
-            <td class="truncate max-w-0 w-full">{{ g.name }}</td>
-            <td class="text-right pr-2 font-mono">{{ money(g.buy.chaos) }}</td>
-            <td class="text-right pr-2 font-mono">{{ money(g.sell.chaos) }}</td>
-            <td class="text-right font-mono" :class="g.profit > 0 ? 'text-green-400' : 'text-red-400'">{{ money(g.profit) }}</td>
-          </tr>
-        </table>
-        <div v-if="!gems.length" class="text-gray-500 py-1">No gems with both prices on poe.ninja{{ gemFilter ? ' for this filter' : '' }}.</div>
-      </div>
-      <div class="px-2 py-1 text-gray-500 shrink-0">
-        <i class="fas fa-info-circle mr-1" />Level the gem in your gear (or a level-up item) and sell it. Takes time and experience; prices of rarely traded gems can be off.
-      </div>
-    </div>
+    <!-- Deathloom fork (layout review step 3): Profit. Gem levelling is Market → Gems'
+         tool now (it was here twice), and Crafting costs moved here from Market -->
+    <MarketGems v-else-if="tab === 'gems'" class="flex-1 min-h-0" />
+    <MarketCrafting v-else-if="tab === 'craft'" class="flex-1 min-h-0" />
+    <MarketFarming v-else-if="tab === 'farm'" class="flex-1 min-h-0" />
+
+    <!-- Deathloom fork (Q12): Viscera planner (own chunk: carries PoB's Viscera list) -->
+    <VisceraPlanner v-else-if="tab === 'viscera'" :items="all" :money="money" />
+    <!-- Deathloom fork (Q13): Temple of Atzoatl planner -->
+    <TemplePlanner v-else-if="tab === 'temple'" :items="all" :money="money" />
+    <!-- Deathloom fork (Q14): Wombgift value -->
+    <WombgiftValue v-else-if="tab === 'wombgifts'" :items="all" :money="money" />
 
     <!-- Currency counter -->
     <div v-else class="flex-1 min-h-0 flex flex-col">
@@ -81,18 +63,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onUnmounted, ref } from 'vue'
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
-import { gemProfits, DEFAULT_CURRENCIES, loadCounter, saveCounter, counterTotal, COUNTER_KEY, type CounterState } from './money'
+import MarketGems from '../market-history/MarketGems.vue'
+import MarketCrafting from '../market-history/MarketCrafting.vue'
+import MarketFarming from '../market-history/MarketFarming.vue'
+import { DEFAULT_CURRENCIES, loadCounter, saveCounter, counterTotal, COUNTER_KEY, type CounterState } from './money'
+
+const VisceraPlanner = defineAsyncComponent(async () => await import('./VisceraPlanner.vue'))
+const TemplePlanner = defineAsyncComponent(async () => await import('./TemplePlanner.vue'))
+const WombgiftValue = defineAsyncComponent(async () => await import('./WombgiftValue.vue'))
 
 const TABS = [
-  { id: 'gems', label: 'Gem levelling' },
-  { id: 'counter', label: 'Currency counter' }
+  { id: 'gems', label: 'Gems' },
+  { id: 'craft', label: 'Crafting costs' },
+  { id: 'counter', label: 'Currency counter' },
+  { id: 'farm', label: 'Farming' },
+  { id: 'viscera', label: 'Viscera' },
+  { id: 'temple', label: 'Temple' },
+  { id: 'wombgifts', label: 'Wombgifts' }
 ] as const
 type Tab = typeof TABS[number]['id']
 const TAB_KEY = 'deathloom.money-tab.v1'
-const tab = ref<Tab>((() => { try { return localStorage.getItem(TAB_KEY) === 'counter' ? 'counter' : 'gems' } catch { return 'gems' } })())
+const tab = ref<Tab>((() => {
+  try {
+    const t = localStorage.getItem(TAB_KEY)
+    return TABS.find(x => x.id === t)?.id ?? 'gems'
+  } catch { return 'gems' }
+})())
 function setTab (t: Tab) {
   tab.value = t
   try { localStorage.setItem(TAB_KEY, t) } catch {}
@@ -108,17 +107,6 @@ const timer = setInterval(() => { ninja.queuePricesFetch() }, 10 * 60_000)
 const all = computed(() => {
   if (ninja.dbVersion.value < 0) return []
   return ninja.allItems()
-})
-
-// Gem levelling
-const gemFilter = ref('')
-const quality = ref(false)
-const minBuy = ref(1)
-const gems = computed(() => {
-  const f = gemFilter.value.trim().toLowerCase()
-  return gemProfits(all.value, quality.value, minBuy.value || 0)
-    .filter(g => !f || g.name.toLowerCase().includes(f))
-    .slice(0, 60)
 })
 
 // Currency counter
@@ -175,5 +163,4 @@ function money (chaos: number) {
   if (d && Math.abs(chaos) >= d) return `${(chaos / d).toFixed(1)} div`
   return chaos >= 10 || chaos <= -10 ? `${Math.round(chaos)} c` : `${Math.round(chaos * 10) / 10} c`
 }
-function open (url: string) { window.open(url) }
 </script>

@@ -19,10 +19,21 @@
     <!-- Backup -->
     <div class="mb-4">
       <div class="text-base mb-1">Settings backup</div>
-      <div class="text-gray-500 mb-2">One file with all settings, hotkeys, panel layouts, notes, ticks and session data, to move to a new PC or share your setup with a friend. Your builds stay in their folder (build sync shares those).</div>
+      <div class="text-gray-500 mb-2">One file with all settings, hotkeys, panel layouts, notes, ticks and session data, to move to a new PC or share your setup with a friend. Your builds stay in their folder (build sync shares those). Sign-ins and keys are never in the file. On restore you pick what to take, and this PC's folders are kept unless you say otherwise.</div>
       <div class="flex gap-2">
         <button class="ui-btn" :disabled="busy === 'backup'" @click="saveBackup"><i class="fas fa-file-export mr-1" />Save backup…</button>
         <button class="ui-btn" :disabled="busy === 'backup'" @click="openBackup"><i class="fas fa-file-import mr-1" />Restore…</button>
+      </div>
+      <!-- Q24: what's in the file, and what to take from it -->
+      <div v-if="pick" class="mt-2 p-2 rounded border border-gray-700 bg-gray-900">
+        <div class="mb-1">Backup from <b>{{ pick.summary.createdAt || 'an unknown date' }}</b>: {{ pick.summary.settings }} settings, {{ pick.summary.panelData }} panel data items.</div>
+        <ui-checkbox v-model="pick.settings">Settings, hotkeys and panel layouts</ui-checkbox>
+        <ui-checkbox v-model="pick.panelData" class="mt-1">Panel data (notes, ticks, watchlist, session and the like). Replaces this PC's copy straight away.</ui-checkbox>
+        <ui-checkbox v-if="pick.settings && pick.summary.otherPaths?.length" v-model="pick.keepPaths" class="mt-1">Keep this PC's folders (game files, Path of Building, builds): the backup has other ones</ui-checkbox>
+        <div class="flex gap-2 mt-2">
+          <button class="ui-btn ui-btn-primary" :disabled="!pick.settings && !pick.panelData" @click="restorePicked"><i class="fas fa-file-import mr-1" />Restore</button>
+          <button class="ui-btn" @click="pick = null">Cancel</button>
+        </div>
       </div>
       <div v-if="backupMsg" class="mt-1" :class="backupErr ? 'text-red-400' : 'text-green-400'">{{ backupMsg }}</div>
     </div>
@@ -31,9 +42,9 @@
     <!-- Phone or other devices -->
     <div class="mb-4">
       <div class="text-base mb-1">Phone or other devices</div>
-      <div class="text-gray-500 mb-2">Open the Orbhoarder window in a browser on your phone or another PC on the same Wi-Fi (campaign guide, build notes, cheat sheets on a second screen). Only devices that open the link with its key get in.</div>
+      <div class="text-gray-500 mb-2">Open the Orbhoarder window in a browser on your phone or another PC on the same Wi-Fi (campaign guide, build notes, cheat sheets on a second screen). Only devices that open the link with its key get in. Your price lines (Market → Watched → ⋯ → Price line above / below…) show on the connected phone too (if it doesn't confirm, e.g. it's locked, you get a Windows notification); add or remove them on this PC. Prices are only checked when Orbhoarder refreshes them anyway (price check, Market or Profit in use).</div>
       <ui-toggle :modelValue="remote?.enabled === true" @update:modelValue="setRemote">Allow my phone or other devices on my network</ui-toggle>
-      <div class="text-gray-500 mt-1">Settings, folders, sign-in and anything that types in the game only work on this PC. The link isn't encrypted: use it on your home Wi-Fi, and turn it off (or press New key) on shared networks such as a LAN party or café.</div>
+      <div class="text-gray-500 mt-1">Settings, folders, sign-in, price alert changes and anything that types in the game only work on this PC. The link isn't encrypted: use it on your home Wi-Fi, and turn it off (or press New key) on shared networks such as a LAN party or café.</div>
       <div v-if="remote && remote.enabled !== remote.listening" class="text-yellow-300 mt-1">
         {{ remote.enabled ? 'Orbhoarder makes the phone link after a restart.' : 'Phone access stops after a restart.' }}
         <button class="ml-1 ui-btn ui-btn-primary" @click="restart">Restart now</button>
@@ -59,18 +70,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, watch, onUnmounted } from 'vue'
-import qrcode from 'qrcode-generator'
+import { defineComponent, computed, ref, shallowRef, watch, onUnmounted } from 'vue'
+import type qrcodeT from 'qrcode-generator'
 import type { HealthItem, RemoteInfo, IpcEventPayload } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import type { Config } from '@/web/Config'
 import { configProp } from './utils'
-import { hotkeyClashes, makeBackup, readBackup } from './tools'
+import { hotkeyClashes, makeBackup, readBackup, backupSummary, type BackupSummary } from './tools'
 import UiToggle from '@/web/ui/UiToggle.vue'
+import UiCheckbox from '@/web/ui/UiCheckbox.vue'
 
 export default defineComponent({
   name: 'Tools',
-  components: { UiToggle },
+  components: { UiToggle, UiCheckbox },
   props: configProp(),
   setup (props) {
     const busy = ref<'health' | 'backup' | null>(null)
@@ -116,8 +128,14 @@ export default defineComponent({
     // first link's QR open by default (the usual one is the Wi-Fi address)
     const qrFor = ref('')
     watch(() => remote.value?.urls[0], (u) => { if (u && !qrFor.value) qrFor.value = u })
+    // the QR library (20 kB) is loaded the first time a QR is shown (S4)
+    const qrcode = shallowRef<typeof qrcodeT | null>(null)
+    watch(qrFor, (u) => {
+      if (u && !qrcode.value) import('qrcode-generator').then(m => { qrcode.value = m.default }, (err: unknown) => { console.error(err) })
+    }, { immediate: true })
     function qrSvg (text: string): string {
-      const qr = qrcode(0, 'M')
+      if (!qrcode.value) return ''
+      const qr = qrcode.value(0, 'M')
       qr.addData(text)
       qr.make()
       // our own link only (local address + key), no user text
@@ -140,16 +158,27 @@ export default defineComponent({
     async function openBackup () {
       busy.value = 'backup'
       backupMsg.value = ''
+      pick.value = null
       try {
         const res = (await ask('backup-open')).backup
         if (!res?.ok) { if (res?.error) { backupErr.value = true; backupMsg.value = res.error } return }
-        const r = readBackup(res.text ?? '', props.config as Config)
-        backupErr.value = !r.ok
-        backupMsg.value = r.message
+        const summary = backupSummary(res.text ?? '', props.config as Config)
+        if (!summary.ok) { backupErr.value = true; backupMsg.value = summary.message; return }
+        pick.value = { text: res.text ?? '', summary, settings: true, panelData: true, keepPaths: true }
       } finally { busy.value = null }
     }
+    // Q24: the opened file, waiting for Restore
+    const pick = ref<{ text: string, summary: BackupSummary, settings: boolean, panelData: boolean, keepPaths: boolean } | null>(null)
+    function restorePicked () {
+      const p = pick.value
+      if (!p) return
+      const r = readBackup(p.text, props.config as Config, { settings: p.settings, panelData: p.panelData, keepPaths: p.keepPaths && !!p.summary.otherPaths?.length })
+      pick.value = null
+      backupErr.value = !r.ok
+      backupMsg.value = r.message
+    }
 
-    return { busy, health, allHealth, runHealth, remote, setRemote, newKey, restart, qrFor, qrSvg, copy, copied, saveBackup, openBackup, backupMsg, backupErr }
+    return { busy, health, allHealth, runHealth, remote, setRemote, newKey, restart, qrFor, qrSvg, copy, copied, saveBackup, openBackup, backupMsg, backupErr, pick, restorePicked }
   }
 })
 </script>

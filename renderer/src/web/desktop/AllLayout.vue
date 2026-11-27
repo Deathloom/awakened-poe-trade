@@ -3,10 +3,10 @@
        lines to resize. Edit layout: drag panels by their bar to move them
        (onto a column's edge for a new column), × removes, Add panel adds. -->
   <div class="flex flex-col flex-1 min-h-0">
-    <!-- Deathloom fork (Gerhard 17 Nov): the levelling planner works out what you've
-         taken (game log) and the next passives; the tree map follows it. Without the
-         Levelling guide panel (Mapping layout) it runs hidden so the tree still updates. -->
-    <div v-if="needPlanner" class="hidden"><PobNext /></div>
+    <!-- Deathloom fork (Gerhard 17 Nov): the levelling planner loads the plan (PoB)
+         the tree map and Build progress step along. Without the Levelling guide
+         panel (Mapping layout) it runs hidden so they still have it. -->
+    <div v-if="needPlanner" class="hidden"><LazyPobNext /></div>
     <mapping-loadout-prompt />
     <div v-if="editing" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 mx-2 mt-2 rounded bg-blue-900 text-sm shrink-0">
       <i class="fas fa-arrows-alt text-blue-300" />
@@ -77,20 +77,23 @@
 <script setup lang="ts">
 import { computed, ref, type Component } from 'vue'
 import SplitGutter from './SplitGutter.vue'
-import PobGearBody from '../pob/PobGearBody.vue'
-import PobTreeMap from '../pob/PobTreeMap.vue'
-import LevellingBody from './LevellingBody.vue'
-import PobNext from '../pob/PobNext.vue'
+import {
+  LazyPobGearBody as PobGearBody,
+  LazyLevellingBody as LevellingBody,
+  LazyPlaySessionBody as PlaySessionBody,
+  LazyCheatSheetsBody as CheatSheetsBody,
+  LazyMoneyToolsBody as MoneyToolsBody,
+  LazyTradeCompanionBody as TradeCompanionBody,
+  LazyMarketHistoryBody as MarketHistoryBody,
+  LazyMarketOverview as MarketOverview,
+  LazyMarketSearchBody as MarketSearchBody,
+  LazyTradeBoardBody as TradeBoardBody,
+  LazyBuildProgress as BuildProgress
+} from '../ui/LazyBodies'
+import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
+import { LazyPobNext } from '../companion/LazyLevelling'
 import MappingLoadoutPrompt from './MappingLoadoutPrompt.vue'
-import PlaySessionBody from '../companion/PlaySessionBody.vue'
-import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
-import MoneyToolsBody from '../money/MoneyToolsBody.vue'
-import TradeCompanionBody from '../companion/TradeCompanionBody.vue'
-import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
-import MarketOverview from '../market-history/MarketOverview.vue'
-import MarketSearchBody from '../market-search/MarketSearchBody.vue'
-import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
-import TradeBoardBody from '../trade-board/TradeBoardBody.vue'
+import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
 import {
   ALL_PANELS, layout, saveLayout, resetLayout, panelDef, shownBySettings, inLayout,
   removePanel, addPanel, movePanel, resize, useSettingsSync, type AllPanelId, type DropTarget
@@ -99,7 +102,8 @@ import {
 const propsIn = defineProps<{ editing: boolean }>()
 const emit = defineEmits<{ (e: 'done'): void }>()
 useSettingsSync()
-const needPlanner = computed(() => inLayout('tree') && shownBySettings('tree') && !(inLayout('guide') && shownBySettings('guide')))
+// the tree map and Build progress (Q17) follow the levelling planner: keep one running when the guide isn't shown
+const needPlanner = computed(() => ((inLayout('tree') && shownBySettings('tree')) || inLayout('progress')) && !(inLayout('guide') && shownBySettings('guide')))
 
 const BODIES: Record<AllPanelId, Component> = {
   gear: PobGearBody,
@@ -113,7 +117,8 @@ const BODIES: Record<AllPanelId, Component> = {
   session: PlaySessionBody,
   board: TradeBoardBody,
   cheats: CheatSheetsBody,
-  money: MoneyToolsBody
+  money: MoneyToolsBody,
+  progress: BuildProgress
 }
 function body (id: AllPanelId) { return BODIES[id] }
 function props (id: AllPanelId): Record<string, unknown> {

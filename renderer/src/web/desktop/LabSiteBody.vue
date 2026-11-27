@@ -80,7 +80,8 @@ function setIzaro (i: number, on: boolean) {
 }
 function shrine (d: number) { run.value.shrines = Math.max(0, Math.min(20, run.value.shrines + d)); saveRun() }
 const now = ref(Date.now())
-const tick = setInterval(() => { now.value = Date.now() }, 1000)
+// (only while the window is shown; the time is worked out from the start, F4)
+const tick = setInterval(() => { if (document.visibilityState === 'visible') now.value = Date.now() }, 1000)
 const elapsed = computed(() => {
   const r = run.value
   if (!r.start) return ''

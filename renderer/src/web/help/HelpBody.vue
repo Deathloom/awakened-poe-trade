@@ -27,11 +27,11 @@
           <p>A normal window for your second screen with everything in one place. Open it from the tray (double-click), or let it open when the game starts (Settings → General).</p>
           <ul>
             <li><b>All</b>: build, levelling, tree map, atlas tree, trades and market history at once. Drag the lines between panels to resize; double-click a line to even those panels out. <b>Edit layout</b> (top right) lets you move panels (drag them by their bar; drop on a column's edge for a new column), take them off with ×, add more (This session, market overview, market search, friends' board) and Reset layout.</li>
-            <li><b>Build</b>: gear, gems, tree and Tree map of the active build.
+            <li><b>Build</b>: gear, gems, tree and Tree map of the active build, and <b>Progress</b> (Build progress: tree step, gem and gear ticks, next upgrades).
               <b>Build</b> (top right) picks the build and loadout; the <b>⋯</b> menu next to it has Import a build, Build sharing, What changes between stages,
               Compare, Edit loadouts and Manage builds. In the overlay and in game, Compare / Edit / Manage open this window.</li>
-            <li><b>Levelling</b>: campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take.</li>
-            <li><b>Atlas</b>: the atlas passive tree. The drop-down picks an atlas build; the <b>⋯</b> menu adds one from a pathofexile.com atlas tree link or code
+            <li><b>Levelling</b> (<b>Guide</b> and <b>Lab</b>: today's labyrinth layouts on poelab.com with your run checklist): campaign guide, quest gems to take or buy, gem swaps per level and the next passives to take. <b>Pace</b> (below the game log stats) shows when you reached each act, your level and deaths there, and levels per hour of campaign time next to an earlier fresh start on this PC (your best or last; ⋯ to pick another, or to forget a run). Client.txt has no experience numbers, so it's levels per hour, not XP/h.</li>
+            <li><b>Mapping</b>: <b>Atlas tree</b>, <b>This session</b> (map timer and loot), <b>Map mods</b> (the same list as Settings → Maps, with its own Save) and <b>Farming</b> (profit per map and per hour). Atlas tree: the atlas passive tree. The drop-down picks an atlas build; the <b>⋯</b> menu adds one from a pathofexile.com atlas tree link or code
               (poeplanner links use their own format) or makes a ready-made tree, and copies the link to share with friends, renames or deletes it.
               Green = taken, orange = still to take. Step along the build with the arrows (1 or 5 passives) as you take passives in game;
               ⋯ → "Taken: jump to all or nothing" sets "I have this whole build" (or "I have nothing" after a respec or in a new league).
@@ -40,20 +40,26 @@
               Orbhoarder takes that content's notables by the shortest path from the start, using only GGG's own atlas data.
               Atlas builds are saved in your builds folder (Atlas) and sync with your builds, so friends who can see your builds see your atlas builds too
               (listed under their name, read-only: ⋯ → Copy to my atlas builds). Also on the All tab (Edit layout → Add panel → Atlas tree).</li>
-            <li><b>Trades</b>: incoming and outgoing trade whispers and your ledger.</li>
-            <li><b>Board</b>: the friends' trade board, only for your group (POE-Builds members, GitHub sign-in).
+            <li><b>Trade</b>: <b>Whispers and ledger</b> (incoming and outgoing trade whispers and your ledger), <b>Search</b> (Market search, below) and <b>Trade site</b> (below).</li>
+            <li><b>Friends</b>: <b>Build sharing</b> (the same as Build ⋯ → Build sharing) and <b>Board</b>: the friends' trade board, only for your group (POE-Builds members, GitHub sign-in).
               <b>Give</b>: free items, press <b>Claim</b> and the poster invites you. <b>Sell</b>: priced items for friends first, press <b>Whisper</b>.
               <b>Wanted</b>: what someone needs, press <b>I have one</b> and whisper them. <b>Post</b> adds your own: paste the item text (Ctrl+C on the item in game)
               or type a name. Mark yours <b>Sold</b> / <b>Given</b> / <b>Got it</b> when done. Also in the overlay menu (<i class="fas fa-people-carry" />)
               and on the All tab (Edit layout → Add panel).</li>
             <li><b>Market</b>: your watchlist and a poe.ninja market overview, plus tools (tabs on the left):
-              <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, every row has Trade and gear rows ↑ to open the trade site; click a gear row for its mods; rares are listed without a price),
+              <b>Shopping</b> (what your build still needs: its uniques and gems at the cheapest poe.ninja price; tick what you have, every row has Trade and gear rows ↑ to open the trade site; click a gear row for its mods; rares are listed without a price;
+              ⋯ → <b>Make loot filter add-on…</b>: pick your loot filter and Orbhoarder writes a new file next to it, <i>"your filter + Orbhoarder.filter"</i>, with big, highlighted Show blocks for what's still to buy (uniques by base type, the rares' bases, gems in PoE1) first and then your filter unchanged (every drop of a listed rare base is highlighted, white, magic or rare; names the app doesn't know are left out, since the game refuses a filter with an unknown name); in game pick it in <b>Options → UI → Item filter</b>. Your own filter file is never changed; make it again when the list changes. Only on the PC, only in the game's Documents\My Games folder; website (online) filters can't be used, download the file first),
               <b>Sell list</b> (what you plan to sell: value now, a week of prices, "Falling: sell soon" or "Rising: can wait", and a copy button for a <code>~price</code> note),
-              <b>Farming</b> (name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
-              <b>Crafting</b> (crafting currency prices with a week's trend, and a sum of what your craft costs).
-              The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Money tools → Currency counter).</li>
-            <li><b>Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
-            <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide and What's new.</li>
+              <b>Farming</b> (now on the Profit and Mapping tabs: name what you're farming at the top; maps with loot added in This session then show profit per map and per hour, by strategy or by league mechanic),
+              (Gems, Crafting costs and Farming are on the <b>Profit</b> tab now.)
+              The <b>1 div = … c</b> button in the Market bar shows the divine price trend, a chaos ↔ divine converter and your wallet (from Profit → Currency counter).
+              <b>Price lines</b>: on a Watched or Shopping row, ⋯ → <b>Price line above / below…</b>, then a price in chaos or divine. Each time Orbhoarder refreshes poe.ninja prices (no extra downloads) it checks them; an alert fires once when the price crosses your line.
+              With the phone link on (Settings → Tools) a connected phone shows it at the top of the page (dismiss there only hides it on the phone); if no phone confirms it within a few seconds (none connected, or it's locked) you get a Windows notification. Prices are only checked while something that shows them (price check, Market, Profit) is in use. Add and remove price lines on the PC; <b>?</b> above the Watched list explains the rest. (Not the same as the Watched row's <b>Alert</b> button, which tells you when the price moves by a percentage.)</li>
+            <li><b>Profit</b> (tab, and the Profit panel in the overlay and in game): <b>Gems</b> (gem levelling profit per slot-day, and the gems you are levelling now),
+              <b>Crafting costs</b> (crafting currency prices with a week's trend, and a sum of what your craft costs), <b>Currency counter</b>, <b>Farming</b>, and the league planners
+              <b>Viscera</b>, <b>Temple</b> and <b>Wombgifts</b>.</li>
+            <li><b>Trade → Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
+            <li><b>Settings</b>: all settings (the same as Shift+Space → Settings); <b>About</b> has Help, What's new, the tour and the setup guide; at the bottom: <b>Patch notes</b> (GGG's PC patch notes; a yellow dot means new notes came out since you last opened them, with a Windows notification too: Settings → General to turn it off).</li>
           </ul>
         </section>
 
@@ -61,12 +67,23 @@
           <h2>In game</h2>
           <ul>
             <li><b>Price check</b>: hover an item and press the price check key. You see prices and what the item does to your PoB build.</li>
+            <li><b>Map check</b>: hover a map and press the item check key. Mods you coloured (Settings → Maps) and the ones in your build's Notes show as always.
+              With a PoB build active, mods dangerous for it get a red edge and <i class="fas fa-hammer" /> (hover for why: reflect for melee, no regen for regen builds, less max res when your over-cap is low, curses unless you're curse immune, …)
+              and mods that are fine for it (or have no build-specific rule) are greyed; mods dangerous for every build (more monster damage or crit, penetration, poison on hit, …) never are. It uses the stats PoB saved in the build file, so save the build in PoB after big changes. <b>?</b> on the map check shows the legend; Settings → Maps → Warn for my PoB build turns it off.</li>
             <li><b>Market search</b> (overlay menu, <i class="fas fa-search-dollar" />, or its hotkey from Settings → Hotkeys): type an item name, pick it, and see who sells it, cheapest first.
               <b>Whisper</b> uses GGG's own buy message, <b>Hideout</b> is <code>/hideout name</code> (works when the seller lets visitors in).
               Instant buyout listings open in the Trade site tab, where you click GGG's "Travel to Hideout".</li>
-            <li><b>Panels over the game</b>: pin any panel (build, guide, trade companion, tree map, atlas, session, market, cheat sheets, money) with Settings → Panels → Where panels show.
+            <li><b>Panels over the game</b>: pin any panel (build, guide, trade companion, tree map, atlas, session, market, cheat sheets, profit, friends' board, market search, build progress) with Settings → Panels → Where panels show.
               Drag them by the top bar, resize from the bottom-right corner. A panel set to click-through can't be dragged while you play: press Shift+Space first.</li>
             <li><b>Panels in the overlay</b>: hover a panel, click <b>Move</b> and drag one of the corner squares. A panel's hotkey pressed in game shows only that panel; Shift+Space shows the menu and every open panel.</li>
+            <li><b>Cheat sheets</b> (panel, or the window's <b>Reference</b> tab: Cheat sheets, Recipes, Tracking): short sheets for league mechanics (Covens, Betrayal, Heist, Delve, Sanctum, map mechanics), vendor recipes, campaign bench recipes and a league checklist.
+              <b>Fate reward values</b> (button at the bottom of the Covens sheet): the Fate reward types with their poe.ninja price per item, dearest first, and how many copies of a Fate pay
+              (2 for the single Divine / Annulment outcomes, otherwise 1 or 3). GGG doesn't say how many items most rewards give, so the star only means "highest price per item"; random drops have no price.
+              <b>Thread planner</b>: pick a Thread and how many you put in the map device (1–8) to see the guaranteed Thread mods, which 3 / 6 / 8 bonus you get and the next one,
+              the area level the strongest effects need, the cost per map at poe.ninja prices (chaos and divine) and the atlas notables that help that Thread
+              (which option to choose on Dextral / Sinistral Threads, which type to rule out on Threadbare / Unthreaded). <b>?</b> says where the numbers come from.
+              <b>Challenges</b>: this league's 40 challenges with their steps, a tip and a link to the cheat sheet that helps. Tick them yourself (the app doesn't read your account):
+              saved on this PC for the league picked in Settings, so a new league starts empty; Hardcore and SSF share the list, Ruthless has its own. <b>⋯</b> unticks them all.</li>
             <li><b>Post to the friends' board</b>: set a hotkey in Settings → Hotkeys, hover an item and press it. The board opens in the overlay with the item filled in.</li>
             <li><b>Chat buttons</b> (trade companion, market search, friends' board) copy the command, or send one chat message per click (setting). Nothing is ever sent by itself.</li>
           </ul>
@@ -76,7 +93,7 @@
           <h2>Your build</h2>
           <ul>
             <li>Orbhoarder uses your Path of Building build: keep it up to date in PoB (re-import your character, save) and the panels follow.</li>
-            <li><b>Loadouts</b>: name PoB trees after a level ("Level 12", "Level 30") and the levelling planner uses them as steps. ⋯ → Edit loadouts and gems → New loadout copies the picked one.</li>
+            <li><b>Loadouts</b>: name PoB trees after a level ("Level 12", "Level 30") and the levelling planner uses them as steps (click a step in Levelling → Next steps to switch; it never switches by itself). ⋯ → Edit loadouts and gems → New loadout copies the picked one.</li>
             <li><b>Edit loadouts</b> (window, Build tab → ⋯ → Edit loadouts and gems): rename / copy / delete trees, item sets and skill sets; change gem level, quality and on/off.
               Tree map → <b>Edit</b>: click a passive to take or refund it. The old file is kept in <i>Build backups</i> next to your builds folder.</li>
             <li><b>Manage builds</b> (window, Build tab → ⋯ → Manage builds): rename, move to a folder, duplicate, delete. Deleted builds go to <i>Deleted builds</i> next to your builds folder.</li>
@@ -90,6 +107,9 @@
             <li>Moves on by itself when you enter the next zone on the route (from the game's log file). The arrows fix it by hand.</li>
             <li>Hand-ins show what to pick for your build ("take …") and what to buy after. <span class="tag">optional</span> quests can be hidden with <i class="fas fa-plus-square" />.</li>
             <li>Bandit choice comes from your PoB build's Configuration tab.</li>
+            <li><b>Labyrinth</b> (Levelling → Next steps): the 12 trials for Normal, Cruel and Merciless, ticked from the game's log (a trial-completed message in that zone, or entering that lab) or by hand with <i class="fas fa-tasks" /> Trials; labs done from Izaro's "Triumphant at last" or entering a higher lab (type it in under Trials if it's behind); and the ascendancy notables your PoB levelling tree adds over the previous tree, minus what the game log shows taken (PoB sets no order, so pick which first). The guide's trial lines get a tick too; its lab banner lists those notables only in the Orbhoarder window (where the build is loaded).</li>
+
+            <li>"crafting recipe: …" lines are crafting bench recipes to pick up in that zone. Click one when you have it: it's crossed out and ticked in Cheat sheets → Bench recipes, which lists them all by act with the next one on your route. Ticks are by hand (the game log doesn't say) and count for all your characters, like recipes in game.</li>
           </ul>
         </section>
       </template>
@@ -165,7 +185,7 @@ const keys = computed(() => {
     { key: pob?.tradesKey, label: 'Trade companion' },
     { key: pob?.openPobKey, label: 'Open Path of Building' },
     // panels added in 1.0.63: no hotkey until the player sets one
-    ...EXTRA_PANELS.map(p => ({ key: pob?.panelKeys?.[p.panel] ?? '', label: p.label }))
+    ...EXTRA_PANELS.filter(p => !p.ownHotkey).map(p => ({ key: pob?.panelKeys?.[p.panel] ?? '', label: p.label }))
   ]
 })
 

@@ -9,9 +9,9 @@ import type { ShortcutAction, HudPanel } from '../../../ipc/types'
 
 // Deathloom fork: Orbhoarder window tab for a panel that's in neither the overlay nor in game
 const WINDOW_VIEW: Record<string, string> = {
-  gear: 'build', guide: 'levelling', trades: 'trades', search: 'trade', board: 'board', tree: 'build', atlas: 'atlas', session: 'overview', market: 'market', overview: 'market', cheats: 'overview', money: 'market'
+  gear: 'build', guide: 'levelling', trades: 'trades', search: 'search', board: 'board', tree: 'build', atlas: 'atlas', session: 'session', market: 'market', overview: 'market', cheats: 'reference', money: 'profit', progress: 'progress'
 }
-const EXTRA = new Set(['tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money'])
+const EXTRA = new Set(['tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money', 'progress'])
 import type { Logger } from '../RemoteLogger'
 import type { HudWindow } from '../windowing/HudWindow'
 import type { OverlayWindow } from '../windowing/OverlayWindow'
@@ -188,7 +188,9 @@ export class Shortcuts {
           const extraPanel = entry.action.target.startsWith('panel:') && EXTRA.has(entry.action.target.slice(6)) ? entry.action.target.slice(6) as HudPanel : null
           const hudPanel: HudPanel | null = entry.action.target === 'campaign-guide' ? 'guide'
             : entry.action.target === 'trade-companion' ? 'trades'
-              : entry.action.target === 'pob-gear' ? 'gear' : extraPanel
+              : entry.action.target === 'pob-gear' ? 'gear'
+                : entry.action.target === 'market-search' ? 'search'
+                  : entry.action.target === 'trade-board' ? 'board' : extraPanel
           if (hudPanel && this.hud?.isPinned(hudPanel)) {
             this.hud.togglePanel(hudPanel)
             return
@@ -196,7 +198,8 @@ export class Shortcuts {
           // Deathloom fork: panel set to not show in the overlay: the hotkey opens
           // the Orbhoarder window on its tab instead (the game keeps focus)
           const placeKey = hudPanel ?? (entry.action.target === 'market-search' ? 'search' : entry.action.target === 'trade-board' ? 'board' : null)
-          if (placeKey && this.panelOverlayOff?.(placeKey)) {
+          // Build progress has no overlay panel: unpinned, its hotkey always opens the window
+          if (placeKey && (placeKey === 'progress' || this.panelOverlayOff?.(placeKey))) {
             this.openWindowView?.(WINDOW_VIEW[placeKey] ?? placeKey)
             return
           }

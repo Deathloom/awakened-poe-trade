@@ -22,10 +22,10 @@ export const CONTENTS: AtlasContent[] = [
   { id: 'blight', label: 'Blight', re: /Blight/i },
   { id: 'delirium', label: 'Delirium', re: /Delirium/i },
   { id: 'abyss', label: 'Abyss', re: /Abyss/i },
-  { id: 'beasts', label: 'Beasts (Bestiary)', re: /Beast|Einhar/i },
+  { id: 'beasts', label: 'Beasts (Bestiary)', re: /Beast|Einhar|Bestiary/i },
   { id: 'ultimatum', label: 'Ultimatum', re: /Ultimatum/i },
   { id: 'incursion', label: 'Incursion', re: /Incursion/i },
-  { id: 'syndicate', label: 'Syndicate', re: /Syndicate/i },
+  { id: 'syndicate', label: 'Syndicate', re: /Syndicate|Betrayal/i },
   { id: 'torment', label: 'Tormented Spirits', re: /Tormented Spirit|haunted/i },
   { id: 'exiles', label: 'Rogue Exiles', re: /Rogue Exile/i },
   { id: 'mercenaries', label: 'Mercenaries', re: /Mercenar/i },
@@ -39,6 +39,21 @@ export const CONTENTS: AtlasContent[] = [
   { id: 'uniques', label: 'Unique monsters', re: /Unique Monsters/i },
   { id: 'rares', label: 'Rare monsters / packs', re: /Rare Monsters|Magic Monsters|Pack Size|Monster Packs/i }
 ]
+
+// loot or monster kinds found in every content: a node naming one of these doesn't
+// need that content picked (Threads from Unique Monsters are still Threads)
+const LOOT_ONLY = new Set(['threads', 'divination', 'uniques', 'rares'])
+
+// what a stat line is about: the content it names first ("Strongboxes … contain a
+// Mercenary" is a Strongbox line; "Mercenaries … Shrine buff" a Mercenary line)
+export function subjectOf (line: string): string | null {
+  let best: { id: string, at: number } | null = null
+  for (const c of CONTENTS) {
+    const m = c.re.exec(line)
+    if (m && (!best || m.index < best.at)) best = { id: c.id, at: m.index }
+  }
+  return best?.id ?? null
+}
 
 // general map sustain: maps dropping, higher tiers
 export const SUSTAIN: RegExp = /Maps found|1 tier higher|additional Map at a tier|Guardian Map|Conqueror Map/i
@@ -75,6 +90,23 @@ function variantFor (n: AtlasNode, re: RegExp): number | null {
   return null
 }
 
+// Deathloom fork (Gerhard 20 Nov 2026): a "type picker" notable lets you choose
+// between other contents (Dextral / Sinistral Threads: Breach, Ritual, Ultimatum…;
+// Merged Worlds …). Its own text ("Threads") isn't the content you get: it only
+// counts when one of its options is a content you picked, with that option chosen.
+const ANY_CONTENT = new RegExp(CONTENTS.map(c => c.re.source).join('|'), 'i')
+function isTypePicker (n: AtlasNode): boolean {
+  const vs = ATLAS.variants[String(n[0])] ?? []
+  return vs.filter(([, lines]) => ANY_CONTENT.test(clean(lines.join(' ')))).length >= 2
+}
+// "cannot be of type" picker (Threadbare, Unthreaded): rule out a type you didn't
+// pick, only when this group holds one you did (more of yours, fewer of the rest)
+function excludeVariant (n: AtlasNode, re: RegExp): number | null {
+  const vs = ATLAS.variants[String(n[0])] ?? []
+  if (!vs.some(([, lines]) => re.test(clean(lines.join(' '))))) return null
+  return vs.find(([, lines]) => !re.test(clean(lines.join(' '))))?.[0] ?? null
+}
+
 // nodes a path may go through (no mastery art labels)
 const walkable = (id: number) => { const k = ATLAS_BY_ID.get(id)?.[3]; return k != null && k !== 3 }
 
@@ -102,6 +134,14 @@ function newPath (tree: Set<number>, prev: Map<number, number>, id: number): num
 export function generateAtlas (opts: GenOptions): GenResult {
   const picked = CONTENTS.filter(c => opts.contents.includes(c.id))
   const contentRe = picked.length ? new RegExp(picked.map(c => c.re.source).join('|'), 'i') : null
+  // a node that only works inside a content you didn't pick (an Ultimatum node that
+  // rewards Divination cards) is not yours
+  const needsUnpicked = (lines: string[]) => lines.some(l => {
+    const s = subjectOf(l)
+    return s != null && !LOOT_ONLY.has(s) && !opts.contents.includes(s)
+  })
+  const optionLines = (n: AtlasNode, v: number) => ((ATLAS.variants[String(n[0])] ?? []).find(([e]) => e === v)?.[1] ?? []).map(clean)
+  const statLines = (n: AtlasNode) => n[8].map(clean)
   const budget = Math.max(1, Math.min(opts.budget || ATLAS.points || 150, ATLAS.points || 150))
 
   // what we want, in order: sustain notables (ticked = the base of any atlas tree,
@@ -113,11 +153,15 @@ export function generateAtlas (opts: GenOptions): GenResult {
     const t = textOf(n)
     const notable = n[3] === 1
     let hit = false
-    if (contentRe) {
-      if (contentRe.test(t)) hit = true
+    if (contentRe && notable && isTypePicker(n)) {
+      const against = AGAINST.test(clean(n[8].join(' ')))
+      const v = against ? excludeVariant(n, contentRe) : variantFor(n, contentRe)
+      if (v != null && (against || !needsUnpicked(optionLines(n, v)))) { choices[String(n[0])] = v; hit = true }
+    } else if (contentRe) {
+      if (contentRe.test(t)) hit = !needsUnpicked(statLines(n))
       else if (notable) {
         const v = variantFor(n, contentRe)
-        if (v != null) { choices[String(n[0])] = v; hit = true }
+        if (v != null && !needsUnpicked([...statLines(n), ...optionLines(n, v)])) { choices[String(n[0])] = v; hit = true }
       }
     }
     if (hit) { tiers[notable ? 0 : 2].push(n[0]); continue }
@@ -167,4 +211,50 @@ export function generateAtlas (opts: GenOptions): GenResult {
 
 // how many notables each content has (to show next to the choice)
 export const CONTENT_NOTABLES: Record<string, number> = Object.fromEntries(CONTENTS.map(c => [c.id,
-  ATLAS.nodes.filter(n => n[3] === 1 && (c.re.test(textOf(n)) || variantFor(n, c.re) != null)).length]))
+  ATLAS.nodes.filter(n => n[3] === 1 && (isTypePicker(n) ? variantFor(n, c.re) != null : (c.re.test(textOf(n)) || variantFor(n, c.re) != null))).length]))
+
+// Deathloom fork (Q3): atlas notables that help one kind of Thread (Cheat sheets →
+// Thread planner). Same rules as the ready-made tree: a "more likely to be of type"
+// picker counts with your type chosen, a "cannot be of type" one when its group
+// holds your type (rule out another), plus notables for Threads in general
+// ("per different Thread" ones work against stacking one kind: left out).
+export interface ThreadNotable { name: string, how: string, kind: 'type' | 'exclude' | 'general' }
+const THREAD_RE = /\bThreads?\b/i
+// the ten Thread types (3.30)
+const THREAD_TYPES = ['Abyss', 'Bestiary', 'Betrayal', 'Blight', 'Breach', 'Expedition', 'Incursion', 'Legion', 'Ritual', 'Ultimatum']
+// Thread names that differ from the content's name: used only here (the planner),
+// so the ready-made tree's matching (CONTENTS) stays as it is
+const THREAD_ALIAS: Record<string, string> = { beasts: 'Bestiary', syndicate: 'Betrayal' }
+function threadRe (c: AtlasContent): RegExp {
+  const alias = THREAD_ALIAS[c.id]
+  return alias ? new RegExp(`${c.re.source}|${alias}`, 'i') : c.re
+}
+// a text naming another kind of Thread than `re`'s ("Breach Threads drop more")
+export function namesOtherThread (text: string, re: RegExp): boolean {
+  return THREAD_TYPES.some(t => !re.test(t) && new RegExp(`\\b${t}\\b`, 'i').test(text))
+}
+export function threadNotables (contentId: string): ThreadNotable[] {
+  const c = CONTENTS.find(x => x.id === contentId)
+  if (!c) return []
+  const re = threadRe(c)
+  const out: ThreadNotable[] = []
+  const seen = new Set<string>()
+  for (const n of ATLAS.nodes) {
+    if (n[3] !== 1) continue
+    const name = n[6].trim()
+    if (seen.has(name)) continue
+    const own = clean(n[8].join(' '))
+    if (isTypePicker(n)) {
+      const opts = (ATLAS.variants[String(n[0])] ?? []).map(([, lines]) => clean(lines.join(' ')).trim())
+      const mine = opts.find(t => re.test(t))
+      if (!mine || !THREAD_RE.test(own)) continue
+      if (AGAINST.test(own)) out.push({ name, kind: 'exclude', how: `rule out one of ${opts.filter(t => t !== mine).join(' / ')}` })
+      else out.push({ name, kind: 'type', how: `set to ${mine}` })
+    } else if (THREAD_RE.test(own) && !AGAINST.test(own) && !/different Thread/i.test(own) && !namesOtherThread(own, re)) {
+      out.push({ name, kind: 'general', how: own.trim() })
+    } else continue
+    seen.add(name)
+  }
+  const order = { type: 0, exclude: 1, general: 2 }
+  return out.sort((a, b) => order[a.kind] - order[b.kind])
+}

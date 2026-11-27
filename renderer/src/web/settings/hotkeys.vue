@@ -33,7 +33,7 @@
         <span class="flex-1">Post hovered item to the friends' trade board <span class="text-gray-500 text-sm">(optional)</span></span>
         <hotkey-input :modelValue="pob.boardPostKey ?? null" class="w-48" @update:modelValue="v => { pob.boardPostKey = v }" />
       </div>
-      <div v-for="p of OFFERED_EXTRA_PANELS" :key="p.panel" class="flex items-center gap-x-2 mb-1">
+      <div v-for="p of HOTKEY_EXTRA_PANELS" :key="p.panel" class="flex items-center gap-x-2 mb-1">
         <span class="flex-1">{{ p.label }} <span class="text-gray-500 text-sm">(optional)</span></span>
         <hotkey-input :modelValue="pob.panelKeys?.[p.panel] ?? null" class="w-48" @update:modelValue="v => setPanelKey(p.panel, v)" />
       </div>
@@ -73,7 +73,7 @@ import { ItemCheckWidget } from '../item-check/widget.js'
 
 import UiRadio from '@/web/ui/UiRadio.vue'
 import HotkeyInput from './HotkeyInput.vue'
-import { OFFERED_EXTRA_PANELS } from '@/web/desktop/panel-defs'
+import { HOTKEY_EXTRA_PANELS } from '@/web/desktop/panel-defs'
 import type { HudPanel } from '@ipc/types'
 import { usePobConfig } from './pob-config'
 import HotkeysGeneric, { HotkeySchema } from '../settings/HotkeysGeneric.vue'

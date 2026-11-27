@@ -49,7 +49,7 @@
         </div>
       </div>
       <!-- Deathloom fork: watch this item in the market history panel -->
-      <button class="px-1 text-gray-500 hover:text-yellow-400" :title="watched ? 'Stop watching' : 'Watch price (market history panel)'"
+      <button class="px-1 text-gray-500 hover:text-yellow-400" :title="watched ? 'Stop watching' : watchFull ? `Watchlist full (${maxWatched} items): remove one in Market history` : 'Watch price (market history panel)'"
         @click="toggleWatched"><i :class="watched ? 'fas fa-star text-yellow-400' : 'far fa-star'" /></button>
     </template>
   </div>
@@ -67,12 +67,12 @@ import { useI18nNs } from '@/web/i18n'
 import { usePoeninja } from '@/web/background/Prices'
 import { isValuableBasetype, getDetailsId } from './getDetailsId'
 import ItemQuickPrice from '@/web/ui/ItemQuickPrice.vue'
-import VueApexcharts from 'vue3-apexcharts'
+import VueApexcharts from '@/web/ui/LazyChart'
 import { ParsedItem } from '@/parser'
 import { artificialSlowdown } from '../trade/artificial-slowdown'
 import { ItemFilters } from '../filters/interfaces'
 import { useLeagues } from '@/web/background/Leagues'
-import { isWatched, toggleWatch, watchKey } from '@/web/market-history/watchlist'
+import { isWatched, toggleWatch, watchKey, watchFull, MAX_ITEMS } from '@/web/market-history/watchlist'
 
 const slowdown = artificialSlowdown(800)
 
@@ -127,6 +127,8 @@ export default defineComponent({
       t,
       trend,
       watched,
+      watchFull,
+      maxWatched: MAX_ITEMS,
       toggleWatched () {
         const d = detailsKey.value
         if (!d) return

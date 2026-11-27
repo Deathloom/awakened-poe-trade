@@ -192,6 +192,7 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { saveShared } from './build-progress'
 import type { PobPlan, PobPlanGem, PobSocketGroup, PobSocketedItem } from '@ipc/types'
 import { pobText } from './labels'
 import { Host } from '@/web/background/IPC'
@@ -238,7 +239,7 @@ function toggleGem (name: string) {
   if (list.has(name)) list.delete(name)
   else list.add(name)
   ticks.value = { ...ticks.value, [owner]: [...list] }
-  try { localStorage.setItem(TICKS_KEY, JSON.stringify(ticks.value)) } catch {}
+  saveShared(TICKS_KEY, ticks.value)
 }
 
 const me = useMyCharacter()

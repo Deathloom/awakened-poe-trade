@@ -8,7 +8,7 @@ import { readWindowKey, windowKey } from '@/web/hud/is-hud'
 import { effectiveMode, phaseForArea, addTreeMapOnce, type LayoutMode, type LayoutPref } from './layout-phase'
 import { PLAY_SESSION_KEY, loadPlaySession } from '../companion/play-session'
 
-export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money'
+export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money' | 'progress'
 
 export interface AllPanelDef {
   id: AllPanelId
@@ -22,17 +22,19 @@ export interface AllPanelDef {
 // keeps its place), so it lives on its own tab. Default layout (Gerhard,
 // 14 Nov 2026): Build / Trades / Market history | Levelling | Tree map / Atlas tree.
 export const ALL_PANELS: AllPanelDef[] = [
-  { id: 'gear', label: 'Build (gear, gems, tree)', icon: 'fa-hammer', settingsKey: 'gear' },
   { id: 'guide', label: 'Levelling guide', icon: 'fa-route', settingsKey: 'guide' },
-  { id: 'tree', label: 'Tree map', icon: 'fa-project-diagram', settingsKey: 'tree' },
   { id: 'atlas', label: 'Atlas tree', icon: 'fa-globe', settingsKey: 'atlas' },
-  { id: 'trades', label: 'Trade companion', icon: 'fa-handshake', settingsKey: 'trades' },
-  { id: 'market', label: 'Market', icon: 'fa-chart-line', settingsKey: 'market' },
-  { id: 'search', label: 'Market search', icon: 'fa-search' },
-  { id: 'board', label: "Friends' trade board", icon: 'fa-people-carry', settingsKey: 'board' },
   { id: 'session', label: 'This session', icon: 'fa-stopwatch', settingsKey: 'session' },
-  { id: 'cheats', label: 'Cheat sheets', icon: 'fa-book', settingsKey: 'cheats' },
-  { id: 'money', label: 'Money tools', icon: 'fa-piggy-bank', settingsKey: 'money' }
+  { id: 'gear', label: 'Build (gear, gems, tree)', icon: 'fa-hammer', settingsKey: 'gear' },
+  { id: 'tree', label: 'Tree map', icon: 'fa-project-diagram', settingsKey: 'tree' },
+  // Q17: tree step + gems + gear ticks in one view (added with Add panel)
+  { id: 'progress', label: 'Build progress', icon: 'fa-tasks', settingsKey: 'progress' },
+  { id: 'market', label: 'Market', icon: 'fa-chart-line', settingsKey: 'market' },
+  { id: 'money', label: 'Profit', icon: 'fa-piggy-bank', settingsKey: 'money' },
+  { id: 'trades', label: 'Trade companion', icon: 'fa-handshake', settingsKey: 'trades' },
+  { id: 'search', label: 'Market search', icon: 'fa-search', settingsKey: 'search' },
+  { id: 'board', label: "Friends' trade board", icon: 'fa-people-carry', settingsKey: 'board' },
+  { id: 'cheats', label: 'Cheat sheets', icon: 'fa-book', settingsKey: 'cheats' }
 ]
 const IDS = new Set(ALL_PANELS.map(p => p.id))
 

@@ -43,8 +43,9 @@
         <div class="flex flex-wrap items-center gap-1 px-1 pb-1 text-xs">
           <template v-for="(ph, i) of plan.phases" :key="i">
             <i v-if="i" class="fas fa-angle-right text-gray-600" />
-            <span class="px-1 rounded" :class="i + 1 === plan.phase ? 'bg-gray-700 text-gray-100' : (i + 1 < plan.phase ? 'text-gray-600' : 'text-gray-400')"
-              :title="ph.level ? `Followed up to level ${ph.level}` : 'End goal: the loadout picked in the Build tab'">{{ ph.title }}</span>
+            <button class="px-1 rounded" :class="i + 1 === plan.phase ? 'bg-gray-700 text-gray-100' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'"
+              :title="(ph.level ? `Levelling tree up to level ${ph.level}` : 'End goal: the loadout picked in the Build tab') + '. Click to use this tree (it doesn\'t change by itself when you level).'"
+              @click="pickPhase(ph.title)">{{ ph.title }}</button>
           </template>
         </div>
         <div v-if="plan.phases.length === 1" class="px-1 pb-1 text-xs text-gray-600"
@@ -55,15 +56,17 @@
         <div class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head flex items-baseline"><i class="fas fa-shoe-prints mr-1 text-gray-500" />
             <span>Next passives</span>
-            <span class="ml-2 text-gray-600">{{ Math.min(plan.taken, plan.order.length) + plan.kept }} / {{ plan.order.length + plan.kept }} of this tree by now</span>
+            <tree-stepper v-if="planStep" class="ml-2" :pos="planStep.pos" :len="planStep.len" @step="stepPlan" />
+            <button v-if="planStep && planStep.pos !== planStep.byLevel" class="ui-btn ui-btn-quiet text-xs"
+              :title="`Jump to where your level and quest points say you are (${planStep.byLevel}/${planStep.len}). Once: it won't follow your level.`"
+              @click="jumpPlanToLevel"><i class="fas fa-user-check" />My level</button>
             <button class="ml-auto ui-btn ui-btn-quiet text-xs" @click="showAll = !showAll">{{ showAll ? 'Next only' : 'Whole order' }}</button>
           </div>
           <div v-if="!plan.order.length" class="text-gray-500">This tree adds no passives over the previous one.</div>
-          <div v-else-if="!showAll && plan.taken >= plan.order.length" class="text-green-500">All passives of this tree should be taken by now.</div>
+          <div v-else-if="!showAll && planStep && planStep.pos >= planStep.len" class="text-green-500">You've stepped past every passive of this tree.</div>
           <div v-for="row of passiveRows" :key="row.i" class="flex items-baseline gap-x-2 py-px"
             :class="isTaken(row.i) ? 'opacity-40' : ''">
             <span class="w-6 text-right text-xs text-gray-600 shrink-0">{{ row.i + 1 + plan.kept }}</span>
-            <i v-if="takenByLog?.has(row.i)" class="fas fa-check text-green-500 text-xs" title="Taken (game log)" />
             <span class="min-w-0 truncate" :class="nodeClass(row.node)" :title="nodeTitle(row.node)">{{ row.node.name }}</span>
             <span v-if="row.node.type !== 'Normal'" class="text-xs text-gray-600 shrink-0">{{ typeLabel(row.node) }}</span>
             <span v-if="row.node.stats" class="text-xs text-gray-600 truncate">{{ row.node.stats }}</span>
@@ -75,10 +78,8 @@
           <div class="text-xs text-gray-500">{{ plan.refund.map(n => n.name).join(', ') }}</div>
         </div>
 
-        <div v-if="plan.ascendancy.length" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
-          <div class="lg-head"><i class="fas fa-crown mr-1 text-gray-500" />Ascendancy in this tree{{ plan.ascendancyClass ? ` (${plan.ascendancyClass})` : '' }}</div>
-          <div class="text-blue-300">{{ plan.ascendancy.map(a => a.name).join(', ') }}</div>
-        </div>
+        <!-- Deathloom fork (Q7): trials + the next lab's 2 ascendancy points (replaces "Ascendancy in this tree") -->
+        <LabHelper :char-name="char?.name ?? ''" :progress="progress" :plan="plan" />
 
         <!-- gems: swap at the next step -->
         <div v-if="swap" class="rounded px-2 py-1.5 mb-2 bg-gray-900">
@@ -201,8 +202,6 @@
             <div class="flex flex-wrap gap-x-4 text-gray-300">
               <span :title="progress.questsExact ? 'From /passives' : 'Passive points received from quests (type /passives in game for the exact list)'">
                 Quest passives: {{ progress.passives }}<span class="text-gray-500">{{ progress.questsExact ? ' (/passives)' : '' }}</span></span>
-              <span v-if="logAllocated != null" :title="progress.passivesSnap ? 'From /passives in game, plus what you allocated since. Type /passives again to re-sync.' : 'Passives taken minus refunded, counted from the game log. Type /passives in game for the exact number.'">
-                Passives taken: {{ logAllocated }}<span v-if="plan.available - logAllocated > 0" class="text-yellow-400"> · {{ plan.available - logAllocated }} unspent</span></span>
               <span>Deaths: {{ progress.deaths ?? 0 }}<span v-if="guideAct && progress.deathsByAct?.[guideAct]" class="text-gray-500"> ({{ progress.deathsByAct[guideAct] }} in act {{ guideAct }})</span></span>
               <button v-if="campaignTime" class="hover:text-gray-100" :title="actTimes + '\nClick: act splits'" @click="toggleSplits">
                 <i class="fas fa-stopwatch mr-1 text-gray-500" />Campaign time: {{ campaignTime }}</button>
@@ -228,6 +227,9 @@
           <div v-else class="text-gray-600">Nothing yet for this character. Level up once, or Rebuild from game log.</div>
         </div>
 
+        <!-- Deathloom fork (Q8): deaths and pace vs earlier fresh starts -->
+        <PaceLog :levels="levels" :char-name="char?.name" />
+
         <div class="px-1 pt-1 text-xs text-gray-600">
           Assumes you took the passives in this order. Order: nearest notable, keystone or jewel socket first, with the
           small passives on the way. Points = level − 1 + quest points. Gem levels are the level-1 requirements.
@@ -239,20 +241,25 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { saveShared } from './build-progress'
 import type { PobPlan, PobPlanGem, PobPlanNode } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf, rebuildFromLog, saveCharLevels, type CharLevels } from '../companion/char-level'
 import { AppConfig } from '@/web/Config'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
-import { planQuestGems } from '../companion/quest-gems'
-import { currentPlan, currentTaken, mapHave, treeLayout } from './plan-store'
+import { loadQuestGemData, planQuestGems, type QuestGemData } from '../companion/quest-gems'
+import { currentPlan, planStep, stepPlan, jumpPlanToLevel } from './plan-store'
+import TreeStepper from '../ui/TreeStepper.vue'
+import PaceLog from '../companion/PaceLog.vue'
+import LabHelper from '../companion/LabHelper.vue'
 
 const levels = ref<CharLevels>(loadCharLevels())
 const guideStep = ref(loadCampaignStep())
 const onStorage = (e: StorageEvent) => {
   if (e.key === CHAR_LEVELS_KEY) levels.value = loadCharLevels()
   if (e.key === CAMPAIGN_STEP_KEY) guideStep.value = loadCampaignStep()
+  if (e.key === PHASE_KEY) { phaseChoice.value = loadPhases(); request() }
 }
 window.addEventListener('storage', onStorage)
 
@@ -306,6 +313,15 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-plan', (e) => {
     return
   }
   error.value = null
+  // the tree picked for this build (another window, or the build changed): ask again
+  const want = e.build ? phaseChoice.value[e.build.name] : undefined
+  if (e.build) buildName = e.build.name
+  if (e.plan && want != null && e.plan.phases[e.plan.phase - 1]?.title !== want && e.plan.phases.some(ph => ph.title === want) && !retried) {
+    retried = true
+    request()
+    return
+  }
+  retried = false
   plan.value = e.plan ?? null
   currentPlan.value = plan.value
   // the guide (every window) follows the build's bandit choice
@@ -314,12 +330,31 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-plan', (e) => {
 // the build or loadout changed in another panel
 const buildsListener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => { if (e.ok) request() })
 
+// Deathloom fork (Gerhard 27 Nov 2026): the levelling tree is picked by hand
+// (click it above), per build, shared by every window. It never follows your
+// level; a build you haven't picked for starts at its first tree.
+const PHASE_KEY = 'deathloom.plan-phase.v1'
+function loadPhases (): Record<string, string> {
+  try { const v = JSON.parse(localStorage.getItem(PHASE_KEY) ?? '{}'); return v && typeof v === 'object' ? v : {} } catch { return {} }
+}
+const phaseChoice = shallowRef<Record<string, string>>(loadPhases())
+let buildName = ''
+let retried = false
+function pickPhase (title: string) {
+  if (!buildName) return
+  const entries = Object.entries(phaseChoice.value).filter(([k]) => k !== buildName)
+  entries.push([buildName, title])
+  phaseChoice.value = Object.fromEntries(entries.slice(-40))
+  try { localStorage.setItem(PHASE_KEY, JSON.stringify(phaseChoice.value)) } catch {}
+  request()
+}
+
 function request () {
   loading.value = true
   lastRequestId += 1
   Host.sendEvent({
     name: 'CLIENT->MAIN::pob-plan',
-    payload: { requestId: lastRequestId, level: level.value, questPoints: questPoints.value }
+    payload: { requestId: lastRequestId, level: level.value, questPoints: questPoints.value, phase: phaseChoice.value[buildName] }
   })
 }
 defineExpose({ request })
@@ -331,99 +366,19 @@ onUnmounted(() => {
   window.removeEventListener('storage', onStorage)
 })
 
-// Passives actually taken (game log, characters followed from level 2): match
-// the plan's nodes by name, in order (small passives with the same name are approximate)
 const progress = computed(() => progressOf(levels.value, char.value?.name))
-// followed from level 2: every allocation is in the log
-const followedFromStart = computed(() => Boolean(progress.value?.alloc) && (progress.value?.firstLevel ?? 99) <= 2)
-const logAllocated = computed(() => {
-  const p = progress.value
-  const count = Object.values(p?.alloc ?? {}).reduce((n, c) => n + c, 0)
-  // the game's own count from /passives is exact (masteries in, ascendancy out): add what came since
-  if (p?.passivesSnap) return Math.max(0, p.passivesSnap.allocated + count - p.passivesSnap.logCount)
-  return followedFromStart.value ? count : null
-})
-const takenByLog = computed(() => {
-  const p = plan.value; const a = progress.value?.alloc
-  if (!p || !a || !followedFromStart.value) return null
-  // names compared without case and spaces at the ends
-  const left: Record<string, number> = {}
-  for (const [k, n] of Object.entries(a)) left[k.trim().toLowerCase()] = (left[k.trim().toLowerCase()] ?? 0) + n
-  const take = (key: string | undefined) => {
-    const k = key?.trim().toLowerCase()
-    if (!k || (left[k] ?? 0) <= 0) return false
-    left[k]--
-    return true
-  }
-  const taken = new Set<number>()
-  const takeNode = (node: PobPlanNode) => take(node.name) ||
-    // Masteries: also accept the picked effect's text (any of its lines)
-    (node.type === 'Mastery' && node.effect != null && (take(node.effect) || node.effect.split(/\r?\n/).some(l => take(l))))
-  const lay = treeLayout.value
-  if (lay) {
-    // The log only names passives ("Intelligence" is many nodes), so place them
-    // along the tree: a passive counts as taken only next to one already taken
-    // (start, passives kept from the previous tree, or placed before). Kept
-    // passives use up their names first.
-    const byId = new Map(lay.nodes.map(n => [n[0], n]))
-    const adj = new Map<number, number[]>()
-    const add = (x: number, y: number) => { const l = adj.get(x); if (l) l.push(y); else adj.set(x, [y]) }
-    for (const [x, y] of lay.links) { add(x, y); add(y, x) }
-    const starts = lay.nodes.filter(n => n[3] === 5).map(n => n[0])
-    const have = new Set<number>(starts)
-    // the tree data may not link the class start to its first passives: then
-    // the plan's first passive (nearest the start) is where a path begins
-    const startLinked = starts.some(id => (adj.get(id) ?? []).length > 0)
-    const rootId = startLinked ? null : p.order[0]?.id
-    for (const id of p.keptIds ?? []) {
-      have.add(id)
-      take(byId.get(id)?.[6])
-    }
-    const placed = new Set<number>()
-    for (let again = true; again;) {
-      again = false
-      for (let i = 0; i < p.order.length; i++) {
-        const node = p.order[i]
-        if (placed.has(i)) continue
-        const reachable = node.type === 'Mastery' || node.id === rootId || (adj.get(node.id) ?? []).some(nb => have.has(nb))
-        if (!reachable || !takeNode(node)) continue
-        placed.add(i); taken.add(i); have.add(node.id)
-        again = true
-        break
-      }
-    }
-    // names left over that no linked passive could take (passives off the build's
-    // path) are not placed: guessing them in plan order lit passives further along
-    // the path, and the tree map then filled in everything on the way to them
-    return taken
-  }
-  p.order.forEach((node, i) => { if (takeNode(node)) taken.add(i) })
-  // The log only names passives. Taking or refunding a same-named small passive
-  // off the plan (e.g. "Intelligence") moves the count and leaves a hole in the
-  // path; a small passive before a taken one is on the way to it, so count it.
-  let last = -1
-  for (const i of taken) last = Math.max(last, i)
-  for (let i = 0; i < last; i++) {
-    if (!taken.has(i) && p.order[i].type === 'Normal') taken.add(i)
-  }
-  return taken
-})
-watch(takenByLog, (t) => { currentTaken.value = t }, { immediate: true })
-// Deathloom fork (17 Nov): when a tree map is open, its back / forward step is
-// what counts as taken, so this list and the map always agree
+// Deathloom fork (Gerhard 27 Nov 2026): no automatic tree tracking. What counts
+// as taken is only where you stepped to with the arrows (shared with the tree
+// map and Build progress); the game log and your level don't move it.
 function isTaken (i: number) {
-  const id = plan.value?.order[i]?.id
-  if (mapHave.value) return id != null && mapHave.value.has(id)
-  return takenByLog.value ? takenByLog.value.has(i) : i < (plan.value?.taken ?? 0)
+  return i < (planStep.value?.pos ?? 0)
 }
 const passiveRows = computed(() => {
   const p = plan.value
   if (!p) return []
   const rows = p.order.map((node, i) => ({ node, i }))
   if (showAll.value) return rows
-  if (mapHave.value) return rows.filter(r => !isTaken(r.i)).slice(0, 5)
-  if (takenByLog.value) return rows.filter(r => !takenByLog.value!.has(r.i)).slice(0, 5)
-  return rows.slice(p.taken, p.taken + 5)
+  return rows.filter(r => !isTaken(r.i)).slice(0, 5)
 })
 
 function fmtMs (ms: number) {
@@ -496,7 +451,7 @@ function toggleGem (name: string) {
   if (list.has(name)) list.delete(name)
   else list.add(name)
   ticks.value = { ...ticks.value, [tickOwner.value]: [...list] }
-  try { localStorage.setItem(TICKS_KEY, JSON.stringify(ticks.value)) } catch {}
+  saveShared(TICKS_KEY, ticks.value)
 }
 const haveCount = computed(() => uniqueGems.value.filter(g => hasGem(g.name)).length)
 // usable at your level and not ticked
@@ -575,11 +530,14 @@ const swap = computed(() => {
 
 const guideAct = computed(() => STEPS[guideStep.value]?.act ?? 1)
 const allActs = ref(false)
+// quest reward data: loaded on first use (F4); the box appears once it is in
+const questData = shallowRef<QuestGemData | null>(null)
+loadQuestGemData().then(d => { questData.value = d }, () => {})
 const questGems = computed(() => {
   const p = plan.value
-  if (!p) return null
+  if (!p || !questData.value) return null
   const wanted = [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])]
-  return planQuestGems(p.className, wanted)
+  return planQuestGems(questData.value, p.className, wanted)
 })
 const questRows = computed(() => {
   const q = questGems.value

@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: campaign guide; follows the current zone from Client.txt -->
   <Widget :config="config" move-handles="corners" :grip="!inHud" :removable="false" :inline-edit="false">
-    <CampaignGuideBody v-if="!inHud" />
+    <LazyCampaignGuide v-if="!inHud" />
   </Widget>
 </template>
 
@@ -36,7 +36,7 @@ import { AppConfig } from '@/web/Config'
 import type { WidgetManager } from '../overlay/interfaces'
 import Widget from '../overlay/Widget.vue'
 import { inOverlay } from '../desktop/panels'
-import CampaignGuideBody from './CampaignGuideBody.vue'
+import { LazyCampaignGuide } from './LazyLevelling'
 import { toggleFromHotkey } from '../overlay/hotkey-toggle'
 
 const props = defineProps<{ config: CampaignGuideWidget }>()

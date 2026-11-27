@@ -1,6 +1,7 @@
 import type { Server } from 'http'
 import { app, net, session } from 'electron'
 import type { Logger } from './RemoteLogger'
+import { isCacheableProxyRequest, ResponseCache, type CachedResponse } from './proxy-cache'
 
 // Deathloom fork: identify the tool on every request it forwards (GGG asks third-party
 // tools to say who they are). Keeps Electron's browser string so nothing breaks.
@@ -17,10 +18,64 @@ const PROXY_HOSTS = [
   { host: 'www.poeprices.info', official: false },
 ]
 
+const ninjaCache = new ResponseCache()
+const DOWNLOAD_TIMEOUT_MS = 60 * 1000
+
+function downloadToMemory (options: Electron.ClientRequestConstructorOptions): Promise<CachedResponse> {
+  return new Promise((resolve, reject) => {
+    const proxyReq = net.request(options)
+    // a stalled download must not keep the shared in-flight entry forever
+    let settled = false
+    const timer = setTimeout(() => {
+      fail(new Error('poe.ninja download timed out'))
+      proxyReq.abort()
+    }, DOWNLOAD_TIMEOUT_MS)
+    function fail (err: Error) {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      reject(err)
+    }
+    function done (value: CachedResponse) {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      resolve(value)
+    }
+    proxyReq.addListener('abort', () => { fail(new Error('poe.ninja download aborted')) })
+    proxyReq.addListener('response', (proxyRes) => {
+      const headers = { ...proxyRes.headers }
+      // `net.request` returns an already decoded body; the length is set when sent
+      delete headers['content-encoding']
+      delete headers['content-length']
+      delete headers['transfer-encoding']
+      // a kept copy is handed to other windows later: no cookies in it
+      // (the session's own cookie jar still gets them through `net.request`)
+      delete headers['set-cookie']
+      const chunks: Buffer[] = []
+      proxyRes.on('data', (chunk) => { chunks.push(chunk) })
+      proxyRes.on('end', () => {
+        done({
+          statusCode: proxyRes.statusCode,
+          statusMessage: proxyRes.statusMessage,
+          headers,
+          body: Buffer.concat(chunks)
+        })
+      })
+      proxyRes.on('aborted', () => { fail(new Error('poe.ninja download aborted')) })
+      proxyRes.on('error', fail)
+    })
+    proxyReq.addListener('error', fail)
+    proxyReq.end()
+  })
+}
+
 export class HttpProxy {
   constructor (
     server: Server,
-    logger: Logger
+    logger: Logger,
+    // Deathloom fork (Q6): told about each fresh poe.ninja price list (price alerts)
+    onNinjaDownload?: (target: string, res: CachedResponse) => void
   ) {
     server.addListener('request', (req, res) => {
       if (!req.url?.startsWith('/proxy/')) return
@@ -35,8 +90,9 @@ export class HttpProxy {
         }
       }
 
-      const proxyReq = net.request({
-        url: 'https://' + req.url.slice('/proxy/'.length),
+      const target = req.url.slice('/proxy/'.length)
+      const requestOptions: Electron.ClientRequestConstructorOptions = {
+        url: 'https://' + target,
         method: req.method,
         headers: {
           ...req.headers,
@@ -48,7 +104,34 @@ export class HttpProxy {
         },
         useSessionCookies: true,
         referrerPolicy: 'no-referrer-when-downgrade'
-      })
+      }
+
+      // Deathloom fork (F4a): poe.ninja's full price list is shared by all windows
+      // for a few minutes instead of each one downloading it (see proxy-cache.ts)
+      if (isCacheableProxyRequest(req.method, target)) {
+        req.resume()
+        ninjaCache.fetch(target, () => downloadToMemory(requestOptions).then((fresh) => {
+          // only real downloads (not cache hits): the alerts follow the same refresh, no extra requests
+          if (onNinjaDownload) {
+            try { onNinjaDownload(target, fresh) } catch (err) { logger.write(`error [price-alerts] ${(err as Error).message}`) }
+          }
+          return fresh
+        }))
+          .then((cached) => {
+            if (res.destroyed) return
+            res.writeHead(cached.statusCode, cached.statusMessage, {
+              ...cached.headers,
+              'content-length': String(cached.body.byteLength)
+            })
+            res.end(cached.body)
+          }, (err: Error) => {
+            logger.write(`error [cors-proxy] ${err.message} (${host})`)
+            res.destroy(err)
+          })
+        return
+      }
+
+      const proxyReq = net.request(requestOptions)
       proxyReq.addListener('response', (proxyRes) => {
         const resHeaders = { ...proxyRes.headers }
         // `net.request` returns an already decoded body

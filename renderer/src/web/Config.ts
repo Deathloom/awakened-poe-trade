@@ -429,6 +429,15 @@ function upgradeConfig (_config: Config): Config {
   if (priceCheck.defaultCurrency === undefined) {
     priceCheck.defaultCurrency = null
   }
+  // Deathloom fork: PoE2 price check settings (Exiled Exchange 2 defaults)
+  priceCheck.rememberCurrency ??= false
+  priceCheck.defaultAllSelected ??= false
+  priceCheck.itemHoverTooltip ??= 'keybind'
+  priceCheck.alwaysShowTier ??= false
+  priceCheck.coreCurrency ??= 'exalted'
+  priceCheck.currencyVolume ??= 'both'
+  priceCheck.rememberListingType ??= false
+  priceCheck.savedAugments ??= {}
 
   for (const widget of config.widgets) {
     if (widget.wmType === 'stash-search') {
@@ -788,7 +797,7 @@ export function defaultHudConfig (): PobHudConfig {
     guide: false,
     trades: false,
     gear: false,
-    clickThroughPanels: { guide: false, trades: false, gear: false, tree: false, atlas: false, session: false, market: false, overview: false, cheats: false, money: false },
+    clickThroughPanels: { guide: false, trades: false, gear: false, tree: false, atlas: false, session: false, market: false, overview: false, cheats: false, money: false, board: false, search: false, progress: false },
     autoHideTrades: true,
     opaque: false,
     opacity: 90,
@@ -802,7 +811,10 @@ export function defaultHudConfig (): PobHudConfig {
       market: { x: 440, y: 440 },
       overview: { x: 440, y: 440 },
       cheats: { x: 880, y: 90 },
-      money: { x: 880, y: 440 }
+      money: { x: 880, y: 440 },
+      board: { x: 440, y: 90 },
+      search: { x: 440, y: 90 },
+      progress: { x: 880, y: 90 }
     }
   }
 }

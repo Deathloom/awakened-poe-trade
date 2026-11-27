@@ -38,10 +38,6 @@ function hostIn (url: string, hosts: string[]): boolean {
   }
 }
 
-export function isTradeTabHost (url: string): boolean {
-  return hostIn(url, ALLOWED_HOSTS)
-}
-
 // Each in-app site tab: its own session and the only hosts it may navigate to
 interface SiteTab { partition: string, hosts: string[], ready: boolean }
 const SITE_TABS: SiteTab[] = [

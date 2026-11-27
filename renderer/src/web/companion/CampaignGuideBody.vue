@@ -18,8 +18,10 @@
     <!-- Labyrinth: shown while in the lab, closes after Izaro or on leaving -->
     <div v-if="lab" class="mx-1 mt-1 px-2 py-1 rounded bg-yellow-900 bg-opacity-40 border border-yellow-800 text-xs flex items-center gap-x-2">
       <i class="fas fa-dungeon text-yellow-400" />
-      <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${lab.name} Labyrinth` }}</span>
-      <span v-if="!lab.done" class="text-gray-400">area level {{ lab.level }}</span>
+      <span class="text-yellow-200 font-bold">{{ lab.done ? 'Labyrinth done' : `${LAB_LABEL[lab.lab]} Labyrinth` }}</span>
+      <span v-if="!lab.done && lab.level != null" class="text-gray-400">area level {{ lab.level }}</span>
+      <span v-if="!lab.done && labAsc.length" class="text-blue-300 truncate"
+        :title="'Ascendancy notables your Path of Building levelling tree adds (not taken yet). PoB sets no order: pick which first.'">tree adds: {{ labAsc.join(', ') }}</span>
       <button class="ml-auto px-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-100" title="Today's layout and the best route, on poelab.com (opens the Lab tab in the Orbhoarder window)"
         @click="openPoelab"><i class="fas fa-map mr-1" />Today's layout on poelab.com</button>
       <button class="ui-btn ui-btn-quiet" title="Hide" @click="lab = null"><i class="fas fa-times" /></button>
@@ -79,12 +81,16 @@
                 <span v-else-if="p.k === 'area'" class="g-area"><i class="fas fa-map-marker-alt" />{{ p.v }}</span>
                 <span v-else-if="p.k === 'waypoint'" class="text-blue-300"><i class="fas fa-dungeon" /> {{ p.v ?? 'waypoint' }}</span>
                 <span v-else-if="p.k === 'waypoint_get'" class="text-blue-300">waypoint</span>
-                <span v-else-if="p.k === 'trial'" class="text-yellow-500"><i class="fas fa-dungeon" /> the Labyrinth trial</span>
+                <span v-else-if="p.k === 'trial'" class="text-yellow-500" :class="{ 'line-through opacity-60': trialIsDone(s.areaId) }"><i class="fas fa-dungeon" /> the Labyrinth trial<i
+                  v-if="trialIsDone(s.areaId)" class="fas fa-check text-green-500 ml-1" title="Trial done (game log or ticked in the levelling planner)" /></span>
                 <span v-else-if="p.k === 'logout'" class="text-gray-400">log out</span>
                 <i v-else-if="p.k === 'dir'" class="fas fa-arrow-up text-gray-300 mx-px" :style="{ transform: `rotate(${Number(p.v)}deg)` }" :title="`direction ${p.v}°`" />
                 <span v-else-if="p.k === 'portal'" class="text-purple-300">{{ p.v === 'set' ? 'a portal' : 'the portal' }}</span>
                 <span v-else-if="p.k === 'ascend'" class="text-yellow-400">Ascend ({{ p.v }} Labyrinth)</span>
-                <span v-else-if="p.k === 'crafting'" class="text-gray-400" :title="p.recipes?.length ? 'Bench recipe found here' : ''">crafting recipe<template v-if="p.recipes?.length">: <span class="text-gray-200">{{ p.recipes.join(', ') }}</span></template></span>
+                <span v-else-if="p.k === 'crafting'" class="text-gray-400" :title="p.recipes?.length ? 'Bench recipe found here' : ''">crafting recipe<template v-if="p.recipes?.length">: <template v-for="(r, ri) of p.recipes" :key="r"><template v-if="ri">, </template><button type="button"
+                  class="text-gray-200 hover:underline" :class="{ 'line-through opacity-60': benchTicks.has(r) }"
+                  :title="benchTicks.has(r) ? 'Ticked in Cheat sheets → Bench recipes (click to untick)' : 'Bench recipe here. Click when you have it (ticks Cheat sheets → Bench recipes)'"
+                  @click="benchTicks = toggleBenchTick(r)">{{ r }}</button><i v-if="benchTicks.has(r)" class="fas fa-check text-green-500 ml-1" title="Ticked: you have this recipe" /></template></template></span>
                 <span v-else-if="p.k === 'quest_text'" class="g-item"><i class="fas fa-box" />{{ p.v }}</span>
                 <span v-else class="g-item">{{ p.v }}</span>
               </template>
@@ -122,15 +128,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { Host } from '@/web/background/IPC'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { AppConfig } from '@/web/Config'
 import { parseLogLine } from './game-log'
 import { type RoutePart, type BanditFlag, BANDIT_KEY, OPTIONAL_KEY, showOptional, BANDIT_LABEL, loadBandit, onlyActive, questPassivesTotal, STEPS, findStep, isOnRoute, actFromAreaCode, CAMPAIGN_STEP_KEY as KEY, loadCampaignStep as loadIndex, questPassivesBefore, loadStepByChar, saveStepForChar, firstStepOfAct, campaignDone } from './campaign-route'
-import { planQuestGems, type QuestGemStep } from './quest-gems'
+import { loadQuestGemData, planQuestGems, type QuestGemData, type QuestGemStep } from './quest-gems'
 import { currentPlan } from '../pob/plan-store'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels, progressOf } from './char-level'
+import { LAB_LABEL, isIzaroDefeat, labBannerAscendancy, labBannerOnArea, labsDone, trialDone, type LabBanner } from './lab-helper'
+import { labManualAll } from './lab-store'
+import { treeLayout } from '../pob/plan-store'
+
+import { BENCH_KEY, loadBenchTicks, toggleBenchTick } from './bench-recipes'
 
 const index = ref(loadIndex())
 // Deathloom fork: overlay, HUD and desktop window each show the guide; keep them on the same step
@@ -173,6 +184,16 @@ onUnmounted(() => { window.removeEventListener('storage', onLevels) })
 const progress = computed(() => progressOf(levels.value, currentChar(levels.value)?.name ?? ''))
 const doneQuests = computed(() => new Set(progress.value?.quests ?? []))
 const doneBosses = computed(() => new Set(progress.value?.bosses ?? []))
+// Labyrinth trials done (game log or ticked by hand in the levelling planner) (Q7)
+function trialIsDone (areaId: string) {
+  return trialDone(areaId, progress.value, labManualAll.value[currentChar(levels.value)?.name ?? ''])
+}
+
+// Deathloom fork (Q9): bench recipes ticked by hand (Cheat sheets → Bench recipes, or a click here)
+const benchTicks = ref(loadBenchTicks())
+const onBench = (e: StorageEvent) => { if (e.key === BENCH_KEY) benchTicks.value = loadBenchTicks() }
+window.addEventListener('storage', onBench)
+onUnmounted(() => { window.removeEventListener('storage', onBench) })
 
 // Deathloom fork (Gerhard, 16 Nov 2026): follow the character. Each one keeps its
 // own step; one seen for the first time starts at the act it was last in
@@ -207,10 +228,13 @@ function showTasks (i: number) {
 
 // which quest reward / vendor gems the build wants (Orbhoarder window, where the
 // levelling planner has the build's gems)
+// (the reward data is loaded on first use, F4)
+const questData = shallowRef<QuestGemData | null>(null)
+loadQuestGemData().then(d => { questData.value = d }, () => {})
 const questGems = computed(() => {
   const p = currentPlan.value
-  if (!p) return new Map<string, QuestGemStep>()
-  const plan = planQuestGems(p.className, [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])])
+  if (!p || !questData.value) return new Map<string, QuestGemStep>()
+  const plan = planQuestGems(questData.value, p.className, [...(p.previousGems ?? []), ...p.gems, ...(p.nextGems ?? [])])
   return new Map((plan?.steps ?? []).map(st => [st.id, st]))
 })
 // what a hand-in is worth: 'skip' (only gems the build doesn't use), 'items', 'gems' (build unknown here)
@@ -221,6 +245,8 @@ function questTag (p: Exclude<RoutePart, string>): 'skip' | 'items' | 'gems' | n
   if (r.includes('items')) return 'items'
   if (!r.length) return null
   if (!currentPlan.value) return 'gems'
+  // no tag for the moment the reward data is still loading
+  if (!questData.value) return null
   return gemsFor(p).some(g => g.take || g.buy.length) ? null : 'skip'
 }
 // optional quests on/off (remembered; shared with the other windows)
@@ -262,11 +288,13 @@ watch([index, () => props.tall], () => {
   }).catch(() => {})
 }, { immediate: true })
 
-// Labyrinth panel (difficulty from the area level)
-const lab = ref<{ name: string, level: number, done: boolean } | null>(null)
-function labName (level: number) {
-  return level >= 75 ? 'Eternal' : level >= 68 ? 'Merciless' : level >= 55 ? 'Cruel' : 'Normal'
-}
+// Labyrinth panel (difficulty from the first room's area level; in the plaza: the next lab not done)
+const lab = ref<LabBanner | null>(null)
+// ascendancy notables this levelling tree adds, not taken yet (only where the
+// levelling planner has the build: the Orbhoarder window)
+const labAsc = computed(() => lab.value
+  ? labBannerAscendancy(currentPlan.value?.ascendancy, undefined, treeLayout.value, currentPlan.value?.ascendancyClass)
+  : [])
 // the Orbhoarder window's Lab tab (opens the window without taking focus from the game)
 function openPoelab () {
   Host.sendEvent({ name: 'CLIENT->MAIN::user-action', payload: { action: 'open-window-view', view: 'lab' } })
@@ -297,14 +325,11 @@ const listener = Host.onEvent('MAIN->CLIENT::game-log', (e) => {
       areaAct = actFromAreaCode(ev.code)
       // only campaign zones: a map's level next to "Act 1" read as the guide's
       areaLevel.value = areaAct != null ? ev.level : null
-      // Labyrinth areas: "Labyrinth_Airlock" (plaza), "1_Labyrinth_…"
-      if (/Labyrinth/i.test(ev.code)) {
-        if (!lab.value || lab.value.done) lab.value = { name: labName(ev.level), level: ev.level, done: false }
-      } else if (lab.value) {
-        lab.value = null
-      }
+      // Labyrinth areas: "Labyrinth_Airlock" (plaza), "1_Labyrinth_…" (lab-helper.ts)
+      const done = labsDone(progress.value, labManualAll.value[charName.value])
+      lab.value = labBannerOnArea(lab.value, ev.code, ev.level, done)
     }
-    if (ev.type === 'speech' && ev.speaker === 'Izaro' && /^Triumphant at last/.test(ev.text) && lab.value) {
+    if (ev.type === 'speech' && isIzaroDefeat(ev.speaker, ev.text) && lab.value) {
       lab.value = { ...lab.value, done: true }
     }
     if (ev.type === 'zone') {

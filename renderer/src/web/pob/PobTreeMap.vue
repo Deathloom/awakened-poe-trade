@@ -13,12 +13,12 @@
       </template>
       <template v-else-if="levellingOn && levelPlan">
         <span class="text-gray-400">Levelling: {{ plan?.phases[plan.phase - 1]?.title }}</span>
-        <span><i class="fas fa-circle text-green-500" /> taken by now</span>
+        <span><i class="fas fa-circle text-green-500" /> stepped past</span>
         <span><i class="fas fa-circle text-cyan-300" /> next ({{ levelPlan.next.length }})</span>
         <tree-stepper v-if="planStep" :pos="planStep.pos" :len="planStep.len" @step="stepPlan" />
         <button v-if="planStep && planStep.pos !== planStep.byLevel" class="ui-btn ui-btn-quiet"
-          :title="`Jump to where your level and quest points say you are (${planStep.byLevel}/${planStep.len}, same as Next steps)`"
-          @click="stepPlan(planStep.byLevel - planStep.pos)"><i class="fas fa-user-check" />My level</button>
+          :title="`Jump to where your level and quest points say you are (${planStep.byLevel}/${planStep.len}, once: it won't follow your level)`"
+          @click="jumpToLevel"><i class="fas fa-user-check" />My level</button>
         <span><i class="fas fa-circle text-orange-400" /> later</span>
       </template>
       <template v-else-if="live">
@@ -77,9 +77,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { PobTreeAlloc, PobTreeMapLayout, PobTreeMapNode } from '@ipc/types'
-import { currentPlan as plan, currentTaken as takenSet, mapHave, treeLayout } from './plan-store'
-import { orderKey, leadingTaken } from './tree-step-logic'
-import { getStep, moveStep } from './tree-steps'
+import { currentPlan as plan, planStep, stepPlan as stepPlanStore, jumpPlanToLevel, treeLayout } from './plan-store'
 import TreeStepper from '../ui/TreeStepper.vue'
 
 const props = defineProps<{
@@ -208,28 +206,9 @@ function loadFrom () {
 if (!props.compact) requestBuilds()
 onUnmounted(() => { lsBuilds.abort(); lsFrom.abort() })
 // levelling view: "build" = the levelling tree, "have" = the passives you've
-// stepped past. Deathloom fork (Gerhard 17 Nov 2026): no automatic following;
-// the back / forward buttons move along the plan's order (1 or 5 passives).
-const planStepKey = computed(() => {
-  const p = plan.value
-  return p ? orderKey('tree', [...(Array.isArray(p.keptIds) ? p.keptIds : []), -1, ...p.order.map(n => n.id)]) : null
-})
-const planStep = computed(() => {
-  const p = plan.value; const key = planStepKey.value
-  if (!p || !key) return null
-  const len = p.order.length
-  let pos = getStep(key)
-  // Deathloom fork (Gerhard 20 Nov 2026: switching to the next tree in PoB showed 5/88,
-  // far behind his character): a tree seen for the first time starts where your level
-  // and quest points say you are (same number as Next steps), not at the game log's
-  // unbroken run, which is short once a new tree reorders things
-  const byLevel = Math.min(len, Math.max(0, p.taken ?? 0))
-  if (pos == null) {
-    const taken = takenSet.value
-    pos = Math.max(byLevel, leadingTaken(len, i => taken ? taken.has(i) : false))
-  }
-  return { key, len, pos: Math.min(pos, len), byLevel }
-})
+// stepped past. Deathloom fork (Gerhard 17 / 27 Nov 2026): no automatic following
+// at all; the back / forward buttons move along the plan's order (1 or 5
+// passives), shared with Next steps and Build progress (plan-store).
 const levelPlan = computed(() => {
   const p = plan.value; const st = planStep.value
   if (!levellingOn.value || !p || !st || fromOn.value) return null
@@ -241,13 +220,14 @@ const levelPlan = computed(() => {
     next: order.slice(st.pos, st.pos + 5)
   }
 })
-function stepPlan (delta: number) {
-  const st = planStep.value
-  if (!st) return
-  moveStep(st.key, st.pos, delta, st.len)
+function jumpToLevel () {
+  jumpPlanToLevel()
   nextTick(() => focusNext()).catch(() => {})
 }
-watch(levelPlan, (lp) => { mapHave.value = lp?.have ?? null }, { immediate: true })
+function stepPlan (delta: number) {
+  stepPlanStore(delta)
+  nextTick(() => focusNext()).catch(() => {})
+}
 const hasLive = computed(() => fromOn.value || levelPlan.value != null || live.value != null)
 
 const refundSet = computed(() => {

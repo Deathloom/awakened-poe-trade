@@ -25,9 +25,9 @@
         </div>
       </div>
       <div>
-        <div class="text-gray-400 mb-0.5">Wallet (Money tools → Currency counter)</div>
+        <div class="text-gray-400 mb-0.5">Wallet (Profit → Currency counter)</div>
         <div v-if="wallet.chaos > 0" class="text-gray-200">{{ money(wallet.chaos) }}<span class="text-gray-500"> ({{ Math.round(wallet.chaos) }} c)</span></div>
-        <div v-else class="text-gray-500">Type what's in your stash in Money tools → Currency counter to see your total here.</div>
+        <div v-else class="text-gray-500">Type what's in your stash in Profit → Currency counter to see your total here.</div>
         <div v-if="wallet.missing.length" class="text-gray-500">No price for: {{ wallet.missing.join(', ') }}</div>
       </div>
     </div>

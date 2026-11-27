@@ -3,13 +3,18 @@
 import type { Component } from 'vue'
 import type { WidgetSpec } from './interfaces'
 import type { Widget as WidgetT, Anchor } from './widgets'
-import PobTreeMap from '../pob/PobTreeMap.vue'
-import AtlasTreeMap from '../atlas/AtlasTreeMap.vue'
-import PlaySessionBody from '../companion/PlaySessionBody.vue'
-import MarketOverview from '../market-history/MarketOverview.vue'
-import MarketHistoryBody from '../market-history/MarketHistoryBody.vue'
-import CheatSheetsBody from '../cheats/CheatSheetsBody.vue'
-import MoneyToolsBody from '../money/MoneyToolsBody.vue'
+import { LazyPobTreeMap as PobTreeMap } from '../pob/LazyPobPanels'
+import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
+import {
+  LazyPlaySessionBody as PlaySessionBody,
+  LazyMarketOverview as MarketOverview,
+  LazyMarketHistoryBody as MarketHistoryBody,
+  LazyCheatSheetsBody as CheatSheetsBody,
+  LazyMoneyToolsBody as MoneyToolsBody,
+  LazyTradeBoardBody as TradeBoardBody,
+  LazyMarketSearchBody as MarketSearchBody,
+  LazyBuildProgressPanel as BuildProgressPanel
+} from '../ui/LazyBodies'
 import { EXTRA_PANELS } from '../desktop/panel-defs'
 
 export interface PanelBody {
@@ -31,7 +36,11 @@ const BODIES: Record<string, Omit<PanelBody, 'panel' | 'label' | 'icon'>> = {
   market: { body: MarketHistoryBody, props: { active: true, fill: true }, boxed: false, w: '26rem', h: '24rem' },
   overview: { body: MarketOverview, props: {}, boxed: false, w: '30rem', h: '26rem' },
   cheats: { body: CheatSheetsBody, props: {}, boxed: false, w: '24rem', h: '26rem' },
-  money: { body: MoneyToolsBody, props: {}, boxed: false, w: '26rem', h: '27rem' }
+  money: { body: MoneyToolsBody, props: {}, boxed: false, w: '26rem', h: '27rem' },
+  // in game only (their overlay widgets are their own)
+  board: { body: TradeBoardBody, props: { fill: true }, boxed: false, w: '26rem', h: '28rem' },
+  search: { body: MarketSearchBody, props: {}, boxed: true, w: '26rem', h: '26rem' },
+  progress: { body: BuildProgressPanel, props: {}, boxed: false, w: '24rem', h: '26rem' }
 }
 
 // by panel (HUD) and by widget type (overlay)

@@ -16,10 +16,10 @@
         <component :is="selected" v-if="configClone" :config="configClone" />
       </div>
       <div class="border-t bg-gray-900 border-gray-600 p-2 flex items-center justify-end gap-x-2">
-        <button class="px-3 rounded bg-gray-800 text-gray-300" title="The first-run setup guide (build sharing, folders, panels, trade buttons)"
-          @click="desktopSetupShown = true"><i class="fas fa-magic mr-1" />Run setup guide</button>
-        <button class="px-3 mr-auto rounded bg-gray-800 text-gray-300 -ml-1" title="Changes in the latest Orbhoarder versions"
-          @click="whatsNewRequested++"><i class="fas fa-gift mr-1" />What's new</button>
+        <!-- Help, What's new, Take the tour and Run setup guide are in About (layout review step 6) -->
+        <button class="px-3 rounded bg-gray-800 text-gray-300" title="Help, What's new, Take the tour, Run setup guide"
+          @click="selected = SettingsAbout"><i class="fas fa-question-circle mr-1" />Help and tour</button>
+        <PatchNotesLink class="mr-auto" />
         <span v-if="note" class="text-xs" :class="note.warn ? 'text-yellow-500' : 'text-green-500'">{{ note.text }}</span>
         <button class="px-3 rounded" :class="dirty ? 'bg-gray-600 text-gray-100' : 'bg-gray-800'" @click="save">{{ t('Save') }}</button>
         <button class="px-3" :title="'Undo changes not saved yet'" @click="reset">{{ t('Cancel') }}</button>
@@ -44,21 +44,20 @@ import SettingsPob from '../settings/pob.vue'
 import SettingsAppearance from '../settings/appearance.vue'
 import SettingsTools from '../settings/tools.vue'
 import SettingsPanels from '../settings/panels.vue'
-import { desktopSetupShown } from '../setup/setup-state'
-import { whatsNewRequested } from '../whats-new/whats-new-state'
+import SettingsLootFilter from '../settings/loot-filter.vue'
+import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 
 const { t } = useI18n()
 
-// same groups as the overlay's settings window (no Quit here: the tray has it)
+// same pages and groups as the overlay's settings window (no Quit here: the tray has it)
 const GROUPS: Component[][] = [
-  [SettingsPob],
   [SettingsHotkeys, SettingsChat],
   [SettingsGeneral, SettingsAppearance, SettingsPanels],
-  [SettingsPricecheck, SettingsMaps, SettingsItemcheck],
+  [SettingsPricecheck, SettingsMaps, SettingsItemcheck, SettingsLootFilter, SettingsPob],
   [SettingsTools, SettingsDebug, SettingsAbout]
 ]
 
-const selected = shallowRef<Component>(SettingsPob)
+const selected = shallowRef<Component>(SettingsHotkeys)
 const clone = () => reactive(JSON.parse(JSON.stringify(AppConfig()))) as Config
 const configClone = shallowRef<Config>(clone())
 const baseline = ref(JSON.stringify(AppConfig()))

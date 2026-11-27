@@ -4,11 +4,15 @@
     <div class="px-2 pt-1 text-sm text-gray-500">
       Map mods for <b class="text-gray-400">every build</b>, on this PC. Mods one build can't run go in
       <b class="text-gray-400">Build panel → Notes</b> (shared with friends, also made into a map search); the map check shows both.
+      With <b class="text-gray-400">Warn for my PoB build</b> on, it also marks mods dangerous for the active build (from the stats PoB saved in it) and greys the rest.
     </div>
     <div class="flex p-1">
       <input :placeholder="t('Search') + '...'" v-model="search" class="bg-gray-900 rounded px-1">
       <UiToggle v-model="onlySelected" class="mx-2">{{ t(':search_selected') }}</UiToggle>
       <UiToggle v-model="showNewStats" class="ml-12">{{ t(':new_mods_icon') }}</UiToggle>
+      <!-- Deathloom fork (Q4) -->
+      <UiToggle v-model="buildAware" class="ml-12"
+        title="With a Path of Building build active: mark map mods dangerous for it, grey the rest">Warn for my PoB build</UiToggle>
     </div>
     <div class="flex items-baseline py-1 shadow">
       <div class="flex-1 px-2 leading-none">{{ t(':search_stat_col', [filteredStats.length]) }}</div>
@@ -127,5 +131,10 @@ const selectedStats = computed(() => widget.value.maps.selectedStats)
 const profile = computed(() => widget.value.maps.profile)
 const fontSize = computed(() => props.config.fontSize)
 const showNewStats = configModelValue(() => widget.value.maps, 'showNewStats')
+// Deathloom fork (Q4): undefined = on
+const buildAware = computed<boolean>({
+  get: () => widget.value.maps.buildAware !== false,
+  set: (v) => { widget.value.maps.buildAware = v }
+})
 const { t } = useI18nNs('map_check')
 </script>

@@ -25,3 +25,6 @@ yarn-error.log*
 
 # vitepress
 tests/.build/
+
+# stray Python packages
+*.whl

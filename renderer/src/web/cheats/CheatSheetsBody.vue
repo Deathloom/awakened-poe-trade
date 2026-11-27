@@ -2,12 +2,16 @@
   <!-- Deathloom fork (idea 8): cheat sheets on a hotkey (overlay, in game, window) -->
   <div class="flex flex-col h-full min-h-0 rounded bg-gray-800 text-sm leading-snug">
     <div class="flex flex-wrap items-center gap-1 px-2 py-1 border-b border-gray-700 shrink-0">
-      <span class="lg-head mr-1"><i class="fas fa-book mr-1 text-gray-500" />Cheat sheets</span>
+      <span v-if="!only" class="lg-head mr-1"><i class="fas fa-book mr-1 text-gray-500" />Cheat sheets</span>
       <button v-for="s of tabs" :key="s.id" class="ui-tab"
         :class="{ 'ui-tab-on': tab === s.id }" @click="setTab(s.id)">{{ s.label }}</button>
+      <PatchNotesLink class="ml-auto" show-title />
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-3">
-      <template v-if="tab === 'progress'">
+      <ThreadPlanner v-if="tab === 'threads'" />
+      <ChallengeTracker v-else-if="tab === 'challenges'" @open-tab="setTab" />
+      <BenchRecipes v-else-if="tab === 'bench'" />
+      <template v-else-if="tab === 'progress'">
         <div class="text-gray-400">League start, then endgame: tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
         <div v-for="g of PROGRESS" :key="g.title">
           <div class="text-gray-100 font-semibold mb-0.5">{{ g.title }} <span class="text-gray-500">{{ g.items.filter(i => ticks.has(i.id)).length }}/{{ g.items.length }}</span></div>
@@ -29,6 +33,10 @@
             <li v-for="l of sec.lines" :key="l">{{ l }}</li>
           </ul>
         </div>
+        <template v-if="sheet.id === 'covens'">
+          <FateValue v-if="fateOpen" />
+          <button class="ui-btn ui-btn-quiet" @click="toggleFate">{{ fateOpen ? 'Hide Fate reward values' : 'Fate reward values (poe.ninja)' }}</button>
+        </template>
         <div class="text-gray-500"><i class="fas fa-info-circle mr-1" />{{ sheet.check }} GGG changes mechanics now and then.</div>
       </template>
       <template v-else>
@@ -48,20 +56,54 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 import { useLeagues } from '@/web/background/Leagues'
 import { PROGRESS, loadProgress, saveProgress } from './progress'
-import { SHEETS, sectionsFor } from './sheets'
+import { SHEETS, OWN_TABS, sectionsFor } from './sheets'
+import ChallengeTracker from './ChallengeTracker.vue'
+import { setSub } from '../desktop/view-route'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 
-const tabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), { id: 'recipes', label: 'Vendor recipes' }, { id: 'progress', label: 'Checklist' }]
-const KEY = 'deathloom.cheats.tab.v1'
-const tab = ref((() => { try { return localStorage.getItem(KEY) ?? 'betrayal' } catch { return 'betrayal' } })())
+// Thread planner brings the atlas tree data (~170 kB): loaded when its tab opens
+const ThreadPlanner = defineAsyncComponent(() => import('./ThreadPlanner.vue'))
+// Fate value helper (Covens sheet): closed by default, so prices only load when opened
+const FateValue = defineAsyncComponent(() => import('./FateValue.vue'))
+// Bench recipes (Q9) needs the campaign route (~57 kB): loaded when its tab opens
+const BenchRecipes = defineAsyncComponent(() => import('./BenchRecipes.vue'))
+const FATE_KEY = 'deathloom.cheats.fateValue.v1'
+const fateOpen = ref((() => { try { return localStorage.getItem(FATE_KEY) === '1' } catch { return false } })())
+function toggleFate () {
+  fateOpen.value = !fateOpen.value
+  try { localStorage.setItem(FATE_KEY, fateOpen.value ? '1' : '0') } catch {}
+}
+
+// Deathloom fork (layout review): the Orbhoarder window's Reference tab shows one
+// group at a time (sheets, recipes, tracking); the panel shows them all
+const props = defineProps<{ only?: 'sheets' | 'recipes' | 'tracking' }>()
+const GROUP_TABS: Record<string, string[]> = { recipes: ['recipes', 'bench'], tracking: ['threads', 'challenges', 'progress'] }
+const allTabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), ...OWN_TABS]
+const tabs = props.only == null
+  ? allTabs
+  : props.only === 'sheets'
+    ? allTabs.filter(t => SHEETS.some(s => s.id === t.id))
+    : GROUP_TABS[props.only].map(id => allTabs.find(t => t.id === id)!)
+const KEY = props.only ? `deathloom.cheats.tab.${props.only}.v1` : 'deathloom.cheats.tab.v1'
+const tab = ref((() => {
+  try { const v = localStorage.getItem(KEY); return tabs.some(t => t.id === v) ? v! : tabs[0].id } catch { return tabs[0].id }
+})())
 function setTab (id: string) {
+  // a challenge's cheat sheet link in Reference → Tracking: open it under Reference → Cheat sheets
+  if (props.only && !tabs.some(t => t.id === id)) {
+    const group = Object.keys(GROUP_TABS).find(g => GROUP_TABS[g].includes(id)) ?? 'sheets'
+    try { localStorage.setItem(`deathloom.cheats.tab.${group}.v1`, id) } catch {}
+    setSub('reference', group)
+    return
+  }
   tab.value = id
   try { localStorage.setItem(KEY, id) } catch {}
 }
-const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (tab.value === 'recipes' || tab.value === 'progress' ? null : SHEETS[0]))
+const sheet = computed(() => SHEETS.find(s => s.id === tab.value) ?? (OWN_TABS.some(t => t.id === tab.value) ? null : SHEETS[0]))
 
 // per-sheet focus switch (Covens: levelling / mapping profit / bosses)
 const FOCUS_KEY = 'deathloom.cheats.focus.v1'

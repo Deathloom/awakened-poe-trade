@@ -16,10 +16,11 @@
     <div v-else-if="curTab !== 'watched'" class="flex-1 min-h-0" :style="fill ? {} : { height: '26rem' }">
       <market-shopping v-if="curTab === 'shop'" />
       <market-sell v-else-if="curTab === 'sell'" />
-      <market-farming v-else-if="curTab === 'farm'" />
-      <market-crafting v-else />
+      <market-bulk v-else />
     </div>
     <div v-else class="overflow-y-auto min-h-0 p-1">
+      <price-alerts-summary />
+      <div v-if="watchNotice" class="p-1 mb-1 rounded bg-red-900 text-red-100 text-xs">{{ watchNotice }}</div>
       <div v-if="!items.length" class="p-1 text-gray-500">
         Nothing watched yet. Press the <i class="far fa-star" /> next to an item in the market list, or next to its poe.ninja price in a price check.
       </div>
@@ -34,8 +35,11 @@
           <button class="ui-btn ui-btn-quiet shrink-0" :class="{ 'ui-btn-on': w.alert }" :disabled="!w.now"
             :title="w.alert ? `Alert when the price moves ${w.alert.pct}% from ${fmt(w.alert.base)} c (click to change)` : 'Price alert: tell me when the price moves (click: 10%, 20%, 50%, off)'"
             @click="cycleAlert(w)"><i class="fas fa-bell mr-1" />{{ w.alert ? w.alert.pct + '%' : 'Alert' }}</button>
-          <ui-menu :items="rowMenu(w)" align-right title="More: open on poe.ninja, stop watching" button-class="ui-btn-quiet" />
+          <button v-if="alertCount(w)" class="ui-btn ui-btn-quiet shrink-0" :class="{ 'ui-btn-on': alertOpen === w.key }"
+            :title="`${alertCount(w)} price line(s): tell me when the price goes above / below (click to see)`" @click="toggleAlert(w.key)"><i class="fas fa-bell mr-1" />{{ alertCount(w) }} {{ alertCount(w) === 1 ? 'line' : 'lines' }}</button>
+          <ui-menu :items="rowMenu(w)" align-right title="More: price line, open on poe.ninja, stop watching" button-class="ui-btn-quiet" />
         </div>
+        <price-alert-form v-if="alertOpen === w.key && w.now" :item="{ type: w.now.type, name: w.name, variant: w.variant, label: w.label }" :chaos="w.now.chaos" />
         <div class="flex gap-x-2 items-end pt-1">
           <div class="flex-1">
             <div class="text-xs text-gray-500">poe.ninja, 7 days</div>
@@ -62,15 +66,17 @@
 import MarketOverview from './MarketOverview.vue'
 import MarketShopping from './MarketShopping.vue'
 import MarketSell from './MarketSell.vue'
-import MarketFarming from './MarketFarming.vue'
-import MarketCrafting from './MarketCrafting.vue'
+import MarketBulk from './MarketBulk.vue'
 import DivineChip from './DivineChip.vue'
+import PriceAlertForm from './PriceAlertForm.vue'
+import PriceAlertsSummary from './PriceAlertsSummary.vue'
+import { usePriceAlerts } from './price-alerts-store'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { computed, onUnmounted, ref, watch } from 'vue'
-import VueApexcharts from 'vue3-apexcharts'
+import VueApexcharts from '../ui/LazyChart'
 import { usePoeninja } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
-import { watchlist, removeWatch, record, setAlert, checkAlert, ALERT_STEPS, type WatchedItem } from './watchlist'
+import { watchlist, removeWatch, recordPrices, setAlert, watchNotice, ALERT_STEPS, type WatchedItem } from './watchlist'
 
 // active: the panel is on screen; fill: take the whole space (desktop window)
 const props = defineProps<{ active?: boolean, fill?: boolean, tabs?: boolean }>()
@@ -80,9 +86,10 @@ const TABS = [
   { id: 'all', label: 'All prices', tip: 'Every poe.ninja price: risers, fallers, outlook' },
   { id: 'shop', label: 'Shopping', tip: 'What your build still needs (uniques and gems) and what it costs' },
   { id: 'sell', label: 'Sell list', tip: 'What you plan to sell: value now and whether to wait' },
-  { id: 'farm', label: 'Farming', tip: 'Profit per hour per strategy or league mechanic' },
-  { id: 'craft', label: 'Crafting', tip: 'Crafting currency prices and what your craft costs' }
+  { id: 'bulk', label: 'Bulk sell', tip: 'Bulk ratios: poe.ninja vs the Currency Exchange, copy a WTS line' }
 ] as const
+// Deathloom fork (layout review steps 3 and 5): Gems, Crafting and Farming moved to the
+// Profit panel (Farming is on the window's Mapping tab too)
 type Tab = typeof TABS[number]['id']
 const tab = ref<Tab>((() => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(t => t.id === v) ? v as Tab : 'watched' } catch { return 'watched' } })())
 // the window's Market view shows All prices on the right, so that tab isn't listed there
@@ -112,14 +119,9 @@ const items = computed(() => watchlist.value
   }))
 
 function recordAll () {
-  for (const w of items.value) {
-    if (!w.now) continue
-    record(w.key, w.now.chaos)
-    if (w.alert) {
-      const change = checkAlert(w.key, w.now.chaos)
-      if (change != null) notify(w.label, change, w.now.chaos)
-    }
-  }
+  const shown = items.value.filter(w => w.now)
+  const hits = recordPrices(shown.map(w => ({ key: w.key, chaos: w.now!.chaos })))
+  for (const h of hits) notify(shown.find(w => w.key === h.key)?.label ?? h.key, h.change, h.chaos)
 }
 
 // Deathloom fork (idea 4): price alerts
@@ -150,9 +152,18 @@ watch(() => props.active, (active) => {
 // only when a watched item or its price changes (not on every list update)
 watch(() => items.value.map(w => `${w.key}=${w.now?.chaos ?? ''}`).join('|'), recordAll)
 
+// Deathloom fork (Q6): price alerts above / below a price (checked in main, sent to the phone)
+const priceAlerts = usePriceAlerts()
+const alertOpen = ref<string | null>(null)
+function toggleAlert (key: string) { alertOpen.value = alertOpen.value === key ? null : key }
+function alertCount (w: WatchedItem & { now: { type: string } | null }) {
+  return priceAlerts.rulesFor(w.league, w.now?.type, w.name, w.variant).length
+}
+
 function open (url: string) { window.open(url) }
 function rowMenu (w: { key: string, now: { url: string } | null }): UiMenuItem[] {
   return [
+    { label: 'Price line above / below…', icon: 'fas fa-bell', disabled: !w.now, hint: 'Tell me (phone or Windows notification) when the price crosses a line', action: () => { toggleAlert(w.key) } },
     { label: 'Open on poe.ninja (full history)', icon: 'fas fa-external-link-alt', disabled: !w.now, action: () => { if (w.now) open(w.now.url) } },
     { divider: true },
     { label: 'Stop watching', icon: 'fas fa-trash-alt', action: () => { removeWatch(w.key) } }

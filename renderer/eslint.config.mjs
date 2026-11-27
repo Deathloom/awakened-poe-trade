@@ -6,7 +6,9 @@ import { standard } from '@vue/eslint-config-standard-with-typescript'
 standard[standard.length - 1].files = ['**/*.ts', '**/*.vue']
 
 export default defineConfigWithVueTs(
-  { ignores: ['src/*.d.ts'] },
+  // Deathloom fork: src/poe2 is vendored from Exiled Exchange 2 and kept in its own
+  // style, so a data/parser refresh from EE2 stays a plain copy.
+  { ignores: ['src/*.d.ts', 'src/poe2/**'] },
   pluginVue.configs['flat/base'],
   vueTsConfigs.strict,
   standard,

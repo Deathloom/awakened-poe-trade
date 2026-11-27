@@ -26,7 +26,8 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 |---|------|--------|-------|
 | 2.1 | Listens on 127.0.0.1 only by default | ✅ | `server.ts` |
 | 2.2 | Requests and WebSocket upgrades from other web pages refused (Host + Origin check, blocks CSRF and DNS rebinding) | ✅ | `request-guard.ts` |
-| 2.3 | Phone link ("Phone or other devices"): other devices need the key, decided by the connection's address (not the Host header); they can't change settings, folders, sign-in or phone access, or send input to the game | ✅ | `request-guard.ts` `isLoopbackAddress`, `allowedFromOtherDevice` |
+| 2.3 | Phone link ("Phone or other devices"): other devices need the key, decided by the connection's address (not the Host header); they can't change settings, folders, sign-in, phone access or price alerts, or send input to the game, can't take the game log lines written while Orbhoarder was closed (only this PC's level recorder does), and never become the window that gets the price check's item text | ✅ | `request-guard.ts` `isLoopbackAddress`, `allowedFromOtherDevice`; `server.ts` (last-active window) |
+| 2.4 | Price alerts: checked on the shared poe.ninja download (no extra requests), sent only to windows connected to the local server (this PC, a paired phone); input validated in main; stored in `apt-data/price-alerts.json` | ✅ | `ipc/price-alerts.ts`, `PriceAlerts.ts` |
 
 ## 3. Secrets (ASVS V6/V8)
 
@@ -36,6 +37,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 3.2 | GitHub sign-in token kept by the OS (Windows Credential Manager), not in config files or logs | ✅ |
 | 3.3 | Sign-ins (trade site tab, incl. Steam / Epic / Xbox / PlayStation) happen on the provider's own pages in an isolated session; Orbhoarder never reads passwords. Same rule for the planned Discord / Steam friend sign-in | ✅ |
 | 3.4 | Logs and error reports don't include tokens | ✅ (review on every new sign-in feature) |
+| 3.5 | Phone link key kept with Windows' own encryption (Electron safeStorage / DPAPI, this Windows user only); plain file only where the OS offers none | ✅ `remote-key.ts`, `remote-key-store.ts` |
 
 ## 4. Input validation (ASVS V5)
 
@@ -44,6 +46,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 4.1 | PoB code / build import: only allowed hosts, size limit | ✅ `PobImport.ts` (`isAllowedImportUrl`, `MAX_IMPORT_BYTES`) |
 | 4.2 | Files from friends' builds (Pull) treated as data, never run | ✅ |
 | 4.3 | Clipboard item text parsed as text only | ✅ |
+| 4.4 | Loot filter add-on (Q10): this PC only (refused from phones); only `.filter` files directly in Documents\My Games\Path of Exile[ 2] (real paths, links out refused), 8 MB cap; writes only `<his filter> + Orbhoarder.filter`, never over a file Orbhoarder didn't make, never through a link; names in quotes checked (no quotes, line breaks, `#`) and must be known to the app's item data (an unknown `BaseType ==` name stops PoE1 loading the filter). ⚠️ Accepted: Windows has no O_NOFOLLOW, so a link swapped in between the check and the write would be followed; needs someone already able to write in your Documents folder (local attacker only) | ✅ `LootFilterFiles.ts`, `ipc/loot-filter.ts`, `request-guard.ts` |
 
 ## 5. Network (ASVS V9)
 
@@ -67,7 +70,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 
 | # | Item | Status |
 |---|------|--------|
-| 7.1 | GitHub Actions pinned to full commit SHAs | ✅ release, security, scorecard, PoB pin workflows |
+| 7.1 | GitHub Actions pinned to full commit SHAs | ✅ build, release, security, scorecard, PoB pin workflows |
 | 7.2 | Workflows run with least `permissions` | ✅ |
 | 7.3 | Dependabot alerts and updates on | ✅ |
 | 7.4 | Branch protection on master (ruleset "protect master") | ✅ |

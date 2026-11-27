@@ -49,7 +49,7 @@ if (!IS_HUD && !IS_DESKTOP) {
 
 <style lang="postcss">
 @import url('@fortawesome/fontawesome-free/css/all.min.css');
-@import url('animate.css/animate.css');
+@import url('../assets/animate-lite.css');
 @import url('../assets/font.css');
 @tailwind base;
 @tailwind components;
@@ -65,6 +65,12 @@ if (!IS_HUD && !IS_DESKTOP) {
   --b-400: 99 179 237; --b-500: 66 153 225; --b-600: 49 130 206;
   --b-700: 43 108 176; --b-800: 44 82 130; --b-900: 42 67 101;
   --accent: 66 153 225;
+  --r-100: 255 245 245; --r-200: 254 215 215; --r-300: 254 178 178;
+  --r-400: 252 129 129; --r-500: 245 101 101; --r-600: 229 62 62;
+  --r-700: 197 48 48; --r-800: 155 44 44; --r-900: 116 42 42;
+  --gn-100: 240 255 244; --gn-200: 198 246 213; --gn-300: 154 230 180;
+  --gn-400: 104 211 145; --gn-500: 72 187 120; --gn-600: 56 161 105;
+  --gn-700: 47 133 90; --gn-800: 39 103 73; --gn-900: 34 84 61;
   --round: 1;
   --panel-alpha: 1;
   --ui-font: FontinSmallCaps, FrizQuadrataC;
