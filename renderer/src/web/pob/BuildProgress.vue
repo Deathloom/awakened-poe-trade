@@ -1,7 +1,8 @@
 <template>
   <!-- Deathloom fork (Q17, 27 Nov 2026): build progress in one view. Tree step from
        the levelling planner, gem ticks per character and gear "got it" ticks per
-       build, all from Path of Building and your own ticks. No character data is fetched. -->
+       build, all from Path of Building and your own ticks. No character data is fetched.
+       Q18: the next 3 unique upgrades by PoB impact per chaos (poe.ninja prices only). -->
   <div class="widget-default-style text-gray-200 leading-tight text-sm flex flex-col h-full min-h-0">
     <div class="flex items-center gap-x-2 px-2 py-1 bg-gray-900 rounded-t">
       <span class="text-gray-500 shrink-0"><i class="fas fa-tasks mr-1" />Build progress</span>
@@ -74,6 +75,36 @@
         </div>
       </div>
 
+      <!-- Q18: next upgrades by PoB impact per chaos (uniques, poe.ninja prices) -->
+      <div class="rounded px-2 py-1.5 mb-2 bg-gray-900">
+        <div class="lg-head flex items-baseline"><i class="fas fa-arrow-up mr-1 text-gray-500" />
+          <span>Next upgrades</span>
+          <span class="ml-2 text-gray-600 normal-case">PoB impact per chaos</span>
+          <button class="ml-auto ui-btn ui-btn-quiet text-xs" :disabled="ranking || !candidates.uniques.length"
+            :title="`Path of Building compares each unique of the build you haven't ticked with your character file (${candidates.uniques.length} to check, one at a time)`"
+            @click="rank"><i class="fas fa-sort-amount-down mr-1" :class="{ 'fa-spin': ranking }" />{{ ranking ? `${rankDone} / ${candidates.uniques.length}` : (ranked ? 'Rank again' : 'Rank') }}</button>
+        </div>
+        <div v-if="rankError" class="text-xs text-gray-400">{{ rankError }}</div>
+        <div v-else-if="!ranked && !ranking" class="text-xs text-gray-500">
+          <template v-if="candidates.uniques.length">Click Rank: the {{ candidates.uniques.length }} unique{{ candidates.uniques.length === 1 ? '' : 's' }} you haven't ticked, best gain per chaos first.</template>
+          <template v-else-if="gear">No unticked uniques to rank.</template>
+        </div>
+        <template v-else-if="ranked">
+          <div v-if="!ranked.length" class="text-xs text-gray-500">None of them beats your character's gear{{ unpriced ? ` (${unpriced} without a poe.ninja price)` : '' }}.</div>
+          <div v-for="(u, i) of ranked" :key="u.item.slot" class="flex items-baseline gap-x-2 py-px">
+            <span class="w-4 text-right text-xs text-gray-600 shrink-0">{{ i + 1 }}</span>
+            <span class="truncate min-w-0" :style="{ color: rarityColour(u.item.rarity) }" :title="`${u.item.label} · compared in ${u.impact.slot}`">{{ u.item.searchText }}</span>
+            <span v-if="u.impact.dpsPct" class="text-xs shrink-0" :class="u.impact.dpsPct > 0 ? 'text-green-400' : 'text-red-400'">{{ pct(u.impact.dpsPct) }} DPS</span>
+            <span v-if="u.impact.ehpPct" class="text-xs shrink-0" :class="u.impact.ehpPct > 0 ? 'text-green-400' : 'text-red-400'">{{ pct(u.impact.ehpPct) }} eHP</span>
+            <span class="ml-auto text-xs text-yellow-200 shrink-0" title="Cheapest listing on poe.ninja">{{ fmtChaos(u.chaos) }}c</span>
+            <button class="ui-btn ui-btn-quiet text-xs shrink-0" :title="`Copy '${u.item.searchText}': press / in game, then Ctrl+V`" @click="copy(u.item.searchText, u.item.slot)">
+              <i class="far" :class="copiedKey === u.item.slot ? 'fa-check' : 'fa-copy'" /></button>
+          </div>
+          <div v-if="ranked.length && unpriced" class="lg-sub">{{ unpriced }} without a poe.ninja price left out.</div>
+        </template>
+        <div v-if="candidates.rares.length" class="lg-sub">{{ candidates.rares.length }} rare/magic item{{ candidates.rares.length === 1 ? '' : 's' }} not ranked (no poe.ninja price): Build → Gear → Trade.</div>
+      </div>
+
       <div class="px-1 text-xs text-gray-600">
         Ticks are shared with Build → Gear (got it), Build → Gems and Levelling → Your gems. Passives come from the
         levelling planner (game log or your level).
@@ -83,14 +114,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, shallowRef } from 'vue'
-import type { PobBuildInfo, PobGearItem, PobPlanGem, PobPlanNode } from '@ipc/types'
+import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
+import type { PobBuildInfo, PobGearItem, PobImpactResult, PobPlanGem, PobPlanNode } from '@ipc/types'
+import { usePoeninja } from '@/web/background/Prices'
+import { myCharacterHint } from './use-my-character'
+import { useCopyFeedback } from './market'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from '../companion/char-level'
 import { currentPlan, currentTaken, mapHave } from './plan-store'
 import {
   GEAR_OWNED_KEY, GEM_TICKS_KEY, gearOwnedKey, gearProgress, gemProgress, overallPercent, parseGearOwned,
-  parseGemTicks, saveShared, toggleGearOwned, toggleGemTick, treeProgress
+  parseGemTicks, saveShared, toggleGearOwned, toggleGemTick, treeProgress,
+  cheapestUnique, impactScore, rankUpgrades, upgradeCandidates, type PricedUpgrade
 } from './build-progress'
 
 const levels = ref(loadCharLevels())
@@ -171,6 +206,76 @@ onUnmounted(() => {
   lsBuilds.abort()
   window.removeEventListener('storage', onStorage)
 })
+
+// ---- Q18: next upgrades ----
+const ninja = usePoeninja()
+ninja.queuePricesFetch()
+const { copiedKey, copy } = useCopyFeedback()
+const candidates = computed(() => upgradeCandidates(gear.value?.items ?? []))
+const ranking = ref(false)
+const rankDone = ref(0)
+const rankError = ref('')
+const ranked = shallowRef<Array<PricedUpgrade<PobGearItem>> | null>(null)
+const unpriced = ref(0)
+let impactId = ((Date.now() & 0x00ffffff) | 0x38000000) | 0
+const waiting = new Map<number, (e: { ok: boolean, error?: string, result?: PobImpactResult }) => void>()
+const lsImpact = Host.onEvent('MAIN->CLIENT::pob-impact', (e) => {
+  const done = waiting.get(e.requestId)
+  if (done) { waiting.delete(e.requestId); done(e) }
+})
+onUnmounted(() => { lsImpact.abort(); waiting.clear() })
+function impactOf (itemText: string) {
+  impactId = (impactId + 1) | 0
+  const requestId = impactId
+  return new Promise<{ ok: boolean, error?: string, result?: PobImpactResult }>((resolve) => {
+    waiting.set(requestId, resolve)
+    Host.sendEvent({ name: 'CLIENT->MAIN::pob-impact', payload: { requestId, itemText, myCharacter: myCharacterHint() } })
+  })
+}
+async function rank () {
+  if (ranking.value) return
+  ranking.value = true
+  rankDone.value = 0
+  rankError.value = ''
+  ranked.value = null
+  ninja.queuePricesFetch()
+  const listings = ninja.allItems()
+  const out: Array<PricedUpgrade<PobGearItem>> = []
+  let noPrice = 0
+  try {
+    for (const item of candidates.value.uniques) {
+      const chaos = cheapestUnique(listings, item.searchText)
+      if (chaos == null) { noPrice++; rankDone.value++; continue }
+      const e = await impactOf(item.text)
+      rankDone.value++
+      if (!e.ok) {
+        // a price check started meanwhile (PoB does one item at a time): skip this one
+        if ((e.error ?? '').includes('newer item')) continue
+        rankError.value = (e.error ?? 'Unknown error').replace(/^.*ImpactServer\.lua:\d+: /, '')
+        return
+      }
+      if (!e.result?.equipped) {
+        rankError.value = e.result?.equippedError ??
+          "Needs your character's file to compare with: Build → Gems → Your character (Path of Building's Import character)."
+        return
+      }
+      const impact = impactScore(e.result.equipped.compares)
+      if (impact) out.push({ item, chaos, impact })
+    }
+    if (!listings.length) {
+      rankError.value = 'No poe.ninja prices yet (they load for the selected trade league). Try again in a minute.'
+      return
+    }
+    unpriced.value = noPrice
+    ranked.value = rankUpgrades(out, 3)
+  } finally {
+    ranking.value = false
+  }
+}
+// a different build or item set: old ranking no longer fits
+watch(ownedKey, () => { ranked.value = null; rankError.value = '' })
+function pct (v: number) { return `${v > 0 ? '+' : ''}${Math.abs(v) >= 10 ? Math.round(v) : v.toFixed(1)}%` }
+function fmtChaos (c: number) { return c >= 100 ? String(Math.round(c)) : c >= 10 ? c.toFixed(0) : c.toFixed(1) }
 
 const overall = computed(() => overallPercent([tree.value ? { have: tree.value.taken, total: tree.value.total } : null, gems.value, gear.value]))
 const buildTitle = computed(() => {

@@ -126,6 +126,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q17): Build progress panel
 - New panel for the All tab (Edit layout → Add panel → Build progress): where you are in the build in one view. Tree: the levelling step, passives taken of this step and the next 3 to take. Gems: the step's gems you have ticked (tick or untick right there). Gear: the build's items with the same "got it" ticks as Build → Gear. One percentage on top. Ticks are shared with Build → Gear, Build → Gems and Levelling, and now update in the same window straight away too.
 
+### Added (Q18): next upgrades in Build progress
+- Build progress has a Next upgrades box: click Rank and Path of Building compares each unique of the build you haven't ticked with your character file (Build → Gems → Your character), then shows the 3 with the most gain per chaos (DPS %, plus half the eHP %), with the cheapest poe.ninja price and a Copy button for the in-game market. Up to 8 items, one at a time; rare items aren't ranked (no poe.ninja price).
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)

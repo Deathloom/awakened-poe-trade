@@ -70,3 +70,40 @@ test('build progress: overall percent averages the parts shown', () => {
   assert.equal(bp.overallPercent([{ have: 1, total: 2 }, { have: 2, total: 2 }, null]), 75)
   assert.equal(bp.overallPercent([{ have: 9, total: 8 }]), 100, 'capped per part')
 })
+
+// ---- Q18: next upgrades ----
+const cmp = (header, stats) => ({ header, summary: Object.entries(stats).map(([stat, pct]) => ({ stat, pct })) })
+test('upgrades (Q18): impact takes the best slot, minion DPS first, eHP at half weight', () => {
+  const s = bp.impactScore([cmp('Ring 1', { FullDPS: 4, TotalEHP: 2 }), cmp('Ring 2', { FullDPS: 10, TotalEHP: -4 })])
+  assert.equal(s.slot, 'Ring 2'); assert.equal(s.score, 8)
+  const m = bp.impactScore([cmp('Helmet', { MinionDPS: 20, FullDPS: 1 })])
+  assert.equal(m.dpsPct, 20)
+  const c = bp.impactScore([cmp('Helmet', { CombinedDPS: 3 })])
+  assert.equal(c.dpsPct, 3)
+  assert.equal(bp.impactScore([]), null)
+  assert.equal(bp.impactScore(undefined), null)
+  assert.equal(bp.impactScore([{ header: 'x', summary: [{ stat: 'FullDPS' }] }]).score, 0, 'no pct (old value 0) counts as 0')
+})
+
+test('upgrades (Q18): ranked by gain per chaos, losers and unpriced left out, top 3', () => {
+  const u = (name, chaos, score) => ({ item: name, chaos, impact: { dpsPct: score, ehpPct: 0, score, slot: '' } })
+  const r = bp.rankUpgrades([u('big', 1000, 50), u('cheap', 5, 2), u('mid', 100, 10), u('worse', 1, -3), u('free', 0, 9), u('ok', 50, 4)])
+  assert.deepEqual(r.map(x => x.item), ['cheap', 'mid', 'ok'])
+  assert.equal(bp.perHundredChaos(u('a', 0.5, 1)), 100, 'under 1c counts as 1c')
+})
+
+test('upgrades (Q18): cheapest unique price, candidates are unticked uniques', () => {
+  const l = [{ ns: 'UNIQUE', name: 'Tabula Rasa', chaos: 40 }, { ns: 'UNIQUE', name: 'Tabula Rasa', chaos: 12 }, { ns: 'ITEM', name: 'Tabula Rasa', chaos: 1 }, { ns: 'UNIQUE', name: 'X', chaos: 0 }]
+  assert.equal(bp.cheapestUnique(l, 'Tabula Rasa'), 12)
+  assert.equal(bp.cheapestUnique(l, 'X'), null)
+  const rows = [
+    { item: item('Body Armour', 'Tabula', { rarity: 'Unique' }), owned: false },
+    { item: item('Helmet', 'Crown', { rarity: 'Unique' }), owned: true },
+    { item: item('Gloves', 'Grip'), owned: false }
+  ]
+  const c = bp.upgradeCandidates(rows)
+  assert.deepEqual(c.uniques.map(i => i.slot), ['Body Armour'])
+  assert.deepEqual(c.rares.map(i => i.slot), ['Gloves'])
+  const many = Array.from({ length: 12 }, (_, i) => ({ item: item('J' + i, 'J', { rarity: 'Unique' }), owned: false }))
+  assert.equal(bp.upgradeCandidates(many).uniques.length, bp.MAX_UPGRADE_CHECKS)
+})

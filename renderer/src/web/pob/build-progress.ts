@@ -119,3 +119,74 @@ export function saveShared (key: string, value: unknown): void {
   try { localStorage.setItem(key, JSON.stringify(value)) } catch { return }
   try { window.dispatchEvent(new StorageEvent('storage', { key })) } catch {}
 }
+
+// ---- Q18: next upgrades ranked by Path of Building impact per chaos ----
+// Candidates are the build's own items you haven't ticked; PoB compares each with
+// your character file's gear ("vs character", like the price check). Prices come
+// from poe.ninja only, so only uniques can be ranked; rares are listed apart.
+
+export interface ImpactStat { stat: string, pct?: number }
+export interface ImpactCompare { header: string, summary: ImpactStat[] }
+export interface UpgradeImpact {
+  dpsPct: number
+  ehpPct: number
+  // dps % + half the eHP % (one number to sort by)
+  score: number
+  slot: string
+}
+
+const DPS_STATS = ['MinionDPS', 'FullDPS', 'CombinedDPS']
+
+// best slot of the compares (rings and jewels can go in more than one)
+export function impactScore (compares: readonly ImpactCompare[] | undefined): UpgradeImpact | null {
+  let best: UpgradeImpact | null = null
+  for (const c of compares ?? []) {
+    const pct = (key: string) => c.summary.find(s => s.stat === key && typeof s.pct === 'number' && Number.isFinite(s.pct))?.pct
+    let dpsPct = 0
+    for (const k of DPS_STATS) {
+      const v = pct(k)
+      if (v != null) { dpsPct = v; break }
+    }
+    const ehpPct = pct('TotalEHP') ?? 0
+    const score = dpsPct + ehpPct / 2
+    if (!best || score > best.score) best = { dpsPct, ehpPct, score, slot: c.header }
+  }
+  return best
+}
+
+export interface PricedUpgrade<T> {
+  item: T
+  chaos: number
+  impact: UpgradeImpact
+}
+
+// score per 100 chaos, highest first; only items that help and have a price
+export function perHundredChaos (u: PricedUpgrade<unknown>): number {
+  return u.impact.score / Math.max(1, u.chaos) * 100
+}
+export function rankUpgrades<T> (list: Array<PricedUpgrade<T>>, n = 3): Array<PricedUpgrade<T>> {
+  return list
+    .filter(u => u.impact.score > 0.05 && u.chaos > 0)
+    .sort((a, b) => perHundredChaos(b) - perHundredChaos(a) || a.chaos - b.chaos)
+    .slice(0, n)
+}
+
+// the cheapest poe.ninja listing for a unique name (links / variants cost more)
+export function cheapestUnique (listings: ReadonlyArray<{ ns: string, name: string, chaos: number }>, name: string): number | null {
+  let min: number | null = null
+  for (const l of listings) {
+    if (l.ns !== 'UNIQUE' || l.name !== name || !(l.chaos > 0)) continue
+    if (min == null || l.chaos < min) min = l.chaos
+  }
+  return min
+}
+
+// which of the gear rows are worth asking PoB about (cap: each is a full calculation)
+export const MAX_UPGRADE_CHECKS = 8
+export function upgradeCandidates (rows: GearProgress['items']): { uniques: PobGearItem[], rares: PobGearItem[] } {
+  const open = rows.filter(r => !r.owned).map(r => r.item)
+  return {
+    uniques: open.filter(i => i.rarity === 'Unique').slice(0, MAX_UPGRADE_CHECKS),
+    rares: open.filter(i => i.rarity !== 'Unique')
+  }
+}
