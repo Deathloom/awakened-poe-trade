@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (layout 6): Settings → Panels follows the tabs; help buttons in About
+- Settings → Panels → Where panels show lists the panels in the order of the window's tabs, says which tab each one lives on, and now has the All tab switch for **Market search** and **Build progress** too. The in-game (pinned) list uses the same order.
+- **Help**, **What's new**, **Take the tour** and **Run setup guide** moved from the bottom of the Orbhoarder window's Settings to Settings → **About** (a **Help and tour** button at the bottom takes you there).
+
 ### Changed (layout 5): Mapping tab, Lab in Levelling, new tab order
 - The Orbhoarder window's tabs are now named after what you are doing: **All, Levelling, Mapping, Build, Craft, Market, Profit, Trade, Friends, Reference, Settings** (11 instead of 12).
 - **Mapping** (new): Atlas tree, This session and Farming. It replaces the Atlas tab.

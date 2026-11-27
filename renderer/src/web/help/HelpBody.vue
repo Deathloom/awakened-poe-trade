@@ -59,7 +59,7 @@
               <b>Crafting costs</b> (crafting currency prices with a week's trend, and a sum of what your craft costs), <b>Currency counter</b>, <b>Farming</b>, and the league planners
               <b>Viscera</b>, <b>Temple</b> and <b>Wombgifts</b>.</li>
             <li><b>Trade → Trade site</b>: GGG's official trade site. Sign in on GGG's own page; Orbhoarder never sees your login.</li>
-            <li><b>Settings</b>: all settings (the same as Shift+Space → Settings), the setup guide, What's new and <b>Patch notes</b> (GGG's PC patch notes; a yellow dot means new notes came out since you last opened them, with a Windows notification too: Settings → General to turn it off).</li>
+            <li><b>Settings</b>: all settings (the same as Shift+Space → Settings); <b>About</b> has Help, What's new, the tour and the setup guide; at the bottom: <b>Patch notes</b> (GGG's PC patch notes; a yellow dot means new notes came out since you last opened them, with a Windows notification too: Settings → General to turn it off).</li>
           </ul>
         </section>
 
