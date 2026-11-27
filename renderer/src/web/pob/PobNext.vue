@@ -55,15 +55,17 @@
         <div class="rounded px-2 py-1.5 mb-2 bg-gray-900">
           <div class="lg-head flex items-baseline"><i class="fas fa-shoe-prints mr-1 text-gray-500" />
             <span>Next passives</span>
-            <span class="ml-2 text-gray-600">{{ Math.min(plan.taken, plan.order.length) + plan.kept }} / {{ plan.order.length + plan.kept }} of this tree by now</span>
+            <tree-stepper v-if="planStep" class="ml-2" :pos="planStep.pos" :len="planStep.len" @step="stepPlan" />
+            <button v-if="planStep && planStep.pos !== planStep.byLevel" class="ui-btn ui-btn-quiet text-xs"
+              :title="`Jump to where your level and quest points say you are (${planStep.byLevel}/${planStep.len}). Once: it won't follow your level.`"
+              @click="jumpPlanToLevel"><i class="fas fa-user-check" />My level</button>
             <button class="ml-auto ui-btn ui-btn-quiet text-xs" @click="showAll = !showAll">{{ showAll ? 'Next only' : 'Whole order' }}</button>
           </div>
           <div v-if="!plan.order.length" class="text-gray-500">This tree adds no passives over the previous one.</div>
-          <div v-else-if="!showAll && plan.taken >= plan.order.length" class="text-green-500">All passives of this tree should be taken by now.</div>
+          <div v-else-if="!showAll && planStep && planStep.pos >= planStep.len" class="text-green-500">You've stepped past every passive of this tree.</div>
           <div v-for="row of passiveRows" :key="row.i" class="flex items-baseline gap-x-2 py-px"
             :class="isTaken(row.i) ? 'opacity-40' : ''">
             <span class="w-6 text-right text-xs text-gray-600 shrink-0">{{ row.i + 1 + plan.kept }}</span>
-            <i v-if="takenByLog?.has(row.i)" class="fas fa-check text-green-500 text-xs" title="Taken (game log)" />
             <span class="min-w-0 truncate" :class="nodeClass(row.node)" :title="nodeTitle(row.node)">{{ row.node.name }}</span>
             <span v-if="row.node.type !== 'Normal'" class="text-xs text-gray-600 shrink-0">{{ typeLabel(row.node) }}</span>
             <span v-if="row.node.stats" class="text-xs text-gray-600 truncate">{{ row.node.stats }}</span>
@@ -248,7 +250,8 @@ import { AppConfig } from '@/web/Config'
 import { VENDOR_RECIPES } from '../companion/vendor-recipes'
 import { CAMPAIGN_STEP_KEY, STEPS, banditFromPob, loadCampaignStep, questPassivesBefore, saveBandit } from '../companion/campaign-route'
 import { loadQuestGemData, planQuestGems, type QuestGemData } from '../companion/quest-gems'
-import { currentPlan, currentTaken, mapHave, treeLayout } from './plan-store'
+import { currentPlan, planStep, stepPlan, jumpPlanToLevel } from './plan-store'
+import TreeStepper from '../ui/TreeStepper.vue'
 import PaceLog from '../companion/PaceLog.vue'
 import LabHelper from '../companion/LabHelper.vue'
 
@@ -347,87 +350,18 @@ const logAllocated = computed(() => {
   if (p?.passivesSnap) return Math.max(0, p.passivesSnap.allocated + count - p.passivesSnap.logCount)
   return followedFromStart.value ? count : null
 })
-const takenByLog = computed(() => {
-  const p = plan.value; const a = progress.value?.alloc
-  if (!p || !a || !followedFromStart.value) return null
-  // names compared without case and spaces at the ends
-  const left: Record<string, number> = {}
-  for (const [k, n] of Object.entries(a)) left[k.trim().toLowerCase()] = (left[k.trim().toLowerCase()] ?? 0) + n
-  const take = (key: string | undefined) => {
-    const k = key?.trim().toLowerCase()
-    if (!k || (left[k] ?? 0) <= 0) return false
-    left[k]--
-    return true
-  }
-  const taken = new Set<number>()
-  const takeNode = (node: PobPlanNode) => take(node.name) ||
-    // Masteries: also accept the picked effect's text (any of its lines)
-    (node.type === 'Mastery' && node.effect != null && (take(node.effect) || node.effect.split(/\r?\n/).some(l => take(l))))
-  const lay = treeLayout.value
-  if (lay) {
-    // The log only names passives ("Intelligence" is many nodes), so place them
-    // along the tree: a passive counts as taken only next to one already taken
-    // (start, passives kept from the previous tree, or placed before). Kept
-    // passives use up their names first.
-    const byId = new Map(lay.nodes.map(n => [n[0], n]))
-    const adj = new Map<number, number[]>()
-    const add = (x: number, y: number) => { const l = adj.get(x); if (l) l.push(y); else adj.set(x, [y]) }
-    for (const [x, y] of lay.links) { add(x, y); add(y, x) }
-    const starts = lay.nodes.filter(n => n[3] === 5).map(n => n[0])
-    const have = new Set<number>(starts)
-    // the tree data may not link the class start to its first passives: then
-    // the plan's first passive (nearest the start) is where a path begins
-    const startLinked = starts.some(id => (adj.get(id) ?? []).length > 0)
-    const rootId = startLinked ? null : p.order[0]?.id
-    for (const id of p.keptIds ?? []) {
-      have.add(id)
-      take(byId.get(id)?.[6])
-    }
-    const placed = new Set<number>()
-    for (let again = true; again;) {
-      again = false
-      for (let i = 0; i < p.order.length; i++) {
-        const node = p.order[i]
-        if (placed.has(i)) continue
-        const reachable = node.type === 'Mastery' || node.id === rootId || (adj.get(node.id) ?? []).some(nb => have.has(nb))
-        if (!reachable || !takeNode(node)) continue
-        placed.add(i); taken.add(i); have.add(node.id)
-        again = true
-        break
-      }
-    }
-    // names left over that no linked passive could take (passives off the build's
-    // path) are not placed: guessing them in plan order lit passives further along
-    // the path, and the tree map then filled in everything on the way to them
-    return taken
-  }
-  p.order.forEach((node, i) => { if (takeNode(node)) taken.add(i) })
-  // The log only names passives. Taking or refunding a same-named small passive
-  // off the plan (e.g. "Intelligence") moves the count and leaves a hole in the
-  // path; a small passive before a taken one is on the way to it, so count it.
-  let last = -1
-  for (const i of taken) last = Math.max(last, i)
-  for (let i = 0; i < last; i++) {
-    if (!taken.has(i) && p.order[i].type === 'Normal') taken.add(i)
-  }
-  return taken
-})
-watch(takenByLog, (t) => { currentTaken.value = t }, { immediate: true })
-// Deathloom fork (17 Nov): when a tree map is open, its back / forward step is
-// what counts as taken, so this list and the map always agree
+// Deathloom fork (Gerhard 27 Nov 2026): no automatic tree tracking. What counts
+// as taken is only where you stepped to with the arrows (shared with the tree
+// map and Build progress); the game log and your level don't move it.
 function isTaken (i: number) {
-  const id = plan.value?.order[i]?.id
-  if (mapHave.value) return id != null && mapHave.value.has(id)
-  return takenByLog.value ? takenByLog.value.has(i) : i < (plan.value?.taken ?? 0)
+  return i < (planStep.value?.pos ?? 0)
 }
 const passiveRows = computed(() => {
   const p = plan.value
   if (!p) return []
   const rows = p.order.map((node, i) => ({ node, i }))
   if (showAll.value) return rows
-  if (mapHave.value) return rows.filter(r => !isTaken(r.i)).slice(0, 5)
-  if (takenByLog.value) return rows.filter(r => !takenByLog.value!.has(r.i)).slice(0, 5)
-  return rows.slice(p.taken, p.taken + 5)
+  return rows.filter(r => !isTaken(r.i)).slice(0, 5)
 })
 
 function fmtMs (ms: number) {

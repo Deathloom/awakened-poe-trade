@@ -1,7 +1,7 @@
 <template>
   <!-- Deathloom fork: Atlas passive tree (Orbhoarder window). Your atlas builds
-       (paste a pathofexile.com / poe.ninja / poeplanner atlas link), what you've
-       taken (Client.txt), pan (drag), zoom (wheel), hover for stats, Edit. -->
+       (paste a pathofexile.com / poe.ninja / poeplanner atlas link), where you've
+       stepped to (arrows only), pan (drag), zoom (wheel), hover for stats, Edit. -->
   <div class="flex flex-col min-h-0 h-full text-sm">
     <div class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 text-xs shrink-0">
       <select class="rounded bg-gray-800 px-1 max-w-[12rem]" :value="store.active ?? ''" title="Active atlas build" @change="onPick">
@@ -138,13 +138,13 @@
     <div v-if="statsOpen" class="flex flex-col shrink-0 min-h-0 rounded bg-gray-900 text-xs" :class="compact ? 'w-52' : 'w-72'">
       <div class="flex items-center gap-2 px-2 py-1 border-b border-gray-700">
         <button :class="statsOf2 === 'build' ? 'text-gray-100 font-bold' : 'text-gray-500 hover:text-gray-200'" title="Every passive in this atlas build" @click="statsOf2 = 'build'">Build</button>
-        <button :class="statsOf2 === 'taken' ? 'text-gray-100 font-bold' : 'text-gray-500 hover:text-gray-200'" title="Only the passives of this build you have taken in game" @click="statsOf2 = 'taken'">Taken</button>
+        <button :class="statsOf2 === 'taken' ? 'text-gray-100 font-bold' : 'text-gray-500 hover:text-gray-200'" title="Only the passives of this build you have stepped past with the arrows" @click="statsOf2 = 'taken'">Taken</button>
         <span class="flex-1" />
         <span class="text-gray-500">{{ statPoints }} pts</span>
       </div>
       <input v-model="statFilter" class="mx-2 my-1 px-1 rounded bg-gray-800 text-gray-200" placeholder="Filter stats" spellcheck="false">
       <div class="flex-1 min-h-0 overflow-y-auto px-2 pb-1">
-        <div v-if="!statLines.length" class="text-gray-500 py-1">{{ statsOf2 === 'taken' ? 'Nothing taken yet (see the ticks button).' : activeBuild ? 'No passives in this build yet.' : 'Pick an atlas build.' }}</div>
+        <div v-if="!statLines.length" class="text-gray-500 py-1">{{ statsOf2 === 'taken' ? 'Nothing taken yet: step forward with the arrows.' : activeBuild ? 'No passives in this build yet.' : 'Pick an atlas build.' }}</div>
         <div v-for="l of statLines" :key="l.text" class="py-px text-blue-300 cursor-pointer hover:text-blue-100"
           :title="l.count > 1 ? `From ${l.count} passives. Click to show them on the atlas` : 'Click to show it on the atlas'" @click="showStat(l.text)">
           {{ l.text }}<span v-if="l.count > 1 && !l.numeric" class="text-gray-500"> ×{{ l.count }}</span>
@@ -158,11 +158,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { ATLAS, ATLAS_ADJ, ATLAS_BY_ID, ATLAS_START, atlasUrl, codeFromInput, decodeAtlas, pointsOf, statsOf, type AtlasNode } from './atlas-tree'
-import { orderKey, leadingTaken } from '../pob/tree-step-logic'
+import { orderKey } from '../pob/tree-step-logic'
 import { getStep, moveStep } from '../pob/tree-steps'
 import TreeStepper from '../ui/TreeStepper.vue'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
-import { store, activeBuild, activeSpec as storeSpec, addBuild, setActive, renameBuild, deleteBuild, updateCode, takenNodes, taken, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
+import { store, activeBuild, activeSpec as storeSpec, addBuild, setActive, renameBuild, deleteBuild, updateCode, synced, lastError, copyToMine, type AtlasBuild } from './atlas-store'
 import { sumStats, cleanStat } from './atlas-stats'
 import { CONTENTS, CONTENT_NOTABLES, SUSTAIN, generateAtlas, type GenResult } from './atlas-generator'
 import { contentValues, NINJA_ATLAS_URL } from './atlas-value'
@@ -430,18 +430,14 @@ const atlasOrder = computed<number[]>(() => {
   }
   return out
 })
-// Deathloom fork (Gerhard 17 Nov 2026): no automatic following; back / forward
-// buttons step along atlasOrder (1 or 5 passives)
+// Deathloom fork (Gerhard 17 / 27 Nov 2026): no automatic following at all;
+// back / forward buttons step along atlasOrder (1 or 5 passives). A build seen
+// for the first time starts at 0 (nothing from the game log).
 const atlasStep = computed(() => {
   const order = atlasOrder.value
   if (!spec.value || !order.length) return null
   const key = orderKey('atlas', order)
-  let pos = getStep(key)
-  if (pos == null) {
-    // first time: start where the old automatic tracking had you
-    const was = takenNodes([...buildSet.value], DEPTH)
-    pos = leadingTaken(order.length, i => was.has(order[i]))
-  }
+  const pos = getStep(key) ?? 0
   return { key, len: order.length, pos: Math.min(pos, order.length) }
 })
 function stepAtlas (delta: number) {
@@ -789,7 +785,6 @@ function paint () {
 watch([searchHits, buildSet, haveSet, nextIds, refundSet, hitIdx], () => draw())
 // switching atlas build or opening the panel: zoom to its target (Gerhard 17 Nov)
 watch(() => store.value.active, () => focusTarget())
-watch(taken, () => draw())
 let ro: ResizeObserver | null = null
 onMounted(() => {
   ro = new ResizeObserver(() => { if (fitted) draw(); else focusTarget() })

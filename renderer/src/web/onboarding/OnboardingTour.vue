@@ -51,7 +51,7 @@ const steps: Step[] = [
   { target: 'overview', view: 'overview', icon: 'fa-th-large', title: 'All', body: 'Everything at once. <b>Edit layout</b> adds, moves and resizes panels. It switches between a Levelling and a Mapping layout by itself.' },
   { target: 'build', view: 'build', icon: 'fa-hammer', title: 'Build', body: 'Gear, gems and tree of your Path of Building build. Builds shared in POE-Builds show here for the whole group.' },
   { target: 'levelling', view: 'levelling', icon: 'fa-route', title: 'Levelling', body: 'Campaign guide, quest gems, gem swaps and the next passives. It follows the game log, so it moves on as you do.' },
-  { target: 'atlas', view: 'atlas', icon: 'fa-globe', title: 'Atlas', body: 'Your atlas tree builds and what you have already taken.' },
+  { target: 'atlas', view: 'atlas', icon: 'fa-globe', title: 'Atlas', body: 'Your atlas tree builds: step along one with the arrows as you take passives.' },
   { target: 'trades', view: 'trades', icon: 'fa-handshake', title: 'Trades', body: 'Trade whispers and a ledger of what you bought and sold.' },
   { target: 'board', view: 'board', icon: 'fa-people-carry', title: 'Board', body: "The friends' trade board: give away, sell to and ask the group." },
   { target: 'market', view: 'market', icon: 'fa-chart-line', title: 'Market', body: 'Prices of items you watch (star them in a price check) next to the poe.ninja overview.' },

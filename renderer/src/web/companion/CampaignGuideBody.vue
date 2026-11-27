@@ -293,7 +293,7 @@ const lab = ref<LabBanner | null>(null)
 // ascendancy notables this levelling tree adds, not taken yet (only where the
 // levelling planner has the build: the Orbhoarder window)
 const labAsc = computed(() => lab.value
-  ? labBannerAscendancy(currentPlan.value?.ascendancy, progress.value?.alloc, treeLayout.value, currentPlan.value?.ascendancyClass)
+  ? labBannerAscendancy(currentPlan.value?.ascendancy, undefined, treeLayout.value, currentPlan.value?.ascendancyClass)
   : [])
 // the Orbhoarder window's Lab tab (opens the window without taking focus from the game)
 function openPoelab () {

@@ -683,24 +683,7 @@ test('Mapping layout: tree map added once to saved layouts, above Build', async 
   assert.deepEqual(lp.addTreeMapOnce(noGear).cols[0].items.map(i => i.id), ['atlas', 'tree'])
 })
 
-test('atlas taken: grows from the start, never fills a path to a far same-named passive', async () => {
-  const { pickTaken } = await import('./.build/atlas-taken.mjs')
-  // start 0 - 1(Drop) - 2(Small) - 3(Small) - 4(Drop) ; 0 - 5(Drop) off the build
-  const names = { 1: 'Drop', 2: 'Small', 3: 'Small', 4: 'Drop', 5: 'Drop' }
-  const edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5]]
-  const adj = id => edges.flatMap(([a, b]) => a === id ? [b] : b === id ? [a] : [])
-  const depth = { 0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 1 }
-  const pick = (build, counts) => [...pickTaken(build, counts, id => names[id], adj, id => id === 0, id => depth[id])].sort()
-  // one Drop taken: only the one next to the start
-  assert.deepEqual(pick([0, 1, 2, 3, 4], { Drop: 1 }), [0, 1])
-  // build goes the other way: its first Drop is far away -> nothing shown, no path filled
-  assert.deepEqual(pick([0, 5, 2, 3, 4], { Drop: 1 }), [0, 5])
-  assert.deepEqual(pick([0, 2, 3, 4], { Drop: 1 }), [0])
-  // the whole line taken
-  assert.deepEqual(pick([0, 1, 2, 3, 4], { Drop: 2, Small: 2 }), [0, 1, 2, 3, 4])
-})
-
-test('tree steps: clamp, stable key, first position from old tracking', async () => {
+test('tree steps: clamp, stable key', async () => {
   const t = await import('./.build/tree-step-logic.mjs')
   assert.equal(t.clampStep(3, 5, 6), 6)
   assert.equal(t.clampStep(3, -5, 6), 0)
@@ -708,8 +691,6 @@ test('tree steps: clamp, stable key, first position from old tracking', async ()
   assert.equal(t.orderKey('tree', [1, 2, 3]), t.orderKey('tree', [1, 2, 3]))
   assert.notEqual(t.orderKey('tree', [1, 2, 3]), t.orderKey('tree', [1, 3, 2]))
   assert.notEqual(t.orderKey('tree', [1]), t.orderKey('atlas', [1]))
-  assert.equal(t.leadingTaken(5, i => [0, 1, 3].includes(i)), 2)
-  assert.equal(t.leadingTaken(3, () => true), 3)
 })
 
 test('gear defences read from item text', async () => {

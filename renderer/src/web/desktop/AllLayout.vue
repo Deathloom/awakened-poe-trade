@@ -3,9 +3,9 @@
        lines to resize. Edit layout: drag panels by their bar to move them
        (onto a column's edge for a new column), × removes, Add panel adds. -->
   <div class="flex flex-col flex-1 min-h-0">
-    <!-- Deathloom fork (Gerhard 17 Nov): the levelling planner works out what you've
-         taken (game log) and the next passives; the tree map follows it. Without the
-         Levelling guide panel (Mapping layout) it runs hidden so the tree still updates. -->
+    <!-- Deathloom fork (Gerhard 17 Nov): the levelling planner loads the plan (PoB)
+         the tree map and Build progress step along. Without the Levelling guide
+         panel (Mapping layout) it runs hidden so they still have it. -->
     <div v-if="needPlanner" class="hidden"><LazyPobNext /></div>
     <mapping-loadout-prompt />
     <div v-if="editing" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1 mx-2 mt-2 rounded bg-blue-900 text-sm shrink-0">

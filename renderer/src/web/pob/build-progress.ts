@@ -53,10 +53,10 @@ export interface TreeProgress {
   next: PobPlanNode[]
 }
 
-// taken: plan.order indexes known to be taken (game log / tree map); null = the
-// plan's level-based guess (first plan.taken passives)
-export function treeProgress (plan: PobPlan, taken: ReadonlySet<number> | null, nextCount = 3): TreeProgress {
-  const isTaken = (i: number) => taken ? taken.has(i) : i < plan.taken
+// pos: how far along plan.order you've stepped with the tree arrows (Deathloom
+// fork, 27 Nov 2026: no automatic tracking from the game log or your level)
+export function treeProgress (plan: PobPlan, pos: number, nextCount = 3): TreeProgress {
+  const isTaken = (i: number) => i < pos
   const done = plan.order.reduce((n, _, i) => n + (isTaken(i) ? 1 : 0), 0)
   return {
     step: plan.phase,
