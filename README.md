@@ -46,7 +46,7 @@ If you already use Awakened PoE Trade or PoE Overlay, close it first, because th
 | **Compare builds** | Pick two builds (yours or a friend's) and see the differences: stats, gear mods per slot, gems and passive tree. Read-only. |
 | **Map warnings for your build** | The map check marks mods dangerous for your active PoB build (reflect for melee, no regen, less max res vs your over-cap, curses, …; hover for why) and greys the rest. Settings → Maps to turn it off. |
 | **Where panels show** | Per panel: in game, in the overlay and/or in the Orbhoarder window. |
-| **PoE2 mode** (early) | Settings → General → Game: switch to Path of Exile 2. So far it finds the PoE2 window, log and config and lists PoE2 trade leagues; price check, PoB and prices for PoE2 come in later updates. |
+| **PoE2 mode** (beta) | Settings → General → Game: switch to Path of Exile 2. Finds the PoE2 window, log and config, lists PoE2 trade leagues and price checks PoE2 items on the PoE2 trade site (search, bulk exchange, filters; from Exiled Exchange 2). English game client only for now. No quick poe.ninja price yet; PoB for PoE2 comes later. |
 
 Shift+Space opens the full overlay. Hover the menu icons to see their names and hotkeys, or press **?** for a quick how-to. The Orbhoarder window's **Help** tab has the full help, an FAQ and links to build guides.
 

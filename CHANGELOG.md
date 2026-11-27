@@ -109,6 +109,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (A3): PoE2 trade search and filters
 - The PoE2 price check panel from Exiled Exchange 2 is now in Orbhoarder: trade2 search and bulk exchange, mod filters, rune/soul core editor and listing tooltips, with the same rate-limit handling. Not switched on yet (next step). Until poe.ninja PoE2 prices are added, PoE2 shows trade listings only, no quick price (EE2's own price server is not used).
 
+### Added (A4): PoE2 price check is on
+- With Settings → General → Game set to PoE2, the price check hotkey now checks PoE2 items: trade2 search and bulk exchange with filters, like Exiled Exchange 2. The "not ready yet" notice is gone. PoE1 price check is unchanged. Beta: English game client only, no quick poe.ninja price yet, and some item icons show a "?" (we don't ship GGG art). The PoE2 data loads the first time you check a PoE2 item.
+
 ### Added (Q17): Build progress panel
 - New panel for the All tab (Edit layout → Add panel → Build progress): where you are in the build in one view. Tree: the levelling step, passives taken of this step and the next 3 to take. Gems: the step's gems you have ticked (tick or untick right there). Gear: the build's items with the same "got it" ticks as Build → Gear. One percentage on top. Ticks are shared with Build → Gear, Build → Gems and Levelling, and now update in the same window straight away too.
 
