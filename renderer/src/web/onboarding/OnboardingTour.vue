@@ -58,7 +58,7 @@ const steps: Step[] = [
   { target: 'trade', view: 'trade', icon: 'fa-handshake', title: 'Trade', body: "Trading right now: trade whispers and a ledger of what you bought and sold, <b>Search</b> (who sells an item, cheapest first) and GGG's own <b>Trade site</b> inside this window. You sign in on GGG's page; Orbhoarder never sees your login." },
   { target: 'friends', view: 'friends', icon: 'fa-user-friends', title: 'Friends', body: "The friends' trade board (give away, sell to and ask the group) and <b>Build sharing</b>: your group's builds through GitHub." },
   { target: 'reference', view: 'reference', icon: 'fa-book', title: 'Reference', body: 'Cheat sheets for league mechanics, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and <b>Help</b>: how things work, where to find a build, common questions.' },
-  { target: 'settings', view: 'settings', icon: 'fa-cog', title: 'Settings', body: 'Everything you can change. <b>Appearance</b> has the theme, text size and colour-blind-safe colours. <b>Take the tour</b> at the bottom runs this again.' },
+  { target: 'settings', view: 'settings', icon: 'fa-cog', title: 'Settings', body: 'Everything you can change. <b>Appearance</b> has the theme, text size and colour-blind-safe colours. <b>About</b> has Help, What\'s new and <b>Take the tour</b>, which runs this again.' },
   { target: 'feedback', icon: 'fa-bug', title: 'Bug / Idea', body: 'Something broken or a wish? Tell us here.' },
   {
     title: 'In game',

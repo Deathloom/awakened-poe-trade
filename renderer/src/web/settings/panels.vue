@@ -8,12 +8,12 @@
       <div class="mb-1">Where panels show</div>
       <div class="text-gray-500 text-sm mb-2">
         Pick for each panel where you want it: <b>In game</b> (a small window over the game, below),
-        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Orbhoarder window</b> (its All tab; arrange it there with Edit layout).
-        A panel that's in neither In game nor the overlay opens the Orbhoarder window when you press its hotkey.
+        the <b>overlay</b> (Shift+Space and its menu) and/or the <b>Orbhoarder window</b>'s All tab (arrange it there with Edit layout).
+        Every panel also has its own tab in the Orbhoarder window (last column). A panel that's in neither In game nor the overlay opens that tab when you press its hotkey.
       </div>
       <table class="mb-2">
         <tr class="text-gray-500 text-sm">
-          <td class="pr-4"></td><td class="pr-4">In game</td><td class="pr-4">Overlay</td><td>Orbhoarder window</td>
+          <td class="pr-4"></td><td class="pr-4">In game</td><td class="pr-4">Overlay</td><td class="pr-4">All tab</td><td>Window tab</td>
         </tr>
         <tr v-for="p of PANELS" :key="p.key">
           <td class="pr-4 py-0.5">{{ p.label }}</td>
@@ -21,9 +21,10 @@
           <td class="pr-4">
             <ui-toggle v-if="p.overlay" :modelValue="placement(p.key).overlay !== false" @update:modelValue="v => setPlacement(p.key, 'overlay', v)" />
             <span v-else class="text-gray-600 text-sm">—</span></td>
-          <td>
+          <td class="pr-4">
             <ui-toggle v-if="p.window" :modelValue="placement(p.key).window !== false" @update:modelValue="v => setPlacement(p.key, 'window', v)" />
-            <span v-else class="text-gray-600 text-sm">{{ p.key === 'search' ? 'Trade site tab' : '—' }}</span></td>
+            <span v-else class="text-gray-600 text-sm">—</span></td>
+          <td class="text-gray-400 text-sm">{{ p.tab }}</td>
         </tr>
       </table>
     </div>

@@ -16,7 +16,7 @@ export function markTourSeen (): void {
 
 // Call once when the window starts, before the setup guide can finish.
 // New install (setup guide not done yet): the tour opens by itself once the guide
-// closes. Existing installs never get it by itself (Settings → Take the tour).
+// closes. Existing installs never get it by itself (Settings → About → Take the tour).
 export function autoTourWanted (setupDone: boolean | undefined): boolean {
   if (tourSeen()) return false
   if (setupDone) {
