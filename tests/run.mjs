@@ -43,7 +43,6 @@ const MODULES = {
   'layout-phase': 'renderer/src/web/desktop/layout-phase.ts',
   'market-trends': 'renderer/src/web/market-history/market-trends.ts',
   'atlas-value': 'renderer/src/web/atlas/atlas-value.ts',
-  'atlas-taken': 'renderer/src/web/atlas/atlas-taken.ts',
   gems: 'renderer/src/web/pob/gems.ts',
   'my-character': 'renderer/src/web/pob/my-character.ts',
   'gems-merged': 'renderer/src/web/pob/gems-merged.ts',

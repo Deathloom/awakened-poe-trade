@@ -1,11 +1,10 @@
-// Deathloom fork: the player's atlas builds (saved on this PC) and what's
-// taken on the atlas (from Client.txt, by name, like the passive tree).
-import { pickTaken } from './atlas-taken'
+// Deathloom fork: the player's atlas builds (saved on this PC). Nothing here
+// follows the game log: where you are on a build is the tree map's arrows
+// (Gerhard 27 Nov 2026: no automatic tree tracking anywhere).
 import { ref, computed } from 'vue'
 import type { AtlasFileBuild } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
-import { CHAR_LEVELS_KEY, loadCharLevels } from '../companion/char-level'
-import { ATLAS_BY_ID, ATLAS_ADJ, ATLAS_START, decodeAtlas, encodeAtlas, type AtlasSpec } from './atlas-tree'
+import { decodeAtlas, encodeAtlas, type AtlasSpec } from './atlas-tree'
 
 // own: yours (editable); owner: the friend whose synced folder it's in (read-only)
 export interface AtlasBuild { id: string, name: string, code: string, at: number, own: boolean, owner?: string }
@@ -197,16 +196,4 @@ export function copyToMine (id: string): AtlasBuild | null {
 window.addEventListener('storage', (e) => {
   if (e.key === KEY && !synced.value) store.value = loadLocal()
   if (e.key === ACTIVE_KEY && synced.value) store.value = { ...store.value, active: loadActive() }
-  if (e.key === CHAR_LEVELS_KEY) taken.value = loadCharLevels().atlas ?? {}
 })
-
-// ---- taken on the atlas (names -> count) ----
-export const taken = ref<Record<string, number>>(loadCharLevels().atlas ?? {})
-export const tracking = computed(() => Object.values(taken.value).some(n => n > 0))
-
-// which of the build's nodes count as taken: names are shared by many small
-// nodes, so the counts go to the build's nodes nearest the start first
-export function takenNodes (buildNodes: number[], order: Map<number, number>): Set<number> {
-  return pickTaken(buildNodes, taken.value, id => ATLAS_BY_ID.get(id)?.[6], id => ATLAS_ADJ.get(id) ?? [],
-    id => ATLAS_START.has(id), id => order.get(id) ?? 1e9)
-}

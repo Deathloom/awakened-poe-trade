@@ -128,7 +128,7 @@ const VIEWS = [
   { key: 'overview', label: 'All', icon: 'fa-th-large', title: 'Everything at once' },
   { key: 'build', label: 'Build', icon: 'fa-hammer', title: 'Gear, gems and tree of the active build' },
   { key: 'levelling', label: 'Levelling', icon: 'fa-route', title: 'Campaign guide, quest gems, gem swaps and the next passives' },
-  { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, what you have taken (from the game log), edit and share' },
+  { key: 'atlas', label: 'Atlas', icon: 'fa-globe', title: 'Atlas tree: your atlas builds, step along a build, edit and share' },
   { key: 'craft', label: 'Craft', icon: 'fa-flask', title: 'Crafting simulator and timeless jewel explorer' },
   { key: 'trades', label: 'Trades', icon: 'fa-handshake', title: 'Trade whispers and ledger' },
   { key: 'board', label: 'Board', icon: 'fa-people-carry', title: "Friends' trade board: give away, sell to and ask your group" },

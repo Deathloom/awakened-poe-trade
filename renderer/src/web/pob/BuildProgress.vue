@@ -121,7 +121,7 @@ import { myCharacterHint } from './use-my-character'
 import { useCopyFeedback } from './market'
 import { Host } from '@/web/background/IPC'
 import { CHAR_LEVELS_KEY, currentChar, loadCharLevels } from '../companion/char-level'
-import { currentPlan, currentTaken, mapHave } from './plan-store'
+import { currentPlan, planStep } from './plan-store'
 import {
   GEAR_OWNED_KEY, GEM_TICKS_KEY, gearOwnedKey, gearProgress, gemProgress, overallPercent, parseGearOwned,
   parseGemTicks, saveShared, toggleGearOwned, toggleGemTick, treeProgress,
@@ -142,16 +142,12 @@ const char = computed(() => currentChar(levels.value))
 const charName = computed(() => char.value?.name ?? '')
 const level = computed(() => char.value?.level ?? currentPlan.value?.level ?? 1)
 
-// tree: the same "taken" the Next tab and the tree map use
+// tree: the same step the Next tab and the tree map use (arrows only, no
+// automatic tracking: Gerhard 27 Nov 2026)
 const tree = computed(() => {
   const p = currentPlan.value
   if (!p) return null
-  let taken: Set<number> | null = currentTaken.value
-  if (mapHave.value) {
-    const have = mapHave.value
-    taken = new Set(p.order.flatMap((n, i) => have.has(n.id) ? [i] : []))
-  }
-  return treeProgress(p, taken)
+  return treeProgress(p, planStep.value?.pos ?? 0)
 })
 const unspent = computed(() => {
   const p = currentPlan.value; const t = tree.value

@@ -55,7 +55,7 @@
       he has other last lines too, so if the count is behind, set <i>Labs done</i> under <i class="fas fa-tasks" /> Trials.
       "This tree adds" is what your Path of Building levelling tree for this level adds to the ascendancy over the
       previous tree (notables only, sorted by name, multiple-choice options left out). PoB keeps no order, so pick
-      which to take first yourself. Notables the game log shows allocated are left out. With the tree map loaded
+      which to take first yourself. With the tree map loaded
       (and the start known) the small passives on the way are counted too. Per character; nothing is sent anywhere.
     </div>
   </div>
@@ -89,9 +89,8 @@ const rows = computed(() => trialRows(props.progress, manual.value))
 const logLabs = computed(() => labsDone(props.progress, undefined))
 const done = computed(() => labsDone(props.progress, manual.value))
 const view = computed(() => ascendancyView(props.plan?.ascendancy ?? [], done.value, {
-  alloc: props.progress?.alloc,
+  // no automatic tree tracking (Gerhard 27 Nov 2026): the game log's allocations aren't used
   layout: treeLayout.value,
-  logComplete: Boolean(props.progress?.alloc) && (props.progress?.firstLevel ?? 99) <= 2,
   ascendancyClass: props.plan?.ascendancyClass
 }))
 const ascTitle = computed(() => `${props.plan?.ascendancyClass ?? 'Ascendancy'} notables this levelling tree adds over the previous one (Path of Building)`)

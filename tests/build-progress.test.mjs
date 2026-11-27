@@ -11,18 +11,16 @@ const plan = {
   refund: [], ascendancy: [], gems: []
 }
 
-test('build progress: tree step uses the level guess without log data', () => {
-  const t = bp.treeProgress(plan, null)
+test('build progress: tree step is only the arrows step, not the level guess', () => {
+  const t = bp.treeProgress(plan, 2)
   assert.equal(t.step, 2); assert.equal(t.steps, 3); assert.equal(t.title, 'Level 30')
   assert.equal(t.taken, 5, 'kept passives count as taken')
   assert.equal(t.total, 8)
   assert.deepEqual(t.next.map(n => n.name), ['C', 'D', 'E'])
-})
-
-test('build progress: tree step follows the taken set (holes stay next)', () => {
-  const t = bp.treeProgress(plan, new Set([0, 2]), 2)
-  assert.equal(t.taken, 5)
-  assert.deepEqual(t.next.map(n => n.name), ['B', 'D'])
+  // plan.taken (level guess) is 2, but nothing stepped yet means nothing taken
+  const z = bp.treeProgress(plan, 0, 2)
+  assert.equal(z.taken, 3)
+  assert.deepEqual(z.next.map(n => n.name), ['A', 'B'])
 })
 
 const gem = (name, reqLevel, extra = {}) => ({ name, reqLevel, ...extra })
