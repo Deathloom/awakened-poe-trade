@@ -1490,6 +1490,8 @@ type IpcPobTimelessResult =
     result?: TimelessResult
     options?: TimelessOptions
     search?: TimelessSearch
+    // Deathloom fork (S6): false when the running PoB can't search seeds (hide Find seeds)
+    canFind?: boolean
   }>
 
 // Deathloom fork (16 Nov 2026): crafting simulator (mod pool from PoB's data)
