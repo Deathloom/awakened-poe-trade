@@ -1,5 +1,6 @@
 // Deathloom fork: gray (surfaces/text) and blue (accent) come from CSS variables
-// set by src/web/appearance.ts; defaults in App.vue (:root)
+// set by src/web/appearance.ts; defaults in App.vue (:root). Red and green too,
+// so the colour-blind palette (Settings → Appearance) can swap them app-wide
 const scale = (v) => Object.fromEntries([100, 200, 300, 400, 500, 600, 700, 800, 900]
   .map(n => [n, `rgb(var(--${v}-${n}) / <alpha-value>)`]))
 // panel backgrounds (gray 800/900) follow the panel opacity setting
@@ -34,17 +35,7 @@ module.exports = {
       white: '#fff',
 
       gray: scale('g'),
-      red: {
-        100: '#fff5f5',
-        200: '#fed7d7',
-        300: '#feb2b2',
-        400: '#fc8181',
-        500: '#f56565',
-        600: '#e53e3e',
-        700: '#c53030',
-        800: '#9b2c2c',
-        900: '#742a2a',
-      },
+      red: scale('r'),
       orange: {
         100: '#fffaf0',
         200: '#feebc8',
@@ -67,17 +58,7 @@ module.exports = {
         800: '#975a16',
         900: '#744210',
       },
-      green: {
-        100: '#f0fff4',
-        200: '#c6f6d5',
-        300: '#9ae6b4',
-        400: '#68d391',
-        500: '#48bb78',
-        600: '#38a169',
-        700: '#2f855a',
-        800: '#276749',
-        900: '#22543d',
-      },
+      green: scale('gn'),
       teal: {
         100: '#e6fffa',
         200: '#b2f5ea',
