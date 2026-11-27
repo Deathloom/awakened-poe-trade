@@ -56,7 +56,7 @@ const steps: Step[] = [
   { target: 'board', view: 'board', icon: 'fa-people-carry', title: 'Board', body: "The friends' trade board: give away, sell to and ask the group." },
   { target: 'market', view: 'market', icon: 'fa-chart-line', title: 'Market', body: 'Prices of items you watch (star them in a price check) next to the poe.ninja overview.' },
   { target: 'trade', icon: 'fa-store', title: 'Trade site', body: "GGG's own trade site inside this window. You sign in on GGG's page; Orbhoarder never sees your login." },
-  { target: 'help', view: 'help', icon: 'fa-question-circle', title: 'Help', body: 'How things work, where to find a build, and answers to common questions.' },
+  { target: 'reference', view: 'reference', icon: 'fa-book', title: 'Reference', body: 'Cheat sheets for league mechanics, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and <b>Help</b>: how things work, where to find a build, common questions.' },
   { target: 'settings', view: 'settings', icon: 'fa-cog', title: 'Settings', body: 'Everything you can change. <b>Appearance</b> has the theme, text size and colour-blind-safe colours. <b>Take the tour</b> at the bottom runs this again.' },
   { target: 'feedback', icon: 'fa-bug', title: 'Bug / Idea', body: 'Something broken or a wish? Tell us here.' },
   {

@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (layout 2): Reference tab in the Orbhoarder window
+- New **Reference** tab with four parts: **Cheat sheets** (league mechanics), **Recipes** (vendor and bench recipes), **Tracking** (Thread planner, Challenges, league checklist) and **Help**. It replaces the Help tab; Cheat sheets had no tab before (only a panel). The Cheat sheets panel in the overlay, in game and on the All tab is unchanged. If the window was on Help, it opens on Reference → Help; the overlay's Help button and the Cheat sheets hotkey go there too.
+
 ### Fixed (layout 1): Loot filter page in the Orbhoarder window's Settings
 - The Orbhoarder window's Settings now has the Loot filter page (it was only in the overlay's Settings), and its pages are in the same order and groups as the overlay's: Hotkeys, Chat | General, Appearance, Panels | Price check, Maps, Item check, Loot filter, Path of Building | Tools, Debug, About.
 

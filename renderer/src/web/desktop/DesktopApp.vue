@@ -55,7 +55,7 @@
         </div>
         <CraftBody v-else-if="view === 'craft'" />
         <DesktopSettings v-else-if="view === 'settings'" />
-        <HelpBody v-else-if="view === 'help'" />
+        <ReferenceBody v-else-if="view === 'reference'" />
       </div>
     </div>
     <!-- Trade site: kept alive once opened (stays signed in and keeps its page) -->
@@ -87,7 +87,6 @@ import {
   LazyTradeCompanionBody as TradeCompanionBody,
   LazyTradeBoardBody as TradeBoardBody,
   LazyMarketHistoryBody as MarketHistoryBody,
-  LazyHelpBody as HelpBody,
   LazyCraftBody as CraftBody
 } from '../ui/LazyBodies'
 import SplitGutter from './SplitGutter.vue'
@@ -99,6 +98,8 @@ import LabSiteBody from './LabSiteBody.vue'
 import { tradeTabRequest } from './trade-tab'
 import { IS_DESKTOP2, readWindowKey, windowKey } from '@/web/hud/is-hud'
 import AllLayout from './AllLayout.vue'
+import ReferenceBody from './ReferenceBody.vue'
+import { resolveView, setSub } from './view-route'
 import { layoutPref, layoutMode, setLayoutPref, useLayoutPhase } from './all-layout'
 import type { LayoutPref } from './layout-phase'
 import AtlasTreeMap from '../atlas/LazyAtlasTreeMap'
@@ -135,7 +136,7 @@ const VIEWS = [
   { key: 'market', label: 'Market', icon: 'fa-chart-line', title: 'Market history of watched items' },
   { key: 'trade', label: 'Trade site', icon: 'fa-store', title: "GGG's official trade site (sign in on GGG's own page; Orbhoarder never sees your login)" },
   { key: 'lab', label: 'Lab', icon: 'fa-dungeon', title: "Today's labyrinth layouts on poelab.com (community site, shown as-is)" },
-  { key: 'help', label: 'Help', icon: 'fa-question-circle', title: 'How to use it, where to get a build, FAQ' },
+  { key: 'reference', label: 'Reference', icon: 'fa-book', title: 'Cheat sheets, vendor and bench recipes, your league tracking (Thread planner, Challenges, checklist) and Help' },
   { key: 'settings', label: 'Settings', icon: 'fa-cog', title: 'All Orbhoarder settings (same as Shift+Space → Settings)' }
 ] as const
 type View = typeof VIEWS[number]['key']
@@ -143,17 +144,23 @@ type View = typeof VIEWS[number]['key']
 const VIEW_KEY = 'deathloom.desktop-view.v1'
 function loadView (): View {
   try {
-    let v = readWindowKey(VIEW_KEY)
-    if (v === 'guide' || v === 'next') v = 'levelling' // before 1.0.30
-    return VIEWS.some(x => x.key === v) ? v as View : 'overview'
+    const v = readWindowKey(VIEW_KEY)
+    // old tab names (before 1.0.30, and before the 27 Nov 2026 layout) keep your place
+    const r = v ? resolveView(v, isView) : null
+    if (r?.sub) setSub(r.view, r.sub)
+    return r ? r.view as View : 'overview'
   } catch { return 'overview' }
 }
 const view = ref<View>(loadView())
 // Deathloom fork: Report a bug / Suggest a feature dialog
 const feedback = ref<'bug' | 'idea' | null>(null)
 // a panel's hotkey asked for its tab (panel not shown in the overlay)
+function isView (v: string) { return VIEWS.some(x => x.key === v) }
 function viewFromHotkey (v: string) {
-  if (VIEWS.some(x => x.key === v)) setView(v as View)
+  const r = resolveView(v, isView)
+  if (!r) return
+  if (r.sub) setSub(r.view, r.sub)
+  setView(r.view as View)
 }
 const askedView = new URLSearchParams(window.location.search).get('view')
 if (askedView) viewFromHotkey(askedView)
