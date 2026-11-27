@@ -59,8 +59,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, watch, onUnmounted } from 'vue'
-import qrcode from 'qrcode-generator'
+import { defineComponent, computed, ref, shallowRef, watch, onUnmounted } from 'vue'
+import type qrcodeT from 'qrcode-generator'
 import type { HealthItem, RemoteInfo, IpcEventPayload } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
 import type { Config } from '@/web/Config'
@@ -116,8 +116,14 @@ export default defineComponent({
     // first link's QR open by default (the usual one is the Wi-Fi address)
     const qrFor = ref('')
     watch(() => remote.value?.urls[0], (u) => { if (u && !qrFor.value) qrFor.value = u })
+    // the QR library (20 kB) is loaded the first time a QR is shown (S4)
+    const qrcode = shallowRef<typeof qrcodeT | null>(null)
+    watch(qrFor, (u) => {
+      if (u && !qrcode.value) import('qrcode-generator').then(m => { qrcode.value = m.default }, (err: unknown) => { console.error(err) })
+    }, { immediate: true })
     function qrSvg (text: string): string {
-      const qr = qrcode(0, 'M')
+      if (!qrcode.value) return ''
+      const qr = qrcode.value(0, 'M')
       qr.addData(text)
       qr.make()
       // our own link only (local address + key), no user text
