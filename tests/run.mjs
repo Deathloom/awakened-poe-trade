@@ -80,7 +80,8 @@ const MODULES = {
   wombgift: 'renderer/src/web/money/wombgift.ts',
   'pull-diff': 'main/src/pob/pull-diff.ts',
   'board-matching': 'renderer/src/web/trade-board/matching.ts',
-  'health-watch': 'ipc/health-watch.ts'
+  'health-watch': 'ipc/health-watch.ts',
+  callouts: 'renderer/src/web/callouts/callouts.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

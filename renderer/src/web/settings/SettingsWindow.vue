@@ -52,6 +52,7 @@ import SettingsAppearance from './appearance.vue'
 import SettingsPanels from './panels.vue'
 import SettingsTools from './tools.vue'
 import SettingsLootFilter from './loot-filter.vue'
+import SettingsCallouts from './callouts.vue'
 
 function quit () {
   Host.sendEvent({
@@ -169,7 +170,7 @@ function menuByType (type?: string) {
     default:
       return [
         [SettingsHotkeys, SettingsChat],
-        [SettingsGeneral, SettingsAppearance, SettingsPanels],
+        [SettingsGeneral, SettingsAppearance, SettingsCallouts, SettingsPanels],
         [SettingsPricecheck, SettingsPob, SettingsLootFilter, SettingsMaps, SettingsItemcheck],
         [SettingsTools, SettingsDebug, SettingsAbout]
       ]

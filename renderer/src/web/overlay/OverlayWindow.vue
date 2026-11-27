@@ -18,6 +18,7 @@
     >{{ logs }}</pre>
     <loading-animation />
     <update-toast />
+    <callouts-speaker />
     <WhatsNew :active="overlayActive" />
     <div v-if="showEditingNotification"
       class="widget-default-style p-6 bg-blue-600 mx-auto text-center text-base mt-6"
@@ -41,6 +42,7 @@ import { registry } from './widget-registry.js'
 import { AppConfig, saveConfig, pushHostConfig } from '@/web/Config'
 import LoadingAnimation from './LoadingAnimation.vue'
 import UpdateToast from './UpdateToast.vue'
+import CalloutsSpeaker from '@/web/callouts/CalloutsSpeaker.vue'
 import WhatsNew from '../whats-new/WhatsNew.vue'
 // ---
 import { usePoeninja } from '@/web/background/Prices'
@@ -53,6 +55,7 @@ export default defineComponent({
   components: {
     LoadingAnimation,
     UpdateToast,
+    CalloutsSpeaker,
     WhatsNew
   },
   setup () {
