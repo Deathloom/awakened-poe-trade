@@ -18,6 +18,7 @@
       <market-sell v-else-if="curTab === 'sell'" />
       <market-farming v-else-if="curTab === 'farm'" />
       <market-gems v-else-if="curTab === 'gems'" />
+      <market-bulk v-else-if="curTab === 'bulk'" />
       <market-crafting v-else />
     </div>
     <div v-else class="overflow-y-auto min-h-0 p-1">
@@ -71,6 +72,7 @@ import MarketSell from './MarketSell.vue'
 import MarketFarming from './MarketFarming.vue'
 import MarketCrafting from './MarketCrafting.vue'
 import MarketGems from './MarketGems.vue'
+import MarketBulk from './MarketBulk.vue'
 import DivineChip from './DivineChip.vue'
 import PriceAlertForm from './PriceAlertForm.vue'
 import PriceAlertsSummary from './PriceAlertsSummary.vue'
@@ -90,6 +92,7 @@ const TABS = [
   { id: 'all', label: 'All prices', tip: 'Every poe.ninja price: risers, fallers, outlook' },
   { id: 'shop', label: 'Shopping', tip: 'What your build still needs (uniques and gems) and what it costs' },
   { id: 'sell', label: 'Sell list', tip: 'What you plan to sell: value now and whether to wait' },
+  { id: 'bulk', label: 'Bulk sell', tip: 'Bulk ratios: poe.ninja vs the Currency Exchange, copy a WTS line' },
   { id: 'farm', label: 'Farming', tip: 'Profit per hour per strategy or league mechanic' },
   { id: 'craft', label: 'Crafting', tip: 'Crafting currency prices and what your craft costs' },
   { id: 'gems', label: 'Gems', tip: 'Gem levelling profit: buy low level, level in a spare socket, sell at max level' }
