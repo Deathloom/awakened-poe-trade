@@ -776,6 +776,13 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
 
 const cache = new Cache()
 
+// Deathloom fork (Q26): trade site time for Settings → Tools → Speed and crashes (kept on this PC only)
+function healthSample (k: 'trade-search' | 'trade-fetch', sentAt: number, ok: boolean) {
+  try {
+    Host.sendEvent({ name: 'CLIENT->MAIN::health', payload: { op: 'sample', sample: { k, ms: Date.now() - sentAt, ok } } })
+  } catch {}
+}
+
 export async function requestTradeResultList (body: TradeRequest, leagueId: string): Promise<SearchResult> {
   let data = cache.get<SearchResult>([body, leagueId])
 
@@ -787,17 +794,24 @@ export async function requestTradeResultList (body: TradeRequest, leagueId: stri
 
     await RateLimiter.waitMulti(RATE_LIMIT_RULES.SEARCH)
 
-    const response = await Host.proxy(`${getTradeEndpoint()}/api/trade/search/${leagueId}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    })
-    adjustRateLimits(RATE_LIMIT_RULES.SEARCH, response.headers)
-
-    const _data = await response.json() as TradeResponse<SearchResult>
+    const sentAt = Date.now()
+    let _data: TradeResponse<SearchResult>
+    try {
+      const response = await Host.proxy(`${getTradeEndpoint()}/api/trade/search/${leagueId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      })
+      adjustRateLimits(RATE_LIMIT_RULES.SEARCH, response.headers)
+      _data = await response.json() as TradeResponse<SearchResult>
+    } catch (e) {
+      healthSample('trade-search', sentAt, false)
+      throw e
+    }
+    healthSample('trade-search', sentAt, !_data.error)
     if (_data.error) {
       throw new Error(_data.error.message)
     } else {
@@ -820,10 +834,17 @@ export async function requestResults (
   if (!data) {
     await RateLimiter.waitMulti(RATE_LIMIT_RULES.FETCH)
 
-    const response = await Host.proxy(`${getTradeEndpoint()}/api/trade/fetch/${resultIds.join(',')}?query=${queryId}`)
-    adjustRateLimits(RATE_LIMIT_RULES.FETCH, response.headers)
-
-    const _data = await response.json() as TradeResponse<{ result: Array<FetchResult | null> }>
+    const sentAt = Date.now()
+    let _data: TradeResponse<{ result: Array<FetchResult | null> }>
+    try {
+      const response = await Host.proxy(`${getTradeEndpoint()}/api/trade/fetch/${resultIds.join(',')}?query=${queryId}`)
+      adjustRateLimits(RATE_LIMIT_RULES.FETCH, response.headers)
+      _data = await response.json() as TradeResponse<{ result: Array<FetchResult | null> }>
+    } catch (e) {
+      healthSample('trade-fetch', sentAt, false)
+      throw e
+    }
+    healthSample('trade-fetch', sentAt, !_data.error)
     if (_data.error) {
       throw new Error(_data.error.message)
     } else {

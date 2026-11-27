@@ -2,7 +2,7 @@ import { reactive as deepReactive, shallowRef, toRaw } from 'vue'
 import isDeepEqual from 'fast-deep-equal'
 import { Host } from '@/web/background/IPC'
 import { HostConfig, ShortcutAction, PobConfig, PobHudConfig } from '@ipc/types'
-import { asGame, type Game } from '@ipc/game'
+import { asGame, asGameMode, POE1_ONLY_PANELS, type Game, type GameMode } from '@ipc/game'
 import { IS_HUD, IS_DESKTOP, IS_DESKTOP2 } from './hud/is-hud'
 import { applyAppearance, defaultAppearance, type AppearanceConfig } from './appearance'
 import type * as widget from './overlay/widgets'
@@ -13,6 +13,7 @@ import type { ItemSearchWidget } from './item-search/widget'
 import { registry as widgetRegistry } from './overlay/widget-registry.js'
 import { PANEL_WIDGET_TYPES } from './desktop/panel-defs'
 import type { QuickWhisper } from './companion/quick-whispers'
+import { setStorageGame } from './game-storage'
 
 const _config = shallowRef<Config | null>(null)
 let _lastSavedConfig: Config | null = null
@@ -29,6 +30,8 @@ export function AppConfig (type?: string) {
 
 export function updateConfig (updates: Config) {
   _config.value = deepReactive(JSON.parse(JSON.stringify(updates)))
+  // Deathloom fork (wave 6): PoE1 / PoE2 keep their own stored lists
+  setStorageGame(asGame(_config.value!.game))
   document.documentElement.style.fontSize = `${_config.value!.fontSize}px`
   applyAppearance(surfaceAppearance(_config.value!), IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay', _config.value!.leagueId)
 }
@@ -117,6 +120,8 @@ export interface Config {
   leagueId?: string
   // Deathloom fork: PoE2 mode. Which game, and the league last picked in each
   game: Game
+  // wave 6: Auto follows the focused game window; poe1 / poe2 pin one
+  gameMode: GameMode
   leagueIdByGame?: Partial<Record<Game, string>>
   overlayKey: string
   overlayBackground: string
@@ -152,6 +157,7 @@ export interface Config {
 export const defaultConfig = (): Config => ({
   configVersion: 18,
   game: 'poe1',
+  gameMode: 'auto',
   overlayKey: 'Shift + Space',
   overlayBackground: 'rgba(129, 139, 149, 0.15)',
   overlayBackgroundClose: true,
@@ -471,6 +477,7 @@ function upgradeConfig (_config: Config): Config {
 
   // Deathloom fork: no configVersion bump, so upstream upgrades stay in sync
   config.game = asGame(config.game)
+  config.gameMode = asGameMode(config.gameMode)
   config.pob ??= defaultPobConfig()
   config.appearance = { ...defaultAppearance(), ...config.appearance }
   if (config.window2Appearance) config.window2Appearance = { ...defaultAppearance(), ...config.window2Appearance }
@@ -788,8 +795,22 @@ function getConfigForHost (): HostConfig {
     windowTitle: config.windowTitle,
     language: config.language,
     game: config.game,
-    pob: config.pob
+    gameMode: config.gameMode,
+    pob: config.game === 'poe2' ? poe2HostPob(config.pob) : config.pob
   }
+}
+
+// Deathloom fork (wave 6): main gets the PoE1-only panels switched off while PoE2
+// is active (no in-game panel windows; their hotkeys don't open the overlay panel).
+// Settings themselves are untouched, so PoE1 gets them back as they were.
+function poe2HostPob (pob: PobConfig): PobConfig {
+  const hud = { ...pob.hud } as Record<string, unknown>
+  const panels = { ...pob.panels } as Record<string, unknown>
+  for (const p of POE1_ONLY_PANELS) {
+    if (p in hud) hud[p] = false
+    panels[p] = { overlay: false, window: false }
+  }
+  return { ...pob, hud: hud as unknown as PobConfig['hud'], panels: panels as PobConfig['panels'] }
 }
 
 export function defaultHudConfig (): PobHudConfig {

@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import { gameKey } from '../game-storage'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { NinjaListing } from '@/web/background/Prices'
 import PriceSpark from './PriceSpark.vue'
@@ -59,7 +60,7 @@ const { copiedKey, copy } = useCopyFeedback()
 ninja.queuePricesFetch()
 
 const list = ref<SellEntry[]>(loadSellList())
-function onStorage (e: StorageEvent) { if (e.key === SELL_KEY) list.value = loadSellList() }
+function onStorage (e: StorageEvent) { if (e.key === gameKey(SELL_KEY)) list.value = loadSellList() }
 onMounted(() => window.addEventListener('storage', onStorage))
 onUnmounted(() => window.removeEventListener('storage', onStorage))
 function save () { saveSellList(list.value) }

@@ -278,6 +278,8 @@ export const OWN_TABS = [
   { id: 'recipes', label: 'Vendor recipes' },
   { id: 'bench', label: 'Bench recipes' },
   { id: 'challenges', label: 'Challenges' },
-  { id: 'progress', label: 'Checklist' }
+  { id: 'progress', label: 'Checklist' },
+  // Q29
+  { id: 'recap', label: 'League recap' }
 ]
 export const CHEAT_TAB_IDS = [...SHEETS.map(s => s.id), ...OWN_TABS.map(t => t.id)]

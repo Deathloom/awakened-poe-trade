@@ -14,6 +14,8 @@
         <div class="flex-1"><div>{{ h.name }}</div><div class="text-gray-500">{{ h.detail }}</div></div>
       </div>
     </div>
+    <!-- Deathloom fork (Q26): crash and slowness watch -->
+    <speed-watch class="mb-4" />
     <hr class="mb-4 mx-8 border-gray-700">
 
     <!-- Backup -->
@@ -79,10 +81,11 @@ import { configProp } from './utils'
 import { hotkeyClashes, makeBackup, readBackup, backupSummary, type BackupSummary } from './tools'
 import UiToggle from '@/web/ui/UiToggle.vue'
 import UiCheckbox from '@/web/ui/UiCheckbox.vue'
+import SpeedWatch from './SpeedWatch.vue'
 
 export default defineComponent({
   name: 'Tools',
-  components: { UiToggle, UiCheckbox },
+  components: { UiToggle, UiCheckbox, SpeedWatch },
   props: configProp(),
   setup (props) {
     const busy = ref<'health' | 'backup' | null>(null)

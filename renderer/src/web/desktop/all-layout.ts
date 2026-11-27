@@ -7,6 +7,7 @@ import { inWindow } from './panels'
 import { readWindowKey, windowKey } from '@/web/hud/is-hud'
 import { effectiveMode, phaseForArea, addTreeMapOnce, type LayoutMode, type LayoutPref } from './layout-phase'
 import { PLAY_SESSION_KEY, loadPlaySession } from '../companion/play-session'
+import { gameKey } from '../game-storage'
 
 export type AllPanelId = 'gear' | 'guide' | 'trades' | 'market' | 'overview' | 'search' | 'tree' | 'atlas' | 'session' | 'board' | 'cheats' | 'money' | 'progress'
 
@@ -184,7 +185,7 @@ export function useLayoutPhase () {
     if (p) setPhase(p)
   }
   check()
-  const onStorage = (e: StorageEvent) => { if (e.key === PLAY_SESSION_KEY) check() }
+  const onStorage = (e: StorageEvent) => { if (e.key === gameKey(PLAY_SESSION_KEY)) check() }
   window.addEventListener('storage', onStorage)
   return () => window.removeEventListener('storage', onStorage)
 }

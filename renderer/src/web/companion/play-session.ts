@@ -7,6 +7,7 @@
 import { parseLogLine } from './game-log'
 import { AppConfig } from '@/web/Config'
 import { archiveRuns, loadStrategy, runsFromSession } from '../market-history/market-tools'
+import { gameKey } from '../game-storage'
 
 export interface MapRun {
   code: string
@@ -98,14 +99,14 @@ export function emptySession (now = Date.now()): PlaySession {
 
 export function loadPlaySession (): PlaySession {
   try {
-    const raw = JSON.parse(localStorage.getItem(PLAY_SESSION_KEY) ?? 'null')
+    const raw = JSON.parse(localStorage.getItem(gameKey(PLAY_SESSION_KEY)) ?? 'null')
     if (raw && typeof raw === 'object' && Array.isArray(raw.maps)) return { ...emptySession(raw.start), ...raw }
   } catch {}
   return emptySession()
 }
 
 export function savePlaySession (s: PlaySession) {
-  try { localStorage.setItem(PLAY_SESSION_KEY, JSON.stringify(s)) } catch {}
+  try { localStorage.setItem(gameKey(PLAY_SESSION_KEY), JSON.stringify(s)) } catch {}
 }
 
 // ---- Session summary (the session before this one) ----------------------
@@ -146,7 +147,7 @@ export function summarize (s: PlaySession, cost = loadMapCost()): SessionSummary
 
 export function loadLastSession (): SessionSummary | null {
   try {
-    const raw = JSON.parse(localStorage.getItem(LAST_SESSION_KEY) ?? 'null')
+    const raw = JSON.parse(localStorage.getItem(gameKey(LAST_SESSION_KEY)) ?? 'null')
     return raw && typeof raw === 'object' && typeof raw.start === 'number' ? raw : null
   } catch { return null }
 }
@@ -156,7 +157,7 @@ export function keepLastSession (s: PlaySession) {
   // Deathloom fork (20 Nov): finished maps with loot go to the farming history (Market → Farming)
   archiveRuns(runsFromSession(s.maps, loadMapCost()))
   if (!s.maps.length && !s.deaths && !Object.keys(s.levels).length && s.lastAt - s.start < 10 * 60_000) return
-  try { localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(summarize(s))) } catch {}
+  try { localStorage.setItem(gameKey(LAST_SESSION_KEY), JSON.stringify(summarize(s))) } catch {}
 }
 
 // ---- Map profit ----------------------------------------------------------

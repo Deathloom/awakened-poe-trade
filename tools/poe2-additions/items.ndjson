@@ -1,0 +1,15 @@
+{"name": "Byrnabas", "refName": "Byrnabas", "namespace": "UNIQUE", "unique": {"base": "Wide Belt"}, "icon": "%NOT_FOUND%", "tags": [], "w": 2, "h": 1}
+{"name": "Eshtera's Path", "refName": "Eshtera's Path", "namespace": "UNIQUE", "unique": {"base": "Ring"}, "icon": "%NOT_FOUND%", "tags": [], "w": 1, "h": 1}
+{"name": "Safrin's Resolve", "refName": "Safrin's Resolve", "namespace": "UNIQUE", "unique": {"base": "Ring"}, "icon": "%NOT_FOUND%", "tags": [], "w": 1, "h": 1}
+{"name": "Zaida's Longevity", "refName": "Zaida's Longevity", "namespace": "UNIQUE", "unique": {"base": "Ring"}, "icon": "%NOT_FOUND%", "tags": [], "w": 1, "h": 1}
+{"name": "Reverie", "refName": "Reverie", "namespace": "UNIQUE", "unique": {"base": "Shaman Mantle"}, "icon": "%NOT_FOUND%", "tags": [], "w": 2, "h": 3}
+{"name": "Reverie", "refName": "Reverie", "namespace": "UNIQUE", "unique": {"base": "Runemastered Shaman Mantle"}, "icon": "%NOT_FOUND%", "tags": [], "w": 2, "h": 3}
+{"name": "The Road Warrior", "refName": "The Road Warrior", "namespace": "UNIQUE", "unique": {"base": "Raider Plate"}, "icon": "%NOT_FOUND%", "tags": [], "w": 2, "h": 3}
+{"name": "Splinter of Lorrata", "refName": "Splinter of Lorrata", "namespace": "UNIQUE", "unique": {"base": "Hardwood Spear"}, "icon": "%NOT_FOUND%", "tags": [], "w": 1, "h": 4}
+{"name": "Splinter of Lorrata", "refName": "Splinter of Lorrata", "namespace": "UNIQUE", "unique": {"base": "Runeforged Hardwood Spear"}, "icon": "%NOT_FOUND%", "tags": [], "w": 1, "h": 4}
+{"name": "Soul Core of Vizoma", "refName": "Soul Core of Vizoma", "namespace": "ITEM", "icon": "%NOT_FOUND%", "tags": ["soul_core"], "craftable": {"category": "SoulCore"}, "w": 1, "h": 1}
+{"name": "Mutated Verisium", "refName": "Mutated Verisium", "namespace": "ITEM", "icon": "%NOT_FOUND%", "tags": [], "tradeTag": "mutated-verisium", "craftable": {"category": "Currency"}, "w": 1, "h": 1}
+{"name": "Corrupted Verisium", "refName": "Corrupted Verisium", "namespace": "ITEM", "icon": "%NOT_FOUND%", "tags": [], "tradeTag": "corrupted-verisium", "craftable": {"category": "Currency"}, "w": 1, "h": 1}
+{"name": "Founders Verisium", "refName": "Founders Verisium", "namespace": "ITEM", "icon": "%NOT_FOUND%", "tags": [], "tradeTag": "founders-verisium", "craftable": {"category": "Currency"}, "w": 1, "h": 1}
+{"name": "Starlit Ore", "refName": "Starlit Ore", "namespace": "ITEM", "icon": "%NOT_FOUND%", "tags": [], "tradeTag": "starlit-ore", "craftable": {"category": "Currency"}, "w": 1, "h": 1}
+{"name": "Lesser Charging Rune", "refName": "Lesser Charging Rune", "namespace": "ITEM", "icon": "%NOT_FOUND%", "tags": ["rune", "rune_lesser"], "tradeTag": "lesser-charging-rune", "craftable": {"category": "SoulCore"}, "w": 1, "h": 1}

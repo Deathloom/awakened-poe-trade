@@ -6,7 +6,8 @@
       <div :class="$style.box">
         <div class="py-2 px-4">
           <div class="text-base">Orbhoarder</div>
-          <p>{{ t('app_is_ready') }}</p>
+          <p v-if="switched">{{ switched }}</p>
+          <p v-else>{{ t('app_is_ready') }}</p>
         </div>
       </div>
     </div>
@@ -14,19 +15,32 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef } from 'vue'
+import { shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Host } from '@/web/background/IPC'
 import { AppConfig } from '@/web/Config'
+import { lastGameSwitch } from '@/web/background/game-switch'
 
 const { t } = useI18n()
 
 const show = shallowRef(false)
+// Deathloom fork (wave 6): say why prices and tabs changed
+const switched = shallowRef('')
+let hideTimer: ReturnType<typeof setTimeout> | undefined
+watch(lastGameSwitch, (sw) => {
+  if (!sw) return
+  const name = sw.game === 'poe2' ? 'Path of Exile 2' : 'Path of Exile 1'
+  switched.value = sw.live ? `Switched to ${name}` : `Switched to ${name}, restarting…`
+  show.value = true
+  clearTimeout(hideTimer)
+  hideTimer = setTimeout(() => { show.value = false; switched.value = '' }, 3000)
+})
 
 Host.onEvent('MAIN->OVERLAY::overlay-attached', () => {
   if (!show.value && AppConfig().showAttachNotification) {
     show.value = true
-    setTimeout(() => { show.value = false }, 2500)
+    clearTimeout(hideTimer)
+    hideTimer = setTimeout(() => { show.value = false }, 2500)
   }
 })
 </script>

@@ -28,6 +28,7 @@ Status: ✅ done · ⚠️ accepted / open (reason given) · Last full review: 2
 | 2.2 | Requests and WebSocket upgrades from other web pages refused (Host + Origin check, blocks CSRF and DNS rebinding) | ✅ | `request-guard.ts` |
 | 2.3 | Phone link ("Phone or other devices"): other devices need the key, decided by the connection's address (not the Host header); they can't change settings, folders, sign-in, phone access or price alerts, or send input to the game, can't take the game log lines written while Orbhoarder was closed (only this PC's level recorder does), and never become the window that gets the price check's item text | ✅ | `request-guard.ts` `isLoopbackAddress`, `allowedFromOtherDevice`; `server.ts` (last-active window) |
 | 2.4 | Price alerts: checked on the shared poe.ninja download (no extra requests), sent only to windows connected to the local server (this PC, a paired phone); input validated in main; stored in `apt-data/price-alerts.json` | ✅ | `ipc/price-alerts.ts`, `PriceAlerts.ts` |
+| 2.5 | Crash and slowness watch (Q26): timings and PoB crashes stay on this PC (`apt-data/health-watch.json`, 7 days, 500 samples max); nothing sent anywhere; refused from phones; window samples limited to trade-site kinds, numbers range-checked, labels stripped to `[\w .:-]{0,40}` (no paths or item text) | ✅ | `ipc/health-watch.ts`, `HealthWatch.ts`, `request-guard.ts` |
 
 ## 3. Secrets (ASVS V6/V8)
 

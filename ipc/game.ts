@@ -52,3 +52,75 @@ export function pickDefaultLeague (ids: readonly string[]): string | undefined {
   const challenge = ids.find(id => !permanent.test(id) && !hardcore.test(id) && !ssf.test(id) && !/Ruthless/i.test(id))
   return challenge ?? ids.find(id => id === 'Standard') ?? ids[0]
 }
+
+// Deathloom fork (wave 6): automatic game switch. Settings → Game is Auto by
+// default; PoE1 / PoE2 pin one game (manual override).
+export type GameMode = 'auto' | Game
+
+export function asGameMode (value: unknown): GameMode {
+  return value === 'poe1' || value === 'poe2' ? value : 'auto'
+}
+
+// Which game a window title belongs to (default titles only)
+export function gameForWindowTitle (title: string | null | undefined): Game | undefined {
+  return GAMES.find(g => GAME_WINDOW_TITLE[g] === title)
+}
+
+export function isDefaultWindowTitle (title: string | null | undefined): boolean {
+  const t = (title ?? '').trim()
+  return !t || gameForWindowTitle(t) !== undefined
+}
+
+// Titles the overlay watches. Auto with the stock titles watches both games when
+// the overlay library can (live switch); otherwise the current game's title only
+// (then Orbhoarder relaunches itself when the other game starts). A custom
+// window title is watched on its own and turns Auto off.
+export function overlayTitles (opts: { mode: GameMode, game: Game, windowTitle: string | null | undefined, multiTitle: boolean }): { titles: string[], auto: boolean, live: boolean } {
+  const custom = (opts.windowTitle ?? '').trim()
+  if (custom && !isDefaultWindowTitle(custom)) return { titles: [custom], auto: false, live: false }
+  const auto = opts.mode === 'auto'
+  if (opts.multiTitle) {
+    // both titles even when one game is pinned, so switching mode needs no restart
+    return { titles: GAMES.map(g => GAME_WINDOW_TITLE[g]), auto, live: true }
+  }
+  const game = opts.mode === 'auto' ? opts.game : opts.mode
+  return { titles: [GAME_WINDOW_TITLE[game]], auto, live: false }
+}
+
+// Game window titles in `tasklist /V /FO CSV /NH` output (fallback detection;
+// the last CSV column is the window title)
+export function gamesInTasklist (stdout: string): Game[] {
+  const found = new Set<Game>()
+  for (const line of stdout.split(/\r?\n/)) {
+    const m = /"([^"]*)"\s*$/.exec(line.trim())
+    const game = m ? gameForWindowTitle(m[1]) : undefined
+    if (game) found.add(game)
+  }
+  return GAMES.filter(g => found.has(g))
+}
+
+// Settings changes for a switch: each game keeps its own league; a custom window
+// title is kept. Returns false when nothing changes.
+export interface GameSwitchable {
+  game: Game
+  leagueId?: string
+  leagueIdByGame?: Partial<Record<Game, string>>
+  windowTitle: string
+}
+export function applyGameSwitch (cfg: GameSwitchable, to: Game): boolean {
+  const from = cfg.game
+  if (to === from) return false
+  const byGame = { ...cfg.leagueIdByGame }
+  if (cfg.leagueId) byGame[from] = cfg.leagueId
+  cfg.leagueIdByGame = byGame
+  cfg.leagueId = byGame[to]
+  cfg.windowTitle = windowTitleOnSwitch(to, cfg.windowTitle)
+  cfg.game = to
+  return true
+}
+
+// Deathloom fork (wave 6): panels and Orbhoarder window tabs that only work for
+// PoE1 (PoB builds, PoE1 campaign / atlas / league planners, poe.ninja PoE1
+// prices, PoE1 trade search). Hidden everywhere while PoE2 is the active game.
+export const POE1_ONLY_PANELS: ReadonlySet<string> = new Set(['guide', 'atlas', 'gear', 'tree', 'progress', 'market', 'money', 'cheats', 'search'])
+export const POE1_ONLY_VIEWS: ReadonlySet<string> = new Set(['levelling', 'build', 'craft', 'market', 'profit'])

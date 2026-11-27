@@ -1,15 +1,20 @@
 <template>
   <div class="max-w-2xl p-2">
-    <!-- Deathloom fork: PoE2 mode. Shown since PoE2 price check is in (Phase A). -->
-    <div class="mb-4" v-if="showGameSwitch">
+    <!-- Deathloom fork (wave 6): Auto follows the game that has focus; PoE1 / PoE2 pin one -->
+    <div class="mb-4">
       <div class="flex-1 mb-1">Game</div>
       <div class="flex gap-x-4">
-        <ui-radio v-model="game" value="poe1">Path of Exile 1</ui-radio>
-        <ui-radio v-model="game" value="poe2">Path of Exile 2 <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">beta</span></ui-radio>
+        <ui-radio v-model="gameMode" value="auto">Automatic</ui-radio>
+        <ui-radio v-model="gameMode" value="poe1">Path of Exile 1</ui-radio>
+        <ui-radio v-model="gameMode" value="poe2">Path of Exile 2 <span class="bg-gray-200 text-gray-900 rounded px-1 text-sm">beta</span></ui-radio>
       </div>
-      <div class="text-gray-500 text-sm mt-1" v-if="game === 'poe2'">
-        Price check uses the PoE2 trade site (English game client only; no quick poe.ninja price yet).
-        Path of Building and poe.ninja prices are still PoE1 only. Restart Orbhoarder after switching.
+      <div class="text-gray-500 text-sm mt-1">
+        <template v-if="customTitle">Automatic is off while a custom window title is set below.</template>
+        <template v-else-if="gameMode === 'auto'">Follows whichever game window has focus (now: {{ game === 'poe2' ? 'Path of Exile 2' : 'Path of Exile 1' }}).</template>
+        <template v-else>Stays on this game even when the other one is open.</template>
+        <template v-if="game === 'poe2'">
+          PoE2: price check uses the PoE2 trade site (English game client only; no quick poe.ninja price yet); PoE1-only tabs are hidden.
+        </template>
       </div>
     </div>
     <div class="mb-2">
@@ -63,7 +68,7 @@
     <ui-checkbox class="mb-4"
       v-model="showAttachNotification">{{ t(':show_overlay_ready') }}</ui-checkbox>
     <div class="mb-4">
-      <div class="flex-1 mb-1">{{ t(':window_title') }} <span class="bg-gray-200 text-gray-900 rounded px-1">{{ t('Restart required') }}</span></div>
+      <div class="flex-1 mb-1">{{ t(':window_title') }} <span class="text-gray-500 text-sm">(Orbhoarder restarts by itself after a change)</span></div>
       <input v-model="windowTitle" class="rounded bg-gray-900 px-1 block w-full mb-1 font-poe" />
     </div>
     <hr class="mb-4 mx-8 border-gray-700">
@@ -130,10 +135,7 @@ import { Host } from '@/web/background/IPC'
 import { usePobConfig } from './pob-config'
 import { configModelValue, configProp } from './utils'
 import { AppConfig } from '@/web/Config'
-import { windowTitleOnSwitch, type Game } from '@ipc/game'
-
-// Deathloom fork: PoE2 mode switch, shown since PoE2 price check is in (Phase A).
-const GAME_SWITCH_ENABLED = true
+import { applyGameSwitch, isDefaultWindowTitle, type GameMode } from '@ipc/game'
 
 export default defineComponent({
   name: 'settings.general',
@@ -174,19 +176,14 @@ export default defineComponent({
       restoreClipboard: configModelValue(() => props.config, 'restoreClipboard'),
       showAttachNotification: configModelValue(() => props.config, 'showAttachNotification'),
       windowTitle: configModelValue(() => props.config, 'windowTitle'),
-      showGameSwitch: computed(() => GAME_SWITCH_ENABLED || props.config.game !== 'poe1'),
-      game: computed<Game>({
-        get () { return props.config.game },
+      game: computed(() => props.config.game),
+      customTitle: computed(() => !isDefaultWindowTitle(props.config.windowTitle)),
+      gameMode: computed<GameMode>({
+        get () { return props.config.gameMode },
         set (value) {
-          const from = props.config.game
-          if (value === from) return
-          // each game keeps its own league; a custom window title is kept
-          const byGame = { ...props.config.leagueIdByGame }
-          if (props.config.leagueId) byGame[from] = props.config.leagueId
-          props.config.leagueIdByGame = byGame
-          props.config.leagueId = byGame[value]
-          props.config.windowTitle = windowTitleOnSwitch(value, props.config.windowTitle)
-          props.config.game = value
+          props.config.gameMode = value
+          // a pinned game switches now; Automatic waits for the next game window
+          if (value !== 'auto') applyGameSwitch(props.config, value)
         }
       })
     }

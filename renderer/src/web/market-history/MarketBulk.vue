@@ -56,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+import { gameKey } from '../game-storage'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { NinjaListing } from '@/web/background/Prices'
 import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
@@ -71,7 +72,7 @@ ninja.queuePricesFetch()
 const BULK_NS = new Set(['ITEM', 'DIVINATION_CARD'])
 
 const list = ref<BulkEntry[]>(loadBulk())
-function onStorage (e: StorageEvent) { if (e.key === BULK_KEY) list.value = loadBulk() }
+function onStorage (e: StorageEvent) { if (e.key === gameKey(BULK_KEY)) list.value = loadBulk() }
 onMounted(() => window.addEventListener('storage', onStorage))
 onUnmounted(() => window.removeEventListener('storage', onStorage))
 function setList (l: BulkEntry[]) { list.value = l; saveBulk(l) }

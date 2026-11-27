@@ -65,6 +65,7 @@
 </template>
 
 <script setup lang="ts">
+import { gameKey } from '../game-storage'
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { useMarket } from './use-market'
 import FarmNudge from './FarmNudge.vue'
@@ -80,8 +81,8 @@ const range = ref<'league' | '7d' | 'all'>('league')
 const archived = shallowRef(loadFarmRuns())
 const session = shallowRef(loadPlaySession())
 function onStorage (e: StorageEvent) {
-  if (e.key === FARM_RUNS_KEY) archived.value = loadFarmRuns()
-  if (e.key === PLAY_SESSION_KEY) session.value = loadPlaySession()
+  if (e.key === gameKey(FARM_RUNS_KEY)) archived.value = loadFarmRuns()
+  if (e.key === gameKey(PLAY_SESSION_KEY)) session.value = loadPlaySession()
   if (e.key === FARM_STRATEGY_KEY) strategy.value = loadStrategy()
 }
 // the session panel saves often; re-read now and then too (same window doesn't get storage events).

@@ -130,6 +130,7 @@ export const FROM_OTHER_DEVICES = new Set([
   'CLIENT->MAIN::pob-import',
   'CLIENT->MAIN::pob-manage-build',
   'CLIENT->MAIN::pob-plan',
+  'CLIENT->MAIN::pob-pull-diff',
   'CLIENT->MAIN::pob-timeless',
   'CLIENT->MAIN::pob-tree',
   'CLIENT->MAIN::pob-tree-map',
@@ -168,7 +169,9 @@ export const NOT_FROM_OTHER_DEVICES = new Set([
   // left levels, deaths and act splits uncounted)
   'CLIENT->MAIN::game-log-catchup',
   // Deathloom fork (Q10): reading / writing loot filter files stays on this PC
-  'CLIENT->MAIN::loot-filter'
+  'CLIENT->MAIN::loot-filter',
+  // Deathloom fork (Q26): this PC's own timings only (a phone's would mix in its network)
+  'CLIENT->MAIN::health'
 ])
 const USER_ACTIONS_FROM_OTHER_DEVICES = new Set(['open-trade-tab', 'open-window-view'])
 const POB_SYNC_FROM_OTHER_DEVICES = new Set(['status', 'pull', 'push', 'syncNow'])

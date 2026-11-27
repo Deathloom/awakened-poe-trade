@@ -7,6 +7,7 @@ import { computed, ref, shallowRef } from 'vue'
 import { createGlobalState } from '@vueuse/core'
 import { Host } from '@/web/background/IPC'
 import { emptyAlertState, type PriceAlertInput, type PriceAlertState, type PriceAlertFired } from '@ipc/price-alerts'
+import { gameKey } from '../game-storage'
 
 const DISMISSED_KEY = 'deathloom.price-alerts.dismissed.v1'
 // fired alerts older than this aren't shown as new any more
@@ -21,7 +22,7 @@ export const IS_OTHER_DEVICE = (() => {
 
 function loadDismissed (): string[] {
   try {
-    const v = JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? '[]')
+    const v = JSON.parse(localStorage.getItem(gameKey(DISMISSED_KEY)) ?? '[]')
     return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(-100) : []
   } catch { return [] }
 }
@@ -48,11 +49,11 @@ export const usePriceAlerts = createGlobalState(() => {
   Host.sendEvent({ name: 'CLIENT->MAIN::price-alerts', payload: { op: 'list' } })
 
   try {
-    window.addEventListener('storage', (e) => { if (e.key === DISMISSED_KEY) dismissed.value = loadDismissed() })
+    window.addEventListener('storage', (e) => { if (e.key === gameKey(DISMISSED_KEY)) dismissed.value = loadDismissed() })
   } catch {}
 
   function saveDismissed () {
-    try { localStorage.setItem(DISMISSED_KEY, JSON.stringify(dismissed.value.slice(-100))) } catch {}
+    try { localStorage.setItem(gameKey(DISMISSED_KEY), JSON.stringify(dismissed.value.slice(-100))) } catch {}
   }
 
   const fresh = computed<PriceAlertFired[]>(() => state.value.fired.filter(f =>

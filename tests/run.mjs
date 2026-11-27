@@ -22,6 +22,7 @@ const MODULES = {
   'remote-key-store': 'main/src/remote-key-store.ts',
   'pob-pin': 'main/src/pob/pob-pin.ts',
   'pob-caps': 'ipc/pob-caps.ts',
+  'game-storage': 'renderer/src/web/game-storage.ts',
   'play-session': 'renderer/src/web/companion/play-session.ts',
   money: 'renderer/src/web/money/money.ts',
   'settings-tools': 'renderer/src/web/settings/tools.ts',
@@ -71,11 +72,17 @@ const MODULES = {
   'pob-announce': 'main/src/pob/announce.ts',
   'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts',
   'build-progress': 'renderer/src/web/pob/build-progress.ts',
+  'boss-readiness': 'renderer/src/web/pob/boss-readiness.ts',
+  'league-recap': 'renderer/src/web/cheats/league-recap.ts',
   'gem-profit': 'renderer/src/web/market-history/gem-profit.ts',
   'bulk-sell': 'renderer/src/web/market-history/bulk-sell.ts',
   viscera: 'renderer/src/web/money/viscera.ts',
   temple: 'renderer/src/web/money/temple.ts',
-  wombgift: 'renderer/src/web/money/wombgift.ts'
+  wombgift: 'renderer/src/web/money/wombgift.ts',
+  'pull-diff': 'main/src/pob/pull-diff.ts',
+  'board-matching': 'renderer/src/web/trade-board/matching.ts',
+  'health-watch': 'ipc/health-watch.ts',
+  callouts: 'renderer/src/web/callouts/callouts.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

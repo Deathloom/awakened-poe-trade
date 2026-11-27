@@ -8,6 +8,42 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+## [1.0.99] - 2026-11-27
+
+### Changed (E3): PoE1 and PoE2 keep their own lists
+- The trade ledger, This session and the last session, farming runs, watched items, the sell list, bulk sell and dismissed price alerts are kept per game. PoE1 keeps everything you have now; PoE2 starts empty. Open panels switch to the other game's lists when the game switches.
+
+### Changed (E2): PoE1-only tabs hidden while playing PoE2
+- With Path of Exile 2 active, the Orbhoarder window hides Levelling, Build, Craft, Market and Profit, and the PoE1-only sub-tabs (Mapping → Atlas tree, Map mods, Farming; Trade → Search; Friends → Build sharing; Reference → Cheat sheets, Recipes, Tracking). The same panels don't show in the overlay, in game or on the All tab. Switching back to PoE1 brings everything back where it was; no settings change.
+
+### Added (E1): automatic PoE1 / PoE2 switch, no restart
+- Settings → Game is now **Automatic** (the default): Orbhoarder watches both the "Path of Exile" and "Path of Exile 2" windows and follows whichever has focus. League, price check, Client.txt, game config and loot filter switch with it, and the overlay says "Switched to Path of Exile 2". Pick Path of Exile 1 or 2 to stay on one game. Only window titles are used: nothing is read from the game's memory.
+- The overlay library's Windows part (electron-overlay-window, MIT) is patched (`main/build/electron-overlay-window+4.1.0.patch`) and rebuilt at install by `main/build/overlay-native.mjs`. If that build isn't there, Orbhoarder falls back to watching one game and relaunches itself (about 2 s) when the other game starts.
+- Changing the window title or the game no longer needs a manual restart; Orbhoarder restarts by itself when it has to.
+
+### Fixed (C1): PoE2 0.5.5 items the price check didn't know
+- PoE2 price check now knows the 0.5.5 uniques Byrnabas, Eshtera's Path, Safrin's Resolve, Zaida's Longevity, Reverie, The Road Warrior and Splinter of Lorrata, plus Soul Core of Vizoma, Mutated, Corrupted and Founders Verisium, Starlit Ore and Lesser Charging Rune, and 7 new rune and Expedition mods. Exiled Exchange 2 hasn't shipped these yet; they live in `tools/poe2-additions/` and drop out on their own once EE2 has them (`node tools/poe2-additions.mjs` after each EE2 data refresh). No icons for these yet.
+
+### Added (Q29): League recap card
+- Reference → Tracking → **League recap**: one card for a league with what Orbhoarder kept on this PC: dates and days played, characters (level, deaths, campaign time), maps, hours and profit per hour, best farming strategy, most seen mechanic, trades sold/bought and what they sold for, bosses and voidstones ticked in the Checklist, and challenges done. Pick an earlier league in the list; **Copy** gives plain text to paste for friends.
+
+### Added (Q28): spoken callouts (off until you turn them on)
+- Settings → **Spoken callouts**: a Windows voice says incoming trade whispers (item and price), fired price alerts, maps you check that have mods bad for your build, and Path of Building crashes or timeouts. Pick the voice, speed and volume, and which callouts you want; Test plays a sample. Only voices installed on this PC are used, so the words never leave it. Nothing is read from the game or sent to it. At most one callout every few seconds, and the same words aren't repeated within 30 seconds.
+
+### Added (Q26): crash and slowness watch
+- Settings → Tools → **Speed and crashes**: how long Path of Building took to start and answer, how fast the trade site answered, and PoB crashes, over the last 7 days, with a fix hint when something is off (antivirus slowing PoB's start, PoB desktop app using the CPU, a slow trade site). Kept on this PC only (apt-data/health-watch.json); nothing is sent anywhere.
+- A PoB crash, a PoB answer that times out or a very slow one shows a short notice over the game, at most once per kind every 30 minutes. Turn it off on the same page.
+
+### Added (Q22): what changed in a friend's build after a Pull
+- Build sharing (Build panel → ⋯ → Build sharing) lists the friends' builds that the last Pulls changed. **What changed** shows the difference from your previous copy: stats (old → new), gear, gems and passives. Works for Pulls started in Orbhoarder (also the automatic one at start); the last 30 changes are kept, **Clear** forgets them.
+
+### Added (Q23): friends' board matches
+- The friends' board marks friends' listings that match what you want (the Shopping list's uniques and gems, your Wanted listings) or what friends want that you give or sell, with a **For you** filter.
+- Once you have used the board, Orbhoarder checks it every 15 minutes and sends one Windows notification per new match. Untick **Tell me about new matches** at the bottom of the board to stop it.
+
+### Added (Q21): Boss readiness card
+- Build → Progress (and the Build progress panel) has a **Boss readiness** card: for each pinnacle boss (Exarch, Eater, Maven, Shaper, Elder, Uber Elder, Sirus, Venarius; **Uber** switch for the uber versions) it says **Ready**, **Close** or **Not yet** from your build's DPS, resistances, chaos resistance and the biggest hit you survive of that boss's main damage types, with two or three lines on the fight. Click a boss for the numbers. Stats are the ones Path of Building saved in the build file (save in PoB, then ↻). Bosses ticked in Reference → Tracking → Checklist get a ✓. The bars are rules of thumb, not GGG numbers.
+
 ## [1.0.98] - 2026-11-27
 
 ### Added (layout follow-up): pin the friends' board, Market search and Build progress in game

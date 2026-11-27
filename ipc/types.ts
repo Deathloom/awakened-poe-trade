@@ -1,6 +1,7 @@
-import type { Game } from './game'
+import type { Game, GameMode } from './game'
 import type { PriceAlertInput, PriceAlertState, PriceAlertFired } from './price-alerts'
 import type { LootFilterWants } from './loot-filter'
+import type { HealthKind, HealthKindSummary, HealthHint, HealthSample } from './health-watch'
 
 export interface HostConfig {
   shortcuts: ShortcutAction[]
@@ -14,6 +15,8 @@ export interface HostConfig {
   language: string
   // Deathloom fork: PoE2 mode (absent = poe1)
   game?: Game
+  // Deathloom fork (wave 6): Auto follows the focused game (absent = auto)
+  gameMode?: GameMode
   // Deathloom fork: Path of Building build impact
   pob?: PobConfig
 }
@@ -506,6 +509,7 @@ export interface HostState {
 export type IpcEvent =
   // events that have meaning only in Overlay mode:
   IpcOverlayAttached |
+  IpcGameDetected |
   IpcFocusChange |
   IpcVisibility |
   IpcFocusGame |
@@ -555,6 +559,8 @@ export type IpcEvent =
   IpcPobPlanResult |
   IpcPobTreeMapResult |
   IpcPobCompareResult |
+  IpcPobPullDiffRequest |
+  IpcPobPullDiffResult |
   IpcPobTimelessRequest |
   IpcPobTimelessResult |
   IpcPobCraftRequest |
@@ -575,6 +581,9 @@ export type IpcEvent =
   IpcPriceAlertsRequest |
   IpcPriceAlertsState |
   IpcPriceAlertFired |
+  IpcHealthRequest |
+  IpcHealthReport |
+  IpcHealthWarning |
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
@@ -778,6 +787,14 @@ type IpcHudGearActionRelay =
     action: 'trade' | 'upgrade' | 'price-check' | 'loadouts'
     text?: string
     loadouts?: Record<string, PobLoadoutChoice>
+  }>
+
+// Deathloom fork (wave 6): the overlay found the other game's window (Auto mode).
+// live = no restart needed; otherwise Orbhoarder relaunches after the switch.
+type IpcGameDetected =
+  Event<'MAIN->CLIENT::game-detected', {
+    game: Game
+    live: boolean
   }>
 
 type IpcOverlayAttached =
@@ -1087,11 +1104,24 @@ export interface PobSyncState {
   notice?: string
   // Orbhoarder reads builds from another folder than PoB syncs
   mismatch?: string
+  // Deathloom fork (Q22): friends' builds the last Pulls changed, newest first
+  changes?: PullChange[]
+}
+
+// Deathloom fork (Q22): a friend's build a Pull changed (old copy kept by main)
+export interface PullChange {
+  id: string
+  // inside the builds folder, '/' separators ("Friend/RF Jugg.xml")
+  rel: string
+  player: string
+  name: string
+  kind: 'changed' | 'new'
+  time: number
 }
 
 type IpcPobSyncRequest =
   Event<'CLIENT->MAIN::pob-sync', {
-    op: 'status' | 'signIn' | 'cancelSignIn' | 'signOut' | 'pull' | 'push' | 'syncNow' | 'configure'
+    op: 'status' | 'signIn' | 'cancelSignIn' | 'signOut' | 'pull' | 'push' | 'syncNow' | 'configure' | 'clearChanges'
     // configure
     player?: string
     autoSync?: boolean
@@ -1566,6 +1596,24 @@ type IpcPobCompareRequest =
     selB?: PobSetSelection
   }>
 
+// Deathloom fork (Q22): a friend's build before and after the Pull that changed it
+type IpcPobPullDiffRequest =
+  Event<'CLIENT->MAIN::pob-pull-diff', {
+    requestId: number
+    id: string
+  }>
+
+type IpcPobPullDiffResult =
+  Event<'MAIN->CLIENT::pob-pull-diff', {
+    requestId: number
+    ok: boolean
+    error?: string
+    change?: PullChange
+    // missing for a build that is new with this Pull
+    before?: PobBuildSummary
+    after?: PobBuildSummary
+  }>
+
 type IpcPobCompareResult =
   Event<'MAIN->CLIENT::pob-compare', {
     requestId: number
@@ -1669,3 +1717,24 @@ interface Event<TName extends string, TPayload = undefined> {
   name: TName
   payload: TPayload
 }
+
+// Deathloom fork (Q26): crash and slowness watch (main/src/HealthWatch.ts). Local only.
+// 'sample' carries a trade site time measured by the price check window.
+type IpcHealthRequest =
+  Event<'CLIENT->MAIN::health', {
+    op: 'sample' | 'report' | 'settings' | 'clear'
+    sample?: { k: HealthKind, ms: number, ok: boolean, what?: string }
+    warn?: boolean
+  }>
+
+type IpcHealthReport =
+  Event<'MAIN->CLIENT::health', {
+    warn: boolean
+    summary: HealthKindSummary[]
+    hints: HealthHint[]
+    recent: HealthSample[]
+  }>
+
+// a crash / PoB timeout / very slow answer just happened (shown over the game)
+type IpcHealthWarning =
+  Event<'MAIN->CLIENT::health-warning', { k: HealthKind, text: string, fix: string }>

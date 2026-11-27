@@ -99,6 +99,7 @@ import { shoppingList, type ShopRow } from './market-tools'
 import { IS_OTHER_DEVICE } from './price-alerts-store'
 import { wantsFromShop, wantsCount, keepKnown, wantsSignature } from '@ipc/loot-filter'
 import { lfSettings, setLfSettings, setLfLastWants, updateAddon } from './loot-filter-store'
+import { setShoppingNames } from '../trade-board/board'
 import { ITEM_BY_REF } from '@/assets/data'
 
 const { all, money, open, ninja, divine, itemPrice } = useMarket()
@@ -332,6 +333,8 @@ watch([() => wantsSignature(lootWants.value), lfReady, () => lfSettings.value.au
   if (!ready || IS_OTHER_DEVICE) return
   lfTimer = setTimeout(() => {
     setLfLastWants(buildName.value, lootWants.value)
+    // Deathloom fork (Q23): uniques and gems still to buy, for friends' board matching
+    setShoppingNames(shop.value.rows.filter(r => !r.owned && r.kind !== 'rare').map(r => r.label))
     const s = lfSettings.value
     const key = `${s.source}|${sig}`
     if (!s.auto || !s.source || key === lfLastSig) return
