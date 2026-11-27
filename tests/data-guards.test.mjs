@@ -240,3 +240,21 @@ test('challenge list: 40 Covens challenges, unique, sourced, links go to real ta
   }
   assert.ok(VENDOR_RECIPES.filter(r => r.challenge).every(r => list.some(c => c.name === r.challenge.name)), 'recipe challenge name not in the list')
 })
+
+// ---- PoE2 data (A1) ----------------------------------------------------------
+
+test('PoE2 data: items, stats and client strings are there and kept apart from PoE1', () => {
+  const read = (p) => readFileSync(join(root, 'renderer/public/data/poe2', p), 'utf8')
+  const items = read('en/items.ndjson').split('\n').filter(Boolean).map(l => JSON.parse(l))
+  const stats = read('en/stats.ndjson').split('\n').filter(Boolean).map(l => JSON.parse(l))
+  assert.ok(items.length > 3000, `only ${items.length} PoE2 items`)
+  assert.ok(stats.length > 2000, `only ${stats.length} PoE2 stats`)
+  const names = new Set(items.map(i => i.refName))
+  for (const n of ['Exalted Orb', 'Orb of Annulment', 'Greater Rune of Leadership']) {
+    assert.ok(names.has(n), `${n} missing from PoE2 items`)
+  }
+  // a PoE2-only stat: if this turns up in the PoE1 file the data got mixed up
+  assert.ok(stats.some(s => s.ref === '# Charm Slot'))
+  assert.ok(!readFileSync(join(root, 'renderer/public/data/en/stats.ndjson'), 'utf8').includes('"# Charm Slot"'))
+  assert.match(read('en/client_strings.js'), /export default/)
+})

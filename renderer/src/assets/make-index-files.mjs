@@ -8,7 +8,8 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export function makeIndexFiles () {
-  const LANGUAGES = ['en', 'ru', 'cmn-Hant', 'ko']
+  // Deathloom fork: PoE2 data (from Exiled Exchange 2) lives in data/poe2/<lang>
+  const LANGUAGES = ['en', 'ru', 'cmn-Hant', 'ko', 'poe2/en']
 
   for (const lang of LANGUAGES) {
     const lineStarts = {

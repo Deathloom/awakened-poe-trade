@@ -19,3 +19,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+PoE2 support (renderer/src/poe2/, renderer/public/data/poe2/) includes code and data from
+Exiled Exchange 2 (https://github.com/Kvan7/exiled-exchange-2), also MIT licensed:
+Copyright (c) 2020 Alexander Drozdov and the Exiled Exchange 2 contributors.
