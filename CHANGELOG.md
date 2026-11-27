@@ -103,6 +103,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (A2): PoE2 item reader
 - Orbhoarder can now read PoE2 items copied with Ctrl+C (the item reader from Exiled Exchange 2, using the PoE2 lists from A1). Not switched on yet: PoE2 price check comes in the next steps. Automatic checks cover bows, armour, charms, gems, waystones and fractured items.
 
+### Changed (Q24): settings backup asks what to restore
+- Settings → Tools → Restore… now shows what's in the file first (date, how many settings and panel data items) and lets you pick: settings and hotkeys, panel data (notes, ticks, watchlist), or both. When the backup has other folders than this PC (game files, Path of Building, builds), this PC's folders are kept unless you untick it, so moving to a new PC or using a friend's setup doesn't break Path of Building.
+- Security: a hand-edited backup file can no longer change the settings object's internals (`__proto__` and similar keys are skipped) or replace a setting with a different kind of value.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
