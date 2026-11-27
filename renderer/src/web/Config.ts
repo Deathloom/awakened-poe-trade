@@ -13,6 +13,7 @@ import type { ItemSearchWidget } from './item-search/widget'
 import { registry as widgetRegistry } from './overlay/widget-registry.js'
 import { PANEL_WIDGET_TYPES } from './desktop/panel-defs'
 import type { QuickWhisper } from './companion/quick-whispers'
+import { setStorageGame } from './game-storage'
 
 const _config = shallowRef<Config | null>(null)
 let _lastSavedConfig: Config | null = null
@@ -29,6 +30,8 @@ export function AppConfig (type?: string) {
 
 export function updateConfig (updates: Config) {
   _config.value = deepReactive(JSON.parse(JSON.stringify(updates)))
+  // Deathloom fork (wave 6): PoE1 / PoE2 keep their own stored lists
+  setStorageGame(asGame(_config.value!.game))
   document.documentElement.style.fontSize = `${_config.value!.fontSize}px`
   applyAppearance(surfaceAppearance(_config.value!), IS_HUD ? 'hud' : IS_DESKTOP ? 'desktop' : 'overlay', _config.value!.leagueId)
 }

@@ -5,6 +5,7 @@
 
 import { ref, computed } from 'vue'
 import { type WatchedItem, type PriceNow, type AlertHit, MAX_ITEMS, canAdd, applyPrices } from './watchlist-store'
+import { gameKey } from '../game-storage'
 
 export type { WatchedItem }
 export { MAX_ITEMS }
@@ -13,7 +14,7 @@ const KEY = 'deathloom.market-history.v1'
 
 function load (): WatchedItem[] {
   try {
-    const list = JSON.parse(localStorage.getItem(KEY) ?? '[]')
+    const list = JSON.parse(localStorage.getItem(gameKey(KEY)) ?? '[]')
     return Array.isArray(list) ? list : []
   } catch {
     return []
@@ -28,12 +29,12 @@ export const watchNotice = ref('')
 // Deathloom fork: the overlay and the desktop window share this list; another
 // window's change shows up here too
 try {
-  window.addEventListener('storage', (e) => { if (e.key === KEY) watchlist.value = load() })
+  window.addEventListener('storage', (e) => { if (e.key === gameKey(KEY)) watchlist.value = load() })
 } catch {}
 
 function save (): boolean {
   try {
-    localStorage.setItem(KEY, JSON.stringify(watchlist.value))
+    localStorage.setItem(gameKey(KEY), JSON.stringify(watchlist.value))
     if (watchNotice.value.startsWith('Couldn\'t save')) watchNotice.value = ''
     return true
   } catch (err) {
