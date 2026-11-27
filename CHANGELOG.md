@@ -129,6 +129,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q18): next upgrades in Build progress
 - Build progress has a Next upgrades box: click Rank and Path of Building compares each unique of the build you haven't ticked with your character file (Build → Gems → Your character), then shows the 3 with the most gain per chaos (DPS %, plus half the eHP %), with the cheapest poe.ninja price and a Copy button for the in-game market. Up to 8 items, one at a time; rare items aren't ranked (no poe.ninja price).
 
+### Added (Q15): gem profit calculator
+- New Market → **Gems** tab: for every skill gem poe.ninja lists, what it costs to buy at its lowest level, what it sells for at max level (same or more quality, not corrupted), how many Gemcutter's Prisms the quality needs, the profit and the **profit per slot-day** (days the gem sits in a spare socket; set the days at the top, Awakened gems count ×3 and Enlighten / Empower / Enhance ×5 as a rough guess). Sorted best first, with a search box. Press **+** on a gem you start levelling: **Levelling now** keeps what you paid, the day count and today's profit. Prices only; nothing is bought or sold for you.
+
 ### Added (Q19): weekly farming report and a nudge when profit drops
 - Market → Farming now opens with a **Last 7 days** card: maps, hours, profit and profit per hour, the week before for comparison (▲/▼ % per hour), your strategies this week ranked by profit per hour, and a tip when one clearly earns less than another. When the last 5 maps of the strategy you're farming now make at least 30 % less per hour than its earlier maps (last 2 weeks, at least 10 of them), a yellow line says so in Farming and in This session, naming a strategy that did better if there is one. **Not now** hides it until the next day. Uses only the loot you type in This session, as before.
 

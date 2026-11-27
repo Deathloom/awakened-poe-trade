@@ -70,7 +70,8 @@ const MODULES = {
   'lab-helper': 'renderer/src/web/companion/lab-helper.ts',
   'pob-announce': 'main/src/pob/announce.ts',
   'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts',
-  'build-progress': 'renderer/src/web/pob/build-progress.ts'
+  'build-progress': 'renderer/src/web/pob/build-progress.ts',
+  'gem-profit': 'renderer/src/web/market-history/gem-profit.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

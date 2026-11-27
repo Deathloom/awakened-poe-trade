@@ -2240,3 +2240,42 @@ test('market tools (Q19): weekly farming report and profit-drop nudge', async ()
   assert.equal(mt.profitDrop(drop, 'Essence', now), null, 'too few maps')
   assert.equal(mt.profitDrop(drop.map(r => ({ ...r, strategy: 'No strategy set' })), '', now).strategy, 'No strategy set')
 })
+
+test('gem profit (Q15): variants, best route per gem, prisms, slot-days, tracked gems', async () => {
+  const gp = await import('./.build/gem-profit.mjs')
+  const G = (name, variant, chaos) => ({ ns: 'GEM', name, variant, chaos, graph: [], category: 'skill-gems', type: 'SkillGem', url: 'u' })
+  assert.deepEqual(gp.parseGemVariant('21/20c'), { level: 21, quality: 20, corrupt: true })
+  assert.deepEqual(gp.parseGemVariant('1'), { level: 1, quality: 0, corrupt: false })
+  assert.equal(gp.parseGemVariant('Imbued'), null)
+  assert.equal(gp.defaultDays('Awakened Added Fire Damage Support', 2), 6)
+  assert.equal(gp.defaultDays('Enlighten Support', 2), 10)
+  assert.equal(gp.defaultDays('Arc', 0), 3)
+  const items = [
+    G('Arc', '1', 1), G('Arc', '1/20', 6), G('Arc', '20', 10), G('Arc', '20/20', 30), G('Arc', '21/20c', 80),
+    G('Awakened Spell Echo Support', '1', 50), G('Awakened Spell Echo Support', '5', 350),
+    G('Only One', '20', 5), // nothing to level
+    { ns: 'ITEM', name: "Gemcutter's Prism", chaos: 0.5, graph: [], category: 'currency', type: 'Currency', url: 'u' }
+  ]
+  const r = gp.gemRoutes(items, 0.5, 2)
+  const arc = r.find(p => p.name === 'Arc')
+  // 1/20 → 20/20 (30 - 6 = 24) beats 1 → 20/20 with 20 prisms (30 - 1 - 10 = 19)
+  assert.equal(arc.buy.variant, '1/20')
+  assert.equal(arc.sell.variant, '20/20')
+  assert.equal(arc.prisms, 0)
+  assert.equal(arc.profit, 24)
+  assert.equal(arc.perDay, 12)
+  const aw = r.find(p => p.name === 'Awakened Spell Echo Support')
+  assert.equal(aw.days, 6)
+  assert.equal(aw.perDay, 50)
+  assert.equal(r[0].name, 'Awakened Spell Echo Support') // sorted by per slot-day
+  assert.equal(r.some(p => p.name === 'Only One'), false)
+  // prisms needed but no prism price: route skipped
+  assert.equal(gp.gemPlan(items[0], items[3], null, 2), null)
+  assert.equal(gp.gemPlan(items[0], items[3], 0.5, 2).profit, 19)
+  // tracked: paid price counts, today's sell price
+  const t = { name: 'Arc', buy: '1', sell: '20/20', paid: 2, days: 4, started: 0 }
+  assert.equal(gp.trackedPlan(t, items, 0.5).profit, 18)
+  assert.equal(gp.trackedPlan({ ...t, sell: '19' }, items, 0.5), null)
+  assert.equal(gp.dayOf(0, 0), 1)
+  assert.equal(gp.dayOf(0, 2.5 * 86_400_000), 3)
+})
