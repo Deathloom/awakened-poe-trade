@@ -167,8 +167,8 @@ export class PobImpact {
     this.server.onEventAnyClient('CLIENT->MAIN::pob-craft', (req) => {
       this.reply('MAIN->CLIENT::pob-craft', req.requestId, async () => await this.craft(req))
     })
-    this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints }) => {
-      this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints))
+    this.server.onEventAnyClient('CLIENT->MAIN::pob-plan', ({ requestId, level, questPoints, phase }) => {
+      this.reply('MAIN->CLIENT::pob-plan', requestId, async () => await this.plan(level, questPoints, phase))
     })
     this.server.onEventAnyClient('CLIENT->MAIN::pob-gems', ({ requestId, refreshGear }) => {
       this.reply('MAIN->CLIENT::pob-gems', requestId, async () => await this.gems(refreshGear === true))
@@ -1101,15 +1101,32 @@ export class PobImpact {
 
   // Levelling planner (desktop window "Next" tab). Level and quest points come
   // from the window (Client.txt + campaign guide); no character data is fetched.
-  async plan (level: unknown, questPoints: unknown): Promise<Record<string, unknown>> {
+  async plan (level: unknown, questPoints: unknown, phase?: unknown): Promise<Record<string, unknown>> {
     const num = (v: unknown, min: number, max: number) => {
       const n = Math.floor(Number(v))
       return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min
     }
     await this.ensureBuild()
-    const reply = await this.call('plan', { level: num(level, 1, 100), questPoints: num(questPoints, 0, 30) })
+    const realLevel = num(level, 1, 100)
+    const qp = num(questPoints, 0, 30)
     // PoB's JSON encoder writes empty lists as {}
     const list = (v: unknown) => Array.isArray(v) ? v : []
+    // Deathloom fork (Gerhard 27 Nov 2026): the levelling tree is picked by hand,
+    // never from your level (it lagged after changing trees until you levelled).
+    // PoB picks the tree for a level, so ask again with a level that lands on the
+    // picked tree (just past the previous tree's level); default = the first tree.
+    let reply = await this.call('plan', { level: 1, questPoints: qp })
+    const phases = list(reply.phases) as Array<{ title?: unknown, level?: unknown }>
+    const want = typeof phase === 'string' ? phase : ''
+    const idx = Math.max(0, phases.findIndex(p => p.title === want))
+    if (idx + 1 !== reply.phase) {
+      const at = idx === 0 ? 1 : num(Number(phases[idx - 1].level ?? 0) + 1, 1, 100)
+      reply = await this.call('plan', { level: at, questPoints: qp })
+    }
+    // gems, points and the rest go by your real level
+    const available = realLevel - 1 + qp
+    const kept = Number(reply.kept) || 0
+    reply = { ...reply, level: realLevel, questPoints: qp, available, taken: Math.max(0, Math.min(list(reply.order).length, available - kept)) }
     const plan: PobPlan = {
       level: reply.level,
       questPoints: reply.questPoints,

@@ -90,7 +90,7 @@
           <h2>Your build</h2>
           <ul>
             <li>Orbhoarder uses your Path of Building build: keep it up to date in PoB (re-import your character, save) and the panels follow.</li>
-            <li><b>Loadouts</b>: name PoB trees after a level ("Level 12", "Level 30") and the levelling planner uses them as steps. ⋯ → Edit loadouts and gems → New loadout copies the picked one.</li>
+            <li><b>Loadouts</b>: name PoB trees after a level ("Level 12", "Level 30") and the levelling planner uses them as steps (click a step in Levelling → Next steps to switch; it never switches by itself). ⋯ → Edit loadouts and gems → New loadout copies the picked one.</li>
             <li><b>Edit loadouts</b> (window, Build tab → ⋯ → Edit loadouts and gems): rename / copy / delete trees, item sets and skill sets; change gem level, quality and on/off.
               Tree map → <b>Edit</b>: click a passive to take or refund it. The old file is kept in <i>Build backups</i> next to your builds folder.</li>
             <li><b>Manage builds</b> (window, Build tab → ⋯ → Manage builds): rename, move to a folder, duplicate, delete. Deleted builds go to <i>Deleted builds</i> next to your builds folder.</li>

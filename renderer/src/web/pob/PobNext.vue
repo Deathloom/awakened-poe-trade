@@ -43,8 +43,9 @@
         <div class="flex flex-wrap items-center gap-1 px-1 pb-1 text-xs">
           <template v-for="(ph, i) of plan.phases" :key="i">
             <i v-if="i" class="fas fa-angle-right text-gray-600" />
-            <span class="px-1 rounded" :class="i + 1 === plan.phase ? 'bg-gray-700 text-gray-100' : (i + 1 < plan.phase ? 'text-gray-600' : 'text-gray-400')"
-              :title="ph.level ? `Followed up to level ${ph.level}` : 'End goal: the loadout picked in the Build tab'">{{ ph.title }}</span>
+            <button class="px-1 rounded" :class="i + 1 === plan.phase ? 'bg-gray-700 text-gray-100' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'"
+              :title="(ph.level ? `Levelling tree up to level ${ph.level}` : 'End goal: the loadout picked in the Build tab') + '. Click to use this tree (it doesn\'t change by itself when you level).'"
+              @click="pickPhase(ph.title)">{{ ph.title }}</button>
           </template>
         </div>
         <div v-if="plan.phases.length === 1" class="px-1 pb-1 text-xs text-gray-600"
@@ -201,8 +202,6 @@
             <div class="flex flex-wrap gap-x-4 text-gray-300">
               <span :title="progress.questsExact ? 'From /passives' : 'Passive points received from quests (type /passives in game for the exact list)'">
                 Quest passives: {{ progress.passives }}<span class="text-gray-500">{{ progress.questsExact ? ' (/passives)' : '' }}</span></span>
-              <span v-if="logAllocated != null" :title="progress.passivesSnap ? 'From /passives in game, plus what you allocated since. Type /passives again to re-sync.' : 'Passives taken minus refunded, counted from the game log. Type /passives in game for the exact number.'">
-                Passives taken: {{ logAllocated }}<span v-if="plan.available - logAllocated > 0" class="text-yellow-400"> · {{ plan.available - logAllocated }} unspent</span></span>
               <span>Deaths: {{ progress.deaths ?? 0 }}<span v-if="guideAct && progress.deathsByAct?.[guideAct]" class="text-gray-500"> ({{ progress.deathsByAct[guideAct] }} in act {{ guideAct }})</span></span>
               <button v-if="campaignTime" class="hover:text-gray-100" :title="actTimes + '\nClick: act splits'" @click="toggleSplits">
                 <i class="fas fa-stopwatch mr-1 text-gray-500" />Campaign time: {{ campaignTime }}</button>
@@ -260,6 +259,7 @@ const guideStep = ref(loadCampaignStep())
 const onStorage = (e: StorageEvent) => {
   if (e.key === CHAR_LEVELS_KEY) levels.value = loadCharLevels()
   if (e.key === CAMPAIGN_STEP_KEY) guideStep.value = loadCampaignStep()
+  if (e.key === PHASE_KEY) { phaseChoice.value = loadPhases(); request() }
 }
 window.addEventListener('storage', onStorage)
 
@@ -313,6 +313,15 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-plan', (e) => {
     return
   }
   error.value = null
+  // the tree picked for this build (another window, or the build changed): ask again
+  const want = e.build ? phaseChoice.value[e.build.name] : undefined
+  if (e.build) buildName = e.build.name
+  if (e.plan && want != null && e.plan.phases[e.plan.phase - 1]?.title !== want && e.plan.phases.some(ph => ph.title === want) && !retried) {
+    retried = true
+    request()
+    return
+  }
+  retried = false
   plan.value = e.plan ?? null
   currentPlan.value = plan.value
   // the guide (every window) follows the build's bandit choice
@@ -321,12 +330,31 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-plan', (e) => {
 // the build or loadout changed in another panel
 const buildsListener = Host.onEvent('MAIN->CLIENT::pob-builds', (e) => { if (e.ok) request() })
 
+// Deathloom fork (Gerhard 27 Nov 2026): the levelling tree is picked by hand
+// (click it above), per build, shared by every window. It never follows your
+// level; a build you haven't picked for starts at its first tree.
+const PHASE_KEY = 'deathloom.plan-phase.v1'
+function loadPhases (): Record<string, string> {
+  try { const v = JSON.parse(localStorage.getItem(PHASE_KEY) ?? '{}'); return v && typeof v === 'object' ? v : {} } catch { return {} }
+}
+const phaseChoice = shallowRef<Record<string, string>>(loadPhases())
+let buildName = ''
+let retried = false
+function pickPhase (title: string) {
+  if (!buildName) return
+  const entries = Object.entries(phaseChoice.value).filter(([k]) => k !== buildName)
+  entries.push([buildName, title])
+  phaseChoice.value = Object.fromEntries(entries.slice(-40))
+  try { localStorage.setItem(PHASE_KEY, JSON.stringify(phaseChoice.value)) } catch {}
+  request()
+}
+
 function request () {
   loading.value = true
   lastRequestId += 1
   Host.sendEvent({
     name: 'CLIENT->MAIN::pob-plan',
-    payload: { requestId: lastRequestId, level: level.value, questPoints: questPoints.value }
+    payload: { requestId: lastRequestId, level: level.value, questPoints: questPoints.value, phase: phaseChoice.value[buildName] }
   })
 }
 defineExpose({ request })
@@ -338,18 +366,7 @@ onUnmounted(() => {
   window.removeEventListener('storage', onStorage)
 })
 
-// Passives actually taken (game log, characters followed from level 2): match
-// the plan's nodes by name, in order (small passives with the same name are approximate)
 const progress = computed(() => progressOf(levels.value, char.value?.name))
-// followed from level 2: every allocation is in the log
-const followedFromStart = computed(() => Boolean(progress.value?.alloc) && (progress.value?.firstLevel ?? 99) <= 2)
-const logAllocated = computed(() => {
-  const p = progress.value
-  const count = Object.values(p?.alloc ?? {}).reduce((n, c) => n + c, 0)
-  // the game's own count from /passives is exact (masteries in, ascendancy out): add what came since
-  if (p?.passivesSnap) return Math.max(0, p.passivesSnap.allocated + count - p.passivesSnap.logCount)
-  return followedFromStart.value ? count : null
-})
 // Deathloom fork (Gerhard 27 Nov 2026): no automatic tree tracking. What counts
 // as taken is only where you stepped to with the arrows (shared with the tree
 // map and Build progress); the game log and your level don't move it.
