@@ -1,5 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync, readdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 const store = {}
 globalThis.localStorage = {
@@ -45,6 +50,54 @@ test('request guard: overlay events reach main (price check), not from phones', 
   assert.equal(guard.isClientEvent('MAIN->CLIENT::pob-gems'), false)
   assert.equal(guard.isClientEvent(undefined), false)
   assert.equal(guard.allowedFromOtherDevice('OVERLAY->MAIN::track-area', {}), false)
+})
+
+// Deathloom fork (S1): the phone list is an allow-list, so every event a window
+// can send must be sorted into allowed or refused, and every name the pages send
+// must get past isClientEvent (dropping OVERLAY->MAIN:: once broke price check).
+const ipcTypes = readFileSync(join(root, 'ipc/types.ts'), 'utf8')
+const declaredEvents = (prefix) => [...new Set([...ipcTypes.matchAll(new RegExp(`'(${prefix}::[a-z0-9-]+)'`, 'g'))].map(m => m[1]))]
+
+function rendererSources (dir, out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name)
+    if (e.isDirectory()) rendererSources(p, out)
+    else if (/\.(ts|vue)$/.test(e.name)) out.push(readFileSync(p, 'utf8'))
+  }
+  return out
+}
+
+test('request guard (S1): every CLIENT->MAIN event is either allowed or refused from phones', () => {
+  const events = declaredEvents('CLIENT->MAIN')
+  assert.ok(events.length > 30, `found only ${events.length} events in ipc/types.ts`)
+  for (const name of events) {
+    const allowed = guard.FROM_OTHER_DEVICES.has(name)
+    const refused = guard.NOT_FROM_OTHER_DEVICES.has(name)
+    assert.ok(allowed !== refused, `${name}: add it to exactly one of FROM_OTHER_DEVICES / NOT_FROM_OTHER_DEVICES in main/src/request-guard.ts`)
+    if (refused) assert.equal(guard.allowedFromOtherDevice(name, {}), false, name)
+  }
+  // no stale names in the lists
+  for (const name of [...guard.FROM_OTHER_DEVICES, ...guard.NOT_FROM_OTHER_DEVICES]) {
+    assert.ok(events.includes(name), `${name} is listed in request-guard.ts but not declared in ipc/types.ts`)
+  }
+  // default deny: an event nobody sorted yet is refused
+  assert.equal(guard.allowedFromOtherDevice('CLIENT->MAIN::some-new-event', {}), false)
+  for (const name of declaredEvents('OVERLAY->MAIN')) {
+    assert.equal(guard.allowedFromOtherDevice(name, {}), false, name)
+  }
+})
+
+test('request guard (S1): every event name the pages send gets past isClientEvent', () => {
+  const declared = new Set([...declaredEvents('CLIENT->MAIN'), ...declaredEvents('OVERLAY->MAIN')])
+  const sent = new Set()
+  for (const src of rendererSources(join(root, 'renderer/src'))) {
+    for (const m of src.matchAll(/name:\s*'([A-Z]+->MAIN::[a-z0-9-]+)'/g)) sent.add(m[1])
+  }
+  assert.ok(sent.size > 30, `found only ${sent.size} sent event names`)
+  for (const name of sent) {
+    assert.equal(guard.isClientEvent(name), true, name)
+    assert.ok(declared.has(name), `${name} is sent by the renderer but not declared in ipc/types.ts`)
+  }
 })
 
 test('request guard: loopback always, other devices only with the key', () => {
