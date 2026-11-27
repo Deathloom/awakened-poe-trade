@@ -130,6 +130,7 @@ export const FROM_OTHER_DEVICES = new Set([
   'CLIENT->MAIN::pob-import',
   'CLIENT->MAIN::pob-manage-build',
   'CLIENT->MAIN::pob-plan',
+  'CLIENT->MAIN::pob-pull-diff',
   'CLIENT->MAIN::pob-timeless',
   'CLIENT->MAIN::pob-tree',
   'CLIENT->MAIN::pob-tree-map',

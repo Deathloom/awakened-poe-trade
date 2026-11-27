@@ -6,6 +6,7 @@ import { initConfig, AppConfig } from './web/Config'
 import { Host } from './web/background/IPC'
 import { startLevelRecorder } from './web/companion/char-level'
 import { startPatchNotesWatch } from './web/patch-notes/patch-notes-store'
+import { startBoardPing } from './web/trade-board/board'
 
 ;(async function () {
   await initConfig()
@@ -36,6 +37,8 @@ import { startPatchNotesWatch } from './web/patch-notes/patch-notes-store'
     startLevelRecorder()
     // and checks GGG's forum for new patch notes (one window only)
     startPatchNotesWatch()
+    // Deathloom fork (Q23): tells you once about friends' board matches
+    startBoardPing()
   }
 
   const app = createApp(App)

@@ -71,11 +71,14 @@ const MODULES = {
   'pob-announce': 'main/src/pob/announce.ts',
   'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts',
   'build-progress': 'renderer/src/web/pob/build-progress.ts',
+  'boss-readiness': 'renderer/src/web/pob/boss-readiness.ts',
   'gem-profit': 'renderer/src/web/market-history/gem-profit.ts',
   'bulk-sell': 'renderer/src/web/market-history/bulk-sell.ts',
   viscera: 'renderer/src/web/money/viscera.ts',
   temple: 'renderer/src/web/money/temple.ts',
   wombgift: 'renderer/src/web/money/wombgift.ts',
+  'pull-diff': 'main/src/pob/pull-diff.ts',
+  'board-matching': 'renderer/src/web/trade-board/matching.ts',
   'health-watch': 'ipc/health-watch.ts'
 }
 
