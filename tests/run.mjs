@@ -68,7 +68,8 @@ const MODULES = {
   'loot-filter': 'ipc/loot-filter.ts',
   'loot-filter-files': 'main/src/LootFilterFiles.ts',
   'lab-helper': 'renderer/src/web/companion/lab-helper.ts',
-  'pob-announce': 'main/src/pob/announce.ts'
+  'pob-announce': 'main/src/pob/announce.ts',
+  'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

@@ -63,7 +63,7 @@
                 :stroke="(r.trend.change ?? 0) >= 0 ? '#48bb78' : '#f56565'" /></svg></td>
             <td class="whitespace-nowrap text-right">
               <button class="px-1" :class="isWatched(r.watchKey) ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'"
-                :title="isWatched(r.watchKey) ? 'Stop watching' : 'Watch (left panel)'" @click="watchRow(r)">
+                :title="isWatched(r.watchKey) ? 'Stop watching' : watchFull ? `Watchlist full (${MAX_ITEMS} items)` : 'Watch (left panel)'" @click="watchRow(r)">
                 <i :class="isWatched(r.watchKey) ? 'fas fa-star' : 'far fa-star'" /></button>
               <button class="ui-btn ui-btn-quiet px-1" title="Open on poe.ninja" @click="open(r.item.url)">
                 <i class="fas fa-external-link-alt" /></button>
@@ -81,7 +81,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { usePoeninja, type NinjaListing } from '@/web/background/Prices'
 import { useLeagues } from '@/web/background/Leagues'
-import { isWatched, toggleWatch, watchKey } from './watchlist'
+import { isWatched, toggleWatch, watchKey, watchFull, MAX_ITEMS } from './watchlist'
 import { MARKET_GROUPS, OUTLOOK_MIN_DAYS, WILD_PCT, trendOf, isSteadyClimber, backtestSummary, type Trend } from './market-trends'
 
 type Mode = 'prices' | 'rising' | 'falling' | 'outlook'
