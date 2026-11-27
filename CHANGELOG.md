@@ -138,6 +138,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q12): Viscera planner
 - Money tools → Viscera: your active build's Wickerman (from its Path of Building file) with what each planned Viscera costs on poe.ninja, cheaper Lesser/Greater versions of the same part, and "farm <boss> with a Fate" when it isn't listed; below, every Viscera from Path of Building 2.69 to search by mod or boss, cheapest first. Boss names come from PoB's data and may differ slightly from the game.
 
+### Added (Q13): Temple planner
+- Money tools → Temple: set each Temple of Atzoatl room's tier (or "not in temple") as you see it in game; it lists which room to upgrade next (best rooms first, the one closest to tier 3 first), good rooms you don't have yet, and what your temple is worth as an Itemised Temple from poe.ninja's temple prices (the dearest listing whose tier 3 rooms you all have). What some rooms give is marked (guess). Your temple stays on this PC.
+
 ### Changed: no automatic tree tracking anywhere
 - The passive tree map, the atlas tree map, Levelling → Next steps, Build progress and the ascendancy hints no longer follow the game log or your level. Where you are on a tree is only what you set with the ‹ › « » arrows (Next steps now has them too), and every panel and window shows the same step. A tree you haven't stepped on yet starts at 0; **My level** jumps once to where your level and quest points say you are, without following it afterwards. The atlas's old game-log matching is removed.
 
