@@ -71,7 +71,8 @@ const MODULES = {
   'pob-announce': 'main/src/pob/announce.ts',
   'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts',
   'build-progress': 'renderer/src/web/pob/build-progress.ts',
-  'gem-profit': 'renderer/src/web/market-history/gem-profit.ts'
+  'gem-profit': 'renderer/src/web/market-history/gem-profit.ts',
+  'bulk-sell': 'renderer/src/web/market-history/bulk-sell.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

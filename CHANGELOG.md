@@ -132,6 +132,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q15): gem profit calculator
 - New Market → **Gems** tab: for every skill gem poe.ninja lists, what it costs to buy at its lowest level, what it sells for at max level (same or more quality, not corrupted), how many Gemcutter's Prisms the quality needs, the profit and the **profit per slot-day** (days the gem sits in a spare socket; set the days at the top, Awakened gems count ×3 and Enlighten / Empower / Enhance ×5 as a rough guess). Sorted best first, with a search box. Press **+** on a gem you start levelling: **Levelling now** keeps what you paid, the day count and today's profit. Prices only; nothing is bought or sold for you.
 
+### Added (Q16): bulk sell pricing
+- New Market → **Bulk sell** tab for stacks (currency, fragments, essences, divination cards…): add a stack and how many you have, and it shows poe.ninja's price the way bulk is quoted (12 c each, 8 per div, 5 per chaos). Type the ratio the in-game Currency Exchange offers (12c, 0.5 div, 8/div or 40:3) to see which pays more and by how much. **Copy** puts a WTS line for trade chat on the clipboard (at the better price, with the total); **Copy all** does every stack in one line. Nothing is sent for you: paste it yourself.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
