@@ -20,6 +20,8 @@
           @click="desktopSetupShown = true"><i class="fas fa-magic mr-1" />Run setup guide</button>
         <button class="px-3 rounded bg-gray-800 text-gray-300 -ml-1" title="Changes in the latest Orbhoarder versions"
           @click="whatsNewRequested++"><i class="fas fa-gift mr-1" />What's new</button>
+        <button v-if="!IS_DESKTOP2" class="px-3 rounded bg-gray-800 text-gray-300 -ml-1" title="A one-minute tour of this window's tabs and the in-game hotkeys"
+          @click="tourOpen = true"><i class="fas fa-route mr-1" />Take the tour</button>
         <PatchNotesLink class="mr-auto" />
         <span v-if="note" class="text-xs" :class="note.warn ? 'text-yellow-500' : 'text-green-500'">{{ note.text }}</span>
         <button class="px-3 rounded" :class="dirty ? 'bg-gray-600 text-gray-100' : 'bg-gray-800'" @click="save">{{ t('Save') }}</button>
@@ -47,6 +49,8 @@ import SettingsTools from '../settings/tools.vue'
 import SettingsPanels from '../settings/panels.vue'
 import { desktopSetupShown } from '../setup/setup-state'
 import { whatsNewRequested } from '../whats-new/whats-new-state'
+import { tourOpen } from '../onboarding/tour-state'
+import { IS_DESKTOP2 } from '@/web/hud/is-hud'
 import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 
 const { t } = useI18n()
