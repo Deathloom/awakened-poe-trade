@@ -72,6 +72,7 @@ const MODULES = {
   'watchlist-store': 'renderer/src/web/market-history/watchlist-store.ts',
   'build-progress': 'renderer/src/web/pob/build-progress.ts',
   'boss-readiness': 'renderer/src/web/pob/boss-readiness.ts',
+  'league-recap': 'renderer/src/web/cheats/league-recap.ts',
   'gem-profit': 'renderer/src/web/market-history/gem-profit.ts',
   'bulk-sell': 'renderer/src/web/market-history/bulk-sell.ts',
   viscera: 'renderer/src/web/money/viscera.ts',

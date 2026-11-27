@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q29): League recap card
+- Reference → Tracking → **League recap**: one card for a league with what Orbhoarder kept on this PC: dates and days played, characters (level, deaths, campaign time), maps, hours and profit per hour, best farming strategy, most seen mechanic, trades sold/bought and what they sold for, bosses and voidstones ticked in the Checklist, and challenges done. Pick an earlier league in the list; **Copy** gives plain text to paste for friends.
+
 ### Added (Q28): spoken callouts (off until you turn them on)
 - Settings → **Spoken callouts**: a Windows voice says incoming trade whispers (item and price), fired price alerts, maps you check that have mods bad for your build, and Path of Building crashes or timeouts. Pick the voice, speed and volume, and which callouts you want; Test plays a sample. Only voices installed on this PC are used, so the words never leave it. Nothing is read from the game or sent to it. At most one callout every few seconds, and the same words aren't repeated within 30 seconds.
 
