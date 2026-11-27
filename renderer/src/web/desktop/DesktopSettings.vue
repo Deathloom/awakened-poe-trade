@@ -47,6 +47,7 @@ import SettingsPob from '../settings/pob.vue'
 import SettingsAppearance from '../settings/appearance.vue'
 import SettingsTools from '../settings/tools.vue'
 import SettingsPanels from '../settings/panels.vue'
+import SettingsLootFilter from '../settings/loot-filter.vue'
 import { desktopSetupShown } from '../setup/setup-state'
 import { whatsNewRequested } from '../whats-new/whats-new-state'
 import { tourOpen } from '../onboarding/tour-state'
@@ -55,16 +56,15 @@ import PatchNotesLink from '../patch-notes/PatchNotesLink.vue'
 
 const { t } = useI18n()
 
-// same groups as the overlay's settings window (no Quit here: the tray has it)
+// same pages and groups as the overlay's settings window (no Quit here: the tray has it)
 const GROUPS: Component[][] = [
-  [SettingsPob],
   [SettingsHotkeys, SettingsChat],
   [SettingsGeneral, SettingsAppearance, SettingsPanels],
-  [SettingsPricecheck, SettingsMaps, SettingsItemcheck],
+  [SettingsPricecheck, SettingsMaps, SettingsItemcheck, SettingsLootFilter, SettingsPob],
   [SettingsTools, SettingsDebug, SettingsAbout]
 ]
 
-const selected = shallowRef<Component>(SettingsPob)
+const selected = shallowRef<Component>(SettingsHotkeys)
 const clone = () => reactive(JSON.parse(JSON.stringify(AppConfig()))) as Config
 const configClone = shallowRef<Config>(clone())
 const baseline = ref(JSON.stringify(AppConfig()))

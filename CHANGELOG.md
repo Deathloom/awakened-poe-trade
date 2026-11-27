@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Fixed (layout 1): Loot filter page in the Orbhoarder window's Settings
+- The Orbhoarder window's Settings now has the Loot filter page (it was only in the overlay's Settings), and its pages are in the same order and groups as the overlay's: Hotkeys, Chat | General, Appearance, Panels | Price check, Maps, Item check, Loot filter, Path of Building | Tools, Debug, About.
+
 ### Added (Q27): first-run tour of the Orbhoarder window
 - On a new install, once the setup guide closes, a one-minute tour points at each tab of the Orbhoarder window in turn (All, Build, Levelling, Atlas, Trades, Board, Market, Trade site, Help, Settings, Bug / Idea), opens it and says what it is for, then ends with the in-game price check and overlay hotkeys. Arrow keys move through it, Esc ends it. Existing installs don't get it by itself: Settings → **Take the tour** runs it any time. It loads only when it opens, so windows don't get bigger.
 
