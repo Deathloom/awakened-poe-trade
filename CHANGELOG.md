@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (layout follow-up): Map mods on the Mapping tab
+- Mapping → **Map mods**: the map mod list from Settings → Maps (colour mods, Warn for my PoB build) right next to the atlas tree and This session, with its own Save.
+
 ### Changed (layout 6): Settings → Panels follows the tabs; help buttons in About
 - Settings → Panels → Where panels show lists the panels in the order of the window's tabs, says which tab each one lives on, and now has the All tab switch for **Market search** and **Build progress** too. The in-game (pinned) list uses the same order.
 - **Help**, **What's new**, **Take the tour** and **Run setup guide** moved from the bottom of the Orbhoarder window's Settings to Settings → **About** (a **Help and tour** button at the bottom takes you there).
