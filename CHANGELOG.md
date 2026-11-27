@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (S6): features your Path of Building can't do yet
+- Orbhoarder now reads what its Path of Building copy can do when it starts. A feature that copy doesn't have yet is hidden (Craft → Timeless → Find seeds) or explained ("Your Path of Building is older than this feature…") instead of showing an error. Older copies are treated as the 22 Nov 2026 version.
+
 ### Security (F2b): phone key encrypted
 - The phone link key is now kept with Windows' own encryption for your Windows user (it used to be a plain text file in the config folder). Your phone's saved link keeps working: the old file is moved over and deleted on the next start with phone access on.
 - The Build checks on GitHub now also pin the upload/download steps to exact versions. Nothing changes in the app.
@@ -70,8 +73,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Security: Dependabot version updates
 - `.github/dependabot.yml`: weekly update PRs (Mondays) for main and renderer npm packages and the pinned GitHub Actions, all to **dev**; minor and patch bumps grouped, at most 3 open per folder. Nothing changes in the app.
 
+### Tidy-up (S8): fewer background timers, less dead code
+- Market history (Farming) and price alerts stop their 30 s / 60 s refresh while their window is hidden and catch up when it is shown again. A stray Python package file was removed from the source and unused leftovers are gone. Nothing else changes.
+
+### Security (S1): phone access is an allow-list
+- A phone or other device may now only send the overlay requests that are listed as allowed; anything new or unlisted is refused (it used to be allowed unless listed as refused). Phone panels work as before. A test now fails if an overlay request is added without deciding whether phones may send it.
+
 ### Security (S2): Path of Building 2.69.0 with the open-request hardening
-- Path of Building moves to the fork's 2.69.0 release (upstream 2.69.0: loadout manager, item type icons, 3.30 Imbue gems, Viscera, Wickerman and Covetous Dark fixes). It also brings PoB fork #44: when Orbhoarder asks PoB to open a build, PoB now only opens local drive paths to real PoB build files (no network share paths). Update in PoB works as before.
+- Path of Building moves to the fork's 2.69.0 release (upstream 2.69.0: loadout manager, item type icons, 3.30 Imbue gems, Viscera, Wickerman and Covetous Dark fixes). It also brings PoB fork #44: when Orbhoarder asks PoB to open a build, PoB now only opens local drive paths to real PoB build files (no network share paths). Update in PoB works as before. (#309)
 
 ## [1.0.97] - 2026-11-20
 

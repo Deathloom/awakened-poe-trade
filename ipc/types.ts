@@ -20,10 +20,6 @@ export interface HostConfig {
 
 // Deathloom fork: panels pinned over the game while it has focus
 export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats' | 'money'
-// panels added after the first three (1.0.63): pinned flag and hotkey live in
-// hud.<panel> (optional) and pob.panelKeys
-export const EXTRA_HUD_PANELS = ['tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money'] as const
-
 export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats' | 'money'
 
 export interface PanelPlacement {
@@ -1490,6 +1486,8 @@ type IpcPobTimelessResult =
     result?: TimelessResult
     options?: TimelessOptions
     search?: TimelessSearch
+    // Deathloom fork (S6): false when the running PoB can't search seeds (hide Find seeds)
+    canFind?: boolean
   }>
 
 // Deathloom fork (16 Nov 2026): crafting simulator (mod pool from PoB's data)

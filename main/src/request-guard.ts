@@ -111,7 +111,38 @@ export function safeJoin (baseDir: string, urlPath: string): string | null {
 // (a connection that isn't this PC, with the key) may ask for. Panels work as on
 // the PC; settings, folders, installs, sign-in and anything that sends input to
 // the game stay on this PC.
-const NOT_FROM_OTHER_DEVICES = new Set([
+// Deathloom fork (S1, 27 Nov 2026): an explicit allow-list. An event that is in
+// neither list (a new one nobody sorted yet) is refused from other devices;
+// tests/logic.test.mjs fails until every CLIENT->MAIN:: event in ipc/types.ts is
+// in exactly one of the two lists.
+export const FROM_OTHER_DEVICES = new Set([
+  'CLIENT->MAIN::atlas-files',
+  'CLIENT->MAIN::board',
+  'CLIENT->MAIN::build-notes',
+  'CLIENT->MAIN::pob-builds',
+  'CLIENT->MAIN::pob-compare',
+  'CLIENT->MAIN::pob-craft',
+  'CLIENT->MAIN::pob-defaults',
+  'CLIENT->MAIN::pob-edit',
+  'CLIENT->MAIN::pob-gear',
+  'CLIENT->MAIN::pob-gems',
+  'CLIENT->MAIN::pob-impact',
+  'CLIENT->MAIN::pob-import',
+  'CLIENT->MAIN::pob-manage-build',
+  'CLIENT->MAIN::pob-plan',
+  'CLIENT->MAIN::pob-timeless',
+  'CLIENT->MAIN::pob-tree',
+  'CLIENT->MAIN::pob-tree-map',
+  'CLIENT->MAIN::read-game-log',
+  'CLIENT->MAIN::report-error',
+  'CLIENT->MAIN::user-report',
+  'CLIENT->MAIN::write-clipboard',
+  // only some ops / actions (see allowedFromOtherDevice)
+  'CLIENT->MAIN::user-action',
+  'CLIENT->MAIN::pob-sync',
+  'CLIENT->MAIN::price-alerts'
+])
+export const NOT_FROM_OTHER_DEVICES = new Set([
   'CLIENT->MAIN::save-config',
   'CLIENT->MAIN::update-host-config',
   'CLIENT->MAIN::tools',
@@ -130,6 +161,8 @@ const NOT_FROM_OTHER_DEVICES = new Set([
   // (that window gets the price check's item text); stash sign-in stays on the PC
   'CLIENT->MAIN::used-recently',
   'CLIENT->MAIN::stash-session',
+  // stash tracker (POESESSID) stays on this PC too
+  'CLIENT->MAIN::stash',
   // Deathloom fork (Q8): the lines written while Orbhoarder was closed are handed
   // out once; only this PC's level recorder may take them (a phone asking first
   // left levels, deaths and act splits uncounted)
@@ -150,9 +183,8 @@ export function isClientEvent (name: unknown): name is string {
 }
 
 export function allowedFromOtherDevice (name: string, payload: unknown): boolean {
-  // overlay window control (track-area, focus-game) is for this PC's overlay only
-  if (!name.startsWith('CLIENT->MAIN::')) return false
-  if (NOT_FROM_OTHER_DEVICES.has(name)) return false
+  // only listed events; overlay window control (OVERLAY->MAIN::) is for this PC's overlay only
+  if (!FROM_OTHER_DEVICES.has(name)) return false
   const op = (key: string) => (payload != null && typeof payload === 'object') ? (payload as Record<string, unknown>)[key] : undefined
   if (name === 'CLIENT->MAIN::user-action') return USER_ACTIONS_FROM_OTHER_DEVICES.has(String(op('action')))
   if (name === 'CLIENT->MAIN::pob-sync') return POB_SYNC_FROM_OTHER_DEVICES.has(String(op('op')))

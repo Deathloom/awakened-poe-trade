@@ -21,6 +21,7 @@ import { LIVE_CHARACTER_DATA, LIVE_CHARACTER_OFF, LiveGear, HttpError, type Fetc
 import { pobDefaults, withDefaults, isLegacyPobSetting, type PobDefaults } from './defaults'
 import { findExistingBuilds, copyBuilds } from './ExistingPob'
 import { isCodeError } from '../ErrorReporter'
+import { pobCapsFromReady, pobCapFor, pobSupports, pobNeedsUpdate, type PobCaps } from '../../../ipc/pob-caps'
 
 const STARTUP_TIMEOUT = 90_000
 const REQUEST_TIMEOUT = 30_000
@@ -41,6 +42,8 @@ export class PobImpact {
   private rawCfg: PobConfig | undefined
   private proc: ChildProcessWithoutNullStreams | null = null
   private ready: Promise<void> | null = null
+  // Deathloom fork (S6): what the running PoB can do (from its ready line)
+  private caps: PobCaps | null = null
   private nextId = 1
   private pending = new Map<number, Pending>()
   private stdoutBuf = ''
@@ -461,6 +464,7 @@ export class PobImpact {
   private cleanup (err: Error) {
     this.proc = null
     this.ready = null
+    this.caps = null
     this.loadedKey = null
     this.loadedBuild = null
     this.appliedLoadout = ''
@@ -541,7 +545,8 @@ export class PobImpact {
           if (reply.id === 0 && reply.ready) {
             started = true
             clearTimeout(startTimer)
-            this.logger.write(`info [PoB] ready (PoB ${String(reply.version)})`)
+            this.caps = pobCapsFromReady(reply)
+            this.logger.write(`info [PoB] ready (PoB ${String(reply.version)}, ${this.caps.reported ? `${this.caps.caps.length} caps` : 'no caps list: older copy'})`)
             resolve()
             continue
           }
@@ -566,6 +571,8 @@ export class PobImpact {
     await this.start()
     const proc = this.proc
     if (!proc) throw new Error('Path of Building is not running')
+    // Deathloom fork (S6): a command this PoB doesn't know gets an explanation, not "Unknown cmd"
+    if (!pobSupports(this.caps, pobCapFor(cmd, params))) throw new Error(pobNeedsUpdate(this.caps))
     const id = this.nextId++
     return await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -1147,6 +1154,7 @@ export class PobImpact {
     const reply = await this.call('timeless', params, find ? 120_000 : undefined)
     const list = (v: unknown): any[] => Array.isArray(v) ? v : []
     return {
+      canFind: pobSupports(this.caps, 'timeless.find'),
       jewels: list(reply.jewels).map((j: any) => ({ ...j, conquerors: list(j.conquerors) })),
       sockets: reply.sockets ? list(reply.sockets).map((s: any) => ({ ...s, notables: list(s.notables) })) : undefined,
       result: reply.result
@@ -1314,7 +1322,7 @@ export class PobImpact {
         this.pobHasGear = false
         const msg = (err as Error).message.replace(/^.*ImpactServer\.lua:\d+: /, '')
         // PoB from before the fork's character-file support (#42): its update waits until the PoB window is closed
-        if (/equipped needs 'items'/.test(msg)) {
+        if (/equipped needs 'items'|older than this feature/.test(msg)) {
           return { error: 'Path of Building needs an update for "vs character". Close the Path of Building window: Orbhoarder updates it within a minute, then price check again.' }
         }
         return { error: msg }

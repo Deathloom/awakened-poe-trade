@@ -1,0 +1,5 @@
+{
+  "_note": "Ready lines of the headless PoB (ImpactServer.lua). oldPin: PoB pin 73764c8 (dev@43f5414, 22 Nov 2026), before the capability list. withCaps: the S6 fork (27 Nov 2026), trimmed: no craft commands, no timeless.find.",
+  "oldPin": "@pob {\"id\":0,\"ok\":true,\"ready\":true,\"version\":\"2.68.1\"}",
+  "withCaps": "@pob {\"id\":0,\"ok\":true,\"ready\":true,\"version\":\"2.69.0\",\"fork\":\"deathloom\",\"protocol\":1,\"caps\":[\"clearEquipped\",\"edit\",\"equipped\",\"equipped.file\",\"gear\",\"gems\",\"impact\",\"info\",\"load\",\"loadouts\",\"ping\",\"plan\",\"quit\",\"setLoadout\",\"timeless\",\"tree\",\"treeMap\",\"bad name!\",42]}"
+}

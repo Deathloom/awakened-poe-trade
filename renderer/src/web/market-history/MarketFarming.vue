@@ -65,10 +65,20 @@ function onStorage (e: StorageEvent) {
   if (e.key === PLAY_SESSION_KEY) session.value = loadPlaySession()
   if (e.key === FARM_STRATEGY_KEY) strategy.value = loadStrategy()
 }
-// the session panel saves often; re-read now and then too (same window doesn't get storage events)
-const timer = setInterval(() => { session.value = loadPlaySession(); archived.value = loadFarmRuns() }, 30_000)
-onMounted(() => window.addEventListener('storage', onStorage))
-onUnmounted(() => { window.removeEventListener('storage', onStorage); clearInterval(timer) })
+// the session panel saves often; re-read now and then too (same window doesn't get storage events).
+// Only while the window is shown; catch up as soon as it is shown again.
+function reload () { session.value = loadPlaySession(); archived.value = loadFarmRuns() }
+function onVisibility () { if (!document.hidden) reload() }
+const timer = setInterval(() => { if (!document.hidden) reload() }, 30_000)
+onMounted(() => {
+  window.addEventListener('storage', onStorage)
+  document.addEventListener('visibilitychange', onVisibility)
+})
+onUnmounted(() => {
+  window.removeEventListener('storage', onStorage)
+  document.removeEventListener('visibilitychange', onVisibility)
+  clearInterval(timer)
+})
 
 // runs archived before this feature have no league: count them under "this league" only by date
 const runs = computed(() => {

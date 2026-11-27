@@ -5,8 +5,10 @@
     <div class="flex items-center gap-1 text-sm">
       <button class="craft-btn" :class="{ 'craft-btn-primary': mode === 'seed' }" @click="mode = 'seed'">
         <i class="fas fa-eye mr-1.5" />Look up a seed</button>
-      <button class="craft-btn" :class="{ 'craft-btn-primary': mode === 'find' }" @click="mode = 'find'">
+      <button v-if="canFind" class="craft-btn" :class="{ 'craft-btn-primary': mode === 'find' }" @click="mode = 'find'">
         <i class="fas fa-search-plus mr-1.5" />Find seeds</button>
+      <span v-else class="text-gray-500 text-xs ml-2" title="Orbhoarder updates Path of Building by itself: close the Path of Building window and restart Orbhoarder">
+        Find seeds needs a newer Path of Building</span>
     </div>
     <div v-if="mode === 'seed'" class="flex flex-wrap items-end gap-3">
       <label class="craft-field">
@@ -172,6 +174,8 @@ const busy = ref(false)
 const onlyBuild = ref(false)
 const showSmall = ref(false)
 const mode = ref<'seed' | 'find'>('seed')
+// Deathloom fork (S6): hidden when the running PoB can't search seeds
+const canFind = ref(true)
 const options = shallowRef<TimelessOptions | null>(null)
 const search = shallowRef<TimelessSearch | null>(null)
 const wants = ref<TimelessWant[]>([])
@@ -203,6 +207,10 @@ const listener = Host.onEvent('MAIN->CLIENT::pob-timeless', (e) => {
     return
   }
   error.value = ''
+  if (e.canFind === false) {
+    canFind.value = false
+    if (mode.value === 'find') mode.value = 'seed'
+  }
   if (e.jewels?.length) jewels.value = e.jewels
   if (e.sockets) {
     sockets.value = e.sockets

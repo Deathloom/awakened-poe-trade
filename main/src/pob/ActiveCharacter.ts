@@ -79,14 +79,6 @@ export function parseCharacters (list: unknown): CharacterEntry[] {
   return out
 }
 
-// get-characters answer -> name of the character played last.
-// pathofexile.com sends lastLoginTime (unix seconds) per character; older
-// answers had a lastActive flag, which still wins if present.
-export function pickLastActive (list: unknown): string | null {
-  const first = parseCharacters(list)[0]
-  return first && first.lastLoginTime !== undefined ? first.name : null
-}
-
 interface StoreData {
   builds: Record<string, string>
   account?: string

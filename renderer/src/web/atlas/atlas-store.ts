@@ -4,7 +4,7 @@ import { pickTaken } from './atlas-taken'
 import { ref, computed } from 'vue'
 import type { AtlasFileBuild } from '@ipc/types'
 import { Host } from '@/web/background/IPC'
-import { CHAR_LEVELS_KEY, loadCharLevels, saveCharLevels } from '../companion/char-level'
+import { CHAR_LEVELS_KEY, loadCharLevels } from '../companion/char-level'
 import { ATLAS_BY_ID, ATLAS_ADJ, ATLAS_START, decodeAtlas, encodeAtlas, type AtlasSpec } from './atlas-tree'
 
 // own: yours (editable); owner: the friend whose synced folder it's in (read-only)
@@ -203,21 +203,6 @@ window.addEventListener('storage', (e) => {
 // ---- taken on the atlas (names -> count) ----
 export const taken = ref<Record<string, number>>(loadCharLevels().atlas ?? {})
 export const tracking = computed(() => Object.values(taken.value).some(n => n > 0))
-
-// Client.txt only shows what you allocate while Orbhoarder runs: "I have this
-// build" sets the count from a build (or from nothing)
-export function setTakenFrom (nodes: number[] | null) {
-  const atlas: Record<string, number> = {}
-  for (const id of nodes ?? []) {
-    if (ATLAS_START.has(id)) continue
-    const n = ATLAS_BY_ID.get(id)
-    if (n && n[3] !== 3) atlas[n[6]] = (atlas[n[6]] ?? 0) + 1
-  }
-  const v = loadCharLevels()
-  v.atlas = atlas
-  saveCharLevels(v)
-  taken.value = atlas
-}
 
 // which of the build's nodes count as taken: names are shared by many small
 // nodes, so the counts go to the build's nodes nearest the start first
