@@ -148,6 +148,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (Q14): Wombgift value
 - Money tools → Wombgifts: every Wombgift poe.ninja lists with its sell price. Click one, open it at the Genesis Tree, price check what came out and log what it was worth; after 3 openings of a kind it says Open (your openings are worth more than selling) or Sell. GGG doesn't publish what Wombgifts give, so the answer comes from your own openings (last 30 per kind, kept on this PC; Hiveblood not counted).
 
+### Added (Q20): rare prices in Market → Shopping
+- Rare rows have a **Price** button. One click looks up listings like your build's rare on the trade site (the stats the price check picks by default) and shows the median of the 10 cheapest, in chaos or divine; hover for the cheapest and how many were found, click the price to open those listings. Priced rares are added to "Still to buy" (shown with ~). Nothing is searched until you click, it uses the price check's normal rate limits, and a second click within 15 minutes reuses the answer. PoE1 builds only.
+
 ### Changed: no automatic tree tracking anywhere
 - The passive tree map, the atlas tree map, Levelling → Next steps, Build progress and the ascendancy hints no longer follow the game log or your level. Where you are on a tree is only what you set with the ‹ › « » arrows (Next steps now has them too), and every panel and window shows the same step. A tree you haven't stepped on yet starts at 0; **My level** jumps once to where your level and quest points say you are, without following it afterwards. The atlas's old game-log matching is removed.
 

@@ -40,8 +40,8 @@
     </div>
     <div class="flex items-baseline gap-2 px-2 pb-1 shrink-0">
       <span class="text-gray-300">Still to buy:</span>
-      <span class="text-yellow-300 text-sm">{{ money(shop.total) }}</span>
-      <span class="text-gray-500">{{ toBuy }} item{{ toBuy === 1 ? '' : 's' }}<template v-if="shop.missing"> · {{ shop.missing }} without a price</template><template v-if="shop.rares"> · {{ shop.rares }} rare{{ shop.rares === 1 ? '' : 's' }} not counted</template></span>
+      <span class="text-yellow-300 text-sm" :title="rareSum.n ? `Includes ~${money(rareSum.chaos)} for ${rareSum.n} priced rare${rareSum.n === 1 ? '' : 's'}` : ''">{{ rareSum.n ? '~' : '' }}{{ money(shop.total + rareSum.chaos) }}</span>
+      <span class="text-gray-500">{{ toBuy }} item{{ toBuy === 1 ? '' : 's' }}<template v-if="shop.missing"> · {{ shop.missing }} without a price</template><template v-if="shop.rares - rareSum.n > 0"> · {{ shop.rares - rareSum.n }} rare{{ shop.rares - rareSum.n === 1 ? '' : 's' }} not counted (Price)</template></span>
       <label class="ml-auto flex items-center gap-1 text-gray-400" title="Show items you already have (ticked)">
         <input v-model="showOwned" type="checkbox">show ticked</label>
     </div>
@@ -56,8 +56,14 @@
           <button class="flex-1 min-w-0 truncate text-left" :class="r.kind === 'unique' ? 'text-orange-300' : (r.kind === 'rare' ? 'text-yellow-200' : 'text-teal-300')"
             :title="r.slots.join(', ')" @click="toggleOpen(r)">{{ r.label }}<span v-if="r.slots.length" class="text-gray-500"> · {{ r.slots.join(', ') }}</span></button>
           <price-spark v-if="r.kind !== 'rare'" :item="r.listing" />
-          <span class="w-14 text-right" :class="r.listing ? 'text-yellow-300' : 'text-gray-600'"
-            :title="r.kind === 'rare' ? 'Rares: price depends on the rolls, use Trade' : (r.listing ? `Cheapest on poe.ninja${r.listing.variant ? ': ' + r.listing.variant : ''}` : 'No poe.ninja price')">{{ r.listing ? money(r.listing.chaos) : (r.kind === 'rare' ? 'rolls' : '–') }}</span>
+          <!-- Deathloom fork (Q20): rares get a trade estimate on click (Price) -->
+          <button v-if="r.kind === 'rare' && rarePrices[r.key]" class="w-14 text-right text-yellow-300 hover:underline"
+            :title="rareTitle(rarePrices[r.key])" @click="openTradeLink(rarePrices[r.key].url)">~{{ money(rarePrices[r.key].median) }}</button>
+          <span v-else class="w-14 text-right" :class="r.listing ? 'text-yellow-300' : 'text-gray-600'"
+            :title="r.kind === 'rare' ? 'Rares: price depends on the rolls. Price looks up similar listings on the trade site.' : (r.listing ? `Cheapest on poe.ninja${r.listing.variant ? ': ' + r.listing.variant : ''}` : 'No poe.ninja price')">{{ r.listing ? money(r.listing.chaos) : (r.kind === 'rare' ? 'rolls' : '–') }}</span>
+          <button v-if="r.kind === 'rare' && gearOf(r)" class="ui-btn ui-btn-quiet" :disabled="rareBusy.has(r.key)"
+            title="Look up similar listings on the trade site now (the stats the price check picks) and show the median of the 10 cheapest. One search per click, same limits as the price check."
+            @click="priceRareRow(r)"><i class="fas" :class="rareBusy.has(r.key) ? 'fa-spinner fa-spin' : 'fa-tag'" />Price</button>
           <button class="ui-btn ui-btn-quiet" :title="tradeTitle(r)" @click="trade(r, false)"><i class="fas fa-search" />Trade</button>
           <button v-if="gearOf(r)" class="ui-btn ui-btn-quiet" :title="r.kind === 'unique' ? 'Trade: the same unique with at least these rolls' : 'Trade: any base of the same kind with at least these mods'" @click="trade(r, true)"><i class="fas fa-arrow-up" /></button>
           <ui-menu :items="rowMenu(r)" align-right button-class="ui-btn-quiet" title="More" />
@@ -72,7 +78,7 @@
       </div>
     </div>
     <div class="px-2 py-1 text-gray-500 shrink-0">
-      <i class="fas fa-info-circle mr-1" />Prices: cheapest on poe.ninja (gems: lowest level/quality). Trade opens the trade site: uniques any copy, rares this base with these mods; ↑ = at least these rolls / any base.
+      <i class="fas fa-info-circle mr-1" />Prices: cheapest on poe.ninja (gems: lowest level/quality); rares: Price = median of the 10 cheapest similar listings on the trade site. Trade opens the trade site: uniques any copy, rares this base with these mods; ↑ = at least these rolls / any base.
     </div>
   </div>
 </template>
@@ -87,13 +93,15 @@ import UiMenu, { type UiMenuItem } from '../ui/UiMenu.vue'
 import { useMarket } from './use-market'
 import { copyText } from '../pob/market'
 import { openTradeSearch, openTradeByType } from '../pob/gear-actions'
+import { openTradeLink } from '@/web/desktop/trade-tab'
+import { priceRare, cachedRarePrice, type RarePrice } from './rare-price'
 import { shoppingList, type ShopRow } from './market-tools'
 import { IS_OTHER_DEVICE } from './price-alerts-store'
 import { wantsFromShop, wantsCount, keepKnown, wantsSignature } from '@ipc/loot-filter'
 import { lfSettings, setLfSettings, setLfLastWants, updateAddon } from './loot-filter-store'
 import { ITEM_BY_REF } from '@/assets/data'
 
-const { all, money, open, ninja } = useMarket()
+const { all, money, open, ninja, divine, itemPrice } = useMarket()
 ninja.queuePricesFetch()
 
 const buildName = ref('')
@@ -207,6 +215,46 @@ function trade (r: ShopRow, upgrade: boolean) {
   const g = gearOf(r)
   const err = g ? openTradeSearch(g.text, upgrade) : openTradeByType(r.label)
   tradeErr.value = { ...tradeErr.value, [r.key]: err ?? '' }
+}
+
+// Deathloom fork (Q20): rare estimate, only on click (one trade search + one fetch)
+const rarePrices = ref<Record<string, RarePrice>>({})
+const rareBusy = ref(new Set<string>())
+async function priceRareRow (r: ShopRow) {
+  const g = gearOf(r)
+  if (!g || rareBusy.value.has(r.key)) return
+  rareBusy.value = new Set([...rareBusy.value, r.key])
+  try {
+    const res = await priceRare(g.text, { divine: divine.value, item: itemPrice })
+    if (typeof res === 'string') tradeErr.value = { ...tradeErr.value, [r.key]: res }
+    else {
+      tradeErr.value = { ...tradeErr.value, [r.key]: '' }
+      rarePrices.value = { ...rarePrices.value, [r.key]: res }
+    }
+  } finally {
+    const s = new Set(rareBusy.value); s.delete(r.key); rareBusy.value = s
+  }
+}
+// estimates from the last 15 minutes come back when the panel opens again
+watch(gear, () => {
+  const next: Record<string, RarePrice> = {}
+  for (const r of shop.value.rows) {
+    const g = r.kind === 'rare' ? gearOf(r) : null
+    const hit = g ? cachedRarePrice(g.text) : null
+    if (hit) next[r.key] = hit
+  }
+  rarePrices.value = next
+})
+const rareSum = computed(() => {
+  let chaos = 0; let n = 0
+  for (const r of shop.value.rows) {
+    const p = r.kind === 'rare' && !r.owned ? rarePrices.value[r.key] : undefined
+    if (p) { chaos += p.median; n += 1 }
+  }
+  return { chaos, n }
+})
+function rareTitle (p: RarePrice) {
+  return `Median of the ${p.used} cheapest similar listings (cheapest ${money(p.low)}; ${p.total} found). Click to open them on the trade site.`
 }
 
 // Deathloom fork (Q10): loot filter add-on (part 1: made by hand from this menu)

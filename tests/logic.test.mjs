@@ -2297,3 +2297,16 @@ test('bulk sell (Q16): exchange ratios, bulk quotes, compare, WTS line', async (
     'WTS 2x Divine Orb at 1 div each, 2 div for all | 10x Exalted Orb at 25 c each (8 per div), 1.3 div for all')
   assert.equal(bs.wtsLine([], D), '')
 })
+
+test('market tools (Q20): rare estimate from trade listings', async () => {
+  const mt = await import('./.build/market-tools.mjs')
+  const rate = c => c === 'chaos' ? 1 : c === 'divine' ? 150 : c === 'exalted' ? 10 : null
+  const e = mt.rareEstimate([
+    { amount: 20, currency: 'chaos' }, { amount: 1, currency: 'divine' }, { amount: 5, currency: 'exalted' },
+    { amount: 3, currency: 'weird' }, { amount: 0, currency: 'no price' }
+  ], rate)
+  assert.deepEqual(e, { low: 20, median: 50, used: 3 })
+  assert.equal(mt.rareEstimate([{ amount: 10, currency: 'chaos' }, { amount: 30, currency: 'chaos' }], rate).median, 20)
+  assert.equal(mt.rareEstimate([{ amount: 1, currency: 'weird' }], rate), null)
+  assert.equal(mt.TRADE_CURRENCY_NAMES.exalted, 'Exalted Orb')
+})
