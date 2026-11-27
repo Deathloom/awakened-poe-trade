@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (E1): automatic PoE1 / PoE2 switch, no restart
+- Settings → Game is now **Automatic** (the default): Orbhoarder watches both the "Path of Exile" and "Path of Exile 2" windows and follows whichever has focus. League, price check, Client.txt, game config and loot filter switch with it, and the overlay says "Switched to Path of Exile 2". Pick Path of Exile 1 or 2 to stay on one game. Only window titles are used: nothing is read from the game's memory.
+- The overlay library's Windows part (electron-overlay-window, MIT) is patched (`main/build/electron-overlay-window+4.1.0.patch`) and rebuilt at install by `main/build/overlay-native.mjs`. If that build isn't there, Orbhoarder falls back to watching one game and relaunches itself (about 2 s) when the other game starts.
+- Changing the window title or the game no longer needs a manual restart; Orbhoarder restarts by itself when it has to.
+
 ### Fixed (C1): PoE2 0.5.5 items the price check didn't know
 - PoE2 price check now knows the 0.5.5 uniques Byrnabas, Eshtera's Path, Safrin's Resolve, Zaida's Longevity, Reverie, The Road Warrior and Splinter of Lorrata, plus Soul Core of Vizoma, Mutated, Corrupted and Founders Verisium, Starlit Ore and Lesser Charging Rune, and 7 new rune and Expedition mods. Exiled Exchange 2 hasn't shipped these yet; they live in `tools/poe2-additions/` and drop out on their own once EE2 has them (`node tools/poe2-additions.mjs` after each EE2 data refresh). No icons for these yet.
 

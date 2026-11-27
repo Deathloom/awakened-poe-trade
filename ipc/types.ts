@@ -1,4 +1,4 @@
-import type { Game } from './game'
+import type { Game, GameMode } from './game'
 import type { PriceAlertInput, PriceAlertState, PriceAlertFired } from './price-alerts'
 import type { LootFilterWants } from './loot-filter'
 import type { HealthKind, HealthKindSummary, HealthHint, HealthSample } from './health-watch'
@@ -15,6 +15,8 @@ export interface HostConfig {
   language: string
   // Deathloom fork: PoE2 mode (absent = poe1)
   game?: Game
+  // Deathloom fork (wave 6): Auto follows the focused game (absent = auto)
+  gameMode?: GameMode
   // Deathloom fork: Path of Building build impact
   pob?: PobConfig
 }
@@ -507,6 +509,7 @@ export interface HostState {
 export type IpcEvent =
   // events that have meaning only in Overlay mode:
   IpcOverlayAttached |
+  IpcGameDetected |
   IpcFocusChange |
   IpcVisibility |
   IpcFocusGame |
@@ -784,6 +787,14 @@ type IpcHudGearActionRelay =
     action: 'trade' | 'upgrade' | 'price-check' | 'loadouts'
     text?: string
     loadouts?: Record<string, PobLoadoutChoice>
+  }>
+
+// Deathloom fork (wave 6): the overlay found the other game's window (Auto mode).
+// live = no restart needed; otherwise Orbhoarder relaunches after the switch.
+type IpcGameDetected =
+  Event<'MAIN->CLIENT::game-detected', {
+    game: Game
+    live: boolean
   }>
 
 type IpcOverlayAttached =
