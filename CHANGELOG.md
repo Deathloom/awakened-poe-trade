@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Changed (S7): price check for twice-corrupted items
+- A twice-corrupted item is now compared with twice-corrupted items only (before, once-corrupted ones were mixed in). Clicking the corrupted label cycles Twice corrupted → Corrupted → Not corrupted. Atlas Drops % on maps and Heist Contract/Blueprint enchants were already preselected.
+
 ### Performance (S4): lighter windows, round 2
 - The panel bodies (Build, Levelling, Trades, Trade board, Market history, Market overview, Market search, This session, Cheat sheets, Money tools, Craft, Help) load the first time they are shown instead of with every window, the phone QR code library loads when a QR code is shown, and the price check cache and the fade animations no longer need two extra libraries. Every window starts with about a third less code (main bundle 1,423 kB → 948 kB, CSS 204 kB → 177 kB). The first time a panel opens it may take a frame or two longer.
 

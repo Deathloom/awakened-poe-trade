@@ -338,7 +338,8 @@ export function createTradeRequest (filters: ItemFilters, stats: FilterOrGroup[]
   if (filters.corrupted?.value === false || filters.corrupted?.exact) {
     propSet(query.filters, 'misc_filters.filters.corrupted.option', String(filters.corrupted.value))
   }
-  if (filters.corrupted?.value === true && filters.corrupted.twice === false) {
+  // Deathloom fork (S7): a twice-corrupted item is compared with twice-corrupted ones only
+  if (filters.corrupted?.value === true) {
     propSet(query.filters, 'misc_filters.filters.twice_corrupted.option', String(filters.corrupted.twice))
   }
   if (filters.fractured?.value === false) {
