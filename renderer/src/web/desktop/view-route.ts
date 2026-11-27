@@ -13,6 +13,10 @@ export function setSub (view: string, sub: string) {
   try { localStorage.setItem(windowKey(subKey(view)), sub) } catch {}
 }
 
+export function hasSavedSub (view: string): boolean {
+  try { return readWindowKey(subKey(view)) != null } catch { return false }
+}
+
 export function useSubTab<T extends string> (view: string, ids: readonly T[], def: T): WritableComputedRef<T> {
   if (!(view in subs)) {
     let saved: string | null = null
@@ -31,7 +35,12 @@ export const LEGACY_VIEWS: Record<string, [string, string?]> = {
   next: ['levelling'],
   help: ['reference', 'help'],
   cheats: ['reference', 'sheets'],
-  money: ['profit']
+  money: ['profit'],
+  trades: ['trade', 'whispers'],
+  search: ['trade', 'search'],
+  site: ['trade', 'site'],
+  board: ['friends', 'board'],
+  sharing: ['friends', 'sharing']
 }
 
 export function resolveView (v: string, known: (v: string) => boolean): { view: string, sub?: string } | null {
