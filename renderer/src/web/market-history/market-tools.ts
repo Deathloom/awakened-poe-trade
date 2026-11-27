@@ -315,6 +315,41 @@ export function dismissNudge (strategy: string, now: number) {
   try { localStorage.setItem(FARM_NUDGE_KEY, `${dayOf(now)}|${strategy}`) } catch {}
 }
 
+// Deathloom fork (Q20): rare estimate from the cheapest trade listings like it.
+// Trade site currency ids → poe.ninja names (chaos and divine handled by the caller)
+export const TRADE_CURRENCY_NAMES: Record<string, string> = {
+  exalted: 'Exalted Orb',
+  alch: 'Orb of Alchemy',
+  alt: 'Orb of Alteration',
+  fusing: 'Orb of Fusing',
+  chrome: 'Chromatic Orb',
+  jewellers: "Jeweller's Orb",
+  vaal: 'Vaal Orb',
+  regal: 'Regal Orb',
+  annul: 'Orb of Annulment',
+  scour: 'Orb of Scouring',
+  chance: 'Orb of Chance',
+  blessed: 'Blessed Orb',
+  gcp: "Gemcutter's Prism",
+  mirror: 'Mirror of Kalandra',
+  transmute: 'Orb of Transmutation',
+  aug: 'Orb of Augmentation'
+}
+export interface RareEstimate { low: number, median: number, used: number }
+// Median of the priced listings (in chaos); listings in a currency without a price are left out
+export function rareEstimate (prices: Array<{ amount: number, currency: string }>,
+  toChaos: (currency: string) => number | null): RareEstimate | null {
+  const chaos = prices
+    .filter(p => p.amount > 0)
+    .map(p => { const r = toChaos(p.currency); return r == null ? null : p.amount * r })
+    .filter((c): c is number => c != null && Number.isFinite(c))
+    .sort((a, b) => a - b)
+  if (!chaos.length) return null
+  const mid = Math.floor(chaos.length / 2)
+  const median = chaos.length % 2 ? chaos[mid] : (chaos[mid - 1] + chaos[mid]) / 2
+  return { low: chaos[0], median, used: chaos.length }
+}
+
 // ---- crafting costs ---------------------------------------------------------
 
 // Common crafting currency (poe.ninja names, ITEM namespace)
