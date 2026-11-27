@@ -73,7 +73,7 @@
             <li><b>Market search</b> (overlay menu, <i class="fas fa-search-dollar" />, or its hotkey from Settings → Hotkeys): type an item name, pick it, and see who sells it, cheapest first.
               <b>Whisper</b> uses GGG's own buy message, <b>Hideout</b> is <code>/hideout name</code> (works when the seller lets visitors in).
               Instant buyout listings open in the Trade site tab, where you click GGG's "Travel to Hideout".</li>
-            <li><b>Panels over the game</b>: pin any panel (build, guide, trade companion, tree map, atlas, session, market, cheat sheets, profit) with Settings → Panels → Where panels show.
+            <li><b>Panels over the game</b>: pin any panel (build, guide, trade companion, tree map, atlas, session, market, cheat sheets, profit, friends' board, market search, build progress) with Settings → Panels → Where panels show.
               Drag them by the top bar, resize from the bottom-right corner. A panel set to click-through can't be dragged while you play: press Shift+Space first.</li>
             <li><b>Panels in the overlay</b>: hover a panel, click <b>Move</b> and drag one of the corner squares. A panel's hotkey pressed in game shows only that panel; Shift+Space shows the menu and every open panel.</li>
             <li><b>Cheat sheets</b> (panel, or the window's <b>Reference</b> tab: Cheat sheets, Recipes, Tracking): short sheets for league mechanics (Covens, Betrayal, Heist, Delve, Sanctum, map mechanics), vendor recipes, campaign bench recipes and a league checklist.
@@ -185,7 +185,7 @@ const keys = computed(() => {
     { key: pob?.tradesKey, label: 'Trade companion' },
     { key: pob?.openPobKey, label: 'Open Path of Building' },
     // panels added in 1.0.63: no hotkey until the player sets one
-    ...EXTRA_PANELS.map(p => ({ key: pob?.panelKeys?.[p.panel] ?? '', label: p.label }))
+    ...EXTRA_PANELS.filter(p => !p.ownHotkey).map(p => ({ key: pob?.panelKeys?.[p.panel] ?? '', label: p.label }))
   ]
 })
 

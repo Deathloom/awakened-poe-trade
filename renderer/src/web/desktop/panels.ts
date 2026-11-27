@@ -14,12 +14,12 @@ export const PANELS: Array<{ key: PanelKey, label: string, hud?: HudPanel, overl
   { key: 'session', label: 'This session', hud: 'session', overlay: true, window: true, view: 'session', tab: 'Mapping' },
   { key: 'gear', label: 'Build (gear, gems, tree)', hud: 'gear', overlay: true, window: true, view: 'build', tab: 'Build' },
   { key: 'tree', label: 'Tree map', hud: 'tree', overlay: true, window: true, view: 'build', tab: 'Build' },
-  { key: 'progress', label: 'Build progress', overlay: false, window: true, view: 'progress', tab: 'Build' },
+  { key: 'progress', label: 'Build progress', hud: 'progress', overlay: false, window: true, view: 'progress', tab: 'Build' },
   { key: 'market', label: 'Market (watched items, all prices)', hud: 'market', overlay: true, window: true, view: 'market', tab: 'Market' },
   { key: 'money', label: 'Profit (gems, crafting costs, currency counter, farming, league planners)', hud: 'money', overlay: true, window: true, view: 'profit', tab: 'Profit' },
   { key: 'trades', label: 'Trade companion', hud: 'trades', overlay: true, window: true, view: 'trades', tab: 'Trade' },
-  { key: 'search', label: 'Market search', overlay: true, window: true, view: 'search', tab: 'Trade' },
-  { key: 'board', label: "Friends' trade board", overlay: true, window: true, view: 'board', tab: 'Friends' },
+  { key: 'search', label: 'Market search', hud: 'search', overlay: true, window: true, view: 'search', tab: 'Trade' },
+  { key: 'board', label: "Friends' trade board", hud: 'board', overlay: true, window: true, view: 'board', tab: 'Friends' },
   { key: 'cheats', label: 'Cheat sheets', hud: 'cheats', overlay: true, window: true, view: 'reference', tab: 'Reference' }
 ]
 

@@ -19,7 +19,7 @@ export interface HostConfig {
 }
 
 // Deathloom fork: panels pinned over the game while it has focus
-export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats' | 'money'
+export type HudPanel = 'guide' | 'trades' | 'gear' | 'tree' | 'atlas' | 'session' | 'market' | 'overview' | 'cheats' | 'money' | 'board' | 'search' | 'progress'
 export type PanelKey = 'gear' | 'guide' | 'trades' | 'market' | 'search' | 'session' | 'tree' | 'atlas' | 'overview' | 'board' | 'cheats' | 'money' | 'progress'
 
 export interface PanelPlacement {
@@ -39,6 +39,10 @@ export interface PobHudConfig {
   overview?: boolean
   cheats?: boolean
   money?: boolean
+  // 27 Nov 2026 (layout follow-up)
+  board?: boolean
+  search?: boolean
+  progress?: boolean
   // Per panel: mouse clicks go through to the game while playing (the panel is read-only then)
   clickThroughPanels: Record<HudPanel, boolean>
   // older single setting (moved into clickThroughPanels)

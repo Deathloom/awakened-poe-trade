@@ -32,19 +32,19 @@ import type { HudPanel } from '@ipc/types'
 document.documentElement.classList.add('hud')
 if (IS_HUD_SHARED) document.documentElement.classList.add('hud-all')
 
-const ALL: HudPanel[] = ['guide', 'trades', 'gear', 'tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money']
+const ALL: HudPanel[] = ['guide', 'trades', 'gear', 'tree', 'atlas', 'session', 'market', 'overview', 'cheats', 'money', 'board', 'search', 'progress']
 // same list as main (HudWindow.ts KEEP_ALIVE)
 const KEEP_ALIVE: ReadonlySet<HudPanel> = new Set<HudPanel>(['trades', 'market', 'session'])
 
 const playing = ref(true)
-const hidden = ref<Record<HudPanel, boolean>>({ guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true, cheats: true, money: true })
+const hidden = ref<Record<HudPanel, boolean>>({ guide: true, trades: true, gear: true, tree: true, atlas: true, session: true, market: true, overview: true, cheats: true, money: true, board: true, search: true, progress: true })
 const hiddenByAlt = ref(false)
 
 const sharedPanels = computed(() => ALL.filter(p => Boolean(AppConfig().pob?.hud?.[p])))
 // market panels need leagues and poe.ninja prices (the overlay and window load them too)
 let marketLoaded = false
 watch(() => IS_HUD_SHARED ? sharedPanels.value : [HUD_PANEL], (panels) => {
-  if (marketLoaded || !panels.some(p => p === 'market' || p === 'overview')) return
+  if (marketLoaded || !panels.some(p => p === 'market' || p === 'overview' || p === 'progress' || p === 'search')) return
   marketLoaded = true
   usePoeninja()
   useLeagues().load()

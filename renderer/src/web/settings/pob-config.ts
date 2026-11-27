@@ -21,7 +21,7 @@ export function usePobConfig (config: () => Config) {
   })
 }
 
-export type PanelHotkeyField = 'guideKey' | 'tradesKey' | 'gearPanelKey' | null
+export type PanelHotkeyField = 'guideKey' | 'tradesKey' | 'gearPanelKey' | 'boardKey' | 'marketSearchKey' | null
 
 // panels that can be pinned over the game, with where their hotkey is kept
 // (layout review step 6: in the order of the window's tabs, like Where panels show)
@@ -30,5 +30,5 @@ export const HUD_PANELS: Array<{ key: HudPanel, label: string, hotkey: PanelHotk
   { key: 'guide' as HudPanel, label: 'Campaign guide', hotkey: 'guideKey' as PanelHotkeyField },
   { key: 'trades' as HudPanel, label: 'Trade companion', hotkey: 'tradesKey' as PanelHotkeyField },
   { key: 'gear' as HudPanel, label: 'Build gear', hotkey: 'gearPanelKey' as PanelHotkeyField },
-  ...OFFERED_EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: null }))
+  ...OFFERED_EXTRA_PANELS.map(p => ({ key: p.panel, label: p.label, hotkey: (p.panel === 'board' ? 'boardKey' : p.panel === 'search' ? 'marketSearchKey' : null) as PanelHotkeyField }))
 ].sort((a, b) => tabOrder(a.key) - tabOrder(b.key))
