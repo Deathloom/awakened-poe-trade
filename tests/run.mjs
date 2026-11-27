@@ -106,6 +106,10 @@ for (const [name, file] of Object.entries(MODULES)) {
   })
 }
 
+// the PoE2 parser test reads the *.index.bin files, which are normally made by the vite build
+const { makeIndexFiles } = await import('../renderer/src/assets/make-index-files.mjs')
+makeIndexFiles()
+
 // Deathloom fork (A2): the PoE2 parser (renderer/src/poe2, from Exiled Exchange 2)
 // with its real data files. '@/...' resolves into renderer/src; the app config,
 // IPC and client strings are stubbed so the parser runs outside Electron.
