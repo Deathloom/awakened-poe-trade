@@ -75,7 +75,8 @@ const MODULES = {
   'bulk-sell': 'renderer/src/web/market-history/bulk-sell.ts',
   viscera: 'renderer/src/web/money/viscera.ts',
   temple: 'renderer/src/web/money/temple.ts',
-  wombgift: 'renderer/src/web/money/wombgift.ts'
+  wombgift: 'renderer/src/web/money/wombgift.ts',
+  'health-watch': 'ipc/health-watch.ts'
 }
 
 // renderer imports the tested code doesn't use at runtime

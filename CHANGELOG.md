@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q26): crash and slowness watch
+- Settings → Tools → **Speed and crashes**: how long Path of Building took to start and answer, how fast the trade site answered, and PoB crashes, over the last 7 days, with a fix hint when something is off (antivirus slowing PoB's start, PoB desktop app using the CPU, a slow trade site). Kept on this PC only (apt-data/health-watch.json); nothing is sent anywhere.
+- A PoB crash, a PoB answer that times out or a very slow one shows a short notice over the game, at most once per kind every 30 minutes. Turn it off on the same page.
+
 ## [1.0.98] - 2026-11-27
 
 ### Added (layout follow-up): pin the friends' board, Market search and Build progress in game

@@ -1,6 +1,7 @@
 import type { Game } from './game'
 import type { PriceAlertInput, PriceAlertState, PriceAlertFired } from './price-alerts'
 import type { LootFilterWants } from './loot-filter'
+import type { HealthKind, HealthKindSummary, HealthHint, HealthSample } from './health-watch'
 
 export interface HostConfig {
   shortcuts: ShortcutAction[]
@@ -575,6 +576,9 @@ export type IpcEvent =
   IpcPriceAlertsRequest |
   IpcPriceAlertsState |
   IpcPriceAlertFired |
+  IpcHealthRequest |
+  IpcHealthReport |
+  IpcHealthWarning |
   IpcHudSize |
   IpcHudDrag |
   IpcHudMoved |
@@ -1669,3 +1673,24 @@ interface Event<TName extends string, TPayload = undefined> {
   name: TName
   payload: TPayload
 }
+
+// Deathloom fork (Q26): crash and slowness watch (main/src/HealthWatch.ts). Local only.
+// 'sample' carries a trade site time measured by the price check window.
+type IpcHealthRequest =
+  Event<'CLIENT->MAIN::health', {
+    op: 'sample' | 'report' | 'settings' | 'clear'
+    sample?: { k: HealthKind, ms: number, ok: boolean, what?: string }
+    warn?: boolean
+  }>
+
+type IpcHealthReport =
+  Event<'MAIN->CLIENT::health', {
+    warn: boolean
+    summary: HealthKindSummary[]
+    hints: HealthHint[]
+    recent: HealthSample[]
+  }>
+
+// a crash / PoB timeout / very slow answer just happened (shown over the game)
+type IpcHealthWarning =
+  Event<'MAIN->CLIENT::health-warning', { k: HealthKind, text: string, fix: string }>
