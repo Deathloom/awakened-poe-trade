@@ -91,6 +91,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 ### Added (A1): PoE2 game data
 - Orbhoarder now ships the PoE2 item and modifier lists (English) from Exiled Exchange 2, kept separate from the PoE1 lists. Nothing uses them yet: they are the groundwork for PoE2 price check. Credited in the README and LICENSE.
 
+### Security: minimatch fix in the renderer lint tools
+- Renderer dev tools: typescript-eslint 8.72.2 → 8.74.0, which moves minimatch 10.2.6 → 11.0.9 (GHSA-g3hv-75wg-m249, moderate, denial of service from crafted glob patterns). Lint only; nothing in the app changes. The same alert in main (electron-builder's build tools) has no fix in electron-builder 26 yet and stays open.
+
 ## [1.0.97] - 2026-11-20
 
 ### Fixed (#282): price check couldn't be clicked (1.0.96)
