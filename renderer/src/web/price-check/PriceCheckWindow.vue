@@ -31,19 +31,17 @@
         <background-info />
         <check-position-circle v-if="showCheckPos"
           :position="checkPosition" style="z-index: -1;" />
-        <!-- Deathloom fork: PoE2 mode phase 1 (game switch only); PoE2 items need their own parser -->
-        <div v-if="isPoe2" class="m-4 p-3 rounded bg-gray-900">
-          <div class="font-bold mb-1"><i class="fas fa-info-circle mr-1" />Path of Exile 2 price check isn't ready yet</div>
-          <p class="text-gray-400">Orbhoarder is set to PoE2 (Settings → General → Game). PoE2 price checks come in a later update; switch back to PoE1 there to price check PoE1 items.</p>
-        </div>
-        <template v-else-if="item?.isErr()">
+        <!-- Deathloom fork (A4): PoE2 items go to the PoE2 price check (renderer/src/poe2) -->
+        <poe2-check v-if="isPoe2 && poe2Text !== null"
+          :clipboard="poe2Text" :advanced-check="advancedCheck" :check-id="poe2CheckId" />
+        <template v-else-if="!isPoe2 && item?.isErr()">
           <ui-error-box class="m-4">
             <template #name>{{ t(item.error.name) }}</template>
             <p>{{ t(item.error.message) }}</p>
           </ui-error-box>
           <pre class="bg-gray-900 rounded m-4 overflow-x-hidden p-2">{{ item.error.rawText }}</pre>
         </template>
-        <template v-else-if="item?.isOk()">
+        <template v-else-if="!isPoe2 && item?.isOk()">
           <unidentified-resolver :item="item.value" @identify="handleIdentification($event)" />
           <checked-item v-if="isLeagueSelected"
             :item="item.value" :advanced-check="advancedCheck" />
@@ -73,7 +71,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, inject, PropType, shallowRef, watch, computed, nextTick, provide } from 'vue'
+import { defineComponent, defineAsyncComponent, inject, PropType, shallowRef, watch, computed, nextTick, provide } from 'vue'
 import { Result, ok, err } from 'neverthrow'
 import { useI18n } from 'vue-i18n'
 import UiErrorBox from '@/web/ui/UiErrorBox.vue'
@@ -136,6 +134,8 @@ export default defineComponent({
     }
   } satisfies WidgetSpec,
   components: {
+    // Deathloom fork (A4): loaded only when a PoE2 item is checked
+    Poe2Check: defineAsyncComponent(() => import('./Poe2Check.vue')),
     AppTitleBar,
     CheckedItem,
     UnidentifiedResolver,
@@ -163,6 +163,8 @@ export default defineComponent({
     })
 
     const item = shallowRef<null | Result<ParsedItem, ParseError>>(null)
+    const poe2Text = shallowRef<string | null>(null)
+    const poe2CheckId = shallowRef(0)
     const advancedCheck = shallowRef(false)
     const checkPosition = shallowRef({ x: 1, y: 1 })
 
@@ -195,6 +197,15 @@ export default defineComponent({
       wm.show(props.config.wmId)
       checkPosition.value = e.position
       advancedCheck.value = e.focusOverlay
+
+      // Deathloom fork (A4): PoE2 items are parsed by Poe2Check.vue
+      if (AppConfig().game === 'poe2') {
+        item.value = null
+        poe2Text.value = e.clipboard
+        poe2CheckId.value += 1
+        return
+      }
+      poe2Text.value = null
 
       item.value = (e.item ? ok(e.item as ParsedItem) : parseClipboard(e.clipboard))
         .andThen(item => (
@@ -309,6 +320,8 @@ export default defineComponent({
       overlayKey,
       isLeagueSelected,
       isPoe2,
+      poe2Text,
+      poe2CheckId,
       openLeagueSelection
     }
   }
