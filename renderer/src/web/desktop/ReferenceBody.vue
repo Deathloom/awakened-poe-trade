@@ -19,7 +19,7 @@ import { LazyCheatSheetsBody as CheatSheetsBody, LazyHelpBody as HelpBody } from
 const TABS = [
   { id: 'sheets', label: 'Cheat sheets', icon: 'fa-book', title: 'League mechanics: Covens, Betrayal, Heist, Delve, Sanctum, map mechanics' },
   { id: 'recipes', label: 'Recipes', icon: 'fa-balance-scale', title: 'Vendor recipes and the campaign bench recipes' },
-  { id: 'tracking', label: 'Tracking', icon: 'fa-tasks', title: 'Your own league tracking: Thread planner, Challenges, league checklist' },
+  { id: 'tracking', label: 'Tracking', icon: 'fa-tasks', title: 'Your own league tracking: Thread planner, Challenges, league checklist, league recap' },
   { id: 'help', label: 'Help', icon: 'fa-question-circle', title: 'How to use Orbhoarder, where to get a build, FAQ' }
 ] as const
 </script>

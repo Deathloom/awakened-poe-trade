@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
+### Added (Q29): League recap card
+- Reference → Tracking → **League recap**: one card for a league with what Orbhoarder kept on this PC: dates and days played, characters (level, deaths, campaign time), maps, hours and profit per hour, best farming strategy, most seen mechanic, trades sold/bought and what they sold for, bosses and voidstones ticked in the Checklist, and challenges done. Pick an earlier league in the list; **Copy** gives plain text to paste for friends.
+
 ### Added (Q21): Boss readiness card
 - Build → Progress (and the Build progress panel) has a **Boss readiness** card: for each pinnacle boss (Exarch, Eater, Maven, Shaper, Elder, Uber Elder, Sirus, Venarius; **Uber** switch for the uber versions) it says **Ready**, **Close** or **Not yet** from your build's DPS, resistances, chaos resistance and the biggest hit you survive of that boss's main damage types, with two or three lines on the fight. Click a boss for the numbers. Stats are the ones Path of Building saved in the build file (save in PoB, then ↻). Bosses ticked in Reference → Tracking → Checklist get a ✓. The bars are rules of thumb, not GGG numbers.
 

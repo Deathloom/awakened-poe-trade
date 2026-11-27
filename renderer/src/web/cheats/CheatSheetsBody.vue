@@ -11,6 +11,7 @@
       <ThreadPlanner v-if="tab === 'threads'" />
       <ChallengeTracker v-else-if="tab === 'challenges'" @open-tab="setTab" />
       <BenchRecipes v-else-if="tab === 'bench'" />
+      <LeagueRecap v-else-if="tab === 'recap'" />
       <template v-else-if="tab === 'progress'">
         <div class="text-gray-400">League start, then endgame: tick what you've done this league ({{ league || 'no league picked' }}). Saved on this PC.</div>
         <div v-for="g of PROGRESS" :key="g.title">
@@ -71,6 +72,8 @@ const ThreadPlanner = defineAsyncComponent(() => import('./ThreadPlanner.vue'))
 const FateValue = defineAsyncComponent(() => import('./FateValue.vue'))
 // Bench recipes (Q9) needs the campaign route (~57 kB): loaded when its tab opens
 const BenchRecipes = defineAsyncComponent(() => import('./BenchRecipes.vue'))
+// Q29 league recap: reads the farming runs, ledger and pace log when its tab opens
+const LeagueRecap = defineAsyncComponent(() => import('./LeagueRecap.vue'))
 const FATE_KEY = 'deathloom.cheats.fateValue.v1'
 const fateOpen = ref((() => { try { return localStorage.getItem(FATE_KEY) === '1' } catch { return false } })())
 function toggleFate () {
@@ -81,7 +84,7 @@ function toggleFate () {
 // Deathloom fork (layout review): the Orbhoarder window's Reference tab shows one
 // group at a time (sheets, recipes, tracking); the panel shows them all
 const props = defineProps<{ only?: 'sheets' | 'recipes' | 'tracking' }>()
-const GROUP_TABS: Record<string, string[]> = { recipes: ['recipes', 'bench'], tracking: ['threads', 'challenges', 'progress'] }
+const GROUP_TABS: Record<string, string[]> = { recipes: ['recipes', 'bench'], tracking: ['threads', 'challenges', 'progress', 'recap'] }
 const allTabs = [...SHEETS.map(s => ({ id: s.id, label: s.label })), ...OWN_TABS]
 const tabs = props.only == null
   ? allTabs
